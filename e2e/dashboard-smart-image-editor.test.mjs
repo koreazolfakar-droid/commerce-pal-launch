@@ -36,9 +36,9 @@ test("smart image editor detects visible content and exposes precise positioning
   assert.match(editor, /detectContentBounds/);
   assert.match(editor, /smartTransform/);
   assert.match(editor, /Auto Center/);
-  assert.match(editor, /label="Zoom"/);
-  assert.match(editor, /label="Horizontal"/);
-  assert.match(editor, /label="Vertical"/);
+  assert.match(editor, /label=\{t\("Zoom"\)\}/);
+  assert.match(editor, /label=\{t\("Horizontal"\)\}/);
+  assert.match(editor, /label=\{t\("Vertical"\)\}/);
   assert.match(editor, /Extra image padding/);
   assert.match(editor, /"Padding"/);
   assert.match(editor, /Fit mode/);
@@ -80,14 +80,14 @@ test("product editor mirrors the live storefront media geometry without double p
   assert.match(storefrontProductCard, /!p-\[3%\]/);
   assert.match(storefrontProductCard, /sm:!p-\[4%\]/);
   assert.match(storefrontProductGallery, /aspect-\[1\/0\.92\]/);
-  assert.match(storefrontProductGallery, /p-2\.5/);
-  assert.match(storefrontProductGallery, /lg:p-8/);
+  assert.match(storefrontProductGallery, /object-contain p-2 transition/);
+  assert.match(storefrontProductGallery, /lg:p-7/);
 
   assert.match(editor, /previewContext\?: "product"/);
   assert.match(editor, /id: "card"[\s\S]*padding: "5%"/);
-  assert.match(editor, /id: "mobile"[\s\S]*aspectRatio: "1 \/ 0\.92"[\s\S]*padding: "10px"/);
-  assert.match(editor, /id: "desktop"[\s\S]*padding: "32px"/);
-  assert.match(editor, /request\.options\.previewContext === "product" \? 0/);
+  assert.match(editor, /id: "mobile"[\s\S]*aspectRatio: "1 \/ 0\.92"[\s\S]*padding: "8px"/);
+  assert.match(editor, /id: "desktop"[\s\S]*padding: "28px"/);
+  assert.match(editor, /request\.options\.previewContext === "product"\s*\? 0/);
   assert.match(editor, /Website preview/);
   assert.match(editor, /Exact CSS/);
   assert.match(editor, /Product files are saved with 0% default baked-in padding/);
@@ -112,7 +112,7 @@ test("hero smart editor cannot shrink artwork inside the frame", () => {
   assert.match(editor, /setZoom\(isHeroPreset \? Math\.max\(1, value\) : value\)/);
   assert.match(editor, /setPadding\(isHeroPreset \? 0 : initialPadding\)/);
   assert.match(editor, /setFit\(isHeroPreset \? "cover" : initialFit\)/);
-  assert.match(editor, /isHeroPreset \? "Use this crop" : "Save adjustment"/);
+  assert.match(editor, /isHeroPreset \? t\("Use this crop"\) : t\("Save adjustment"\)/);
 });
 
 test("shared media surfaces support smart adjustment without breaking existing links", () => {

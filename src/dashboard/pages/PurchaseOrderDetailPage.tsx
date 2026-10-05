@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import {
   ArrowLeft,
   Boxes,
@@ -53,48 +54,57 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function InfoItem({ label, value }: { label: string; value: ReactNode }) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-      <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">{label}</div>
+      <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+        {t(label)}
+      </div>
       <div className="mt-1 text-[12px] font-semibold text-slate-700">{value}</div>
     </div>
   );
 }
 
 export default function PurchaseOrderDetailPage({ id }: { id: string }) {
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [po, setPo] = useState<PurchaseOrderSummary | null>(null);
   const [supplier, setSupplier] = useState<ReceivingSupplier | null>(null);
   const [events, setEvents] = useState<ProcurementEventSummary[]>([]);
   const [attachments, setAttachments] = useState<ProcurementAttachment[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [attachmentType, setAttachmentType] = useState<"purchase_order" | "supplier_invoice" | "packing_list" | "other">("purchase_order");
+  const [attachmentType, setAttachmentType] = useState<
+    "purchase_order" | "supplier_invoice" | "packing_list" | "other"
+  >("purchase_order");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const load = useCallback(async (manual = false) => {
-    if (manual) setRefreshing(true);
+  const load = useCallback(
+    async (manual = false) => {
+      if (manual) setRefreshing(true);
       else setLoading(true);
-    try {
-      const detail = await loadPurchaseOrderDetail(id);
-      setPo(detail.purchaseOrder);
-      setSupplier(detail.supplier);
-      setEvents(detail.events);
-      setAttachments(detail.attachments);
-      setIsAdmin(detail.role === "admin");
-      setError(detail.purchaseOrder ? "" : "Purchase order was not found.");
-      if (manual && detail.purchaseOrder) toast.success("Purchase order refreshed.");
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Unable to load purchase order.";
-      setError(message);
-      if (manual) toast.error(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [id]);
+      try {
+        const detail = await loadPurchaseOrderDetail(id);
+        setPo(detail.purchaseOrder);
+        setSupplier(detail.supplier);
+        setEvents(detail.events);
+        setAttachments(detail.attachments);
+        setIsAdmin(detail.role === "admin");
+        setError(detail.purchaseOrder ? "" : "Purchase order was not found.");
+        if (manual && detail.purchaseOrder) toast.success("Purchase order refreshed.");
+      } catch (cause) {
+        const message = cause instanceof Error ? cause.message : "Unable to load purchase order.";
+        setError(message);
+        if (manual) toast.error(message);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [id],
+  );
 
   useEffect(() => {
     void load(false);
@@ -102,7 +112,8 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
   const submit = async () => {
     if (!po || po.status !== "draft") return;
-    if (!window.confirm(`Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`)) return;
+    if (!window.confirm(`Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`))
+      return;
 
     setSaving(true);
     try {
@@ -182,20 +193,27 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   if (!po) {
     return (
       <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
-        <div className="text-sm font-bold text-rose-700">Purchase order could not be opened.</div>
-        <div className="mt-1 text-xs text-rose-600">{error || "Purchase order was not found."}</div>
+        <div className="text-sm font-bold text-rose-700">
+          {t("Purchase order could not be opened.")}
+        </div>
+        <div className="mt-1 text-xs text-rose-600">
+          {error || t("Purchase order was not found.")}
+        </div>
         <button
           onClick={() => navigate("/dashboard/purchase-orders")}
           className="mt-4 rounded-xl bg-[#14203a] px-4 py-2 text-[11px] font-bold text-white"
         >
-          Back to Purchase Orders
+          {t("Back to Purchase Orders")}
         </button>
       </div>
     );
   }
 
   const canReceive = po.status === "ordered" || po.status === "partially_received";
-  const progress = po.expectedUnits > 0 ? Math.min(100, Math.round((po.receivedUnits / po.expectedUnits) * 100)) : 0;
+  const progress =
+    po.expectedUnits > 0
+      ? Math.min(100, Math.round((po.receivedUnits / po.expectedUnits) * 100))
+      : 0;
 
   return (
     <div>
@@ -206,18 +224,20 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-slate-700"
           >
             <ArrowLeft className="size-3.5" />
-            Purchase Orders
+            {t("Purchase Orders")}
           </button>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
             <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            Commerce / Procurement
+            {t("Commerce / Procurement")}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">{po.poNumber}</h1>
+            <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
+              {po.poNumber}
+            </h1>
             <StatusBadge status={po.status} />
           </div>
           <p className="mt-1.5 text-sm text-slate-500">
-            Purchase order details and ordered items. Receiving remains a separate workflow.
+            {t("Purchase order details and ordered items. Receiving remains a separate workflow.")}
           </p>
         </div>
 
@@ -227,7 +247,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600"
           >
             <Printer className="size-3.5" />
-            Print / PDF
+            {t("Print / PDF")}
           </button>
 
           <button
@@ -236,7 +256,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600 disabled:opacity-50"
           >
             <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
+            {t("Refresh")}
           </button>
 
           {po.status === "draft" ? (
@@ -245,14 +265,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                 onClick={() => navigate(`/dashboard/purchase-orders/${po.id}/edit`)}
                 className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
               >
-                Edit PO
+                {t("Edit PO")}
               </button>
               <button
                 onClick={() => void submit()}
                 disabled={saving}
                 className="h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50"
               >
-                Submit for approval
+                {t("Submit for approval")}
               </button>
             </>
           ) : null}
@@ -264,14 +284,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                 disabled={saving}
                 className="h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50"
               >
-                Reject
+                {t("Reject")}
               </button>
               <button
                 onClick={() => void runLifecycle("approve")}
                 disabled={saving}
                 className="h-10 rounded-xl bg-emerald-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
               >
-                Approve PO
+                {t("Approve PO")}
               </button>
             </>
           ) : null}
@@ -282,7 +302,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               disabled={saving}
               className="h-10 rounded-xl bg-violet-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
             >
-              Issue PO
+              {t("Issue PO")}
             </button>
           ) : null}
 
@@ -292,7 +312,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               disabled={saving}
               className="h-10 rounded-xl border border-amber-200 bg-amber-50 px-4 text-[11px] font-bold text-amber-700 disabled:opacity-50"
             >
-              Reopen draft
+              {t("Reopen draft")}
             </button>
           ) : null}
 
@@ -302,7 +322,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
             >
               <PackageCheck className="size-3.5" />
-              Receive PO
+              {t("Receive PO")}
             </button>
           ) : null}
 
@@ -312,7 +332,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               disabled={saving}
               className="h-10 rounded-xl bg-slate-700 px-4 text-[11px] font-bold text-white disabled:opacity-50"
             >
-              Close PO
+              {t("Close PO")}
             </button>
           ) : null}
 
@@ -322,7 +342,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               disabled={saving}
               className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-500 disabled:opacity-50"
             >
-              Cancel PO
+              {t("Cancel PO")}
             </button>
           ) : null}
         </div>
@@ -330,7 +350,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <InfoItem
-          label="Supplier"
+          label={t("Supplier")}
           value={
             <div>
               <div>{po.supplierName}</div>
@@ -342,64 +362,76 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             </div>
           }
         />
-        <InfoItem label="Store / Warehouse" value={po.locationName} />
-        <InfoItem label="Created date" value={new Date(po.createdAt).toLocaleString()} />
-        <InfoItem label="Expected delivery" value={po.expectedAt ? new Date(po.expectedAt).toLocaleString() : "—"} />
-        <InfoItem label="Issued date" value={po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"} />
-        <InfoItem label="Approved date" value={po.approvedAt ? new Date(po.approvedAt).toLocaleString() : "—"} />
-        <InfoItem label="Currency / FX" value={`${po.currency} · ${po.exchangeRate.toLocaleString()}`} />
-        <InfoItem label="Final total" value={money(po.grandTotal, po.currency)} />
+        <InfoItem label={t("Store / Warehouse")} value={po.locationName} />
+        <InfoItem label={t("Created date")} value={new Date(po.createdAt).toLocaleString()} />
+        <InfoItem
+          label={t("Expected delivery")}
+          value={po.expectedAt ? new Date(po.expectedAt).toLocaleString() : "—"}
+        />
+        <InfoItem
+          label={t("Issued date")}
+          value={po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}
+        />
+        <InfoItem
+          label={t("Approved date")}
+          value={po.approvedAt ? new Date(po.approvedAt).toLocaleString() : "—"}
+        />
+        <InfoItem
+          label={t("Currency / FX")}
+          value={`${po.currency} · ${po.exchangeRate.toLocaleString()}`}
+        />
+        <InfoItem label={t("Final total")} value={money(po.grandTotal, po.currency)} />
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
             <ClipboardList className="size-3.5" />
-            Ordered
+            {t("Ordered")}
           </div>
           <div className="mt-2 text-2xl font-bold text-[#14203a]">{po.expectedUnits}</div>
         </div>
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.08em] text-emerald-600">
             <Boxes className="size-3.5" />
-            Received
+            {t("Received")}
           </div>
           <div className="mt-2 text-2xl font-bold text-emerald-700">{po.receivedUnits}</div>
         </div>
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.08em] text-indigo-600">
             <Truck className="size-3.5" />
-            Remaining
+            {t("Remaining")}
           </div>
           <div className="mt-2 text-2xl font-bold text-indigo-700">{po.remainingUnits}</div>
         </div>
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <InfoItem label="Subtotal" value={money(po.subtotal, po.currency)} />
-        <InfoItem label="Discount" value={money(po.discountAmount, po.currency)} />
-        <InfoItem label="VAT / Tax" value={money(po.taxAmount, po.currency)} />
-        <InfoItem label="Shipping" value={money(po.shippingAmount, po.currency)} />
+        <InfoItem label={t("Subtotal")} value={money(po.subtotal, po.currency)} />
+        <InfoItem label={t("Discount")} value={money(po.discountAmount, po.currency)} />
+        <InfoItem label={t("VAT / Tax")} value={money(po.taxAmount, po.currency)} />
+        <InfoItem label={t("Shipping")} value={money(po.shippingAmount, po.currency)} />
       </div>
 
       {po.rejectionReason ? (
         <div className="mb-5 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-[11px] text-rose-700">
-          <b>Rejection reason:</b> {po.rejectionReason}
+          <b>{t("Rejection reason:")}</b> {po.rejectionReason}
         </div>
       ) : null}
 
       {po.cancellationReason ? (
         <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-100 p-4 text-[11px] text-slate-600">
-          <b>Cancellation reason:</b> {po.cancellationReason}
+          <b>{t("Cancellation reason:")}</b> {po.cancellationReason}
         </div>
       ) : null}
 
       <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-2 flex items-center justify-between">
           <div>
-            <div className="text-[12px] font-bold text-[#14203a]">Receiving progress</div>
+            <div className="text-[12px] font-bold text-[#14203a]">{t("Receiving progress")}</div>
             <div className="mt-1 text-[10px] text-slate-400">
-              {po.receivedUnits} received from {po.expectedUnits} ordered units
+              {po.receivedUnits} {t("received from")} {po.expectedUnits} {t("ordered units")}
             </div>
           </div>
           <div className="text-[12px] font-bold text-indigo-600">{progress}%</div>
@@ -412,12 +444,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div>
-            <div className="text-[14px] font-bold text-[#14203a]">Purchase order items</div>
-            <div className="mt-1 text-[10px] text-slate-400">Ordered quantity, received quantity, remaining quantity and unit cost</div>
+            <div className="text-[14px] font-bold text-[#14203a]">{t("Purchase order items")}</div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Ordered quantity, received quantity, remaining quantity and unit cost")}
+            </div>
           </div>
           <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
             <CalendarDays className="size-3.5" />
-            {po.items.length} items
+            {po.items.length} {t("items")}
           </div>
         </div>
 
@@ -425,50 +459,66 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {po.items.map((item) => (
             <article key={item.id} className="p-4">
               <div className="text-[12px] font-bold text-slate-800">{item.title}</div>
-              <div className="mt-1 font-mono text-[9px] text-slate-400">{item.sku || "No SKU"}</div>
+              <div className="mt-1 font-mono text-[9px] text-slate-400">
+                {item.sku || t("No SKU")}
+              </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[9px] text-slate-400">Ordered</div>
-                  <div className="text-[12px] font-bold text-slate-700">{item.expectedQuantity}</div>
+                  <div className="text-[9px] text-slate-400">{t("Ordered")}</div>
+                  <div className="text-[12px] font-bold text-slate-700">
+                    {item.expectedQuantity}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-emerald-50 p-2">
-                  <div className="text-[9px] text-emerald-500">Received</div>
-                  <div className="text-[12px] font-bold text-emerald-700">{item.approvedReceivedQuantity}</div>
+                  <div className="text-[9px] text-emerald-500">{t("Received")}</div>
+                  <div className="text-[12px] font-bold text-emerald-700">
+                    {item.approvedReceivedQuantity}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-indigo-50 p-2">
-                  <div className="text-[9px] text-indigo-500">Remaining</div>
-                  <div className="text-[12px] font-bold text-indigo-700">{item.remainingQuantity}</div>
+                  <div className="text-[9px] text-indigo-500">{t("Remaining")}</div>
+                  <div className="text-[12px] font-bold text-indigo-700">
+                    {item.remainingQuantity}
+                  </div>
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between text-[10px]">
-                <span className="text-slate-400">Unit cost</span>
-                <span className="font-bold text-slate-700">{money(item.unitCost, po.currency)}</span>
+                <span className="text-slate-400">{t("Unit cost")}</span>
+                <span className="font-bold text-slate-700">
+                  {money(item.unitCost, po.currency)}
+                </span>
               </div>
             </article>
           ))}
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[820px] text-left">
+          <table className="w-full min-w-[820px] text-start">
             <thead className="bg-[#fafbfe] text-[9px] uppercase tracking-[.1em] text-slate-400">
               <tr>
-                <th className="px-5 py-3">Item</th>
-                <th className="px-3 py-3">SKU</th>
-                <th className="px-3 py-3">Ordered qty</th>
-                <th className="px-3 py-3">Received qty</th>
-                <th className="px-3 py-3">Remaining</th>
-                <th className="px-5 py-3 text-right">Unit cost</th>
+                <th className="px-5 py-3">{t("Item")}</th>
+                <th className="px-3 py-3">{t("SKU")}</th>
+                <th className="px-3 py-3">{t("Ordered qty")}</th>
+                <th className="px-3 py-3">{t("Received qty")}</th>
+                <th className="px-3 py-3">{t("Remaining")}</th>
+                <th className="px-5 py-3 text-end">{t("Unit cost")}</th>
               </tr>
             </thead>
             <tbody>
               {po.items.map((item) => (
                 <tr key={item.id} className="border-t border-slate-100">
                   <td className="px-5 py-3 text-[11px] font-bold text-slate-700">{item.title}</td>
-                  <td className="px-3 py-3 font-mono text-[10px] text-slate-400">{item.sku || "—"}</td>
+                  <td className="px-3 py-3 font-mono text-[10px] text-slate-400">
+                    {item.sku || "—"}
+                  </td>
                   <td className="px-3 py-3 text-[11px] text-slate-600">{item.expectedQuantity}</td>
-                  <td className="px-3 py-3 text-[11px] font-bold text-emerald-600">{item.approvedReceivedQuantity}</td>
-                  <td className="px-3 py-3 text-[11px] font-bold text-indigo-600">{item.remainingQuantity}</td>
-                  <td className="px-5 py-3 text-right text-[11px] font-bold text-slate-700">
+                  <td className="px-3 py-3 text-[11px] font-bold text-emerald-600">
+                    {item.approvedReceivedQuantity}
+                  </td>
+                  <td className="px-3 py-3 text-[11px] font-bold text-indigo-600">
+                    {item.remainingQuantity}
+                  </td>
+                  <td className="px-5 py-3 text-end text-[11px] font-bold text-slate-700">
                     {money(item.unitCost, po.currency)}
                   </td>
                 </tr>
@@ -479,7 +529,9 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
         {po.notes ? (
           <div className="border-t border-slate-100 p-4">
-            <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Notes</div>
+            <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+              {t("Notes")}
+            </div>
             <div className="mt-1 text-[11px] text-slate-600">{po.notes}</div>
           </div>
         ) : null}
@@ -489,8 +541,12 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         <div className="rounded-2xl border border-slate-200 bg-white">
           <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-[14px] font-bold text-[#14203a]">Documents & attachments</div>
-              <div className="mt-1 text-[10px] text-slate-400">PO, supplier invoice and packing-list files.</div>
+              <div className="text-[14px] font-bold text-[#14203a]">
+                {t("Documents & attachments")}
+              </div>
+              <div className="mt-1 text-[10px] text-slate-400">
+                {t("PO, supplier invoice and packing-list files.")}
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <select
@@ -498,13 +554,13 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                 onChange={(event) => setAttachmentType(event.target.value as typeof attachmentType)}
                 className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
               >
-                <option value="purchase_order">Purchase order</option>
-                <option value="supplier_invoice">Supplier invoice</option>
-                <option value="packing_list">Packing list</option>
-                <option value="other">Other</option>
+                <option value="purchase_order">{t("Purchase order")}</option>
+                <option value="supplier_invoice">{t("Supplier invoice")}</option>
+                <option value="packing_list">{t("Packing list")}</option>
+                <option value="other">{t("Other")}</option>
               </select>
               <label className="cursor-pointer rounded-lg bg-[#14203a] px-3 py-2 text-[10px] font-bold text-white">
-                Upload file
+                {t("Upload file")}
                 <input
                   type="file"
                   className="hidden"
@@ -533,7 +589,9 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                   </a>
                   <div className="mt-1 text-[9px] text-slate-400">
                     {attachment.attachmentType.replaceAll("_", " ")}
-                    {attachment.sizeBytes != null ? ` · ${Math.ceil(attachment.sizeBytes / 1024)} KB` : ""}
+                    {attachment.sizeBytes != null
+                      ? ` · ${Math.ceil(attachment.sizeBytes / 1024)} KB`
+                      : ""}
                   </div>
                 </div>
                 {isAdmin ? (
@@ -543,32 +601,38 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                       setSaving(true);
                       void deleteProcurementAttachment(attachment)
                         .then(() => load(false))
-                        .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
+                        .catch((cause) =>
+                          toast.error(cause instanceof Error ? cause.message : "Delete failed."),
+                        )
                         .finally(() => setSaving(false));
                     }}
                     className="text-[10px] font-bold text-rose-600"
                   >
-                    Delete
+                    {t("Delete")}
                   </button>
                 ) : null}
               </div>
             ))}
             {!attachments.length ? (
-              <div className="p-6 text-center text-[10px] text-slate-400">No documents uploaded yet.</div>
+              <div className="p-6 text-center text-[10px] text-slate-400">
+                {t("No documents uploaded yet.")}
+              </div>
             ) : null}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 p-4">
-            <div className="text-[14px] font-bold text-[#14203a]">PO timeline</div>
-            <div className="mt-1 text-[10px] text-slate-400">Immutable procurement audit events.</div>
+            <div className="text-[14px] font-bold text-[#14203a]">{t("PO timeline")}</div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Immutable procurement audit events.")}
+            </div>
           </div>
           <div className="max-h-[420px] overflow-y-auto p-4">
             <div className="space-y-4">
               {events.map((event) => (
-                <div key={event.id} className="relative pl-5">
-                  <span className="absolute left-0 top-1 size-2 rounded-full bg-indigo-500" />
+                <div key={event.id} className="relative ps-5">
+                  <span className="absolute start-0 top-1 size-2 rounded-full bg-indigo-500" />
                   <div className="text-[10px] font-bold text-slate-700">
                     {event.type.replaceAll("_", " ")}
                   </div>
@@ -578,7 +642,9 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                 </div>
               ))}
               {!events.length ? (
-                <div className="py-6 text-center text-[10px] text-slate-400">No audit events yet.</div>
+                <div className="py-6 text-center text-[10px] text-slate-400">
+                  {t("No audit events yet.")}
+                </div>
               ) : null}
             </div>
           </div>

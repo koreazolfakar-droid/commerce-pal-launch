@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import {
   Check,
   CheckCircle2,
@@ -62,6 +63,7 @@ function formatMime(value: string) {
 }
 
 export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boolean }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [assets, setAssets] = useState<GlobalLegacyImageAsset[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -80,8 +82,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   const [thumbnailBackfilling, setThumbnailBackfilling] = useState(false);
   const [thumbnailProgress, setThumbnailProgress] =
     useState<ProductThumbnailBackfillProgress | null>(null);
-  const [thumbnailResult, setThumbnailResult] =
-    useState<ProductThumbnailBackfillResult | null>(null);
+  const [thumbnailResult, setThumbnailResult] = useState<ProductThumbnailBackfillResult | null>(
+    null,
+  );
   const sourceFileCache = useRef(new Map<string, File>());
   const previewRunId = useRef(0);
 
@@ -121,7 +124,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
       setAssets(next);
       setSelected(new Set(next.map((asset) => asset.key)));
       setRows([]);
-      toast.success(`Found ${next.length} image reference${next.length === 1 ? "" : "s"} across the dashboard.`);
+      toast.success(
+        `Found ${next.length} image reference${next.length === 1 ? "" : "s"} across the dashboard.`,
+      );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Global image scan failed.");
     } finally {
@@ -221,7 +226,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
         );
       }
       if (result.failed.length) {
-        toast.error(`${result.failed.length} file${result.failed.length === 1 ? "" : "s"} could not be deleted and were left untouched.`);
+        toast.error(
+          `${result.failed.length} file${result.failed.length === 1 ? "" : "s"} could not be deleted and were left untouched.`,
+        );
       }
       const refreshed = await scanSafeOldOriginals();
       setCleanupScan(refreshed);
@@ -233,14 +240,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
   };
 
   const backfillProductThumbnails = async () => {
-    if (
-      thumbnailBackfilling ||
-      loading ||
-      analyzing ||
-      optimizing ||
-      cleaning ||
-      scanningCleanup
-    ) {
+    if (thumbnailBackfilling || loading || analyzing || optimizing || cleaning || scanningCleanup) {
       return;
     }
 
@@ -309,7 +309,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
 
     if (savedByKey.size) {
       setAssets((current) => current.map((item) => savedByKey.get(item.key) ?? item));
-      toast.success(`${savedByKey.size} old image reference${savedByKey.size === 1 ? "" : "s"} optimized.`);
+      toast.success(
+        `${savedByKey.size} old image reference${savedByKey.size === 1 ? "" : "s"} optimized.`,
+      );
     }
     const failed = next.filter((row) => row.status === "failed").length;
     if (failed) toast.error(`${failed} image${failed === 1 ? "" : "s"} need manual review.`);
@@ -329,24 +331,30 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
           setOpen((value) => !value);
           if (!open && !assets.length) void load();
         }}
-        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-start"
       >
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
             <Images className="size-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-[13px] font-black text-slate-800">Global old-image WebP optimizer</div>
+            <div className="text-[13px] font-black text-slate-800">
+              {t("Global old-image WebP optimizer")}
+            </div>
             <div className="mt-0.5 text-[10px] leading-4 text-slate-500">
-              Products, brands, categories, hero and media library in one scan.
+              {t("Products, brands, categories, hero and media library in one scan.")}
             </div>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="hidden rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black text-emerald-700 sm:inline-flex">
-            Admin · safe migration
+            {t("Admin · safe migration")}
           </span>
-          {open ? <ChevronUp className="size-4 text-slate-400" /> : <ChevronDown className="size-4 text-slate-400" />}
+          {open ? (
+            <ChevronUp className="size-4 text-slate-400" />
+          ) : (
+            <ChevronDown className="size-4 text-slate-400" />
+          )}
         </div>
       </button>
 
@@ -356,11 +364,12 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-[11px] font-black text-slate-800">
-                  Mobile product-card thumbnails
+                  {t("Mobile product-card thumbnails")}
                 </div>
                 <div className="mt-1 max-w-2xl text-[9px] leading-4 text-slate-500">
-                  Creates dedicated 480px WebP files for primary product cards. Product-page
-                  originals remain unchanged. Runs one image at a time to stay phone-friendly.
+                  {t(
+                    "Creates dedicated 480px WebP files for primary product cards. Product-page originals remain unchanged. Runs one image at a time to stay phone-friendly.",
+                  )}
                 </div>
               </div>
               <button
@@ -381,7 +390,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 ) : (
                   <WandSparkles className="size-3.5" />
                 )}
-                {thumbnailBackfilling ? "Generating…" : "Generate all missing thumbnails"}
+                {thumbnailBackfilling ? t("Generating…") : t("Generate all missing thumbnails")}
               </button>
             </div>
 
@@ -391,7 +400,7 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                   <span className="truncate">
                     {thumbnailBackfilling
                       ? `Processing: ${thumbnailProgress.currentLabel}`
-                      : "Thumbnail pass complete"}
+                      : t("Thumbnail pass complete")}
                   </span>
                   <span className="shrink-0">
                     {thumbnailProgress.completed}/{thumbnailProgress.total}
@@ -420,14 +429,11 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                   ["Generated", String(thumbnailResult.processed)],
                   ["Still pending", String(thumbnailResult.remaining)],
                   ["Source bytes", formatImageBytes(thumbnailResult.sourceBytes)],
-                  [
-                    "Card thumbnails",
-                    formatImageBytes(thumbnailResult.thumbnailBytes),
-                  ],
+                  ["Card thumbnails", formatImageBytes(thumbnailResult.thumbnailBytes)],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg bg-white px-3 py-2">
                     <div className="text-[8px] font-black uppercase tracking-[.1em] text-slate-400">
-                      {label}
+                      {t(label)}
                     </div>
                     <div className="mt-1 text-[10px] font-black text-slate-700">{value}</div>
                   </div>
@@ -456,7 +462,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
 
           <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
             <label className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
-              <span className="block text-[8px] font-black uppercase tracking-[.12em] text-slate-400">Max resolution</span>
+              <span className="block text-[8px] font-black uppercase tracking-[.12em] text-slate-400">
+                {t("Max resolution")}
+              </span>
               <select
                 value={resolution}
                 onChange={(event) => {
@@ -465,13 +473,17 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 className="mt-1 w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none"
               >
                 {PRODUCT_IMAGE_RESOLUTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </label>
 
             <label className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
-              <span className="block text-[8px] font-black uppercase tracking-[.12em] text-slate-400">WebP quality</span>
+              <span className="block text-[8px] font-black uppercase tracking-[.12em] text-slate-400">
+                {t("WebP quality")}
+              </span>
               <select
                 value={compression}
                 onChange={(event) => {
@@ -482,11 +494,13 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 className="mt-1 w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none"
               >
                 {IMAGE_COMPRESSION_PRESETS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
               <span className="mt-1 block text-[8px] text-slate-400">
-                Encoder quality {Math.round(imageCompressionQuality(compression) * 100)}%
+                {t("Encoder quality")} {Math.round(imageCompressionQuality(compression) * 100)}%
               </span>
             </label>
 
@@ -494,20 +508,36 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               <button
                 type="button"
                 onClick={() => void analyze()}
-                disabled={!selectedAssets.length || analyzing || optimizing || loading || thumbnailBackfilling}
+                disabled={
+                  !selectedAssets.length ||
+                  analyzing ||
+                  optimizing ||
+                  loading ||
+                  thumbnailBackfilling
+                }
                 className="flex min-h-14 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-[10px] font-black text-indigo-700 disabled:opacity-50"
               >
-                {analyzing ? <Loader2 className="size-4 animate-spin" /> : <WandSparkles className="size-4" />}
-                Analyze selected
+                {analyzing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <WandSparkles className="size-4" />
+                )}{" "}
+                {t("Analyze selected")}
               </button>
               <button
                 type="button"
                 onClick={() => void optimize()}
-                disabled={optimizing || thumbnailBackfilling || !rows.some((row) => row.status === "ready")}
+                disabled={
+                  optimizing || thumbnailBackfilling || !rows.some((row) => row.status === "ready")
+                }
                 className="flex min-h-14 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-black text-white disabled:opacity-40"
               >
-                {optimizing ? <Loader2 className="size-4 animate-spin" /> : <Images className="size-4" />}
-                Convert all ready
+                {optimizing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Images className="size-4" />
+                )}{" "}
+                {t("Convert all ready")}
               </button>
             </div>
           </div>
@@ -521,13 +551,15 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                   onChange={(event) => toggleVisible(event.target.checked)}
                   className="size-4 rounded border-slate-300"
                 />
-                Select visible ({visibleAssets.length})
+                {t("Select visible (")} {visibleAssets.length})
               </label>
-              <span className="text-[10px] text-slate-400">{selectedAssets.length} total selected</span>
+              <span className="text-[10px] text-slate-400">
+                {selectedAssets.length} {t("total selected")}
+              </span>
             </div>
             <div className="inline-flex items-center gap-1.5 text-[9px] font-semibold text-slate-500">
               <ShieldCheck className="size-3.5 text-emerald-600" />
-              Database reference changes only after WebP upload succeeds
+              {t("Database reference changes only after WebP upload succeeds")}
             </div>
           </div>
 
@@ -540,7 +572,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 ["Estimated saving", `${totals.reduction}%`],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl bg-slate-900 px-3 py-2.5 text-white">
-                  <div className="text-[8px] font-black uppercase tracking-[.12em] text-slate-400">{label}</div>
+                  <div className="text-[8px] font-black uppercase tracking-[.12em] text-slate-400">
+                    {t(label)}
+                  </div>
                   <div className="mt-1 text-[12px] font-black">{value}</div>
                 </div>
               ))}
@@ -548,20 +582,20 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
           ) : null}
 
           <div className="mt-3 max-h-[520px] overflow-auto rounded-xl border border-slate-200">
-            <table className="w-full min-w-[1220px] border-collapse text-left">
+            <table className="w-full min-w-[1220px] border-collapse text-start">
               <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr className="border-b border-slate-200 text-[8px] font-black uppercase tracking-[.1em] text-slate-400">
-                  <th className="w-10 px-3 py-2.5">Use</th>
-                  <th className="px-3 py-2.5">Source</th>
-                  <th className="px-3 py-2.5">Image</th>
-                  <th className="px-3 py-2.5">Current format</th>
-                  <th className="px-3 py-2.5">Current size</th>
-                  <th className="px-3 py-2.5">Current resolution</th>
-                  <th className="px-3 py-2.5">After format</th>
-                  <th className="px-3 py-2.5">After WebP size</th>
-                  <th className="px-3 py-2.5">New resolution</th>
-                  <th className="px-3 py-2.5">Saved</th>
-                  <th className="px-3 py-2.5">Status</th>
+                  <th className="w-10 px-3 py-2.5">{t("Use")}</th>
+                  <th className="px-3 py-2.5">{t("Source")}</th>
+                  <th className="px-3 py-2.5">{t("Image")}</th>
+                  <th className="px-3 py-2.5">{t("Current format")}</th>
+                  <th className="px-3 py-2.5">{t("Current size")}</th>
+                  <th className="px-3 py-2.5">{t("Current resolution")}</th>
+                  <th className="px-3 py-2.5">{t("After format")}</th>
+                  <th className="px-3 py-2.5">{t("After WebP size")}</th>
+                  <th className="px-3 py-2.5">{t("New resolution")}</th>
+                  <th className="px-3 py-2.5">{t("Saved")}</th>
+                  <th className="px-3 py-2.5">{t("Status")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -598,16 +632,27 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2.5">
-                          <img src={item.url} alt="" loading="lazy" className="size-10 rounded-lg bg-slate-50 object-contain" />
+                          <img
+                            src={item.url}
+                            alt=""
+                            loading="lazy"
+                            className="size-10 rounded-lg bg-slate-50 object-contain"
+                          />
                           <div className="min-w-0">
-                            <div className="max-w-[220px] truncate text-[10px] font-bold text-slate-700">{item.label}</div>
-                            <div className="max-w-[220px] truncate text-[8px] text-slate-400">{item.fileName}</div>
+                            <div className="max-w-[220px] truncate text-[10px] font-bold text-slate-700">
+                              {item.label}
+                            </div>
+                            <div className="max-w-[220px] truncate text-[8px] text-slate-400">
+                              {item.fileName}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="text-[10px] font-black text-slate-700">
-                          {conversion ? formatMime(conversion.source.mimeType) : formatMime(item.mimeType)}
+                          {conversion
+                            ? formatMime(conversion.source.mimeType)
+                            : formatMime(item.mimeType)}
                         </div>
                       </td>
                       <td className="px-3 py-2.5">
@@ -616,32 +661,46 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                             ? formatImageBytes(conversion.source.bytes)
                             : item.sizeBytes
                               ? formatImageBytes(item.sizeBytes)
-                              : "Run Analyze"}
+                              : t("Run Analyze")}
                         </div>
-                        <div className="mt-0.5 text-[8px] text-slate-400">Before conversion</div>
+                        <div className="mt-0.5 text-[8px] text-slate-400">
+                          {t("Before conversion")}
+                        </div>
                       </td>
                       <td className="px-3 py-2.5 text-[10px] font-semibold text-slate-600">
-                        {conversion ? `${conversion.source.width} × ${conversion.source.height}` : "Analyze to inspect"}
+                        {conversion
+                          ? `${conversion.source.width} × ${conversion.source.height}`
+                          : t("Analyze to inspect")}
                       </td>
                       <td className="px-3 py-2.5">
-                        <div className="text-[10px] font-black text-emerald-700">{conversion ? "WEBP" : "—"}</div>
+                        <div className="text-[10px] font-black text-emerald-700">
+                          {conversion ? t("WEBP") : "—"}
+                        </div>
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="text-[11px] font-black text-emerald-700">
                           {conversion ? formatImageBytes(conversion.output.bytes) : "—"}
                         </div>
-                        <div className="mt-0.5 text-[8px] text-slate-400">After conversion</div>
+                        <div className="mt-0.5 text-[8px] text-slate-400">
+                          {t("After conversion")}
+                        </div>
                       </td>
                       <td className="px-3 py-2.5 text-[10px] font-semibold text-slate-600">
-                        {conversion ? `${conversion.output.width} × ${conversion.output.height}` : "—"}
+                        {conversion
+                          ? `${conversion.output.width} × ${conversion.output.height}`
+                          : "—"}
                       </td>
                       <td className="px-3 py-2.5">
                         {saving !== null && conversion ? (
                           <div>
-                            <span className={
-                              "rounded-full px-2 py-1 text-[9px] font-black " +
-                              (saving >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")
-                            }>
+                            <span
+                              className={
+                                "rounded-full px-2 py-1 text-[9px] font-black " +
+                                (saving >= 0
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-amber-50 text-amber-700")
+                              }
+                            >
                               {saving >= 0 ? `${saving}% smaller` : `${Math.abs(saving)}% larger`}
                             </span>
                             <div className="mt-1.5 text-[8px] font-bold text-slate-500">
@@ -650,21 +709,33 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                                 : `+${formatImageBytes(conversion.output.bytes - conversion.source.bytes)}`}
                             </div>
                           </div>
-                        ) : "—"}
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-3 py-2.5">
                         {row?.status === "analyzing" ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-indigo-600"><Loader2 className="size-3 animate-spin" /> Analyzing</span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-indigo-600">
+                            <Loader2 className="size-3 animate-spin" /> {t("Analyzing")}
+                          </span>
                         ) : row?.status === "ready" ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700"><Check className="size-3" /> Ready</span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700">
+                            <Check className="size-3" /> {t("Ready")}
+                          </span>
                         ) : row?.status === "done" ? (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700"><CheckCircle2 className="size-3" /> Converted</span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700">
+                            <CheckCircle2 className="size-3" /> {t("Converted")}
+                          </span>
                         ) : row?.status === "failed" ? (
-                          <span className="inline-flex max-w-[230px] items-center gap-1 text-[9px] font-bold text-rose-600" title={row.error}>
-                            <XCircle className="size-3 shrink-0" /><span className="truncate">{row.error}</span>
+                          <span
+                            className="inline-flex max-w-[230px] items-center gap-1 text-[9px] font-bold text-rose-600"
+                            title={row.error}
+                          >
+                            <XCircle className="size-3 shrink-0" />
+                            <span className="truncate">{row.error}</span>
                           </span>
                         ) : (
-                          <span className="text-[9px] text-slate-400">Not analyzed</span>
+                          <span className="text-[9px] text-slate-400">{t("Not analyzed")}</span>
                         )}
                       </td>
                     </tr>
@@ -679,10 +750,12 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               <div>
                 <div className="flex items-center gap-2 text-[12px] font-black text-slate-800">
                   <Trash2 className="size-4 text-rose-500" />
-                  Clean old originals safely
+                  {t("Clean old originals safely")}
                 </div>
                 <p className="mt-1 max-w-2xl text-[9px] leading-4 text-slate-500">
-                  Scans managed Supabase Storage and only proposes old files with no current Product, Variant, Brand, Category, Hero, Media Library or Store Logo reference. Optimized files are never cleanup candidates.
+                  {t(
+                    "Scans managed Supabase Storage and only proposes old files with no current Product, Variant, Brand, Category, Hero, Media Library or Store Logo reference. Optimized files are never cleanup candidates.",
+                  )}
                 </p>
               </div>
               <button
@@ -691,8 +764,12 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                 disabled={scanningCleanup || cleaning || optimizing}
                 className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[10px] font-black text-rose-600 disabled:opacity-50"
               >
-                {scanningCleanup ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
-                Scan old originals
+                {scanningCleanup ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-3.5" />
+                )}{" "}
+                {t("Scan old originals")}
               </button>
             </div>
 
@@ -705,8 +782,13 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                     ["Storage objects scanned", String(cleanupScan.scannedObjects)],
                     ["Known references protected", String(cleanupScan.referencedObjects)],
                   ].map(([label, value]) => (
-                    <div key={label} className="rounded-xl border border-rose-100 bg-white px-3 py-2.5">
-                      <div className="text-[8px] font-black uppercase tracking-[.1em] text-slate-400">{label}</div>
+                    <div
+                      key={label}
+                      className="rounded-xl border border-rose-100 bg-white px-3 py-2.5"
+                    >
+                      <div className="text-[8px] font-black uppercase tracking-[.1em] text-slate-400">
+                        {t(label)}
+                      </div>
                       <div className="mt-1 text-[12px] font-black text-slate-800">{value}</div>
                     </div>
                   ))}
@@ -716,19 +798,28 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                   <>
                     <div className="mt-3 max-h-48 overflow-auto rounded-xl border border-rose-100 bg-white">
                       {cleanupScan.candidates.slice(0, 100).map((item) => (
-                        <div key={item.key} className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 last:border-0">
+                        <div
+                          key={item.key}
+                          className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-2 last:border-0"
+                        >
                           <div className="min-w-0">
-                            <div className="truncate text-[9px] font-bold text-slate-600">{item.objectPath}</div>
-                            <div className="mt-0.5 text-[8px] text-slate-400">{item.mimeType || "image"} · no active database reference</div>
+                            <div className="truncate text-[9px] font-bold text-slate-600">
+                              {item.objectPath}
+                            </div>
+                            <div className="mt-0.5 text-[8px] text-slate-400">
+                              {item.mimeType || t("image")} {t("· no active database reference")}
+                            </div>
                           </div>
-                          <div className="shrink-0 text-[9px] font-black text-rose-600">{formatImageBytes(item.sizeBytes)}</div>
+                          <div className="shrink-0 text-[9px] font-black text-rose-600">
+                            {formatImageBytes(item.sizeBytes)}
+                          </div>
                         </div>
                       ))}
                     </div>
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1.5 text-[9px] font-semibold text-emerald-700">
                         <ShieldCheck className="size-3.5" />
-                        References are checked again immediately before deletion.
+                        {t("References are checked again immediately before deletion.")}
                       </span>
                       <button
                         type="button"
@@ -736,14 +827,19 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
                         disabled={cleaning || scanningCleanup || optimizing || thumbnailBackfilling}
                         className="inline-flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[10px] font-black text-white disabled:opacity-50"
                       >
-                        {cleaning ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-                        Delete {cleanupScan.candidates.length} safe originals · {formatImageBytes(cleanupScan.reclaimableBytes)}
+                        {cleaning ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3.5" />
+                        )}{" "}
+                        {t("Delete")} {cleanupScan.candidates.length} {t("safe originals ·")}{" "}
+                        {formatImageBytes(cleanupScan.reclaimableBytes)}
                       </button>
                     </div>
                   </>
                 ) : (
                   <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-[10px] font-bold text-emerald-700">
-                    Nothing is eligible for safe cleanup right now.
+                    {t("Nothing is eligible for safe cleanup right now.")}
                   </div>
                 )}
               </div>
@@ -752,7 +848,9 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] leading-4 text-slate-400">
             <span>
-              JPG, PNG, AVIF and existing WebP are supported. GIF, SVG and HEIC/HEIF are skipped for manual review.
+              {t(
+                "JPG, PNG, AVIF and existing WebP are supported. GIF, SVG and HEIC/HEIF are skipped for manual review.",
+              )}
             </span>
             <button
               type="button"
@@ -760,8 +858,12 @@ export default function GlobalLegacyImageOptimizer({ enabled }: { enabled: boole
               disabled={loading || analyzing || optimizing || thumbnailBackfilling}
               className="inline-flex items-center gap-1.5 font-bold text-slate-500"
             >
-              {loading ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
-              Rescan all sources
+              {loading ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <RefreshCw className="size-3" />
+              )}{" "}
+              {t("Rescan all sources")}
             </button>
           </div>
         </div>

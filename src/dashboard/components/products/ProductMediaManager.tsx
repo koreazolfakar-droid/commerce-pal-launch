@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -41,6 +42,7 @@ export default function ProductMediaManager({
   productTitle: string;
   onPrimaryChange: (url: string) => void;
 }) {
+  const { t } = useLanguage();
   const uploadRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
@@ -57,7 +59,9 @@ export default function ProductMediaManager({
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
   const [pendingReplaceFile, setPendingReplaceFile] = useState<File | null>(null);
   const [lastConversions, setLastConversions] = useState<ProductImageConversionResult[]>([]);
-  const [storedMeta, setStoredMeta] = useState<Record<string, { width: number; height: number; bytes?: number }>>({});
+  const [storedMeta, setStoredMeta] = useState<
+    Record<string, { width: number; height: number; bytes?: number }>
+  >({});
 
   const sync = (rows: DashboardProductImage[]) => {
     setImages(rows);
@@ -195,7 +199,10 @@ export default function ProductMediaManager({
     setBusyId(images[index].id);
 
     try {
-      await reorderDashboardProductImages(productId, normalized.map((image) => image.id));
+      await reorderDashboardProductImages(
+        productId,
+        normalized.map((image) => image.id),
+      );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image order update failed.");
       await load();
@@ -256,7 +263,10 @@ export default function ProductMediaManager({
             const adjusted: File[] = [];
             for (const file of files) {
               const edited = await imageEditor.editFile(file, {
-                title: files.length > 1 ? `Adjust product image ${adjusted.length + 1} of ${files.length}` : "Adjust product image",
+                title:
+                  files.length > 1
+                    ? `Adjust product image ${adjusted.length + 1} of ${files.length}`
+                    : "Adjust product image",
                 preset: "square",
                 transparent: true,
                 defaultFit: "contain",
@@ -279,30 +289,32 @@ export default function ProductMediaManager({
           const file = event.target.files?.[0] ?? null;
           event.target.value = "";
           if (!file) return;
-          void imageEditor.editFile(file, {
-            title: "Adjust replacement image",
-            preset: "square",
-            transparent: true,
-            defaultFit: "contain",
-            previewContext: "product",
-          }).then((edited) => {
-            if (!edited) return;
-            setPendingReplaceFile(edited);
-            setPendingUploadFiles([]);
-          });
+          void imageEditor
+            .editFile(file, {
+              title: "Adjust replacement image",
+              preset: "square",
+              transparent: true,
+              defaultFit: "contain",
+              previewContext: "product",
+            })
+            .then((edited) => {
+              if (!edited) return;
+              setPendingReplaceFile(edited);
+              setPendingUploadFiles([]);
+            });
         }}
       />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-[11px] font-bold text-slate-700">Product gallery</div>
+          <div className="text-[11px] font-bold text-slate-700">{t("Product gallery")}</div>
           <div className="mt-1 text-[10px] text-slate-400">
-            Uploads are converted to WebP automatically.
+            {t("Uploads are converted to WebP automatically.")}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5">
-            <span className="text-[9px] font-bold text-slate-400">Resolution</span>
+            <span className="text-[9px] font-bold text-slate-400">{t("Resolution")}</span>
             <select
               value={resolution}
               onChange={(event) => {
@@ -331,7 +343,7 @@ export default function ProductMediaManager({
             ) : (
               <UploadCloud className="size-3.5" />
             )}
-            {uploading ? "Uploading…" : "Upload images"}
+            {uploading ? t("Uploading…") : t("Upload images")}
           </button>
         </div>
       </div>
@@ -341,7 +353,7 @@ export default function ProductMediaManager({
           <ImageOptimizationPreview
             files={pendingUploadFiles}
             resolution={resolution}
-            title="Product image compression preview"
+            title={t("Product image compression preview")}
           />
           <div className="flex justify-end gap-2">
             <button
@@ -350,7 +362,7 @@ export default function ProductMediaManager({
               disabled={uploading}
               className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               type="button"
@@ -362,7 +374,7 @@ export default function ProductMediaManager({
               disabled={uploading}
               className="h-9 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white disabled:opacity-50"
             >
-              Confirm & upload
+              {t("Confirm & upload")}
             </button>
           </div>
         </div>
@@ -373,7 +385,7 @@ export default function ProductMediaManager({
           <ImageOptimizationPreview
             files={[pendingReplaceFile]}
             resolution={resolution}
-            title="Replacement image compression preview"
+            title={t("Replacement image compression preview")}
             compact
           />
           <div className="flex justify-end gap-2">
@@ -386,7 +398,7 @@ export default function ProductMediaManager({
               disabled={busyId !== null}
               className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               type="button"
@@ -398,7 +410,7 @@ export default function ProductMediaManager({
               disabled={busyId !== null}
               className="h-9 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white disabled:opacity-50"
             >
-              Confirm replacement
+              {t("Confirm replacement")}
             </button>
           </div>
         </div>
@@ -407,40 +419,53 @@ export default function ProductMediaManager({
       {(pendingInfo.length > 0 || lastConversions.length > 0) && (
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.12em] text-slate-500">
-            Real image size
+            {t("Real image size")}
           </div>
           <div className="space-y-2">
-            {(lastConversions.length ? lastConversions : pendingInfo.map((source) => ({ source, output: null, file: null }))).map((item, index) => {
+            {(lastConversions.length
+              ? lastConversions
+              : pendingInfo.map((source) => ({ source, output: null, file: null }))
+            ).map((item, index) => {
               const source = "source" in item ? item.source : item;
               const output = "output" in item ? item.output : null;
-              const reduction = output && source.bytes > 0
-                ? Math.max(0, Math.round((1 - output.bytes / source.bytes) * 100))
-                : null;
+              const reduction =
+                output && source.bytes > 0
+                  ? Math.max(0, Math.round((1 - output.bytes / source.bytes) * 100))
+                  : null;
               return (
-                <div key={`${source.name}-${index}`} className="grid gap-2 rounded-xl bg-white p-3 sm:grid-cols-2">
+                <div
+                  key={`${source.name}-${index}`}
+                  className="grid gap-2 rounded-xl bg-white p-3 sm:grid-cols-2"
+                >
                   <div>
-                    <div className="text-[9px] font-bold uppercase tracking-[.12em] text-slate-400">Before upload</div>
+                    <div className="text-[9px] font-bold uppercase tracking-[.12em] text-slate-400">
+                      {t("Before upload")}
+                    </div>
                     <div className="mt-1 text-[11px] font-bold text-slate-700">
-                      {source.width} × {source.height}px
+                      {source.width} × {source.height} {t("px")}
                     </div>
                     <div className="mt-0.5 text-[10px] text-slate-500">
-                      {formatBytes(source.bytes)} · {source.mimeType.replace("image/", "").toUpperCase()}
+                      {formatBytes(source.bytes)} ·{" "}
+                      {source.mimeType.replace("image/", "").toUpperCase()}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[9px] font-bold uppercase tracking-[.12em] text-[#5968ea]">After upload</div>
+                    <div className="text-[9px] font-bold uppercase tracking-[.12em] text-[#5968ea]">
+                      {t("After upload")}
+                    </div>
                     {output ? (
                       <>
                         <div className="mt-1 text-[11px] font-bold text-slate-700">
-                          {output.width} × {output.height}px
+                          {output.width} × {output.height} {t("px")}
                         </div>
                         <div className="mt-0.5 text-[10px] text-slate-500">
-                          {formatBytes(output.bytes)} · WebP{reduction != null ? ` · ${reduction}% smaller` : ""}
+                          {formatBytes(output.bytes)} {t("· WebP")}{" "}
+                          {reduction != null ? ` · ${reduction}% smaller` : ""}
                         </div>
                       </>
                     ) : (
                       <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
-                        <Loader2 className="size-3 animate-spin" /> Converting & uploading…
+                        <Loader2 className="size-3 animate-spin" /> {t("Converting & uploading…")}
                       </div>
                     )}
                   </div>
@@ -461,9 +486,7 @@ export default function ProductMediaManager({
             <div
               key={image.id}
               className={`overflow-hidden rounded-2xl border bg-white ${
-                image.isPrimary
-                  ? "border-[#5968ea] ring-4 ring-indigo-50"
-                  : "border-slate-200"
+                image.isPrimary ? "border-[#5968ea] ring-4 ring-indigo-50" : "border-slate-200"
               }`}
             >
               <div className="relative aspect-square overflow-hidden bg-white">
@@ -484,8 +507,8 @@ export default function ProductMediaManager({
                   }}
                 />
                 {image.isPrimary && (
-                  <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-[#5968ea] px-2 py-1 text-[9px] font-bold text-white">
-                    <Star className="size-3 fill-current" /> Primary
+                  <span className="absolute start-2 top-2 flex items-center gap-1 rounded-full bg-[#5968ea] px-2 py-1 text-[9px] font-bold text-white">
+                    <Star className="size-3 fill-current" /> {t("Primary")}
                   </span>
                 )}
                 {busyId === image.id && (
@@ -497,8 +520,13 @@ export default function ProductMediaManager({
 
               <div className="space-y-2 border-t border-slate-100 p-2.5">
                 <div className="rounded-lg bg-slate-50 px-2 py-1.5 text-[9px] font-semibold text-slate-500">
-                  Actual: {storedMeta[image.id]?.width ? `${storedMeta[image.id].width} × ${storedMeta[image.id].height}px` : "Reading dimensions…"}
-                  {storedMeta[image.id]?.bytes ? ` · ${formatBytes(storedMeta[image.id].bytes)}` : ""}
+                  {t("Actual:")}{" "}
+                  {storedMeta[image.id]?.width
+                    ? `${storedMeta[image.id].width} × ${storedMeta[image.id].height}px`
+                    : t("Reading dimensions…")}
+                  {storedMeta[image.id]?.bytes
+                    ? ` · ${formatBytes(storedMeta[image.id].bytes)}`
+                    : ""}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <button
@@ -507,31 +535,33 @@ export default function ProductMediaManager({
                     disabled={image.isPrimary || busyId === image.id}
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2 text-[9px] font-bold text-slate-600 disabled:opacity-40"
                   >
-                    <Star className="size-3" /> Primary
+                    <Star className="size-3" /> {t("Primary")}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      void imageEditor.editUrl(image.url, {
-                        title: "Adjust existing product image",
-                        preset: "square",
-                        transparent: true,
-                        defaultFit: "contain",
-                        previewContext: "product",
-                      }).then((edited) => {
-                        if (!edited) return;
-                        setPendingUploadFiles([]);
-                        void replace(
-                          edited,
-                          image,
-                          "Image adjustment saved. Storefront refresh requested.",
-                        );
-                      });
+                      void imageEditor
+                        .editUrl(image.url, {
+                          title: "Adjust existing product image",
+                          preset: "square",
+                          transparent: true,
+                          defaultFit: "contain",
+                          previewContext: "product",
+                        })
+                        .then((edited) => {
+                          if (!edited) return;
+                          setPendingUploadFiles([]);
+                          void replace(
+                            edited,
+                            image,
+                            "Image adjustment saved. Storefront refresh requested.",
+                          );
+                        });
                     }}
                     disabled={busyId === image.id}
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-indigo-200 px-2 text-[9px] font-bold text-indigo-600 disabled:opacity-40"
                   >
-                    Adjust
+                    {t("Adjust")}
                   </button>
                   <button
                     type="button"
@@ -542,28 +572,30 @@ export default function ProductMediaManager({
                     disabled={busyId === image.id}
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2 text-[9px] font-bold text-slate-600 disabled:opacity-40"
                   >
-                    <RefreshCw className="size-3" /> Replace
+                    <RefreshCw className="size-3" /> {t("Replace")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(image)}
                     disabled={busyId !== null}
                     className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 hover:bg-rose-50 disabled:opacity-40"
-                    aria-label="Delete image"
+                    aria-label={t("Delete image")}
                   >
                     <Trash2 className="size-3.5" />
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between border-t border-slate-100 pt-2">
-                  <span className="text-[9px] text-slate-400">Position {index + 1}</span>
+                  <span className="text-[9px] text-slate-400">
+                    {t("Position")} {index + 1}
+                  </span>
                   <div className="flex gap-1">
                     <button
                       type="button"
                       onClick={() => void move(index, -1)}
                       disabled={index === 0 || busyId === image.id}
                       className="grid size-7 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"
-                      aria-label="Move image left"
+                      aria-label={t("Move image left")}
                     >
                       <ArrowLeft className="size-3" />
                     </button>
@@ -572,7 +604,7 @@ export default function ProductMediaManager({
                       onClick={() => void move(index, 1)}
                       disabled={index === images.length - 1 || busyId === image.id}
                       className="grid size-7 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"
-                      aria-label="Move image right"
+                      aria-label={t("Move image right")}
                     >
                       <ArrowRight className="size-3" />
                     </button>
@@ -592,15 +624,19 @@ export default function ProductMediaManager({
             <span className="mx-auto mb-2 grid size-10 place-items-center rounded-xl bg-indigo-50 text-indigo-500">
               <ImageIcon className="size-5" />
             </span>
-            <span className="block text-[11px] font-bold text-slate-600">Upload product images</span>
-            <span className="mt-1 block text-[9px] text-slate-400">JPG, PNG, WebP or AVIF</span>
+            <span className="block text-[11px] font-bold text-slate-600">
+              {t("Upload product images")}
+            </span>
+            <span className="mt-1 block text-[9px] text-slate-400">
+              {t("JPG, PNG, WebP or AVIF")}
+            </span>
           </span>
         </button>
       )}
 
       <DashboardConfirmDialog
         open={deleteTarget !== null}
-        title="Delete this product image?"
+        title={t("Delete this product image?")}
         description={
           deleteTarget?.isPrimary
             ? "This is the primary image. After deletion, the next image in the gallery will become primary automatically."

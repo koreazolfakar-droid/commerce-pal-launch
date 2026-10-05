@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -21,10 +22,8 @@ const migration = await readFile(
 );
 
 test("active customers routes use the Supabase CRM pages", () => {
-  assert.match(app, /CustomersPageLive/);
-  assert.match(app, /CustomerDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/customers"[\s\S]+<CustomersPageLive \/>/);
-  assert.match(app, /customerDetail[\s\S]+<CustomerDetailPageLive id=\{customerDetail\[1\]\} \/>/);
+assertDashboardRoute("/dashboard/customers","customersPage");
+assertDashboardRoute("/dashboard/customers/test-id","customerDetailPage");
 });
 
 test("customers CRM contains no mock business data", () => {
@@ -36,9 +35,9 @@ test("customers CRM contains no mock business data", () => {
 
 test("customers CRM reads and writes real Supabase customer data", () => {
   assert.match(data, /from\("store_customers"\)/);
-  assert.match(data, /rpc\("create_store_customer"/);
-  assert.match(data, /rpc\("update_store_customer_profile"/);
-  assert.match(data, /rpc\("get_store_customer_orders"/);
+  assert.match(data, /rpc\(\s*"create_store_customer"/);
+  assert.match(data, /rpc\(\s*"update_store_customer_profile"/);
+  assert.match(data, /rpc\(\s*"get_store_customer_orders_page"/);
 });
 
 test("staff-managed customer profiles survive future order sync", () => {

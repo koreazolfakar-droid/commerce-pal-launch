@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { Check, Focus, Loader2, Maximize2, RotateCcw, X } from "lucide-react";
 import {
   type PointerEvent as ReactPointerEvent,
@@ -10,12 +11,7 @@ import {
 } from "react";
 
 export type SmartImagePreset =
-  | "logo"
-  | "square"
-  | "cover"
-  | "hero-desktop"
-  | "hero-mobile"
-  | "free";
+  "logo" | "square" | "cover" | "hero-desktop" | "hero-mobile" | "free";
 
 type EditorOptions = {
   title?: string;
@@ -50,8 +46,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
     id: "mobile",
     label: "Product Page · Mobile",
     aspectRatio: "1 / 0.92",
-    padding: "10px",
-    note: "Exact mobile gallery: 1/0.92 · object-contain · 10px padding",
+    padding: "8px",
+    note: "Exact mobile gallery: 1/0.92 · object-contain · 8px padding",
     borderRadius: "1.6rem",
     bordered: true,
   },
@@ -59,8 +55,8 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
     id: "desktop",
     label: "Product Page · Desktop",
     aspectRatio: "1 / 1",
-    padding: "32px",
-    note: "Exact desktop gallery: 1:1 · object-contain · 32px padding",
+    padding: "28px",
+    note: "Exact desktop gallery: 1:1 · object-contain · 28px padding",
     borderRadius: "1.6rem",
     bordered: true,
   },
@@ -121,7 +117,9 @@ function sourceName(source: File | string) {
 }
 
 function outputName(source: File | string, outputFormat: "png" | "webp") {
-  const base = sourceName(source).replace(/\.[a-z0-9]+$/i, "").replace(/[^a-z0-9._-]+/gi, "-");
+  const base = sourceName(source)
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[^a-z0-9._-]+/gi, "-");
   return `${base || "image"}-adjusted.${outputFormat}`;
 }
 
@@ -195,9 +193,7 @@ function detectContentBounds(image: HTMLImageElement): Bounds {
         data[index + 2] - bg[2],
       );
       const alphaDistance = Math.abs(alpha - bg[3]);
-      const isForeground = transparentBackground
-        ? alpha > 28
-        : distance > 34 || alphaDistance > 50;
+      const isForeground = transparentBackground ? alpha > 28 : distance > 34 || alphaDistance > 50;
 
       if (!isForeground) continue;
       foreground += 1;
@@ -215,10 +211,10 @@ function detectContentBounds(image: HTMLImageElement): Bounds {
   const scaleBack = 1 / ratio;
   const pad = 2 * scaleBack;
   return {
-    left: clamp((left * scaleBack) - pad, 0, image.naturalWidth),
-    top: clamp((top * scaleBack) - pad, 0, image.naturalHeight),
-    right: clamp(((right + 1) * scaleBack) + pad, 0, image.naturalWidth),
-    bottom: clamp(((bottom + 1) * scaleBack) + pad, 0, image.naturalHeight),
+    left: clamp(left * scaleBack - pad, 0, image.naturalWidth),
+    top: clamp(top * scaleBack - pad, 0, image.naturalHeight),
+    right: clamp((right + 1) * scaleBack + pad, 0, image.naturalWidth),
+    bottom: clamp((bottom + 1) * scaleBack + pad, 0, image.naturalHeight),
   };
 }
 
@@ -277,11 +273,14 @@ function RangeControl({
   display: string;
   onChange: (value: number) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block rounded-2xl border border-slate-200 p-3">
       <span className="flex items-center justify-between text-[10px] font-bold text-slate-600">
-        <span>{label}</span>
-        <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black text-slate-600">{display}</span>
+        <span>{t(label)}</span>
+        <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black text-slate-600">
+          {display}
+        </span>
       </span>
       <input
         type="range"
@@ -309,18 +308,20 @@ function ProductStorefrontPreview({
   y: number;
   mode: ProductPreviewMode;
 }) {
-  const profile = PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0];
+  const { t } = useLanguage();
+  const profile =
+    PRODUCT_STOREFRONT_PREVIEWS.find((item) => item.id === mode) ?? PRODUCT_STOREFRONT_PREVIEWS[0];
   if (!profile) return null;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
-          <div className="text-[10px] font-black text-slate-700">Website preview</div>
+          <div className="text-[10px] font-black text-slate-700">{t("Website preview")}</div>
           <div className="mt-0.5 text-[9px] text-slate-400">{profile.note}</div>
         </div>
         <span className="rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase tracking-[.1em] text-emerald-700">
-          Exact CSS
+          {t("Exact CSS")}
         </span>
       </div>
 
@@ -334,7 +335,10 @@ function ProductStorefrontPreview({
           borderRadius: profile.borderRadius,
         }}
       >
-        <div className="relative h-full w-auto max-w-full overflow-hidden" style={{ aspectRatio: "1 / 1" }}>
+        <div
+          className="relative h-full w-auto max-w-full overflow-hidden"
+          style={{ aspectRatio: "1 / 1" }}
+        >
           <img
             src={loaded.previewUrl}
             alt=""
@@ -362,15 +366,23 @@ function SmartImageEditorDialog({
   request: EditorRequest;
   onDone: (file: File | null) => void;
 }) {
+  const { t } = useLanguage();
   const preset = request.options.preset ?? "square";
   const isHeroPreset = preset === "hero-desktop" || preset === "hero-mobile";
   const transparent = request.options.transparent ?? true;
   const outputFormat = request.options.outputFormat ?? "png";
   const outputType = outputFormat === "webp" ? "image/webp" : "image/png";
   const initialFit: "contain" | "cover" =
-    request.options.defaultFit ?? (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain");
+    request.options.defaultFit ??
+    (preset === "cover" || preset.startsWith("hero-") ? "cover" : "contain");
   const initialPadding =
-    preset === "logo" ? 10 : request.options.previewContext === "product" ? 0 : preset === "square" ? 5 : 0;
+    preset === "logo"
+      ? 10
+      : request.options.previewContext === "product"
+        ? 0
+        : preset === "square"
+          ? 5
+          : 0;
   const [loaded, setLoaded] = useState<LoadedImage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -411,7 +423,8 @@ function SmartImageEditorDialog({
         setY(smart.y);
       })
       .catch((cause) => {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : "Could not open this image.");
+        if (!cancelled)
+          setError(cause instanceof Error ? cause.message : "Could not open this image.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -524,12 +537,20 @@ function SmartImageEditorDialog({
       <div className="max-h-[100dvh] w-full overscroll-contain overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-h-[96vh] sm:max-w-3xl sm:rounded-[28px]">
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur sm:px-6">
           <div>
-            <div className="text-[10px] font-black uppercase tracking-[.16em] text-indigo-500">Smart image editor</div>
+            <div className="text-[10px] font-black uppercase tracking-[.16em] text-indigo-500">
+              {t("Smart image editor")}
+            </div>
             <h2 className="mt-1 text-[18px] font-black tracking-[-.03em] text-slate-900">
-              {request.options.title ?? "Adjust image"}
+              {request.options.title ?? t("Adjust image")}
             </h2>
           </div>
-          <button type="button" onClick={() => onDone(null)} disabled={saving} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-50" aria-label="Close image editor">
+          <button
+            type="button"
+            onClick={() => onDone(null)}
+            disabled={saving}
+            className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-50"
+            aria-label={t("Close image editor")}
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -573,8 +594,12 @@ function SmartImageEditorDialog({
             </div>
             <p className="text-center text-[10px] leading-4 text-slate-400">
               {isHeroPreset
-                ? "Drag to position the Hero. It always fills the 16:9 frame; zoom in only when needed."
-                : "Drag the image to choose the crop. Use Zoom for fine adjustment; Auto Center can recenter the visible subject."}
+                ? t(
+                    "Drag to position the Hero. It always fills the 16:9 frame; zoom in only when needed.",
+                  )
+                : t(
+                    "Drag the image to choose the crop. Use Zoom for fine adjustment; Auto Center can recenter the visible subject.",
+                  )}
             </p>
 
             {request.options.previewContext === "product" && loaded ? (
@@ -591,7 +616,11 @@ function SmartImageEditorDialog({
                           : "text-slate-500"
                       }`}
                     >
-                      {profile.id === "card" ? "Card" : profile.id === "mobile" ? "Mobile PDP" : "Desktop PDP"}
+                      {profile.id === "card"
+                        ? t("Card")
+                        : profile.id === "mobile"
+                          ? t("Mobile PDP")
+                          : t("Desktop PDP")}
                     </button>
                   ))}
                 </div>
@@ -603,32 +632,48 @@ function SmartImageEditorDialog({
                   mode={productPreviewMode}
                 />
                 <div className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[9px] leading-4 text-amber-800">
-                  Product files are saved with 0% default baked-in padding. The storefront adds its own exact spacing, so the saved image is not padded twice.
+                  {t(
+                    "Product files are saved with 0% default baked-in padding. The storefront adds its own exact spacing, so the saved image is not padded twice.",
+                  )}
                 </div>
               </div>
             ) : null}
 
-            {error ? <div className="rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-bold text-rose-700">{error}</div> : null}
+            {error ? (
+              <div className="rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-bold text-rose-700">
+                {error}
+              </div>
+            ) : null}
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={autoCenter} disabled={!loaded || saving} className="flex h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-[10px] font-black text-white disabled:opacity-50">
-                <Focus className="size-3.5" /> Auto Center
+              <button
+                type="button"
+                onClick={autoCenter}
+                disabled={!loaded || saving}
+                className="flex h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-[10px] font-black text-white disabled:opacity-50"
+              >
+                <Focus className="size-3.5" /> {t("Auto Center")}
               </button>
-              <button type="button" onClick={reset} disabled={saving} className="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-black text-slate-600 disabled:opacity-50">
-                <RotateCcw className="size-3.5" /> Reset
+              <button
+                type="button"
+                onClick={reset}
+                disabled={saving}
+                className="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-black text-slate-600 disabled:opacity-50"
+              >
+                <RotateCcw className="size-3.5" /> {t("Reset")}
               </button>
             </div>
 
             {isHeroPreset ? (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5 text-[9px] leading-4 text-indigo-700">
-                Hero safety lock: Fill mode · 0% padding · minimum 100% zoom.
+                {t("Hero safety lock: Fill mode · 0% padding · minimum 100% zoom.")}
               </div>
             ) : (
               <div className="rounded-2xl border border-slate-200 p-3">
                 <div className="mb-2 flex items-center justify-between text-[10px] font-bold text-slate-600">
-                  <span>Fit mode</span>
+                  <span>{t("Fit mode")}</span>
                   <Maximize2 className="size-3.5 text-slate-400" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -638,12 +683,10 @@ function SmartImageEditorDialog({
                       type="button"
                       onClick={() => setFit(mode)}
                       className={`h-9 rounded-xl text-[10px] font-black transition ${
-                        fit === mode
-                          ? "bg-slate-900 text-white"
-                          : "bg-slate-100 text-slate-500"
+                        fit === mode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {mode === "contain" ? "Fit" : "Fill"}
+                      {mode === "contain" ? t("Fit") : t("Fill")}
                     </button>
                   ))}
                 </div>
@@ -651,7 +694,7 @@ function SmartImageEditorDialog({
             )}
 
             <RangeControl
-              label="Zoom"
+              label={t("Zoom")}
               value={zoom}
               min={isHeroPreset ? 1 : 0.55}
               max={3}
@@ -660,7 +703,7 @@ function SmartImageEditorDialog({
               onChange={(value) => setZoom(isHeroPreset ? Math.max(1, value) : value)}
             />
             <RangeControl
-              label="Horizontal"
+              label={t("Horizontal")}
               value={x}
               min={-45}
               max={45}
@@ -669,7 +712,7 @@ function SmartImageEditorDialog({
               onChange={setX}
             />
             <RangeControl
-              label="Vertical"
+              label={t("Vertical")}
               value={y}
               min={-45}
               max={45}
@@ -681,8 +724,8 @@ function SmartImageEditorDialog({
               <RangeControl
                 label={
                   request.options.previewContext === "product"
-                    ? "Extra image padding"
-                    : "Padding"
+                    ? t("Extra image padding")
+                    : t("Padding")
                 }
                 value={padding}
                 min={0}
@@ -694,15 +737,24 @@ function SmartImageEditorDialog({
             ) : null}
 
             <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-[9px] leading-4 text-slate-500">
-              Output: {dimensions[0]}×{dimensions[1]} {outputFormat.toUpperCase()}.
+              {t("Output:")} {dimensions[0]}×{dimensions[1]} {outputFormat.toUpperCase()}.
               {request.options.previewContext === "product"
-                ? " Product output uses no default baked-in padding; the Website Preview applies the storefront spacing exactly."
-                : " PNG is used losslessly before the existing WebP upload pipeline; direct media replacement uses WebP once."}
+                ? t(
+                    " Product output uses no default baked-in padding; the Website Preview applies the storefront spacing exactly.",
+                  )
+                : t(
+                    " PNG is used losslessly before the existing WebP upload pipeline; direct media replacement uses WebP once.",
+                  )}
             </div>
 
-            <button type="button" onClick={() => void save()} disabled={!loaded || loading || saving} className="sticky bottom-2 z-10 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white shadow-lg disabled:opacity-50 sm:static sm:h-11 sm:shadow-none">
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={!loaded || loading || saving}
+              className="sticky bottom-2 z-10 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-black text-white shadow-lg disabled:opacity-50 sm:static sm:h-11 sm:shadow-none"
+            >
               {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-              {isHeroPreset ? "Use this crop" : "Save adjustment"}
+              {isHeroPreset ? t("Use this crop") : t("Save adjustment")}
             </button>
           </div>
         </div>
@@ -727,7 +779,9 @@ export function useSmartImageEditor() {
     });
   }, []);
 
-  const dialog: ReactNode = request ? <SmartImageEditorDialog request={request} onDone={finish} /> : null;
+  const dialog: ReactNode = request ? (
+    <SmartImageEditorDialog request={request} onDone={finish} />
+  ) : null;
 
   return {
     editFile: (file: File, options?: EditorOptions) => edit(file, options),

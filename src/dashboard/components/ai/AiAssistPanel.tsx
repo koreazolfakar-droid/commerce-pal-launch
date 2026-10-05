@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import {
   AlertTriangle,
   Check,
@@ -128,6 +129,7 @@ export default function AiAssistPanel({
   triggerLabel?: string;
   showSeoAction?: boolean;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [researchQuery, setResearchQuery] = useState(query);
   const [loadingAction, setLoadingAction] = useState<DashboardAiAction | null>(null);
@@ -151,13 +153,14 @@ export default function AiAssistPanel({
   useEffect(() => {
     if (!open) return;
 
+    const trigger = triggerRef.current;
     const frame = window.requestAnimationFrame(() => {
       queryInputRef.current?.focus();
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
-      triggerRef.current?.focus();
+      trigger?.focus();
     };
   }, [open]);
 
@@ -308,23 +311,25 @@ export default function AiAssistPanel({
                   <div>
                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-indigo-500">
                       <Sparkles className="size-3.5" />
-                      Space Call AI
+                      {t("Space Call AI")}
                     </div>
                     <h2
                       id={dialogTitleId}
                       className="mt-1 text-[19px] font-black tracking-[-.03em] text-[#14203a]"
                     >
-                      Research, fill and improve
+                      {t("Research, fill and improve")}
                     </h2>
                     <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                      Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.
+                      {t(
+                        "Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.",
+                      )}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
                     disabled={Boolean(loadingAction)}
-                    aria-label="Close AI assistant"
+                    aria-label={t("Close AI assistant")}
                     className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 disabled:opacity-50"
                   >
                     <X className="size-4" />
@@ -334,7 +339,7 @@ export default function AiAssistPanel({
                 <div className="flex-1 overflow-y-auto px-5 py-5">
                   <label className="block">
                     <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                      What should AI research?
+                      {t("What should AI research?")}
                     </span>
                     <input
                       ref={queryInputRef}
@@ -346,14 +351,16 @@ export default function AiAssistPanel({
                         setResult(null);
                         setSelected(new Set());
                       }}
-                      placeholder="Exact product, category or brand name"
+                      placeholder={t("Exact product, category or brand name")}
                       className="h-11 w-full rounded-xl border border-slate-200 px-3 text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </label>
 
-                  <div className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-3" : "grid-cols-2"}`}>
+                  <div
+                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-3" : "grid-cols-2"}`}
+                  >
                     <ActionButton
-                      label="Research & Fill"
+                      label={t("Research & Fill")}
                       icon={<Search className="size-3.5" />}
                       active={loadingAction === "research_fill"}
                       disabled={Boolean(loadingAction)}
@@ -361,7 +368,7 @@ export default function AiAssistPanel({
                     />
                     {showSeoAction ? (
                       <ActionButton
-                        label="Improve SEO"
+                        label={t("Improve SEO")}
                         icon={<WandSparkles className="size-3.5" />}
                         active={loadingAction === "seo"}
                         disabled={Boolean(loadingAction)}
@@ -369,7 +376,7 @@ export default function AiAssistPanel({
                       />
                     ) : null}
                     <ActionButton
-                      label="Validate"
+                      label={t("Validate")}
                       icon={<ShieldCheck className="size-3.5" />}
                       active={loadingAction === "validate"}
                       disabled={Boolean(loadingAction)}
@@ -393,7 +400,9 @@ export default function AiAssistPanel({
                           ) : (
                             <AlertTriangle className="size-3.5" />
                           )}
-                          {result.grounded ? "Web research grounded" : "Web grounding unavailable"}
+                          {result.grounded
+                            ? t("Web research grounded")
+                            : t("Web grounding unavailable")}
                         </div>
                         {result.summary ? <p className="mt-1">{result.summary}</p> : null}
                       </div>
@@ -415,10 +424,10 @@ export default function AiAssistPanel({
                             <AlertTriangle className="size-3.5" />
                           )}
                           {result.entityMatch.status === "exact"
-                            ? "Exact entity verified"
+                            ? t("Exact entity verified")
                             : result.entityMatch.status === "partial"
-                              ? "Partial entity match"
-                              : "Entity uncertain"}
+                              ? t("Partial entity match")
+                              : t("Entity uncertain")}
                         </div>
                         {result.entityMatch.canonicalName ? (
                           <p className="mt-1 font-bold">{result.entityMatch.canonicalName}</p>
@@ -430,7 +439,9 @@ export default function AiAssistPanel({
 
                       {result.warnings.length ? (
                         <div className="rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
-                          <div className="text-[10px] font-black text-amber-800">Review warnings</div>
+                          <div className="text-[10px] font-black text-amber-800">
+                            {t("Review warnings")}
+                          </div>
                           <ul className="mt-1.5 space-y-1 text-[10px] leading-4 text-amber-700">
                             {result.warnings.map((warning, index) => (
                               <li key={index}>• {warning}</li>
@@ -452,7 +463,9 @@ export default function AiAssistPanel({
                           });
                           const noChange =
                             issue === "No change" ||
-                            suggestion.checks.includes("No meaningful change from the current value");
+                            suggestion.checks.includes(
+                              "No meaningful change from the current value",
+                            );
                           const blocked = Boolean(issue) || suggestion.decision === "block";
                           const checked = !blocked && selected.has(suggestion.field);
                           const current = currentData[suggestion.field] ?? "";
@@ -504,12 +517,12 @@ export default function AiAssistPanel({
                                       }
                                     >
                                       {noChange
-                                        ? "No meaningful change"
+                                        ? t("No meaningful change")
                                         : suggestion.decision === "allow"
-                                          ? "Safe to apply"
+                                          ? t("Safe to apply")
                                           : suggestion.decision === "block"
-                                            ? "Blocked"
-                                            : "Review"}
+                                            ? t("Blocked")
+                                            : t("Review")}
                                     </span>
                                     <span
                                       className={
@@ -521,7 +534,7 @@ export default function AiAssistPanel({
                                             : "bg-slate-100 text-slate-500")
                                       }
                                     >
-                                      {suggestion.risk} risk
+                                      {suggestion.risk} {t("risk")}
                                     </span>
                                     {!noChange ? (
                                       <span className="text-[9px] font-bold text-slate-400">
@@ -531,7 +544,8 @@ export default function AiAssistPanel({
                                   </div>
                                   {current ? (
                                     <div className="mt-1.5 text-[9px] text-slate-400">
-                                      Current: <span className="font-semibold">{current}</span>
+                                      {t("Current:")}
+                                      <span className="font-semibold">{current}</span>
                                     </div>
                                   ) : null}
                                   <div className="mt-1.5 whitespace-pre-wrap break-words text-[11px] font-semibold leading-5 text-slate-700">
@@ -553,8 +567,7 @@ export default function AiAssistPanel({
                                           onClick={(event) => event.stopPropagation()}
                                           className="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-1.5 py-1 text-[8px] font-bold text-emerald-700"
                                         >
-                                          Evidence
-                                          {source.official ? " · Official" : ""}
+                                          {t("Evidence")} {source.official ? t(" · Official") : ""}
                                           <ExternalLink className="size-2.5" />
                                         </a>
                                       ))}
@@ -569,12 +582,12 @@ export default function AiAssistPanel({
                                   ) : null}
                                   {issue && !noChange ? (
                                     <div className="mt-1 text-[9px] font-bold text-rose-600">
-                                      {issue}. This suggestion cannot be applied.
+                                      {issue} {t(". This suggestion cannot be applied.")}
                                     </div>
                                   ) : null}
                                   {definition.review ? (
                                     <div className="mt-1 text-[9px] font-bold text-amber-600">
-                                      This field always requires manual review.
+                                      {t("This field always requires manual review.")}
                                     </div>
                                   ) : null}
                                 </div>
@@ -584,7 +597,7 @@ export default function AiAssistPanel({
                         })}
                         {!result.suggestions.length ? (
                           <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-[10px] text-slate-400">
-                            No field changes were suggested.
+                            {t("No field changes were suggested.")}
                           </div>
                         ) : null}
                       </div>
@@ -592,7 +605,7 @@ export default function AiAssistPanel({
                       {result.sources.length ? (
                         <div>
                           <div className="mb-2 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">
-                            Research sources
+                            {t("Research sources")}
                           </div>
                           <div className="space-y-1.5">
                             {result.sources.slice(0, 8).map((source, index) => (
@@ -603,11 +616,13 @@ export default function AiAssistPanel({
                                 rel="noreferrer"
                                 className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 text-[10px] font-semibold text-slate-600 hover:border-indigo-100 hover:text-indigo-700"
                               >
-                                <span className="min-w-0 truncate">{source.title || source.url}</span>
+                                <span className="min-w-0 truncate">
+                                  {source.title || source.url}
+                                </span>
                                 <span className="flex shrink-0 items-center gap-1.5 text-[8px] font-black">
                                   {source.official ? (
                                     <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-emerald-700">
-                                      Official
+                                      {t("Official")}
                                     </span>
                                   ) : null}
                                   <span className="text-slate-400">
@@ -626,7 +641,9 @@ export default function AiAssistPanel({
 
                 <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-4">
                   <div className="text-[9px] leading-4 text-slate-400">
-                    Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.
+                    {t(
+                      "Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.",
+                    )}
                   </div>
                   <button
                     type="button"
@@ -635,7 +652,7 @@ export default function AiAssistPanel({
                     className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40"
                   >
                     <Check className="size-3.5" />
-                    Apply selected
+                    {t("Apply selected")}
                   </button>
                 </div>
               </div>
@@ -660,6 +677,7 @@ function ActionButton({
   disabled: boolean;
   onClick: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <button
       type="button"
@@ -668,7 +686,7 @@ function ActionButton({
       className="flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 text-center text-[9px] font-black text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 disabled:opacity-50"
     >
       {active ? <Loader2 className="size-3.5 animate-spin text-indigo-600" /> : icon}
-      {label}
+      {t(label)}
     </button>
   );
 }

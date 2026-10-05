@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { ChevronDown, RotateCcw, Search } from "lucide-react";
 
 function Select({
@@ -11,9 +12,10 @@ function Select({
   onChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="relative min-w-0">
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{t(label)}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -51,22 +53,24 @@ export default function BrandToolbar({
   onSortChange: (value: string) => void;
   onReset: () => void;
 }) {
-  const hasFilters = Boolean(query.trim()) || status !== "all" || homepage !== "all" || sort !== "order";
+  const { t } = useLanguage();
+  const hasFilters =
+    Boolean(query.trim()) || status !== "all" || homepage !== "all" || sort !== "order";
   return (
     <div className="mb-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_150px_160px_170px_auto]">
         <label className="relative sm:col-span-2 xl:col-span-1">
-          <span className="sr-only">Search Brands</span>
+          <span className="sr-only">{t("Search Brands")}</span>
           <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Search brands"
+            placeholder={t("Search brands")}
             className="h-10 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-3 text-[11px] outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
           />
         </label>
         <Select
-          label="Status"
+          label={t("Status")}
           value={status}
           onChange={onStatusChange}
           options={[
@@ -76,7 +80,7 @@ export default function BrandToolbar({
           ]}
         />
         <Select
-          label="Homepage"
+          label={t("Homepage")}
           value={homepage}
           onChange={onHomepageChange}
           options={[
@@ -86,7 +90,7 @@ export default function BrandToolbar({
           ]}
         />
         <Select
-          label="Sort"
+          label={t("Sort")}
           value={sort}
           onChange={onSortChange}
           options={[
@@ -103,7 +107,7 @@ export default function BrandToolbar({
             className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50"
           >
             <RotateCcw className="size-3.5" />
-            Reset
+            {t("Reset")}
           </button>
         )}
       </div>

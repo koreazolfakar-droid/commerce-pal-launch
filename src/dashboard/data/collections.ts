@@ -131,7 +131,9 @@ async function loadProductImages(productIds: string[]) {
   return imageByProduct;
 }
 
-export async function getDashboardCollection(id: string): Promise<DashboardCollectionDetail | null> {
+export async function getDashboardCollection(
+  id: string,
+): Promise<DashboardCollectionDetail | null> {
   await requireDashboardStaff();
 
   const [collectionResult, membershipResult, productResult] = await Promise.all([
@@ -199,17 +201,20 @@ export async function createDashboardCollection(
   input: DashboardCollectionInput,
 ): Promise<DashboardCollectionListItem> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_store_collection", rpcArgs({
-    p_title: input.title,
-    p_handle: input.handle,
-    p_title_ar: input.titleAr || null,
-    p_description: input.description,
-    p_image_url: input.imageUrl || null,
-    p_is_active: input.isActive,
-    p_is_featured: input.isFeatured,
-    p_seo_title: input.seoTitle || null,
-    p_seo_description: input.seoDescription || null,
-  }));
+  const { data, error } = await supabase.rpc(
+    "create_store_collection",
+    rpcArgs({
+      p_title: input.title,
+      p_handle: input.handle,
+      p_title_ar: input.titleAr || null,
+      p_description: input.description,
+      p_image_url: input.imageUrl || null,
+      p_is_active: input.isActive,
+      p_is_featured: input.isFeatured,
+      p_seo_title: input.seoTitle || null,
+      p_seo_description: input.seoDescription || null,
+    }),
+  );
   throwIfError(error, "Creating collection failed");
   const created = data as unknown as CollectionRow | null;
   if (!created?.id) throw new Error("Creating collection returned no row.");
@@ -223,18 +228,21 @@ export async function updateDashboardCollection(
   input: DashboardCollectionInput,
 ): Promise<DashboardCollectionListItem> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("update_store_collection", rpcArgs({
-    p_collection_id: id,
-    p_title: input.title,
-    p_handle: input.handle,
-    p_title_ar: input.titleAr || null,
-    p_description: input.description,
-    p_image_url: input.imageUrl || null,
-    p_is_active: input.isActive,
-    p_is_featured: input.isFeatured,
-    p_seo_title: input.seoTitle || null,
-    p_seo_description: input.seoDescription || null,
-  }));
+  const { data, error } = await supabase.rpc(
+    "update_store_collection",
+    rpcArgs({
+      p_collection_id: id,
+      p_title: input.title,
+      p_handle: input.handle,
+      p_title_ar: input.titleAr || null,
+      p_description: input.description,
+      p_image_url: input.imageUrl || null,
+      p_is_active: input.isActive,
+      p_is_featured: input.isFeatured,
+      p_seo_title: input.seoTitle || null,
+      p_seo_description: input.seoDescription || null,
+    }),
+  );
   throwIfError(error, "Updating collection failed");
   const updated = data as unknown as CollectionRow | null;
   if (!updated?.id) throw new Error("Updating collection returned no row.");
@@ -256,10 +264,13 @@ export async function saveDashboardCollectionProducts(
   productIds: string[],
 ): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("set_store_collection_products", rpcArgs({
-    p_collection_id: id,
-    p_product_ids: productIds,
-  }));
+  const { error } = await supabase.rpc(
+    "set_store_collection_products",
+    rpcArgs({
+      p_collection_id: id,
+      p_product_ids: productIds,
+    }),
+  );
   throwIfError(error, "Saving collection products failed");
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();
@@ -269,9 +280,12 @@ export async function reorderDashboardCollections(
   collections: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("reorder_store_collections", rpcArgs({
-    p_items: collections.map((item) => ({ id: item.id, sort_order: item.sortOrder })),
-  }));
+  const { error } = await supabase.rpc(
+    "reorder_store_collections",
+    rpcArgs({
+      p_items: collections.map((item) => ({ id: item.id, sort_order: item.sortOrder })),
+    }),
+  );
   throwIfError(error, "Reordering collections failed");
   invalidateNativeStoreCache();
   broadcastStorefrontRefresh();

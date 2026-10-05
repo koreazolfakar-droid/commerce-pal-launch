@@ -1,3 +1,5 @@
+import { useLanguage } from "@/dashboard/i18n";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import {
   Boxes,
   ChevronLeft,
@@ -38,6 +40,7 @@ function statusFor(stock: number, threshold: number, tracked: boolean): Inventor
 }
 
 function Badge({ status }: { status: InventoryStatus }) {
+  const { t } = useLanguage();
   const styles =
     status === "In stock"
       ? "bg-emerald-50 text-emerald-700"
@@ -46,7 +49,9 @@ function Badge({ status }: { status: InventoryStatus }) {
         : status === "Out of stock"
           ? "bg-rose-50 text-rose-700"
           : "bg-slate-100 text-slate-500";
-  return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${styles}`}>{status}</span>;
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${styles}`}>{t(status)}</span>
+  );
 }
 
 type PaginationItem = number | "ellipsis-start" | "ellipsis-end";
@@ -83,6 +88,7 @@ function movementLabel(row: InventoryRow, loading: boolean) {
 }
 
 export default function InventoryManagerPage() {
+  const { t } = useLanguage();
   const [rows, setRows] = useState<InventoryRow[]>([]);
   const [query, setQuery] = useState("");
   const [serverQuery, setServerQuery] = useState("");
@@ -110,52 +116,73 @@ export default function InventoryManagerPage() {
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
+  const draftSnapshots = useRef(new Map<string, InventoryRow>());
+  useEffect(() => {
+    for (const [id] of Object.entries(draftStocks)) {
+      if (!draftSnapshots.current.has(id)) {
+        const row = rows.find((item) => item.variantId === id);
+        if (row) draftSnapshots.current.set(id, row);
+      }
+    }
+    for (const id of draftSnapshots.current.keys())
+      if (!(id in draftStocks)) draftSnapshots.current.delete(id);
+  }, [draftStocks, rows]);
+  const inventoryDirty = Object.entries(draftStocks).some(
+    ([id, value]) =>
+      value !==
+      String(
+        draftSnapshots.current.get(id)?.stock ?? rows.find((row) => row.variantId === id)?.stock,
+      ),
+  );
+  useDashboardUnsavedChanges(inventoryDirty);
   const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const load = useCallback(async (manual = false) => {
-    const requestId = ++loadRequestRef.current;
-    if (manual) setRefreshing(true);
-    else if (!hasLoadedRef.current) setLoading(true);
+  const load = useCallback(
+    async (manual = false) => {
+      const requestId = ++loadRequestRef.current;
+      if (manual) setRefreshing(true);
+      else if (!hasLoadedRef.current) setLoading(true);
 
-    try {
-      const [pageResult, summaryResult] = await Promise.all([
-        loadInventoryPage({
-          search: serverQuery,
-          category,
-          threshold,
-          onlyLow,
-          page,
-          pageSize,
-        }),
-        loadInventorySummary(threshold),
-      ]);
+      try {
+        const [pageResult, summaryResult] = await Promise.all([
+          loadInventoryPage({
+            search: serverQuery,
+            category,
+            threshold,
+            onlyLow,
+            page,
+            pageSize,
+          }),
+          loadInventorySummary(threshold),
+        ]);
 
-      if (requestId !== loadRequestRef.current) return;
+        if (requestId !== loadRequestRef.current) return;
 
-      setRows(pageResult.items);
-      setTotalCount(pageResult.totalCount);
-      setSummary(summaryResult);
-      setDraftStocks({});
-      setError("");
-      setMovementVersion((current) => current + 1);
-      hasLoadedRef.current = true;
+        setRows(pageResult.items);
+        setTotalCount(pageResult.totalCount);
+        setSummary(summaryResult);
+        setError("");
+        setMovementVersion((current) => current + 1);
+        hasLoadedRef.current = true;
 
-      if (manual) toast.success("Inventory refreshed from Supabase.");
-    } catch (cause) {
-      if (requestId !== loadRequestRef.current) return;
-      const message = cause instanceof Error ? cause.message : "Unable to load inventory.";
-      setError(message);
-      setMovementLoading(false);
-      if (manual) toast.error(message);
-    } finally {
-      if (requestId === loadRequestRef.current) {
-        setLoading(false);
-        setRefreshing(false);
+        if (manual) toast.success("Inventory refreshed from Supabase.");
+      } catch (cause) {
+        if (requestId !== loadRequestRef.current) return;
+        const message = cause instanceof Error ? cause.message : "Unable to load inventory.";
+        setError(message);
+        setMovementLoading(false);
+        if (manual) toast.error(message);
+      } finally {
+        if (requestId === loadRequestRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    }
-  }, [serverQuery, category, threshold, onlyLow, page, pageSize]);
+    },
+    [serverQuery, category, threshold, onlyLow, page, pageSize],
+  );
 
   useEffect(() => {
     void load(false);
@@ -306,12 +333,16 @@ export default function InventoryManagerPage() {
 
     setSavingId(row.variantId);
     try {
-      const newStock = await setInventoryStock(row, nextStock, "Inventory dashboard manual stock set");
+      const snapshot = draftSnapshots.current.get(row.variantId) ?? row;
+      const newStock = await setInventoryStock(
+        snapshot,
+        nextStock,
+        "Inventory dashboard manual stock set",
+      );
       replaceRowStock(row.variantId, newStock, newStock - row.stock);
       toast.success(`${row.productName} stock updated to ${newStock}.`);
       void load(false);
     } catch (cause) {
-      setDraftStocks((current) => ({ ...current, [row.variantId]: String(row.stock) }));
       toast.error(cause instanceof Error ? cause.message : "Inventory update failed.");
     } finally {
       setSavingId(null);
@@ -340,13 +371,15 @@ export default function InventoryManagerPage() {
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
             <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            Commerce / Operations
+            {t("Commerce / Operations")}
           </div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            Inventory control
+            {t("Inventory control")}
           </h1>
           <p className="mt-1.5 text-sm text-slate-500">
-            Live variant inventory from Supabase. Every stock change is recorded as an inventory movement.
+            {t(
+              "Live variant inventory from Supabase. Every stock change is recorded as an inventory movement.",
+            )}
           </p>
         </div>
         <button
@@ -355,22 +388,24 @@ export default function InventoryManagerPage() {
           className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-60"
         >
           <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh inventory
+          {t("Refresh inventory")}
         </button>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-[11px] text-slate-400">Total units</div>
+          <div className="text-[11px] text-slate-400">{t("Total units")}</div>
           <div className="mt-1 text-2xl font-bold text-[#14203a]">{totalUnits}</div>
-          <div className="mt-1 text-[10px] text-slate-400">{summary.variantCount} variants</div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {summary.variantCount} {t("variants")}
+          </div>
         </div>
         <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
-          <div className="text-[11px] text-amber-700/70">Low stock variants</div>
+          <div className="text-[11px] text-amber-700/70">{t("Low stock variants")}</div>
           <div className="mt-1 text-2xl font-bold text-amber-700">{low}</div>
         </div>
         <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
-          <div className="text-[11px] text-rose-700/70">Out of stock variants</div>
+          <div className="text-[11px] text-rose-700/70">{t("Out of stock variants")}</div>
           <div className="mt-1 text-2xl font-bold text-rose-700">{out}</div>
         </div>
       </div>
@@ -378,12 +413,12 @@ export default function InventoryManagerPage() {
       <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search product, variant, SKU, barcode, or brand"
-              className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[11px] outline-none focus:border-indigo-400"
+              placeholder={t("Search product, variant, SKU, barcode, or brand")}
+              className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px] outline-none focus:border-indigo-400"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -395,17 +430,19 @@ export default function InventoryManagerPage() {
               }}
               className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600"
             >
-              <option value="all">All categories</option>
+              <option value="all">{t("All categories")}</option>
               {categories.items.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
-              {categories.hasUncategorized && <option value="uncategorized">Uncategorized</option>}
+              {categories.hasUncategorized && (
+                <option value="uncategorized">{t("Uncategorized")}</option>
+              )}
             </select>
             <label className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] font-semibold text-slate-600">
               <SlidersHorizontal className="size-3.5" />
-              Low ≤
+              {t("Low ≤")}
               <input
                 value={threshold}
                 onChange={(event) => {
@@ -429,7 +466,7 @@ export default function InventoryManagerPage() {
               }`}
             >
               <Filter className="size-3.5" />
-              Low stock only
+              {t("Low stock only")}
             </button>
           </div>
         </div>
@@ -438,11 +475,13 @@ export default function InventoryManagerPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
           <div>
-            <div className="text-[15px] font-bold text-[#14203a]">Inventory variants</div>
-            <div className="mt-1 text-[10px] text-slate-400">Products, variants, and live stock controls</div>
+            <div className="text-[15px] font-bold text-[#14203a]">{t("Inventory variants")}</div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Products, variants, and live stock controls")}
+            </div>
           </div>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
-            {totalCount ? `${pageStart + 1}–${pageEnd} of ${totalCount}` : "0 shown"}
+            {totalCount ? `${pageStart + 1}–${pageEnd} of ${totalCount}` : t("0 shown")}
           </span>
         </div>
 
@@ -473,7 +512,7 @@ export default function InventoryManagerPage() {
                           {row.productName}
                         </h3>
                         <div className="mt-1 truncate text-[10px] font-medium text-slate-400">
-                          {row.brand || "No brand"} · {row.variantTitle || "Default"}
+                          {row.brand || t("No brand")} · {row.variantTitle || t("Default")}
                         </div>
                       </div>
                       <Badge status={status} />
@@ -489,14 +528,20 @@ export default function InventoryManagerPage() {
 
                 <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
                   <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-2">
-                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">SKU</div>
+                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                      {t("SKU")}
+                    </div>
                     <div className="mt-0.5 truncate font-mono text-[10px] font-semibold text-slate-600">
                       {row.sku || "—"}
                     </div>
                   </div>
                   <div className="min-w-[78px] rounded-xl bg-slate-50 px-3 py-2">
-                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">On hand</div>
-                    <div className="mt-0.5 text-[18px] font-black leading-none text-slate-800">{row.stock}</div>
+                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                      {t("On hand")}
+                    </div>
+                    <div className="mt-0.5 text-[18px] font-black leading-none text-slate-800">
+                      {row.stock}
+                    </div>
                   </div>
                 </div>
 
@@ -535,21 +580,25 @@ export default function InventoryManagerPage() {
                     className="grid size-10 shrink-0 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
                     aria-label={`Increase stock for ${row.productName}`}
                   >
-                    {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                    {saving ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Plus className="size-4" />
+                    )}
                   </button>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setHistoryRow(row)}
-                  className="mt-2 flex min-h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-[9px] leading-4 text-slate-500 transition hover:bg-slate-50 active:scale-[.99]"
+                  className="mt-2 flex min-h-9 w-full items-center gap-2 rounded-lg px-2 text-start text-[9px] leading-4 text-slate-500 transition hover:bg-slate-50 active:scale-[.99]"
                   aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
                 >
                   <History className="size-3.5 shrink-0 text-indigo-500" />
                   <span className="min-w-0 flex-1 truncate">
-                    Last movement: {movementLabel(row, movementLoading)}
+                    {t("Last movement:")} {movementLabel(row, movementLoading)}
                   </span>
-                  <span className="shrink-0 font-bold text-indigo-600">History</span>
+                  <span className="shrink-0 font-bold text-indigo-600">{t("History")}</span>
                 </button>
               </article>
             );
@@ -557,17 +606,17 @@ export default function InventoryManagerPage() {
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[1180px] text-left">
+          <table className="w-full min-w-[1180px] text-start">
             <thead className="bg-[#fafbfe]">
               <tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400">
-                <th className="px-5 py-3">Item</th>
-                <th className="px-3 py-3">Variant</th>
-                <th className="px-3 py-3">Category</th>
-                <th className="px-3 py-3">SKU</th>
-                <th className="px-3 py-3">Stock control</th>
-                <th className="px-3 py-3">On hand</th>
-                <th className="px-3 py-3">Last movement</th>
-                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">{t("Item")}</th>
+                <th className="px-3 py-3">{t("Variant")}</th>
+                <th className="px-3 py-3">{t("Category")}</th>
+                <th className="px-3 py-3">{t("SKU")}</th>
+                <th className="px-3 py-3">{t("Stock control")}</th>
+                <th className="px-3 py-3">{t("On hand")}</th>
+                <th className="px-3 py-3">{t("Last movement")}</th>
+                <th className="px-5 py-3">{t("Status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -595,14 +644,14 @@ export default function InventoryManagerPage() {
                             {row.productName}
                           </div>
                           <div className="mt-1.5 text-[10px] font-medium text-slate-400">
-                            {row.brand || "No brand"} · {row.productStatus}
+                            {row.brand || t("No brand")} · {row.productStatus}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3.5">
                       <div className="max-w-[220px] text-[12px] font-bold text-slate-700">
-                        {row.variantTitle || "Default"}
+                        {row.variantTitle || t("Default")}
                       </div>
                       {row.optionsLabel && (
                         <div className="mt-1 max-w-[220px] truncate text-[9px] text-slate-400">
@@ -612,7 +661,7 @@ export default function InventoryManagerPage() {
                     </td>
                     <td className="px-3 py-3.5">
                       <span className="rounded-lg bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">
-                        {row.category || "Uncategorized"}
+                        {row.category || t("Uncategorized")}
                       </span>
                     </td>
                     <td className="px-3 py-3.5 font-mono text-[10px] text-slate-500">
@@ -652,22 +701,30 @@ export default function InventoryManagerPage() {
                           className="grid size-9 place-items-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-35"
                           aria-label={`Increase stock for ${row.productName}`}
                         >
-                          {saving ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
+                          {saving ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <Plus className="size-3" />
+                          )}
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 py-4"><span className="inline-flex min-w-12 items-center justify-center rounded-xl bg-slate-100 px-2.5 py-1.5 text-[14px] font-black text-slate-800">{row.stock}</span></td>
+                    <td className="px-3 py-4">
+                      <span className="inline-flex min-w-12 items-center justify-center rounded-xl bg-slate-100 px-2.5 py-1.5 text-[14px] font-black text-slate-800">
+                        {row.stock}
+                      </span>
+                    </td>
                     <td className="px-3 py-3.5">
                       <button
                         type="button"
                         onClick={() => setHistoryRow(row)}
-                        className="flex max-w-[230px] items-start gap-1.5 rounded-lg px-2 py-1.5 text-left text-[9px] leading-4 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-700"
+                        className="flex max-w-[230px] items-start gap-1.5 rounded-lg px-2 py-1.5 text-start text-[9px] leading-4 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-700"
                         aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
                       >
                         <History className="mt-0.5 size-3 shrink-0" />
                         <span>
                           <span className="block">{movementLabel(row, movementLoading)}</span>
-                          <span className="font-bold text-indigo-600">View history</span>
+                          <span className="font-bold text-indigo-600">{t("View history")}</span>
                         </span>
                       </button>
                     </td>
@@ -683,7 +740,7 @@ export default function InventoryManagerPage() {
         {!totalCount && (
           <div className="p-12 text-center text-sm text-slate-400">
             <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
-            No inventory variants match these filters.
+            {t("No inventory variants match these filters.")}
           </div>
         )}
 
@@ -691,10 +748,10 @@ export default function InventoryManagerPage() {
           <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#fcfcfe] px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex items-center justify-between gap-3 sm:justify-start">
               <span className="text-[10px] font-semibold text-slate-500">
-                Showing {pageStart + 1}–{pageEnd} of {totalCount}
+                {t("Showing")} {pageStart + 1}–{pageEnd} {t("of")} {totalCount}
               </span>
               <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
-                Per page
+                {t("Per page")}
                 <select
                   value={pageSize}
                   onChange={(event) => {
@@ -702,7 +759,7 @@ export default function InventoryManagerPage() {
                     setPage(1);
                   }}
                   className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 outline-none focus:border-indigo-400"
-                  aria-label="Inventory rows per page"
+                  aria-label={t("Inventory rows per page")}
                 >
                   <option value={20}>20</option>
                   <option value={40}>40</option>
@@ -711,13 +768,16 @@ export default function InventoryManagerPage() {
               </label>
             </div>
 
-            <nav className="flex items-center justify-center gap-1" aria-label="Inventory pagination">
+            <nav
+              className="flex items-center justify-center gap-1"
+              aria-label={t("Inventory pagination")}
+            >
               <button
                 type="button"
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={safePage <= 1}
                 className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:cursor-not-allowed disabled:opacity-35"
-                aria-label="Previous inventory page"
+                aria-label={t("Previous inventory page")}
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -738,7 +798,10 @@ export default function InventoryManagerPage() {
                     {item}
                   </button>
                 ) : (
-                  <span key={item} className="grid size-9 place-items-center text-[11px] text-slate-400">
+                  <span
+                    key={item}
+                    className="grid size-9 place-items-center text-[11px] text-slate-400"
+                  >
                     …
                   </span>
                 ),
@@ -749,7 +812,7 @@ export default function InventoryManagerPage() {
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                 disabled={safePage >= totalPages}
                 className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:cursor-not-allowed disabled:opacity-35"
-                aria-label="Next inventory page"
+                aria-label={t("Next inventory page")}
               >
                 <ChevronRight className="size-4" />
               </button>

@@ -24,12 +24,17 @@ export default defineConfig({
     define: {
       __APP_VERSION__: JSON.stringify(APP_VERSION),
     },
-    // Pre-bundle the Start client graph at startup. Without this, Vite can
-    // discover these modules after the first document request, force a reload,
-    // and abort the browser's in-flight dynamic entry import.
+    // Pre-bundle router dependencies, while keeping Start compiler boundaries intact.
     optimizeDeps: {
-      include: [
+      // Start modules contain isomorphic functions that must pass through the
+      // Start compiler; pre-bundling them leaks server AsyncLocalStorage to clients.
+      exclude: [
+        "@tanstack/react-start",
         "@tanstack/react-start/client",
+        "@tanstack/react-start-client",
+        "@tanstack/start-client-core",
+      ],
+      include: [
         "@tanstack/router-core",
         "@tanstack/router-core/isServer",
         "@tanstack/router-core/ssr/client",

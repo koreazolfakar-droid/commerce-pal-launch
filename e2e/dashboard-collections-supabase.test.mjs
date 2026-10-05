@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -21,10 +22,8 @@ const migration = await readFile(
 );
 
 test("collections routes use real Supabase pages", () => {
-  assert.match(app, /CollectionsPageLive/);
-  assert.match(app, /CollectionDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/collections"[\s\S]+<CollectionsPageLive \/>/);
-  assert.match(app, /collectionDetail[\s\S]+<CollectionDetailPageLive id=\{collectionDetail\[1\]\} \/>/);
+assertDashboardRoute("/dashboard/collections","collectionsPage");
+assertDashboardRoute("/dashboard/collections/test-id","collectionDetailPage");
 });
 
 test("collections pages contain no mock data source", () => {
@@ -36,11 +35,11 @@ test("collections pages contain no mock data source", () => {
 test("collections data layer uses Supabase CRUD and membership RPCs", () => {
   assert.match(data, /from\("store_collections"\)/);
   assert.match(data, /from\("store_collection_products"\)/);
-  assert.match(data, /rpc\("create_store_collection"/);
-  assert.match(data, /rpc\("update_store_collection"/);
-  assert.match(data, /rpc\("delete_store_collection"/);
-  assert.match(data, /rpc\("set_store_collection_products"/);
-  assert.match(data, /rpc\("reorder_store_collections"/);
+  assert.match(data, /rpc\(\s*"create_store_collection"/);
+  assert.match(data, /rpc\(\s*"update_store_collection"/);
+  assert.match(data, /rpc\(\s*"delete_store_collection"/);
+  assert.match(data, /rpc\(\s*"set_store_collection_products"/);
+  assert.match(data, /rpc\(\s*"reorder_store_collections"/);
 });
 
 test("collection management stores SEO and protects writes", () => {

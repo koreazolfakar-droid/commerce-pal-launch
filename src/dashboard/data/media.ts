@@ -1,3 +1,5 @@
+import { looseSupabase } from "@/integrations/supabase/looseClient";
+import { loadAllRows } from "@/dashboard/lib/loadAllRows";
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -55,12 +57,13 @@ export async function loadDashboardMediaWorkspace(): Promise<{
   role: DashboardRole;
 }> {
   const role = await requireDashboardStaff();
-  const { data, error } = await supabase
-    .from("cms_media_assets")
-    .select("*")
-    .eq("bucket_id", BUCKET)
-    .order("created_at", { ascending: false })
-    .limit(300);
+  const { data, error } = await loadAllRows(
+    supabase
+      .from("cms_media_assets")
+      .select("*")
+      .eq("bucket_id", BUCKET)
+      .order("created_at", { ascending: false }),
+  );
 
   throwIfError(error, "Loading media library failed");
   return { assets: ((data ?? []) as MediaRow[]).map(mapMedia), role };
@@ -85,25 +88,26 @@ export async function uploadDashboardMediaImage(
   const day = new Date().toISOString().slice(0, 10);
   const objectPath = `${LIBRARY_PREFIX}/${day}/${unique}.webp`;
 
-  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(
-    objectPath,
-    conversion.file,
-    {
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(objectPath, conversion.file, {
       cacheControl: "31536000",
       upsert: false,
       contentType: "image/webp",
-    },
-  );
+    });
   throwIfError(uploadError, "Uploading media failed");
 
   try {
-    const { data, error } = await supabase.rpc("register_cms_media_asset", rpcArgs({
-      p_object_path: objectPath,
-      p_file_name: conversion.file.name,
-      p_mime_type: "image/webp",
-      p_size_bytes: conversion.file.size,
-      p_alt_text: altText.trim() || null,
-    }));
+    const { data, error } = await supabase.rpc(
+      "register_cms_media_asset",
+      rpcArgs({
+        p_object_path: objectPath,
+        p_file_name: conversion.file.name,
+        p_mime_type: "image/webp",
+        p_size_bytes: conversion.file.size,
+        p_alt_text: altText.trim() || null,
+      }),
+    );
     throwIfError(error, "Registering media failed");
     return mapMedia(data as MediaRow);
   } catch (error) {
@@ -128,19 +132,56 @@ export async function updateDashboardMediaAltText(
   return mapMedia(data as MediaRow);
 }
 
+export async function getDashboardMediaUsage(
+  assetId: string,
+): Promise<Array<{ source: string; record_id: string }>> {
+  await requireDashboardStaff();
+  const { data, error } = await looseSupabase.rpc("get_dashboard_media_usage", {
+    p_asset_id: assetId,
+  });
+  throwIfError(error, "Checking media usage failed");
+  return (data ?? []) as Array<{ source: string; record_id: string }>;
+}
+
 export async function deleteDashboardMediaAsset(asset: DashboardMediaAsset): Promise<void> {
   const role = await requireDashboardStaff();
   if (role !== "admin") throw new Error("Only dashboard admins can delete media.");
 
-  const { error: deleteRowError } = await supabase.from("cms_media_assets").delete().eq("id", asset.id);
+  const usage = await getDashboardMediaUsage(asset.id);
+  if (usage.length)
+    throw new Error(
+      `This image is in use: ${usage.map((row) => `${row.source} (${row.record_id})`).join(", ")}. Replace it in that content before deleting it.`,
+    );
+
+  const { error: deleteRowError } = await supabase
+    .from("cms_media_assets")
+    .delete()
+    .eq("id", asset.id);
   throwIfError(deleteRowError, "Deleting media record failed");
 
-  const { error: storageError } = await supabase.storage.from(asset.bucketId).remove([asset.objectPath]);
+  const { error: storageError } = await supabase.storage
+    .from(asset.bucketId)
+    .remove([asset.objectPath]);
   if (storageError) {
-    console.warn("[dashboard-media] database row deleted but storage cleanup failed", storageError.message);
+    // Restore the library entry so the user can retry cleanup instead of losing it.
+    const { error: restoreError } = await supabase.from("cms_media_assets").insert({
+      id: asset.id,
+      bucket_id: asset.bucketId,
+      object_path: asset.objectPath,
+      file_name: asset.fileName,
+      mime_type: asset.mimeType,
+      size_bytes: asset.sizeBytes,
+      alt_text: asset.altText || null,
+      created_at: asset.createdAt,
+      updated_at: asset.updatedAt,
+    });
+    throw new Error(
+      restoreError
+        ? "File cleanup failed and the library entry could not be restored. Refresh and contact support."
+        : "File cleanup failed. The library entry was restored; try again.",
+    );
   }
 }
-
 
 export async function downloadDashboardMediaAsset(asset: DashboardMediaAsset): Promise<File> {
   await requireDashboardStaff();
@@ -171,15 +212,13 @@ export async function replaceDashboardMediaAssetWithWebp(
   const backupBlob = await backupResponse.blob();
   const backupType = backupBlob.type || asset.mimeType || "application/octet-stream";
 
-  const { error: uploadError } = await supabase.storage.from(asset.bucketId).upload(
-    asset.objectPath,
-    output,
-    {
+  const { error: uploadError } = await supabase.storage
+    .from(asset.bucketId)
+    .upload(asset.objectPath, output, {
       cacheControl: "31536000",
       upsert: true,
       contentType: "image/webp",
-    },
-  );
+    });
   throwIfError(uploadError, "Replacing media with WebP failed");
 
   const nextFileName = asset.fileName.replace(/\.[^.]+$/, "") + ".webp";
@@ -200,15 +239,13 @@ export async function replaceDashboardMediaAssetWithWebp(
       type: backupType,
       lastModified: Date.now(),
     });
-    const { error: rollbackError } = await supabase.storage.from(asset.bucketId).upload(
-      asset.objectPath,
-      backupFile,
-      {
+    const { error: rollbackError } = await supabase.storage
+      .from(asset.bucketId)
+      .upload(asset.objectPath, backupFile, {
         cacheControl: "31536000",
         upsert: true,
         contentType: backupType,
-      },
-    );
+      });
     if (rollbackError) {
       console.error("[dashboard-media] rollback failed", rollbackError.message);
     }

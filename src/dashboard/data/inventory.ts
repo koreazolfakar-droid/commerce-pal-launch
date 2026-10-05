@@ -36,10 +36,7 @@ type InventoryVariantRow = Pick<
   | "options"
 >;
 type InventoryImageRow = Pick<ImageRow, "product_id" | "url" | "is_primary" | "sort_order">;
-type InventoryLatestMovementRow = Pick<
-  MovementRow,
-  "variant_id" | "created_at" | "quantity_delta"
->;
+type InventoryLatestMovementRow = Pick<MovementRow, "variant_id" | "created_at" | "quantity_delta">;
 
 export type InventoryRow = {
   productId: string;
@@ -151,25 +148,26 @@ function firstImageByProduct(images: InventoryImageRow[]) {
 export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
   await requireDashboardStaff();
 
-  const [productResult, variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
-    supabase
-      .from("store_products")
-      .select("id,title,brand_id,category_id,product_type,sku,barcode,stock_quantity,status")
-      .order("title", { ascending: true }),
-    supabase
-      .from("store_product_variants")
-      .select(
-        "id,product_id,title,sku,barcode,image_url,stock_quantity,track_inventory,is_active,options",
-      )
-      .order("product_id", { ascending: true })
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("store_product_images")
-      .select("product_id,url,is_primary,sort_order")
-      .order("sort_order", { ascending: true }),
-    supabase.from("cms_brands").select("id,name"),
-    supabase.from("store_categories").select("id,name"),
-  ]);
+  const [productResult, variantResult, imageResult, brandResult, categoryResult] =
+    await Promise.all([
+      supabase
+        .from("store_products")
+        .select("id,title,brand_id,category_id,product_type,sku,barcode,stock_quantity,status")
+        .order("title", { ascending: true }),
+      supabase
+        .from("store_product_variants")
+        .select(
+          "id,product_id,title,sku,barcode,image_url,stock_quantity,track_inventory,is_active,options",
+        )
+        .order("product_id", { ascending: true })
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("store_product_images")
+        .select("product_id,url,is_primary,sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase.from("cms_brands").select("id,name"),
+      supabase.from("store_categories").select("id,name"),
+    ]);
 
   throwIfError(productResult.error, "Loading inventory products failed");
   throwIfError(variantResult.error, "Loading inventory variants failed");
@@ -196,11 +194,11 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
         variantId: variant.id,
         productName: product.title,
         variantTitle: variant.title,
-        brand: product.brand_id ? brands.get(product.brand_id) ?? "" : "",
+        brand: product.brand_id ? (brands.get(product.brand_id) ?? "") : "",
         categoryId: product.category_id,
         category: product.category_id
-          ? categories.get(product.category_id) ?? product.product_type ?? ""
-          : product.product_type ?? "",
+          ? (categories.get(product.category_id) ?? product.product_type ?? "")
+          : (product.product_type ?? ""),
         sku: variant.sku ?? product.sku ?? "",
         barcode: variant.barcode ?? product.barcode ?? "",
         image: variant.image_url || fallbackImage,
@@ -281,8 +279,7 @@ export async function loadInventoryPage(input: {
   const page = Math.max(1, Math.trunc(input.page ?? 1));
   const pageSize = Math.min(100, Math.max(1, Math.trunc(input.pageSize ?? 20)));
   const category = input.category ?? "all";
-  const categoryId =
-    category !== "all" && category !== "uncategorized" ? category : undefined;
+  const categoryId = category !== "all" && category !== "uncategorized" ? category : undefined;
 
   // The generated Supabase types lag behind the dashboard pagination functions,
   // so these two RPCs are called through a loosely typed view of the client and
@@ -332,9 +329,7 @@ export async function loadInventoryPage(input: {
   };
 }
 
-export async function loadInventorySummary(
-  threshold = 10,
-): Promise<InventorySummary> {
+export async function loadInventorySummary(threshold = 10): Promise<InventorySummary> {
   await requireDashboardStaff();
   const rpc = supabase.rpc.bind(supabase) as unknown as (
     name: string,
@@ -395,9 +390,7 @@ export async function loadInventoryLatestMovements(
     query = query.in("variant_id", ids);
   }
 
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(safeLimit);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(safeLimit);
 
   throwIfError(error, "Loading latest inventory movements failed");
 
@@ -505,12 +498,15 @@ export async function adjustInventoryDelta(
   await requireDashboardStaff();
   if (!Number.isInteger(delta) || delta === 0) return row.stock;
 
-  const { data, error } = await supabase.rpc("adjust_store_inventory", rpcArgs({
-    p_product_id: row.productId,
-    p_variant_id: row.variantId,
-    p_quantity_delta: delta,
-    p_note: note,
-  }));
+  const { data, error } = await supabase.rpc(
+    "adjust_store_inventory",
+    rpcArgs({
+      p_product_id: row.productId,
+      p_variant_id: row.variantId,
+      p_quantity_delta: delta,
+      p_note: note,
+    }),
+  );
   throwIfError(error, "Adjusting inventory failed");
   const result = data?.[0];
   if (!result) throw new Error("Inventory adjustment returned no result.");
@@ -529,13 +525,16 @@ export async function setInventoryStock(
     throw new Error("Stock must be a non-negative whole number.");
   }
 
-  const { data, error } = await looseSupabase.rpc("set_store_inventory_stock_v2", rpcArgs({
-    p_product_id: row.productId,
-    p_variant_id: row.variantId,
-    p_stock: stock,
-    p_expected_stock: row.stock,
-    p_note: note,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "set_store_inventory_stock_v2",
+    rpcArgs({
+      p_product_id: row.productId,
+      p_variant_id: row.variantId,
+      p_stock: stock,
+      p_expected_stock: row.stock,
+      p_note: note,
+    }),
+  );
   if (error?.message?.includes("inventory_stock_conflict")) {
     throw new Error("Inventory changed in another session. Refresh and try again.");
   }

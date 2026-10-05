@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -48,6 +49,7 @@ function statusClass(status: string) {
 }
 
 export default function ReceivingDetailPage({ id }: { id: string }) {
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [receipt, setReceipt] = useState<ReceivingSummary | null>(null);
   const [po, setPo] = useState<ReceivingPurchaseOrderBaseline | null>(null);
@@ -62,7 +64,9 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   const [receivingNotes, setReceivingNotes] = useState("");
   const [lineDrafts, setLineDrafts] = useState<Record<string, ReceivingLineDraft>>({});
   const [serialDrafts, setSerialDrafts] = useState<Record<string, SerialDraftRow[]>>({});
-  const [attachmentType, setAttachmentType] = useState<"supplier_invoice" | "packing_list" | "other">("supplier_invoice");
+  const [attachmentType, setAttachmentType] = useState<
+    "supplier_invoice" | "packing_list" | "other"
+  >("supplier_invoice");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,7 +123,8 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   }, [load]);
 
   const invoiceTotal = useMemo(
-    () => receipt?.items.reduce((sum, line) => sum + line.deliveredQuantity * line.unitCost, 0) ?? 0,
+    () =>
+      receipt?.items.reduce((sum, line) => sum + line.deliveredQuantity * line.unitCost, 0) ?? 0,
     [receipt],
   );
 
@@ -222,7 +227,12 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
 
   const approve = async () => {
     if (!receipt) return;
-    if (!window.confirm(`Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`)) return;
+    if (
+      !window.confirm(
+        `Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`,
+      )
+    )
+      return;
     setSaving(true);
     try {
       let expectedUpdatedAt = receipt.updatedAt;
@@ -287,10 +297,13 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   if (error || !receipt) {
     return (
       <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
-        <div className="text-sm font-bold text-rose-700">Receiving could not be opened.</div>
+        <div className="text-sm font-bold text-rose-700">{t("Receiving could not be opened.")}</div>
         <div className="mt-1 text-xs text-rose-600">{error}</div>
-        <button onClick={() => navigate("/dashboard/receiving")} className="mt-4 rounded-xl bg-[#14203a] px-4 py-2 text-[11px] font-bold text-white">
-          Back to Receiving
+        <button
+          onClick={() => navigate("/dashboard/receiving")}
+          className="mt-4 rounded-xl bg-[#14203a] px-4 py-2 text-[11px] font-bold text-white"
+        >
+          {t("Back to Receiving")}
         </button>
       </div>
     );
@@ -303,18 +316,28 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     <div>
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <button onClick={() => navigate("/dashboard/receiving")} className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold text-slate-500">
-            <ArrowLeft className="size-3.5" /> Receiving
+          <button
+            onClick={() => navigate("/dashboard/receiving")}
+            className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold text-slate-500"
+          >
+            <ArrowLeft className="size-3.5" /> {t("Receiving")}
           </button>
-          <div className="text-[10px] font-bold uppercase tracking-[.18em] text-indigo-600">Commerce / Receiving</div>
+          <div className="text-[10px] font-bold uppercase tracking-[.18em] text-indigo-600">
+            {t("Commerce / Receiving")}
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Receipt #{receipt.receiptNumber}</h1>
-            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${statusClass(receipt.status)}`}>
+            <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
+              {t("Receipt #")} {receipt.receiptNumber}
+            </h1>
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${statusClass(receipt.status)}`}
+            >
               {receipt.status}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Invoice {receipt.invoiceNumber} · PO {receipt.poNumber} · {receipt.supplierName}
+            {t("Invoice")} {receipt.invoiceNumber} {t("· PO")} {receipt.poNumber} ·{" "}
+            {receipt.supplierName}
           </p>
         </div>
 
@@ -323,18 +346,30 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
             onClick={() => navigate(`/dashboard/purchase-orders/${receipt.purchaseOrderId}`)}
             className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
           >
-            Open PO
+            {t("Open PO")}
           </button>
           {receipt.status === "draft" ? (
             <>
-              <button onClick={() => void voidDraft()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50">
-                <XCircle className="size-3.5" /> Void draft
+              <button
+                onClick={() => void voidDraft()}
+                disabled={saving}
+                className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50"
+              >
+                <XCircle className="size-3.5" /> {t("Void draft")}
               </button>
-              <button onClick={() => void saveReceivingDraft()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-[11px] font-bold text-indigo-700 disabled:opacity-50">
-                <Save className="size-3.5" /> Save draft
+              <button
+                onClick={() => void saveReceivingDraft()}
+                disabled={saving}
+                className="flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-[11px] font-bold text-indigo-700 disabled:opacity-50"
+              >
+                <Save className="size-3.5" /> {t("Save draft")}
               </button>
-              <button onClick={() => void approve()} disabled={saving} className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[11px] font-bold text-white disabled:opacity-50">
-                <CheckCircle2 className="size-3.5" /> Approve receiving
+              <button
+                onClick={() => void approve()}
+                disabled={saving}
+                className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
+              >
+                <CheckCircle2 className="size-3.5" /> {t("Approve receiving")}
               </button>
             </>
           ) : null}
@@ -344,14 +379,18 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       {receipt.status === "draft" ? (
         <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
           <div className="mb-4">
-            <div className="text-[14px] font-bold text-[#14203a]">Draft receiving details</div>
+            <div className="text-[14px] font-bold text-[#14203a]">
+              {t("Draft receiving details")}
+            </div>
             <div className="mt-1 text-[10px] text-slate-400">
-              Update invoice, employee, notes and receiving quantities before approval.
+              {t("Update invoice, employee, notes and receiving quantities before approval.")}
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <label>
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Invoice number</div>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+                {t("Invoice number")}
+              </div>
               <input
                 value={invoiceNumber}
                 onChange={(event) => setInvoiceNumber(event.target.value)}
@@ -359,20 +398,24 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
               />
             </label>
             <label>
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Receiving employee</div>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+                {t("Receiving employee")}
+              </div>
               <input
                 value={employeeLabel}
                 onChange={(event) => setEmployeeLabel(event.target.value)}
-                placeholder="Optional display name"
+                placeholder={t("Optional display name")}
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
               />
             </label>
             <label>
-              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">Notes</div>
+              <div className="mb-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+                {t("Notes")}
+              </div>
               <input
                 value={receivingNotes}
                 onChange={(event) => setReceivingNotes(event.target.value)}
-                placeholder="Optional receiving notes"
+                placeholder={t("Optional receiving notes")}
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
               />
             </label>
@@ -392,7 +435,9 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
           ["Damaged Units", String(receipt.damagedUnits)],
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl border border-slate-200 bg-white p-3">
-            <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">{label}</div>
+            <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+              {t(String(label))}
+            </div>
             <div className="mt-1 text-[12px] font-semibold text-slate-700">{value}</div>
           </div>
         ))}
@@ -400,168 +445,224 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Supplier invoice value</div>
-          <div className="mt-2 text-xl font-bold text-[#14203a]">{money(invoiceTotal, currency)}</div>
+          <div className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+            {t("Supplier invoice value")}
+          </div>
+          <div className="mt-2 text-xl font-bold text-[#14203a]">
+            {money(invoiceTotal, currency)}
+          </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <div className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">PO baseline for delivered qty</div>
-          <div className="mt-2 text-xl font-bold text-[#14203a]">{money(poBaselineTotal, currency)}</div>
+          <div className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+            {t("PO baseline for delivered qty")}
+          </div>
+          <div className="mt-2 text-xl font-bold text-[#14203a]">
+            {money(poBaselineTotal, currency)}
+          </div>
         </div>
-        <div className={`rounded-2xl border p-4 ${priceVariance === 0 ? "border-emerald-100 bg-emerald-50/50" : "border-amber-100 bg-amber-50/50"}`}>
-          <div className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">Price variance</div>
-          <div className={`mt-2 text-xl font-bold ${priceVariance === 0 ? "text-emerald-700" : "text-amber-700"}`}>
-            {priceVariance >= 0 ? "+" : ""}{money(priceVariance, currency)}
+        <div
+          className={`rounded-2xl border p-4 ${priceVariance === 0 ? "border-emerald-100 bg-emerald-50/50" : "border-amber-100 bg-amber-50/50"}`}
+        >
+          <div className="text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
+            {t("Price variance")}
+          </div>
+          <div
+            className={`mt-2 text-xl font-bold ${priceVariance === 0 ? "text-emerald-700" : "text-amber-700"}`}
+          >
+            {priceVariance >= 0 ? "+" : ""}
+            {money(priceVariance, currency)}
           </div>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 p-4">
-          <div className="text-[14px] font-bold text-[#14203a]">Receiving lines & invoice matching</div>
-          <div className="mt-1 text-[10px] text-slate-400">PO cost vs invoice cost, quantity variance and serial / IMEI tracking.</div>
+          <div className="text-[14px] font-bold text-[#14203a]">
+            {t("Receiving lines & invoice matching")}
+          </div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {t("PO cost vs invoice cost, quantity variance and serial / IMEI tracking.")}
+          </div>
         </div>
         <div className="divide-y divide-slate-100">
           {receipt.items.map((line) => {
             const poLine = po?.items.find((item) => item.id === line.purchaseOrderItemId);
             const rowPriceVariance = line.unitCost - (poLine?.unitCost ?? line.unitCost);
             const rows = serialDrafts[line.id] ?? [];
-            const trackedCount = rows.filter((row) => row.serialNumber?.trim() || row.imei1?.trim() || row.imei2?.trim()).length;
+            const trackedCount = rows.filter(
+              (row) => row.serialNumber?.trim() || row.imei1?.trim() || row.imei2?.trim(),
+            ).length;
             return (
               <div key={line.id} className="p-4">
-                {receipt.status === "draft" ? (() => {
-                  const draft = lineDrafts[line.id];
-                  const received = Number(draft?.received ?? 0);
-                  const damaged = Number(draft?.damaged ?? 0);
-                  const delivered = (Number.isFinite(received) ? received : 0) + (Number.isFinite(damaged) ? damaged : 0);
-                  const missing = Math.max(0, line.remainingQuantityBefore - delivered);
-                  const difference = delivered - line.remainingQuantityBefore;
-                  const unitCost = Number(draft?.unitCost ?? line.unitCost);
-                  const draftPriceVariance =
-                    (Number.isFinite(unitCost) ? unitCost : line.unitCost) - (poLine?.unitCost ?? line.unitCost);
-                  const requiresOverage = delivered > line.remainingQuantityBefore;
+                {receipt.status === "draft" ? (
+                  (() => {
+                    const draft = lineDrafts[line.id];
+                    const received = Number(draft?.received ?? 0);
+                    const damaged = Number(draft?.damaged ?? 0);
+                    const delivered =
+                      (Number.isFinite(received) ? received : 0) +
+                      (Number.isFinite(damaged) ? damaged : 0);
+                    const missing = Math.max(0, line.remainingQuantityBefore - delivered);
+                    const difference = delivered - line.remainingQuantityBefore;
+                    const unitCost = Number(draft?.unitCost ?? line.unitCost);
+                    const draftPriceVariance =
+                      (Number.isFinite(unitCost) ? unitCost : line.unitCost) -
+                      (poLine?.unitCost ?? line.unitCost);
+                    const requiresOverage = delivered > line.remainingQuantityBefore;
 
-                  return (
-                    <div>
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.35fr_repeat(7,minmax(90px,.6fr))] xl:items-start">
-                        <div>
-                          <div className="text-[12px] font-bold text-slate-800">{line.title}</div>
-                          <div className="mt-1 font-mono text-[9px] text-slate-400">{line.sku || "No SKU"}</div>
-                        </div>
-                        <div>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Expected</div>
-                          <div className="mt-1 text-[11px] font-bold text-slate-700">{line.expectedQuantity}</div>
-                        </div>
-                        <div>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Remaining before</div>
-                          <div className="mt-1 text-[11px] font-bold text-indigo-600">{line.remainingQuantityBefore}</div>
-                        </div>
-                        <label>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Received</div>
-                          <input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={draft?.received ?? ""}
-                            onChange={(event) =>
-                              setLineDrafts((current) => ({
-                                ...current,
-                                [line.id]: { ...current[line.id], received: event.target.value },
-                              }))
-                            }
-                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
-                          />
-                        </label>
-                        <label>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Damaged</div>
-                          <input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={draft?.damaged ?? ""}
-                            onChange={(event) =>
-                              setLineDrafts((current) => ({
-                                ...current,
-                                [line.id]: { ...current[line.id], damaged: event.target.value },
-                              }))
-                            }
-                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
-                          />
-                        </label>
-                        <div>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Missing</div>
-                          <div className="mt-1 text-[11px] font-bold text-rose-600">{missing}</div>
-                        </div>
-                        <div>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Difference</div>
-                          <div className={`mt-1 text-[11px] font-bold ${difference > 0 ? "text-amber-600" : "text-slate-700"}`}>
-                            {difference}
+                    return (
+                      <div>
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.35fr_repeat(7,minmax(90px,.6fr))] xl:items-start">
+                          <div>
+                            <div className="text-[12px] font-bold text-slate-800">{line.title}</div>
+                            <div className="mt-1 font-mono text-[9px] text-slate-400">
+                              {line.sku || t("No SKU")}
+                            </div>
                           </div>
-                        </div>
-                        <label>
-                          <div className="text-[8px] font-bold uppercase text-slate-400">Invoice cost</div>
-                          <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={draft?.unitCost ?? ""}
-                            onChange={(event) =>
-                              setLineDrafts((current) => ({
-                                ...current,
-                                [line.id]: { ...current[line.id], unitCost: event.target.value },
-                              }))
-                            }
-                            className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
-                          />
-                          <div className={`mt-1 text-[9px] font-bold ${draftPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}>
-                            {draftPriceVariance === 0
-                              ? "Matches PO"
-                              : `${draftPriceVariance > 0 ? "+" : ""}${money(draftPriceVariance, currency)} / unit`}
+                          <div>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Expected")}
+                            </div>
+                            <div className="mt-1 text-[11px] font-bold text-slate-700">
+                              {line.expectedQuantity}
+                            </div>
                           </div>
-                        </label>
-                      </div>
-
-                      {requiresOverage ? (
-                        <div className="mt-3 grid gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 md:grid-cols-[auto_1fr] md:items-center">
-                          <label className="flex items-center gap-2 text-[10px] font-bold text-amber-800">
+                          <div>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Remaining before")}
+                            </div>
+                            <div className="mt-1 text-[11px] font-bold text-indigo-600">
+                              {line.remainingQuantityBefore}
+                            </div>
+                          </div>
+                          <label>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Received")}
+                            </div>
                             <input
-                              type="checkbox"
-                              checked={draft?.overageConfirmed ?? false}
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={draft?.received ?? ""}
+                              onChange={(event) =>
+                                setLineDrafts((current) => ({
+                                  ...current,
+                                  [line.id]: { ...current[line.id], received: event.target.value },
+                                }))
+                              }
+                              className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                            />
+                          </label>
+                          <label>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Damaged")}
+                            </div>
+                            <input
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={draft?.damaged ?? ""}
+                              onChange={(event) =>
+                                setLineDrafts((current) => ({
+                                  ...current,
+                                  [line.id]: { ...current[line.id], damaged: event.target.value },
+                                }))
+                              }
+                              className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                            />
+                          </label>
+                          <div>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Missing")}
+                            </div>
+                            <div className="mt-1 text-[11px] font-bold text-rose-600">
+                              {missing}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Difference")}
+                            </div>
+                            <div
+                              className={`mt-1 text-[11px] font-bold ${difference > 0 ? "text-amber-600" : "text-slate-700"}`}
+                            >
+                              {difference}
+                            </div>
+                          </div>
+                          <label>
+                            <div className="text-[8px] font-bold uppercase text-slate-400">
+                              {t("Invoice cost")}
+                            </div>
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              value={draft?.unitCost ?? ""}
+                              onChange={(event) =>
+                                setLineDrafts((current) => ({
+                                  ...current,
+                                  [line.id]: { ...current[line.id], unitCost: event.target.value },
+                                }))
+                              }
+                              className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
+                            />
+                            <div
+                              className={`mt-1 text-[9px] font-bold ${draftPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}
+                            >
+                              {draftPriceVariance === 0
+                                ? t("Matches PO")
+                                : `${draftPriceVariance > 0 ? "+" : ""}${money(draftPriceVariance, currency)} / unit`}
+                            </div>
+                          </label>
+                        </div>
+
+                        {requiresOverage ? (
+                          <div className="mt-3 grid gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 md:grid-cols-[auto_1fr] md:items-center">
+                            <label className="flex items-center gap-2 text-[10px] font-bold text-amber-800">
+                              <input
+                                type="checkbox"
+                                checked={draft?.overageConfirmed ?? false}
+                                onChange={(event) =>
+                                  setLineDrafts((current) => ({
+                                    ...current,
+                                    [line.id]: {
+                                      ...current[line.id],
+                                      overageConfirmed: event.target.checked,
+                                    },
+                                  }))
+                                }
+                              />
+                              {t("Confirm excess delivery")}
+                            </label>
+                            <input
+                              value={draft?.overageReason ?? ""}
+                              maxLength={500}
                               onChange={(event) =>
                                 setLineDrafts((current) => ({
                                   ...current,
                                   [line.id]: {
                                     ...current[line.id],
-                                    overageConfirmed: event.target.checked,
+                                    overageReason: event.target.value,
                                   },
                                 }))
                               }
+                              placeholder={t(
+                                "Reason required for receiving above remaining PO quantity",
+                              )}
+                              className="h-9 rounded-lg border border-amber-200 bg-white px-3 text-[10px]"
                             />
-                            Confirm excess delivery
-                          </label>
-                          <input
-                            value={draft?.overageReason ?? ""}
-                            maxLength={500}
-                            onChange={(event) =>
-                              setLineDrafts((current) => ({
-                                ...current,
-                                [line.id]: {
-                                  ...current[line.id],
-                                  overageReason: event.target.value,
-                                },
-                              }))
-                            }
-                            placeholder="Reason required for receiving above remaining PO quantity"
-                            className="h-9 rounded-lg border border-amber-200 bg-white px-3 text-[10px]"
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })() : (
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })()
+                ) : (
                   <div className="grid gap-3 lg:grid-cols-[1.3fr_repeat(7,minmax(80px,.55fr))] lg:items-start">
                     <div>
                       <div className="text-[12px] font-bold text-slate-800">{line.title}</div>
-                      <div className="mt-1 font-mono text-[9px] text-slate-400">{line.sku || "No SKU"}</div>
+                      <div className="mt-1 font-mono text-[9px] text-slate-400">
+                        {line.sku || t("No SKU")}
+                      </div>
                     </div>
                     {[
                       ["Expected", line.expectedQuantity],
@@ -572,15 +673,25 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                       ["Difference", line.difference],
                     ].map(([label, value]) => (
                       <div key={label}>
-                        <div className="text-[8px] font-bold uppercase text-slate-400">{label}</div>
+                        <div className="text-[8px] font-bold uppercase text-slate-400">
+                          {t(String(label))}
+                        </div>
                         <div className="mt-1 text-[11px] font-bold text-slate-700">{value}</div>
                       </div>
                     ))}
                     <div>
-                      <div className="text-[8px] font-bold uppercase text-slate-400">Invoice cost</div>
-                      <div className="mt-1 text-[11px] font-bold text-slate-700">{money(line.unitCost, currency)}</div>
-                      <div className={`mt-1 text-[9px] font-bold ${rowPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}>
-                        {rowPriceVariance === 0 ? "Matches PO" : `${rowPriceVariance > 0 ? "+" : ""}${money(rowPriceVariance, currency)} / unit`}
+                      <div className="text-[8px] font-bold uppercase text-slate-400">
+                        {t("Invoice cost")}
+                      </div>
+                      <div className="mt-1 text-[11px] font-bold text-slate-700">
+                        {money(line.unitCost, currency)}
+                      </div>
+                      <div
+                        className={`mt-1 text-[9px] font-bold ${rowPriceVariance === 0 ? "text-emerald-600" : "text-amber-600"}`}
+                      >
+                        {rowPriceVariance === 0
+                          ? t("Matches PO")
+                          : `${rowPriceVariance > 0 ? "+" : ""}${money(rowPriceVariance, currency)} / unit`}
                       </div>
                     </div>
                   </div>
@@ -589,9 +700,12 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                 <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="text-[10px] font-bold text-slate-700">Serial / IMEI tracking</div>
+                      <div className="text-[10px] font-bold text-slate-700">
+                        {t("Serial / IMEI tracking")}
+                      </div>
                       <div className="mt-1 text-[9px] text-slate-400">
-                        {trackedCount} identifier row(s) · physical delivered qty {line.deliveredQuantity}
+                        {trackedCount} {t("identifier row(s) · physical delivered qty")}{" "}
+                        {line.deliveredQuantity}
                       </div>
                     </div>
                     {receipt.status === "draft" ? (
@@ -601,68 +715,126 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                             ...current,
                             [line.id]: [
                               ...(current[line.id] ?? []),
-                              { key: crypto.randomUUID(), serialNumber: "", imei1: "", imei2: "", condition: "usable" },
+                              {
+                                key: crypto.randomUUID(),
+                                serialNumber: "",
+                                imei1: "",
+                                imei2: "",
+                                condition: "usable",
+                              },
                             ],
                           }))
                         }
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold text-slate-600"
                       >
-                        <Plus className="size-3" /> Add serial
+                        <Plus className="size-3" /> {t("Add serial")}
                       </button>
                     ) : null}
                   </div>
 
                   <div className="space-y-2">
                     {rows.map((row) => (
-                      <div key={row.key} className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_120px_36px]">
+                      <div
+                        key={row.key}
+                        className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_120px_36px]"
+                      >
                         <input
                           value={row.serialNumber ?? ""}
                           readOnly={receipt.status !== "draft"}
-                          onChange={(e) => setSerialDrafts((current) => ({ ...current, [line.id]: (current[line.id] ?? []).map((item) => item.key === row.key ? { ...item, serialNumber: e.target.value } : item) }))}
-                          placeholder="Serial number"
+                          onChange={(e) =>
+                            setSerialDrafts((current) => ({
+                              ...current,
+                              [line.id]: (current[line.id] ?? []).map((item) =>
+                                item.key === row.key
+                                  ? { ...item, serialNumber: e.target.value }
+                                  : item,
+                              ),
+                            }))
+                          }
+                          placeholder={t("Serial number")}
                           className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
                         />
                         <input
                           value={row.imei1 ?? ""}
                           readOnly={receipt.status !== "draft"}
-                          onChange={(e) => setSerialDrafts((current) => ({ ...current, [line.id]: (current[line.id] ?? []).map((item) => item.key === row.key ? { ...item, imei1: e.target.value } : item) }))}
-                          placeholder="IMEI 1"
+                          onChange={(e) =>
+                            setSerialDrafts((current) => ({
+                              ...current,
+                              [line.id]: (current[line.id] ?? []).map((item) =>
+                                item.key === row.key ? { ...item, imei1: e.target.value } : item,
+                              ),
+                            }))
+                          }
+                          placeholder={t("IMEI 1")}
                           className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
                         />
                         <input
                           value={row.imei2 ?? ""}
                           readOnly={receipt.status !== "draft"}
-                          onChange={(e) => setSerialDrafts((current) => ({ ...current, [line.id]: (current[line.id] ?? []).map((item) => item.key === row.key ? { ...item, imei2: e.target.value } : item) }))}
-                          placeholder="IMEI 2"
+                          onChange={(e) =>
+                            setSerialDrafts((current) => ({
+                              ...current,
+                              [line.id]: (current[line.id] ?? []).map((item) =>
+                                item.key === row.key ? { ...item, imei2: e.target.value } : item,
+                              ),
+                            }))
+                          }
+                          placeholder={t("IMEI 2")}
                           className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
                         />
                         <select
                           value={row.condition ?? "usable"}
                           disabled={receipt.status !== "draft"}
-                          onChange={(e) => setSerialDrafts((current) => ({ ...current, [line.id]: (current[line.id] ?? []).map((item) => item.key === row.key ? { ...item, condition: e.target.value as "usable" | "damaged" } : item) }))}
+                          onChange={(e) =>
+                            setSerialDrafts((current) => ({
+                              ...current,
+                              [line.id]: (current[line.id] ?? []).map((item) =>
+                                item.key === row.key
+                                  ? { ...item, condition: e.target.value as "usable" | "damaged" }
+                                  : item,
+                              ),
+                            }))
+                          }
                           className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
                         >
-                          <option value="usable">Usable</option>
-                          <option value="damaged">Damaged</option>
+                          <option value="usable">{t("Usable")}</option>
+                          <option value="damaged">{t("Damaged")}</option>
                         </select>
                         {receipt.status === "draft" ? (
                           <button
-                            onClick={() => setSerialDrafts((current) => ({ ...current, [line.id]: (current[line.id] ?? []).filter((item) => item.key !== row.key) }))}
+                            onClick={() =>
+                              setSerialDrafts((current) => ({
+                                ...current,
+                                [line.id]: (current[line.id] ?? []).filter(
+                                  (item) => item.key !== row.key,
+                                ),
+                              }))
+                            }
                             className="grid size-9 place-items-center rounded-lg text-rose-500 hover:bg-rose-50"
-                            aria-label="Remove serial"
+                            aria-label={t("Remove serial")}
                           >
                             <Trash2 className="size-3.5" />
                           </button>
-                        ) : <span />}
+                        ) : (
+                          <span />
+                        )}
                       </div>
                     ))}
-                    {!rows.length ? <div className="text-[9px] text-slate-400">No serial / IMEI data recorded for this line.</div> : null}
+                    {!rows.length ? (
+                      <div className="text-[9px] text-slate-400">
+                        {t("No serial / IMEI data recorded for this line.")}
+                      </div>
+                    ) : null}
                   </div>
 
                   {receipt.status === "draft" ? (
                     <div className="mt-3 flex justify-end">
-                      <button onClick={() => void saveSerials(line.id)} disabled={saving} className="inline-flex items-center gap-1.5 rounded-lg bg-[#14203a] px-3 py-2 text-[10px] font-bold text-white disabled:opacity-50">
-                        <Save className="size-3" /> Save serials
+                      <button
+                        onClick={() => void saveSerials(line.id)}
+                        disabled={saving}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#14203a] px-3 py-2 text-[10px] font-bold text-white disabled:opacity-50"
+                      >
+                        <Save className="size-3" /> {t("Save serials")}
                       </button>
                     </div>
                   ) : null}
@@ -677,17 +849,25 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
         <div className="rounded-2xl border border-slate-200 bg-white">
           <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-[14px] font-bold text-[#14203a]"><FileText className="size-4" /> Receiving documents</div>
-              <div className="mt-1 text-[10px] text-slate-400">Supplier invoice and packing-list attachments.</div>
+              <div className="flex items-center gap-2 text-[14px] font-bold text-[#14203a]">
+                <FileText className="size-4" /> {t("Receiving documents")}
+              </div>
+              <div className="mt-1 text-[10px] text-slate-400">
+                {t("Supplier invoice and packing-list attachments.")}
+              </div>
             </div>
             <div className="flex gap-2">
-              <select value={attachmentType} onChange={(e) => setAttachmentType(e.target.value as typeof attachmentType)} className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]">
-                <option value="supplier_invoice">Supplier invoice</option>
-                <option value="packing_list">Packing list</option>
-                <option value="other">Other</option>
+              <select
+                value={attachmentType}
+                onChange={(e) => setAttachmentType(e.target.value as typeof attachmentType)}
+                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
+              >
+                <option value="supplier_invoice">{t("Supplier invoice")}</option>
+                <option value="packing_list">{t("Packing list")}</option>
+                <option value="other">{t("Other")}</option>
               </select>
               <label className="cursor-pointer rounded-lg bg-[#14203a] px-3 py-2 text-[10px] font-bold text-white">
-                Upload
+                {t("Upload")}
                 <input
                   type="file"
                   accept="application/pdf,image/*"
@@ -705,7 +885,12 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
           <div className="divide-y divide-slate-100">
             {attachments.map((attachment: ProcurementAttachment) => (
               <div key={attachment.id} className="flex items-center justify-between gap-3 p-4">
-                <a href={attachment.url} target="_blank" rel="noreferrer" className="truncate text-[11px] font-bold text-indigo-600 hover:underline">
+                <a
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate text-[11px] font-bold text-indigo-600 hover:underline"
+                >
                   {attachment.fileName}
                 </a>
                 {isAdmin ? (
@@ -715,34 +900,50 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                       setSaving(true);
                       void deleteProcurementAttachment(attachment)
                         .then(() => load())
-                        .catch((cause) => toast.error(cause instanceof Error ? cause.message : "Delete failed."))
+                        .catch((cause) =>
+                          toast.error(cause instanceof Error ? cause.message : "Delete failed."),
+                        )
                         .finally(() => setSaving(false));
                     }}
                     className="text-[10px] font-bold text-rose-600"
                   >
-                    Delete
+                    {t("Delete")}
                   </button>
                 ) : null}
               </div>
             ))}
-            {!attachments.length ? <div className="p-6 text-center text-[10px] text-slate-400">No receiving documents yet.</div> : null}
+            {!attachments.length ? (
+              <div className="p-6 text-center text-[10px] text-slate-400">
+                {t("No receiving documents yet.")}
+              </div>
+            ) : null}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 p-4">
-            <div className="text-[14px] font-bold text-[#14203a]">Receiving timeline</div>
-            <div className="mt-1 text-[10px] text-slate-400">Draft, approval and void events.</div>
+            <div className="text-[14px] font-bold text-[#14203a]">{t("Receiving timeline")}</div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Draft, approval and void events.")}
+            </div>
           </div>
           <div className="space-y-4 p-4">
             {events.map((event) => (
-              <div key={event.id} className="relative pl-5">
-                <span className="absolute left-0 top-1 size-2 rounded-full bg-indigo-500" />
-                <div className="text-[10px] font-bold text-slate-700">{event.type.replaceAll("_", " ")}</div>
-                <div className="mt-1 text-[9px] text-slate-400">{new Date(event.createdAt).toLocaleString()}</div>
+              <div key={event.id} className="relative ps-5">
+                <span className="absolute start-0 top-1 size-2 rounded-full bg-indigo-500" />
+                <div className="text-[10px] font-bold text-slate-700">
+                  {event.type.replaceAll("_", " ")}
+                </div>
+                <div className="mt-1 text-[9px] text-slate-400">
+                  {new Date(event.createdAt).toLocaleString()}
+                </div>
               </div>
             ))}
-            {!events.length ? <div className="py-6 text-center text-[10px] text-slate-400">No events yet.</div> : null}
+            {!events.length ? (
+              <div className="py-6 text-center text-[10px] text-slate-400">
+                {t("No events yet.")}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -750,7 +951,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       {receipt.status === "approved" ? (
         <div className="mt-5 flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-[11px] font-semibold text-emerald-700">
           <PackageCheck className="size-4" />
-          Stock and inventory movements were recorded when this receiving was approved.
+          {t("Stock and inventory movements were recorded when this receiving was approved.")}
         </div>
       ) : null}
     </div>

@@ -71,7 +71,7 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /queryInputRef\.current\?\.focus\(\)/);
   assert.match(panel, /event\.key === "Escape"/);
   assert.match(panel, /querySelectorAll<HTMLElement>/);
-  assert.match(panel, /triggerRef\.current\?\.focus\(\)/);
+  assert.match(panel, /trigger\?\.focus\(\)/);
   assert.match(panel, /requestIdRef/);
   assert.match(panel, /requestId !== requestIdRef\.current/);
   assert.match(panel, /suggestion\.decision === "allow"/);

@@ -31,8 +31,8 @@ test("inventory dashboard uses Supabase instead of mock storage", () => {
 });
 
 test("inventory writes go through atomic Supabase RPCs", () => {
-  assert.match(inventoryData, /rpc\("adjust_store_inventory"/);
-  assert.match(inventoryData, /rpc\("set_store_inventory_stock_v2"/);
+  assert.match(inventoryData, /rpc\(\s*"adjust_store_inventory"/);
+  assert.match(inventoryData, /rpc\(\s*"set_store_inventory_stock_v2"/);
   assert.match(inventoryData, /invalidateNativeStoreCache\(\)/);
   assert.doesNotMatch(inventoryData, /@\/dashboard\/mock\//);
 });
@@ -96,7 +96,7 @@ test("inventory movement history drawer is paginated and resilient", () => {
   assert.match(movementDrawer, /setDebouncedSearch\(searchInput\), 300/);
   assert.match(movementDrawer, /useMemo\(\(\) => movementCreatedSince\(period\), \[period\]\)/);
   assert.match(movementDrawer, /createdSince,/);
-  assert.match(movementDrawer, /aria-label="Clear inventory movement history search"/);
+  assert.match(movementDrawer, /aria-label=\{t\("Clear inventory movement history search"\)\}/);
   assert.match(movementDrawer, /aria-busy=\{loading \|\| loadingMore\}/);
   assert.match(movementDrawer, /sm:grid-cols-3/);
   assert.match(movementDrawer, /sm:w-\[560px\]/);

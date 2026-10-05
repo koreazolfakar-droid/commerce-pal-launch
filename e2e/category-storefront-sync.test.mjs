@@ -85,12 +85,12 @@ test("dashboard exposes the same category artwork with editable custom overrides
   assert.match(dashboard, /Storefront Category Grid/);
   assert.match(dashboard, /onClick=\{\(\) => openEdit\(category\)\}/);
   assert.match(dashboard, /category\.image/);
-  assert.match(dashboard, /<CategoryGlyph slug=\{category\.slug\}/);
+  assert.match(dashboard, /<CategoryGlyph\s+slug=\{category\.slug\}/);
   assert.match(dashboard, /Add Category/);
 
   assert.match(list, /category\.image \?/);
-  assert.match(list, /<CategoryGlyph slug=\{category\.slug\}/);
-  assert.match(preview, /<CategoryGlyph slug=\{category\.slug\}/);
+  assert.match(list, /<CategoryGlyph\s+slug=\{category\.slug\}/);
+  assert.match(preview, /<CategoryGlyph\s+slug=\{category\.slug\}/);
 
   assert.match(form, /Storefront category image/);
   assert.match(form, /Storefront default/);

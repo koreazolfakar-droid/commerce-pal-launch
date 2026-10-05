@@ -1,3 +1,11 @@
+import {
+  DashboardIdentityProvider,
+  useDashboardIdentity,
+} from "@/dashboard/contexts/DashboardIdentityContext";
+import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
+import { confirmDashboardDiscard } from "@/dashboard/lib/unsavedChanges";
+import { installDashboardNavigationGuard } from "@/dashboard/lib/unsavedChanges";
+import { readPreference, writePreference } from "@/dashboard/lib/preferenceStorage";
 import { navSections } from "@/dashboard/config/navigation";
 import {
   DASHBOARD_AUTH_REQUIRED_EVENT,
@@ -6,7 +14,7 @@ import {
   signOutDashboard,
   type DashboardProductSearchItem,
 } from "@/dashboard/data/catalog";
-import { LanguageContext, useLanguage } from "@/dashboard/i18n";
+import { LanguageContext, useLanguage, translations } from "@/dashboard/i18n";
 import { useTheme } from "@/dashboard/contexts/ThemeContext";
 import {
   DashboardLoginPage,
@@ -17,7 +25,6 @@ import { useDashboardAuth0 } from "@/dashboard/security/Auth0DashboardSecurity";
 import { SITE_URL } from "@/lib/storeConfig";
 import {
   BarChart3,
-  Bell,
   Boxes,
   ChevronDown,
   ClipboardList,
@@ -52,7 +59,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useInsertionEffect, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Route, Switch, useLocation } from "wouter";
 
@@ -117,8 +124,29 @@ function Sidebar({
 }) {
   const { t, lang } = useLanguage();
   const [location, navigate] = useLocation();
-  const isActive = (href: string) =>
-    location === href || (href !== "/dashboard" && location.startsWith(href));
+  const identity = useDashboardIdentity();
+  const sidebarRef = useRef<HTMLElement>(null);
+  useDashboardDialogFocus(mobileOpen, sidebarRef, () => setMobileOpen(false));
+  const [smallSidebar, setSmallSidebar] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const update = () => {
+      setSmallSidebar(media.matches);
+      if (!media.matches) setMobileOpen(false);
+    };
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [setMobileOpen]);
+  const items = navSections.flatMap((section) => section.items);
+  const activeHref = items
+    .filter(
+      (item) =>
+        location === item.href ||
+        (item.href !== "/dashboard" && location.startsWith(item.href + "/")),
+    )
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const isActive = (href: string) => href === activeHref;
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -148,6 +176,12 @@ function Sidebar({
         />
       )}
       <aside
+        ref={sidebarRef}
+        inert={smallSidebar && !mobileOpen ? true : undefined}
+        role={mobileOpen ? "dialog" : undefined}
+        aria-modal={mobileOpen ? true : undefined}
+        aria-label={t("Navigation")}
+        tabIndex={-1}
         className={`fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
         <div
@@ -164,35 +198,49 @@ function Sidebar({
                 </div>
               )}
               <div className="space-y-1">
-                {section.items.map((item) => {
-                  const Icon = iconMap[item.icon] ?? LayoutDashboard;
-                  const active = isActive(item.href);
-                  return (
-                    <button
-                      key={item.href}
-                      title={collapsed ? t(item.label) : undefined}
-                      onMouseEnter={() => void preloadDashboardRoute(item.href)}
-                      onFocus={() => void preloadDashboardRoute(item.href)}
-                      onTouchStart={() => void preloadDashboardRoute(item.href)}
-                      onClick={() => {
-                        void preloadDashboardRoute(item.href);
-                        navigate(item.href);
-                        setMobileOpen(false);
-                      }}
-                      className={`dashboard-sidebar-action group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_4px_14px_rgba(83,97,239,.22)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
-                    >
-                      <Icon
-                        className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
-                        strokeWidth={1.8}
-                      />
-                      {(!collapsed || mobileOpen) && (
-                        <>
-                          <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
-                        </>
-                      )}
-                    </button>
-                  );
-                })}
+                {section.items
+                  .filter((item) => item.href !== "/dashboard/users" || identity.role === "admin")
+                  .map((item) => {
+                    const Icon = iconMap[item.icon] ?? LayoutDashboard;
+                    const active = isActive(item.href);
+                    return (
+                      <button
+                        key={item.href}
+                        title={collapsed ? t(item.label) : undefined}
+                        aria-current={active ? "page" : undefined}
+                        onMouseEnter={() => void preloadDashboardRoute(item.href)}
+                        onFocus={() => void preloadDashboardRoute(item.href)}
+                        onTouchStart={() => void preloadDashboardRoute(item.href)}
+                        onClick={() => {
+                          void preloadDashboardRoute(item.href);
+                          navigate(item.href);
+                          setMobileOpen(false);
+                        }}
+                        className={`dashboard-sidebar-action group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_4px_14px_rgba(83,97,239,.22)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
+                      >
+                        <Icon
+                          className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
+                          strokeWidth={1.8}
+                        />
+                        {(!collapsed || mobileOpen) && (
+                          <>
+                            <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
+                            {[
+                              "/dashboard/marketing",
+                              "/dashboard/coupons",
+                              "/dashboard/messages",
+                              "/dashboard/reviews",
+                            ].includes(item.href) &&
+                            (!collapsed || mobileOpen) ? (
+                              <span className="ms-auto rounded bg-white/10 px-1.5 py-0.5 text-[9px]">
+                                {t("Not connected")}
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
               </div>
             </div>
           ))}
@@ -245,13 +293,35 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const [, navigate] = useLocation();
   const [headerProducts, setHeaderProducts] = useState<DashboardProductSearchItem[]>([]);
   const [searchIndexLoading, setSearchIndexLoading] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const headerMounted = useRef(true);
+  useEffect(() => {
+    if (!profileOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!profileRef.current?.contains(event.target as Node)) setProfileOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+        profileRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+      }
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [profileOpen]);
+  const identity = useDashboardIdentity();
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        document.getElementById("global-search")?.focus();
+        if (window.matchMedia("(max-width: 639px)").matches) setMobileSearchOpen(true);
+        else document.getElementById("global-search")?.focus();
       }
     };
     window.addEventListener("keydown", listener);
@@ -259,6 +329,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
   }, []);
 
   useEffect(() => {
+    headerMounted.current = true;
     return () => {
       headerMounted.current = false;
     };
@@ -273,6 +344,8 @@ function Header({ onMenu }: { onMenu: () => void }) {
     }
 
     let cancelled = false;
+    setHeaderProducts([]);
+    setSearchError(false);
     setSearchIndexLoading(true);
     const timer = window.setTimeout(() => {
       void searchDashboardProducts(normalizedQuery, 5)
@@ -280,7 +353,10 @@ function Header({ onMenu }: { onMenu: () => void }) {
           if (!cancelled && headerMounted.current) setHeaderProducts(rows);
         })
         .catch(() => {
-          if (!cancelled && headerMounted.current) setHeaderProducts([]);
+          if (!cancelled && headerMounted.current) {
+            setHeaderProducts([]);
+            setSearchError(true);
+          }
         })
         .finally(() => {
           if (!cancelled && headerMounted.current) setSearchIndexLoading(false);
@@ -293,9 +369,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
     };
   }, [query]);
 
-  const results: DashboardProductSearchItem[] = query.trim().length >= 2
-    ? headerProducts
-    : [];
+  const results: DashboardProductSearchItem[] = query.trim().length >= 2 ? headerProducts : [];
 
   return (
     <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
@@ -359,7 +433,11 @@ function Header({ onMenu }: { onMenu: () => void }) {
                 ))
               ) : (
                 <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {searchIndexLoading ? t("Loading products…") : t("No matching Supabase products")}
+                  {searchIndexLoading
+                    ? t("Loading products…")
+                    : searchError
+                      ? t("Product search failed. Try again.")
+                      : t("No matching Supabase products")}
                 </div>
               )}
             </div>
@@ -374,7 +452,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
           aria-label={t("Activity logs")}
           title={t("Activity logs")}
         >
-          <Bell className="size-[18px]" />
+          <FileText className="size-[18px]" />
         </button>
         <button
           type="button"
@@ -390,12 +468,12 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           onClick={() => setLang(lang === "en" ? "ar" : "en")}
           className="dashboard-compact-control rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-bold text-muted-foreground transition hover:text-primary"
-          title={lang === "en" ? "العربية" : "English"}
+          title={lang === "en" ? "العربية" : t("English")}
         >
-          {lang === "en" ? "AR" : "EN"}
+          {lang === "en" ? t("AR") : t("EN")}
         </button>
 
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button
             onClick={() => setProfileOpen((current) => !current)}
             className="flex items-center gap-2.5 rounded-lg p-1.5 pe-2 transition hover:bg-card"
@@ -403,12 +481,16 @@ function Header({ onMenu }: { onMenu: () => void }) {
             aria-expanded={profileOpen}
           >
             <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-background">
-              SC
+              {identity.name.slice(0, 2).toUpperCase() || "…"}
             </div>
             <div className="hidden text-start sm:block">
-              <div className="text-[12px] font-bold text-foreground">{t("Space Call Staff")}</div>
+              <div className="text-[12px] font-bold text-foreground">
+                {identity.loading ? t("Loading…") : identity.name}
+              </div>
               <div className="text-[10px] font-medium text-muted-foreground">
-                {t("Store staff")}
+                {identity.role
+                  ? t(identity.role === "admin" ? "Administrator" : "Editor")
+                  : t("Staff")}
               </div>
             </div>
             <ChevronDown className="hidden size-4 text-muted-foreground sm:block" />
@@ -508,7 +590,11 @@ function Header({ onMenu }: { onMenu: () => void }) {
                 ))
               ) : (
                 <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {searchIndexLoading ? t("Loading products…") : t("No matching products")}
+                  {searchIndexLoading
+                    ? t("Loading products…")
+                    : searchError
+                      ? t("Product search failed. Try again.")
+                      : t("No matching products")}
                 </div>
               )}
             </div>
@@ -685,10 +771,7 @@ function DashboardGate() {
     const reset = () => {
       lastActivityAt.current = Date.now();
       window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(
-        () => void expireDashboardSession(),
-        DASHBOARD_IDLE_TIMEOUT_MS,
-      );
+      timeoutId = window.setTimeout(() => void expireDashboardSession(), DASHBOARD_IDLE_TIMEOUT_MS);
     };
 
     const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "touchstart", "scroll"];
@@ -708,18 +791,22 @@ function DashboardGate() {
       </div>
     );
   }
-  return <DashboardLayout />;
+  return (
+    <DashboardIdentityProvider>
+      <DashboardLayout />
+    </DashboardIdentityProvider>
+  );
 }
 
 function DashboardLayout() {
   const [location] = useLocation();
   const { lang } = useLanguage();
   const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem("spacecall-sidebar") === "collapsed",
+    () => readPreference("spacecall-sidebar") === "collapsed",
   );
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
-    localStorage.setItem("spacecall-sidebar", collapsed ? "collapsed" : "expanded");
+    writePreference("spacecall-sidebar", collapsed ? "collapsed" : "expanded");
   }, [collapsed]);
   const route = location.replace(/\/$/, "") || "/dashboard";
   const content = resolveDashboardRoute(route);
@@ -732,13 +819,12 @@ function DashboardLayout() {
         setMobileOpen={setMobileOpen}
       />
       <div
+        inert={mobileOpen ? true : undefined}
         className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[82px]" : "lg:pl-[82px]") : lang === "ar" ? "lg:pr-[260px]" : "lg:pl-[260px]"}`}
       >
         <Header onMenu={() => setMobileOpen(true)} />
         <main className="dashboard-main mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9">
-          <Suspense fallback={<DashboardRouteFallback />}>
-            {content}
-          </Suspense>
+          <Suspense fallback={<DashboardRouteFallback />}>{content}</Suspense>
         </main>
         <MobileBottomNav onMore={() => setMobileOpen(true)} />
       </div>
@@ -748,67 +834,16 @@ function DashboardLayout() {
 
 export default function App() {
   const { theme } = useTheme();
-  const [lang, setLang] = useState<"en" | "ar">(
-    () => (localStorage.getItem("spacecall-language") as "en" | "ar") || "en",
+  useInsertionEffect(() => installDashboardNavigationGuard(), []);
+  const [lang, setLang] = useState<"en" | "ar">(() =>
+    readPreference("spacecall-language") === "ar" ? "ar" : "en",
   );
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-    localStorage.setItem("spacecall-language", lang);
+    writePreference("spacecall-language", lang);
   }, [lang]);
-  const t = (key: string) => {
-    const dictionary =
-      lang === "ar"
-        ? {
-            Overview: "نظرة عامة",
-            Commerce: "التجارة",
-            "Store content": "محتوى المتجر",
-            Marketing: "التسويق",
-            Management: "الإدارة",
-            System: "النظام",
-            Dashboard: "لوحة التحكم",
-            Orders: "الطلبات",
-            Sales: "المبيعات",
-            Products: "المنتجات",
-            Collections: "المجموعات",
-            Categories: "التصنيفات",
-            Inventory: "المخزون",
-            Procurement: "المشتريات",
-            "Purchase Orders": "أوامر الشراء",
-            Receiving: "الاستلام",
-            Suppliers: "الموردون",
-            Customers: "العملاء",
-            Homepage: "الصفحة الرئيسية",
-            "Hero banners": "البنرات الرئيسية",
-            Brands: "العلامات التجارية",
-            Navigation: "التنقل",
-            Promotions: "العروض",
-            Campaigns: "الحملات",
-            Coupons: "القسائم",
-            SEO: "تحسين الظهور",
-            Analytics: "التحليلات",
-            Messages: "الرسائل",
-            Reviews: "المراجعات",
-            "Media library": "مكتبة الوسائط",
-            Users: "المستخدمون",
-            "Activity logs": "سجل النشاط",
-            Security: "الأمان",
-            Settings: "الإعدادات",
-            "Search products...": "ابحث في المنتجات...",
-            "Store Manager": "مدير المتجر",
-            "Export report": "تصدير التقرير",
-            "Live workspace": "مساحة مباشرة",
-            "Store management workspace": "مساحة إدارة المتجر",
-            "Notifications are not connected yet.": "الإشعارات غير مربوطة بعد.",
-            "View store": "عرض المتجر",
-            "Collapse sidebar": "طي الشريط الجانبي",
-            "Switch to dark mode": "تفعيل الوضع الليلي",
-            "Switch to light mode": "تفعيل الوضع النهاري",
-            More: "المزيد",
-          }
-        : {};
-    return dictionary[key as keyof typeof dictionary] || key;
-  };
+  const t = (key: string) => translations[lang][key] || key;
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>
       <>

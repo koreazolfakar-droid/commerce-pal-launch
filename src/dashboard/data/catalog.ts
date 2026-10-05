@@ -1,3 +1,4 @@
+import { loadAllRows } from "@/dashboard/lib/loadAllRows";
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { createEphemeralPasskeyClient, supabase } from "@/integrations/supabase/client";
 import { looseSupabase } from "@/integrations/supabase/looseClient";
@@ -79,7 +80,6 @@ export type DashboardSecuritySnapshot = {
   events: DashboardSecurityEvent[];
 };
 
-
 export type DashboardMfaStatus = {
   role: DashboardRole;
   required: boolean;
@@ -105,8 +105,6 @@ type DashboardMfaFactor = {
   factor_type?: "totp" | "phone";
   friendly_name?: string | null;
 };
-
-
 
 export type DashboardBrand = {
   id: string;
@@ -174,6 +172,7 @@ export type DashboardProductInput = {
   sku: string;
   barcode: string;
   stock: number;
+  expectedStock: number | null;
   imageUrl: string;
   seoTitle: string;
   seoDescription: string;
@@ -201,18 +200,10 @@ const DASHBOARD_ACCESS_TOKEN_REFRESH_SKEW_MS = 5_000;
 
 export const DASHBOARD_AUTH_REQUIRED_EVENT = "spacecall:dashboard-auth-required";
 
-let dashboardRoleCache:
-  | { userId: string; role: DashboardRole; expiresAt: number }
-  | null = null;
-let dashboardRoleRequest:
-  | { userId: string; promise: Promise<DashboardRole | null> }
-  | null = null;
-let dashboardValidatedUserCache:
-  | { user: User; expiresAt: number }
-  | null = null;
-let dashboardUserValidationRequest:
-  | { userId: string; promise: Promise<User | null> }
-  | null = null;
+let dashboardRoleCache: { userId: string; role: DashboardRole; expiresAt: number } | null = null;
+let dashboardRoleRequest: { userId: string; promise: Promise<DashboardRole | null> } | null = null;
+let dashboardValidatedUserCache: { user: User; expiresAt: number } | null = null;
+let dashboardUserValidationRequest: { userId: string; promise: Promise<User | null> } | null = null;
 let dashboardSessionRefreshRequest: Promise<boolean> | null = null;
 
 function clearDashboardRoleCache() {
@@ -380,10 +371,7 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
   if (!user) return null;
 
   const userId = user.id;
-  if (
-    dashboardRoleCache?.userId === userId &&
-    dashboardRoleCache.expiresAt > Date.now()
-  ) {
+  if (dashboardRoleCache?.userId === userId && dashboardRoleCache.expiresAt > Date.now()) {
     return dashboardRoleCache.role;
   }
 
@@ -405,8 +393,7 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
       return null;
     }
 
-    const role =
-      data.role === "admin" || data.role === "editor" ? data.role : null;
+    const role = data.role === "admin" || data.role === "editor" ? data.role : null;
     if (role) {
       dashboardRoleCache = {
         userId,
@@ -527,7 +514,6 @@ export async function signInDashboard(
   return role;
 }
 
-
 export type DashboardPasskey = {
   id: string;
   friendlyName: string | null;
@@ -537,10 +523,7 @@ export type DashboardPasskey = {
 
 type DashboardPasskeyAction = "signin" | "register" | "manage";
 
-function dashboardPasskeyErrorMessage(
-  error: DashboardAuthFailure,
-  action: DashboardPasskeyAction,
-) {
+function dashboardPasskeyErrorMessage(error: DashboardAuthFailure, action: DashboardPasskeyAction) {
   const code = typeof error.code === "string" ? error.code.toLowerCase() : "";
   const status = typeof error.status === "number" ? error.status : 0;
 
@@ -574,10 +557,7 @@ function dashboardPasskeyErrorMessage(
   return "Passkey sign-in could not be completed.";
 }
 
-function dashboardPasskeyThrownErrorMessage(
-  cause: unknown,
-  action: DashboardPasskeyAction,
-) {
+function dashboardPasskeyThrownErrorMessage(cause: unknown, action: DashboardPasskeyAction) {
   if (cause instanceof DOMException) {
     if (cause.name === "NotAllowedError" || cause.name === "AbortError") {
       return "Passkey request was cancelled or timed out.";
@@ -707,7 +687,6 @@ export async function registerDashboardPasskey(): Promise<DashboardPasskey> {
   return passkey;
 }
 
-
 async function requireDashboardPasskeyReadSession() {
   const status = await getDashboardMfaStatus();
   if (!status?.ready) {
@@ -817,10 +796,7 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
     passkeyStepUpReady,
     ready:
       roleRow.mfa_required === true &&
-      (
-        (currentLevel === "aal2" && Boolean(verifiedFactor?.id)) ||
-        passkeyStepUpReady
-      ),
+      ((currentLevel === "aal2" && Boolean(verifiedFactor?.id)) || passkeyStepUpReady),
   };
 }
 
@@ -853,9 +829,7 @@ export async function beginDashboardTotpEnrollment(): Promise<DashboardTotpEnrol
   });
   throwIfError(error, "Starting MFA enrollment failed");
 
-  const totp = data?.totp as
-    | { qr_code?: string; secret?: string; uri?: string }
-    | undefined;
+  const totp = data?.totp as { qr_code?: string; secret?: string; uri?: string } | undefined;
 
   if (!data?.id || !totp?.qr_code || !totp.secret || !totp.uri) {
     throw new Error("Supabase did not return a complete TOTP enrollment.");
@@ -946,10 +920,13 @@ async function logDashboardSecurityEvent(
   eventType: string,
   metadata: Record<string, unknown> = {},
 ) {
-  const { error } = await supabase.rpc("log_dashboard_security_event", rpcArgs({
-    p_event_type: eventType,
-    p_metadata: metadata,
-  }));
+  const { error } = await supabase.rpc(
+    "log_dashboard_security_event",
+    rpcArgs({
+      p_event_type: eventType,
+      p_metadata: metadata,
+    }),
+  );
   if (error) console.warn("[dashboard-security] event log failed", error.message);
 }
 
@@ -1021,16 +998,10 @@ export async function getDashboardSecuritySnapshot(): Promise<DashboardSecurityS
   };
 }
 
-export async function requestDashboardPasswordReset(
-  email: string,
-  captchaToken?: string,
-) {
+export async function requestDashboardPasswordReset(email: string, captchaToken?: string) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) throw new Error("Enter your dashboard email first.");
-  if (
-    normalizedEmail.length > 320 ||
-    !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail)
-  ) {
+  if (normalizedEmail.length > 320 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(normalizedEmail)) {
     throw new Error("Enter a valid dashboard email address.");
   }
   if (isDashboardTurnstileConfigured && !captchaToken) {
@@ -1067,7 +1038,9 @@ export async function updateDashboardPassword(password: string) {
     body: { password },
   });
   if (error) {
-    throw new Error("Secure password update was rejected. Verify MFA and try a different password.");
+    throw new Error(
+      "Secure password update was rejected. Verify MFA and try a different password.",
+    );
   }
 
   const payload = data as { ok?: boolean; error?: string } | null;
@@ -1091,19 +1064,23 @@ export async function updateDashboardPassword(password: string) {
   // change. Still request a global sign-out, then always clear the local session.
   const { error: signOutError } = await supabase.auth.signOut({ scope: "global" });
   if (signOutError) {
-    console.warn("[dashboard-security] global sign out after password change failed", signOutError.message);
+    console.warn(
+      "[dashboard-security] global sign out after password change failed",
+      signOutError.message,
+    );
     await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
   }
 }
 
-
 export async function listDashboardBrands(): Promise<DashboardBrand[]> {
   await requireDashboardRole();
-  const { data, error } = await supabase
-    .from("cms_brands")
-    .select("id,name,slug,is_visible,logo_url,href")
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
+  const { data, error } = await loadAllRows(
+    supabase
+      .from("cms_brands")
+      .select("id,name,slug,is_visible,logo_url,href")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
+  );
   throwIfError(error, "Loading brands failed");
   return (data ?? []).map((row) => ({
     id: row.id,
@@ -1117,11 +1094,13 @@ export async function listDashboardBrands(): Promise<DashboardBrand[]> {
 
 export async function listDashboardCategories(): Promise<DashboardCategory[]> {
   await requireDashboardRole();
-  const { data, error } = await supabase
-    .from("store_categories")
-    .select("id,name,slug,is_active,spec_template")
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
+  const { data, error } = await loadAllRows(
+    supabase
+      .from("store_categories")
+      .select("id,name,slug,is_active,spec_template")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
+  );
   throwIfError(error, "Loading categories failed");
   return (data ?? []).map((row) => ({
     id: row.id,
@@ -1134,11 +1113,13 @@ export async function listDashboardCategories(): Promise<DashboardCategory[]> {
 
 export async function listDashboardCollections(): Promise<DashboardCollection[]> {
   await requireDashboardRole();
-  const { data, error } = await supabase
-    .from("store_collections")
-    .select("id,title,handle,is_active")
-    .order("sort_order", { ascending: true })
-    .order("title", { ascending: true });
+  const { data, error } = await loadAllRows(
+    supabase
+      .from("store_collections")
+      .select("id,title,handle,is_active")
+      .order("sort_order", { ascending: true })
+      .order("title", { ascending: true }),
+  );
   throwIfError(error, "Loading collections failed");
   return (data ?? []).map((row) => ({
     id: row.id,
@@ -1156,24 +1137,31 @@ function firstImage(images: ImageListRow[]) {
 
 export async function listDashboardProducts(): Promise<DashboardProduct[]> {
   await requireDashboardRole();
-  const [productResult, variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
-    supabase
-      .from("store_products")
-      .select(
-        "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
-      )
-      .order("updated_at", { ascending: false }),
-    supabase
-      .from("store_product_variants")
-      .select("product_id,price,compare_at_price,sku,barcode,sort_order")
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("store_product_images")
-      .select("product_id,url,is_primary,sort_order")
-      .order("sort_order", { ascending: true }),
-    supabase.from("cms_brands").select("id,name"),
-    supabase.from("store_categories").select("id,name"),
-  ]);
+  const [productResult, variantResult, imageResult, brandResult, categoryResult] =
+    await Promise.all([
+      loadAllRows(
+        supabase
+          .from("store_products")
+          .select(
+            "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description",
+          )
+          .order("updated_at", { ascending: false }),
+      ),
+      loadAllRows(
+        supabase
+          .from("store_product_variants")
+          .select("product_id,price,compare_at_price,sku,barcode,sort_order")
+          .order("sort_order", { ascending: true }),
+      ),
+      loadAllRows(
+        supabase
+          .from("store_product_images")
+          .select("product_id,url,is_primary,sort_order")
+          .order("sort_order", { ascending: true }),
+      ),
+      loadAllRows(supabase.from("cms_brands").select("id,name")),
+      loadAllRows(supabase.from("store_categories").select("id,name")),
+    ]);
   throwIfError(productResult.error, "Loading products failed");
   throwIfError(variantResult.error, "Loading variants failed");
   throwIfError(imageResult.error, "Loading product images failed");
@@ -1206,11 +1194,11 @@ export async function listDashboardProducts(): Promise<DashboardProduct[]> {
       handle: row.handle,
       name: row.title,
       description: row.description,
-      brand: row.brand_id ? brands.get(row.brand_id) ?? "" : "",
+      brand: row.brand_id ? (brands.get(row.brand_id) ?? "") : "",
       brandId: row.brand_id,
       category: row.category_id
-        ? categories.get(row.category_id) ?? row.product_type ?? ""
-        : row.product_type ?? "",
+        ? (categories.get(row.category_id) ?? row.product_type ?? "")
+        : (row.product_type ?? ""),
       categoryId: row.category_id,
       price: primary ? Number(primary.price) : Number(row.base_price),
       compareAt:
@@ -1308,11 +1296,11 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
     handle: row.handle,
     name: row.title,
     description: row.description,
-    brand: row.brand_id ? brandResult.data?.name ?? "" : "",
+    brand: row.brand_id ? (brandResult.data?.name ?? "") : "",
     brandId: row.brand_id,
     category: row.category_id
-      ? categoryResult.data?.name ?? row.product_type ?? ""
-      : row.product_type ?? "",
+      ? (categoryResult.data?.name ?? row.product_type ?? "")
+      : (row.product_type ?? ""),
     categoryId: row.category_id,
     price: primary ? Number(primary.price) : Number(row.base_price),
     compareAt:
@@ -1334,7 +1322,12 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
 }
 
 async function uniqueHandle(title: string, existingId?: string) {
-  const base = slugify(title);
+  const base =
+    title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "product";
   let candidate = base;
   let suffix = 2;
   while (true) {
@@ -1367,6 +1360,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
       p_sku: input.sku.trim(),
       p_barcode: input.barcode.trim(),
       p_stock: input.stock,
+      p_expected_stock: input.expectedStock,
       p_image_url: input.imageUrl.trim(),
       p_seo_title: input.seoTitle.trim(),
       p_seo_description: input.seoDescription.trim(),
@@ -1376,19 +1370,24 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
       p_collection_ids: [...new Set(input.collectionIds)],
     }),
   );
+  if (error?.message.includes("product_editor_stock_conflict")) {
+    throw new Error(
+      "Stock changed in another session. Refresh the product before adjusting inventory.",
+    );
+  }
   throwIfError(error, "Saving product failed");
 
-  const result = data as
-    | {
-        id?: unknown;
-        handle?: unknown;
-        variant_managed_separately?: unknown;
-      }
-    | null;
+  const result = data as {
+    id?: unknown;
+    handle?: unknown;
+    variant_managed_separately?: unknown;
+    stock?: unknown;
+  } | null;
 
   const productId = typeof result?.id === "string" ? result.id : "";
   const handle = typeof result?.handle === "string" ? result.handle : "";
-  if (!productId || !handle) {
+  const stock = result?.stock;
+  if (!productId || !handle || typeof stock !== "number" || !Number.isInteger(stock) || stock < 0) {
     throw new Error("Product save completed without a valid result.");
   }
 
@@ -1398,6 +1397,7 @@ export async function saveDashboardProduct(input: DashboardProductInput) {
     id: productId,
     handle,
     variantManagedSeparately: result?.variant_managed_separately === true,
+    stock,
   };
 }
 
@@ -1429,7 +1429,9 @@ function mapProductImage(row: ImageRow): DashboardProductImage {
   };
 }
 
-export async function listDashboardProductImages(productId: string): Promise<DashboardProductImage[]> {
+export async function listDashboardProductImages(
+  productId: string,
+): Promise<DashboardProductImage[]> {
   await requireDashboardRole();
   const { data, error } = await supabase
     .from("store_product_images")
@@ -1470,8 +1472,7 @@ async function uploadProductImageFile(
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const objectPath = `${PRODUCT_IMAGE_PREFIX}/${productId}/${unique}.webp`;
-  const thumbnailObjectPath =
-    `${PRODUCT_IMAGE_PREFIX}/${productId}/thumbnails/${unique}.webp`;
+  const thumbnailObjectPath = `${PRODUCT_IMAGE_PREFIX}/${productId}/thumbnails/${unique}.webp`;
 
   const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).upload(objectPath, file, {
     cacheControl: "31536000",
@@ -1488,7 +1489,10 @@ async function uploadProductImageFile(
       contentType: "image/webp",
     });
   if (thumbnailError) {
-    await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]).catch(() => undefined);
+    await supabase.storage
+      .from(PRODUCT_IMAGE_BUCKET)
+      .remove([objectPath])
+      .catch(() => undefined);
     throw new Error(`Uploading product thumbnail failed: ${thumbnailError.message}`);
   }
 
@@ -1506,7 +1510,7 @@ async function uploadProductImageFile(
 }
 
 async function removeOwnedProductImageFile(url?: string) {
-  const objectPath = productStoragePathFromUrl(url);
+  const objectPath = productStoragePathFromUrl(url ?? "");
   if (!objectPath) return;
   const { error } = await supabase.storage.from(PRODUCT_IMAGE_BUCKET).remove([objectPath]);
   throwIfError(error, "Deleting product image file failed");
@@ -1656,4 +1660,7 @@ export async function reorderDashboardProductImages(
   broadcastStorefrontRefresh();
 }
 
-type LooseRpc = (fn: string, args: never) => Promise<{ data: unknown; error: { message: string } | null }>;
+type LooseRpc = (
+  fn: string,
+  args: never,
+) => Promise<{ data: unknown; error: { message: string } | null }>;

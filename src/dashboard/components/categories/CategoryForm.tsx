@@ -1,3 +1,6 @@
+import { useLanguage } from "@/dashboard/i18n";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { Check, Loader2, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -39,9 +42,10 @@ function TextField({
   type?: string;
   min?: number;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <input
         type={type}
         min={min}
@@ -65,6 +69,7 @@ function ToggleRow({
   title: string;
   description: string;
 }) {
+  const { t } = useLanguage();
   return (
     <button
       type="button"
@@ -72,8 +77,8 @@ function ToggleRow({
       className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-start transition hover:border-indigo-200"
     >
       <span className="min-w-0">
-        <span className="block text-[11px] font-bold text-slate-700">{title}</span>
-        <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">{description}</span>
+        <span className="block text-[11px] font-bold text-slate-700">{t(title)}</span>
+        <span className="mt-0.5 block text-[10px] leading-4 text-slate-400">{t(description)}</span>
       </span>
       <span
         className={
@@ -112,6 +117,7 @@ export default function CategoryForm({
   onClose: () => void;
   onSave: (category: CatalogCategory, imageChange: CategoryImageChange) => Promise<void>;
 }) {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState<CatalogCategory>({ ...category });
   const [pendingImage, setPendingImage] = useState<File | null>(null);
   const [sourceInfo, setSourceInfo] = useState<ProductImageSourceInfo | null>(null);
@@ -119,6 +125,21 @@ export default function CategoryForm({
   const [previewUrl, setPreviewUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const imageEditor = useSmartImageEditor();
+  const dirty = JSON.stringify(draft) !== JSON.stringify(category) || Boolean(pendingImage);
+  const markSaved = useDashboardUnsavedChanges(dirty);
+  const requestClose = () => {
+    if (saving) return;
+    if (
+      !dirty ||
+      window.confirm(
+        document.documentElement.lang === "ar"
+          ? "هل تريد تجاهل التعديلات غير المحفوظة؟"
+          : "Discard unsaved changes?",
+      )
+    )
+      onClose();
+  };
+  const dialogRef = useDashboardModal(requestClose, !imageEditor.isEditing);
 
   useEffect(() => {
     if (!pendingImage) {
@@ -194,9 +215,7 @@ export default function CategoryForm({
 
     const family = canonicalCategoryFamilySlug(slug);
     const duplicateFamily = categories.find(
-      (item) =>
-        item.id !== draft.id &&
-        canonicalCategoryFamilySlug(item.slug) === family,
+      (item) => item.id !== draft.id && canonicalCategoryFamilySlug(item.slug) === family,
     );
     if (duplicateFamily) {
       toast.error(
@@ -249,11 +268,18 @@ export default function CategoryForm({
     <div
       className="fixed inset-0 z-[90] grid place-items-end bg-slate-950/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !saving) onClose();
+        if (event.target === event.currentTarget && !saving) requestClose();
       }}
     >
       {imageEditor.dialog}
-      <div className="max-h-[94vh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={mode === "create" ? t("Create category") : t("Edit category")}
+        tabIndex={-1}
+        className="max-h-[94dvh] w-full overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl"
+      >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-100 bg-white text-indigo-600 shadow-sm">
@@ -265,13 +291,15 @@ export default function CategoryForm({
             </span>
             <div className="min-w-0">
               <div className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6a70e7]">
-                {mode === "create" ? "New category" : "Edit category"}
+                {mode === "create" ? t("New category") : t("Edit category")}
               </div>
               <h2 className="mt-1 truncate text-[19px] font-black tracking-[-.03em] text-[#14203a]">
-                {mode === "create" ? "Create Category" : draft.name || "Category"}
+                {mode === "create" ? t("Create Category") : draft.name || t("Category")}
               </h2>
               <p className="mt-1 truncate text-[10px] text-slate-400">
-                Configure browsing, product specification fields, storefront visibility, order, and SEO.
+                {t(
+                  "Configure browsing, product specification fields, storefront visibility, order, and SEO.",
+                )}
               </p>
             </div>
           </div>
@@ -340,26 +368,26 @@ export default function CategoryForm({
               onApply={applyAiPatch}
               compact
             />
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            aria-label="Close category form"
-            className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:opacity-50"
-          >
-            <X className="size-4" />
-          </button>
+            <button
+              type="button"
+              onClick={requestClose}
+              disabled={saving}
+              aria-label={t("Close category form")}
+              className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              <X className="size-4" />
+            </button>
           </div>
         </div>
 
         <div className="space-y-6 px-5 py-5 sm:px-6">
           <section>
             <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
-              Basic information
+              {t("Basic information")}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField
-                label="Category Name"
+                label={t("Category Name")}
                 value={draft.name}
                 onChange={(value) => {
                   const shouldGenerateSlug = !draft.slug.trim();
@@ -368,28 +396,30 @@ export default function CategoryForm({
                     ...(shouldGenerateSlug ? { slug: normalizeCategorySlug(value) } : {}),
                   });
                 }}
-                placeholder="e.g. Smartphones"
+                placeholder={t("e.g. Smartphones")}
               />
               <TextField
-                label="Arabic Name"
+                label={t("Arabic Name")}
                 value={draft.nameAr ?? ""}
                 onChange={(value) => patch({ nameAr: value || undefined })}
                 placeholder="مثال: هواتف ذكية"
               />
               <TextField
-                label="Slug"
+                label={t("Slug")}
                 value={draft.slug}
                 onChange={(value) => patch({ slug: normalizeCategorySlug(value) })}
-                placeholder="smartphones"
+                placeholder={t("smartphones")}
               />
             </div>
             <label className="mt-4 block">
-              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Description</span>
+              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                {t("Description")}
+              </span>
               <textarea
                 value={draft.description}
                 onChange={(event) => patch({ description: event.target.value })}
                 rows={4}
-                placeholder="Explain what customers will find in this category."
+                placeholder={t("Explain what customers will find in this category.")}
                 className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] leading-5 text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
               />
             </label>
@@ -397,7 +427,7 @@ export default function CategoryForm({
 
           <section>
             <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
-              Visual identity
+              {t("Visual identity")}
             </div>
             <div className="rounded-2xl border border-slate-200 p-3.5">
               <div className="mb-3 flex items-center gap-3">
@@ -406,10 +436,10 @@ export default function CategoryForm({
                 </span>
                 <div>
                   <div className="text-[11px] font-bold text-slate-700">
-                    {draft.icon || "LayoutGrid"}
+                    {draft.icon || t("LayoutGrid")}
                   </div>
                   <div className="text-[9px] text-slate-400">
-                    Choose an icon suited to electronics retail.
+                    {t("Choose an icon suited to electronics retail.")}
                   </div>
                 </div>
               </div>
@@ -438,11 +468,7 @@ export default function CategoryForm({
               <div className="grid gap-4 p-4 sm:grid-cols-[150px_1fr]">
                 <div className="grid aspect-square place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white">
                   {activePreview ? (
-                    <img
-                      src={activePreview}
-                      alt=""
-                      className="h-full w-full object-contain p-2"
-                    />
+                    <img src={activePreview} alt="" className="h-full w-full object-contain p-2" />
                   ) : (
                     <div className="relative grid size-full place-items-center">
                       <CategoryGlyph
@@ -450,24 +476,26 @@ export default function CategoryForm({
                         className="h-[8.25rem] w-[8.25rem]"
                       />
                       <span className="absolute inset-x-2 bottom-2 rounded-lg bg-slate-900/75 px-2 py-1 text-center text-[8px] font-bold text-white">
-                        Storefront default
+                        {t("Storefront default")}
                       </span>
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0">
-                  <div className="text-[11px] font-black text-slate-700">Storefront category image</div>
+                  <div className="text-[11px] font-black text-slate-700">
+                    {t("Storefront category image")}
+                  </div>
                   <p className="mt-1 text-[10px] leading-4 text-slate-400">
-                    The preview now matches the storefront. Upload a custom image to replace the
-                    built-in category artwork. Removing the custom image restores the default.
-                    Uploads are converted to WebP with a maximum 1080 px edge.
+                    {t(
+                      "The preview now matches the storefront. Upload a custom image to replace the built-in category artwork. Removing the custom image restores the default. Uploads are converted to WebP with a maximum 1080 px edge.",
+                    )}
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[10px] font-bold text-white shadow-sm">
                       <Upload className="size-4" />
-                      {activePreview ? "Replace image" : "Use custom image"}
+                      {activePreview ? t("Replace image") : t("Use custom image")}
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/avif"
@@ -510,13 +538,15 @@ export default function CategoryForm({
                                 setSourceInfo(info);
                                 setRemoveImage(false);
                               } catch (cause) {
-                                toast.error(cause instanceof Error ? cause.message : "Unable to read image.");
+                                toast.error(
+                                  cause instanceof Error ? cause.message : "Unable to read image.",
+                                );
                               }
                             });
                           }}
                           className="inline-flex h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-white px-3.5 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
                         >
-                          Adjust image
+                          {t("Adjust image")}
                         </button>
                         <button
                           type="button"
@@ -525,7 +555,7 @@ export default function CategoryForm({
                           className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 text-[10px] font-bold text-rose-600 disabled:opacity-50"
                         >
                           <Trash2 className="size-4" />
-                          Restore default
+                          {t("Restore default")}
                         </button>
                       </>
                     ) : null}
@@ -533,9 +563,10 @@ export default function CategoryForm({
 
                   {sourceInfo ? (
                     <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2 text-[9px] leading-4 text-indigo-700">
-                      <div className="font-bold">Ready for WebP conversion</div>
+                      <div className="font-bold">{t("Ready for WebP conversion")}</div>
                       <div>
-                        Source: {sourceInfo.width}×{sourceInfo.height} · {formatBytes(sourceInfo.bytes)}
+                        {t("Source:")} {sourceInfo.width}×{sourceInfo.height} ·{" "}
+                        {formatBytes(sourceInfo.bytes)}
                       </div>
                     </div>
                   ) : null}
@@ -545,7 +576,7 @@ export default function CategoryForm({
                       <ImageOptimizationPreview
                         files={[pendingImage]}
                         resolution="1080"
-                        title="Category compression preview"
+                        title={t("Category compression preview")}
                         compact
                       />
                     </div>
@@ -555,7 +586,7 @@ export default function CategoryForm({
 
               <div className="border-t border-slate-200 bg-white p-3.5">
                 <TextField
-                  label="Image URL (advanced)"
+                  label={t("Image URL (advanced)")}
                   value={removeImage ? "" : draft.image || ""}
                   onChange={(value) => {
                     setPendingImage(null);
@@ -563,7 +594,7 @@ export default function CategoryForm({
                     setRemoveImage(false);
                     patch({ image: value });
                   }}
-                  placeholder="https://..."
+                  placeholder={t("https://...")}
                 />
               </div>
             </div>
@@ -571,33 +602,34 @@ export default function CategoryForm({
 
           <section>
             <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
-              Visibility
+              {t("Visibility")}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <ToggleRow
                 checked={draft.active}
                 onChange={(active) => patch({ active })}
-                title="Active"
+                title={t("Active")}
                 description="Visible in the storefront"
               />
               <ToggleRow
                 checked={draft.featured}
                 onChange={(featured) => patch({ featured })}
-                title="Featured on Homepage"
+                title={t("Featured on Homepage")}
                 description="Show this category in homepage sections"
               />
             </div>
             {!draft.active && draft.featured && (
               <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[10px] leading-4 text-amber-700">
-                Featured is preserved, but Hidden status takes precedence until the category is
-                active again.
+                {t(
+                  "Featured is preserved, but Hidden status takes precedence until the category is active again.",
+                )}
               </div>
             )}
           </section>
 
           <section>
             <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
-              Product specifications
+              {t("Product specifications")}
             </div>
             <CategorySpecificationTemplateEditor
               value={draft.specTemplate}
@@ -607,11 +639,11 @@ export default function CategoryForm({
 
           <section>
             <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
-              Order
+              {t("Order")}
             </div>
             <div className="max-w-[220px]">
               <TextField
-                label="Sort Order"
+                label={t("Sort Order")}
                 type="number"
                 min={1}
                 value={String(draft.order)}
@@ -622,24 +654,24 @@ export default function CategoryForm({
 
           <section>
             <div className="mb-3 text-[10px] font-black uppercase tracking-[.14em] text-slate-400">
-              SEO
+              {t("SEO")}
             </div>
             <div className="space-y-4">
               <TextField
-                label="SEO Title"
+                label={t("SEO Title")}
                 value={draft.seoTitle || ""}
                 onChange={(value) => patch({ seoTitle: value })}
-                placeholder={draft.name ? draft.name + " | Space Call" : "Category | Space Call"}
+                placeholder={draft.name ? draft.name + " | Space Call" : t("Category | Space Call")}
               />
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                  Meta Description
+                  {t("Meta Description")}
                 </span>
                 <textarea
                   value={draft.seoDescription || ""}
                   onChange={(event) => patch({ seoDescription: event.target.value })}
                   rows={3}
-                  placeholder="Short search description for this category."
+                  placeholder={t("Short search description for this category.")}
                   className="w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-[12px] leading-5 text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
                 />
               </label>
@@ -650,11 +682,11 @@ export default function CategoryForm({
         <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-slate-100 bg-white/95 px-5 py-4 backdrop-blur sm:flex sm:justify-end sm:px-6">
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             disabled={saving}
             className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50 sm:w-auto"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             type="button"
@@ -665,11 +697,11 @@ export default function CategoryForm({
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
             {saving
               ? pendingImage
-                ? "Optimizing & saving..."
-                : "Saving..."
+                ? t("Optimizing & saving...")
+                : t("Saving...")
               : mode === "create"
-                ? "Create Category"
-                : "Save Category"}
+                ? t("Create Category")
+                : t("Save Category")}
           </button>
         </div>
       </div>

@@ -40,7 +40,7 @@ test("hero raster images use the shared real WebP conversion pipeline", () => {
 
 test("hero conversion happens before any storage upload", () => {
   const conversion = heroData.indexOf("const conversion = await convertProductImageToWebp(file, targetResolution)");
-  const upload = heroData.indexOf("supabase.storage.from(HERO_BUCKET).upload");
+  const upload = heroData.search(/supabase\.storage\s*\.from\(HERO_BUCKET\)\s*\.upload/);
   assert.ok(conversion >= 0, "conversion invocation is missing");
   assert.ok(upload >= 0, "storage upload is missing");
   assert.ok(conversion < upload, "hero file must be converted before it is uploaded");
@@ -54,11 +54,11 @@ test("hero preserves animation/vector formats instead of falsely labeling them W
 
 test("hero dashboard exposes real before and after optimization metadata", () => {
   assert.match(heroPage, /Real WebP optimization complete/);
-  assert.match(heroPage, />Before</);
-  assert.match(heroPage, />After</);
+  assert.match(heroPage, /\{t\("Before"\)\}/);
+  assert.match(heroPage, /\{t\("After"\)\}/);
   assert.match(heroPage, /formatBytes\(optimization\.source\.bytes\)/);
   assert.match(heroPage, /formatBytes\(optimization\.output\.bytes\)/);
-  assert.match(heroPage, /max \{isDesktop \? "1920" : "1080"\}px/);
+  assert.match(heroPage, /\{isDesktop \? "1920" : "1080"\}/);
 });
 
 test("hero dashboard media preview matches the 16:9 storefront shape on both devices", () => {
@@ -74,7 +74,7 @@ test("hero upload revalidates dashboard MFA or passkey before Storage and redire
   assert.match(heroData, /DashboardHeroVerificationRequiredError/);
   const verification = heroData.indexOf("await requireFreshHeroWriteVerification()");
   const conversion = heroData.indexOf("const conversion = await convertProductImageToWebp(file, targetResolution)");
-  const upload = heroData.indexOf("supabase.storage.from(HERO_BUCKET).upload");
+  const upload = heroData.search(/supabase\.storage\s*\.from\(HERO_BUCKET\)\s*\.upload/);
   assert.ok(verification >= 0, "fresh dashboard verification check is missing");
   assert.ok(verification < conversion, "verification must happen before local hero conversion");
   assert.ok(verification < upload, "verification must happen before Storage upload");
@@ -91,7 +91,7 @@ test("pending hero image stays visible and upload actions live inside the compre
   assert.match(heroPage, /confirmLabel=\{isDesktop \? "Upload desktop hero" : "Upload mobile hero"\}/);
   assert.match(heroPage, /onConfirm=\{\(\) => void upload\(pendingHeroImages\[target\], target\)\}/);
   assert.match(imageOptimizationPreview, /onConfirm\?: \(\) => void/);
-  assert.match(imageOptimizationPreview, /busy \? "Uploading…" : confirmLabel/);
+  assert.match(imageOptimizationPreview, /busy \? t\("Uploading…"\) : confirmLabel/);
   assert.match(imageOptimizationPreview, /w-full.*sm:w-auto/);
 });
 
@@ -188,9 +188,9 @@ test("Hero editor does not create a completely empty slide", () => {
 
 test("Hero page exposes one clear create-or-edit workspace mode", () => {
   assert.match(heroPage, /const editorMode = selected \? "edit" : "create"/);
-  assert.match(heroPage, /editorMode === "edit" \? "Editing slide" : "New slide"/);
-  assert.match(heroPage, /editorMode === "edit" \? "Save changes" : "Create slide"/);
-  assert.match(heroPage, />Content</);
+  assert.match(heroPage, /editorMode === "edit" \? t\("Editing slide"\) : t\("New slide"\)/);
+  assert.match(heroPage, /editorMode === "edit" \? t\("Save changes"\) : t\("Create slide"\)/);
+  assert.match(heroPage, /\{t\("Content"\)\}/);
   assert.doesNotMatch(
     heroPage,
     /<div className="text-\[13px\] font-bold text-\[#14203a\]">\{selected \? "Edit slide" : "Create slide"\}<\/div>/,
@@ -198,7 +198,7 @@ test("Hero page exposes one clear create-or-edit workspace mode", () => {
 });
 
 test("Hero slide selector is compact on mobile and remains a desktop sidebar", () => {
-  assert.match(heroPage, /flex gap-2 overflow-x-auto p-3 xl:block/);
+  assert.match(heroPage, /flex gap-2 overflow-x-auto p-2\.5 sm:p-3 xl:block/);
   assert.match(heroPage, /min-w-\[230px\][\s\S]*xl:min-w-0/);
 });
 
@@ -211,7 +211,7 @@ test("Hero editor groups secondary controls into compact accordion sections", ()
     "Publishing & schedule",
     "Advanced appearance",
   ]) {
-    assert.match(heroPage, new RegExp(`>${label.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")}<\\/div>`));
+    assert.match(heroPage, new RegExp(`t\\(${JSON.stringify(label).replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")}\\)`));
   }
   assert.match(heroPage, /group-open:rotate-180/);
   assert.match(heroPage, /\[&::-webkit-details-marker\]:hidden/);
@@ -221,12 +221,12 @@ test("Hero editor groups secondary controls into compact accordion sections", ()
 test("Hero live preview stays outside Advanced appearance controls", () => {
   const preview = heroPage.indexOf("Design & live preview");
   const visualEditor = heroPage.indexOf("<HeroVisualEditor");
-  const advanced = heroPage.indexOf(">Advanced appearance</div>");
+  const advanced = heroPage.indexOf('t("Advanced appearance")');
   assert.ok(preview >= 0 && visualEditor > preview && advanced > visualEditor);
 });
 
 test("pending Hero media keeps its accordion expanded until upload or cancel", () => {
-  assert.match(heroPage, /<details open=\{hasPendingHeroImages \|\| undefined\}[^>]*>/);
+  assert.match(heroPage, /<details\s+open=\{hasPendingHeroImages \|\| undefined\}[^>]*>/);
   assert.match(heroPage, /Upload pending/);
 });
 

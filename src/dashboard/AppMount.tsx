@@ -5,8 +5,7 @@ import { ThemeProvider } from "@/dashboard/contexts/ThemeContext";
 const DASHBOARD_CHUNK_RELOAD_KEY = "space-call:dashboard-chunk-reload";
 
 function isDashboardChunkLoadError(error: unknown) {
-  const message =
-    error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 
   return /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk|error loading dynamically imported module/i.test(
     message,
@@ -33,8 +32,7 @@ async function loadDashboardApp() {
 
       try {
         canUseReloadGuard = true;
-        alreadyReloaded =
-          window.sessionStorage.getItem(DASHBOARD_CHUNK_RELOAD_KEY) === "1";
+        alreadyReloaded = window.sessionStorage.getItem(DASHBOARD_CHUNK_RELOAD_KEY) === "1";
       } catch {
         // Do not auto-reload without a guard because that could create a reload loop.
       }

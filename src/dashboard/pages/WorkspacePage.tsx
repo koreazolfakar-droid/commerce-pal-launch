@@ -9,7 +9,7 @@ import {
 } from "@/dashboard/data/workspace";
 
 export default function WorkspacePage({ path }: { path: string }) {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const ar = lang === "ar";
   const [auditSource, setAuditSource] = useState<"catalog" | "cms">("catalog");
   const source: WorkspaceSource | null =
@@ -77,8 +77,15 @@ export default function WorkspacePage({ path }: { path: string }) {
     "rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm disabled:opacity-40";
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-      {!source ? (
+      <h1 className="text-2xl font-bold text-slate-900">{t(title)}</h1>
+      {!source && !pageMeta[path] ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <p>{ar ? "هذه الصفحة غير موجودة." : "This page does not exist."}</p>
+          <a href="/dashboard" className="mt-3 inline-block text-indigo-600">
+            {ar ? "العودة إلى لوحة التحكم" : "Back to dashboard"}
+          </a>
+        </div>
+      ) : !source ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
           <p>
             {ar

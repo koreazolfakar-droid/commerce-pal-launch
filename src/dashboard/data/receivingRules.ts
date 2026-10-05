@@ -36,7 +36,8 @@ export function previewReceivingLine(input: ReceivingLineInput) {
     errors.push("Confirm the warning before receiving more than the remaining PO quantity.");
   }
   if (hasOverage && !overageReason) errors.push("A reason is required for excess delivery.");
-  if (overageReason.length > 500) errors.push("The excess delivery reason must be 500 characters or fewer.");
+  if (overageReason.length > 500)
+    errors.push("The excess delivery reason must be 500 characters or fewer.");
 
   return {
     deliveredQuantity,

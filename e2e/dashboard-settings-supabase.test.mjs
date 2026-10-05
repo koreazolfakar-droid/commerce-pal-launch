@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -27,8 +28,7 @@ test("dashboard settings support real CMS logo upload", () => {
 });
 
 test("settings route uses the live SettingsPage module", () => {
-  assert.match(app, /import SettingsPage from "@\/dashboard\/pages\/SettingsPage"/);
-  assert.match(app, /route === "\/dashboard\/settings"\) content = <SettingsPage \/>/);
+assertDashboardRoute("/dashboard/settings","settingsPage");
   assert.doesNotMatch(app, /function SettingsPage\(\)/);
 });
 

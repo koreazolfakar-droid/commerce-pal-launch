@@ -123,7 +123,7 @@ export default function DashboardMfaStep({
   onCancel: () => void;
   theme?: LoginTheme;
 }) {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const copy = mfaCopy[lang];
   const isRtl = lang === "ar";
   const [mode, setMode] = useState<MfaMode>("loading");
@@ -306,7 +306,8 @@ export default function DashboardMfaStep({
         cause.message === "Too many verification attempts. Wait a moment and try again."
           ? copy.tooMany
           : cause instanceof Error &&
-              cause.message === "Verification service is temporarily unavailable. Try again shortly."
+              cause.message ===
+                "Verification service is temporarily unavailable. Try again shortly."
             ? copy.unavailable
             : copy.failed;
       setError(safeMessage);
@@ -342,11 +343,7 @@ export default function DashboardMfaStep({
   };
 
   const title =
-    mode === "enroll"
-      ? copy.setupTitle
-      : mode === "choice"
-        ? copy.choiceTitle
-        : copy.verifyTitle;
+    mode === "enroll" ? copy.setupTitle : mode === "choice" ? copy.choiceTitle : copy.verifyTitle;
   const description =
     mode === "enroll"
       ? copy.setupDescription
@@ -379,8 +376,12 @@ export default function DashboardMfaStep({
           <ShieldCheck className="size-3.5" />
           {copy.badge}
         </div>
-        <h2 className="login-heading text-[22px] font-black leading-[1.08] tracking-[-.035em] text-white sm:text-[24px]">{title}</h2>
-        <p className="login-muted mt-2 max-w-[38rem] text-[12px] leading-[1.65] text-slate-400">{description}</p>
+        <h2 className="login-heading text-[22px] font-black leading-[1.08] tracking-[-.035em] text-white sm:text-[24px]">
+          {t(title)}
+        </h2>
+        <p className="login-muted mt-2 max-w-[38rem] text-[12px] leading-[1.65] text-slate-400">
+          {t(description)}
+        </p>
       </div>
 
       {mode === "choice" ? (
@@ -394,12 +395,18 @@ export default function DashboardMfaStep({
             disabled={loading}
             className={`login-mfa-option group flex min-h-[72px] w-full items-center gap-3.5 rounded-[18px] border px-3.5 py-3 text-start transition duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 ${choiceCardTheme}`}
           >
-            <div className={`grid size-11 shrink-0 place-items-center rounded-[14px] transition ${authenticatorIconTheme}`}>
+            <div
+              className={`grid size-11 shrink-0 place-items-center rounded-[14px] transition ${authenticatorIconTheme}`}
+            >
               <KeyRound className="size-[18px]" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className={`text-[13px] font-bold leading-5 ${choiceTitleTheme}`}>{copy.authenticatorOption}</div>
-              <div className={`mt-0.5 text-[11px] leading-[1.5] ${choiceHintTheme}`}>{copy.authenticatorHint}</div>
+              <div className={`text-[13px] font-bold leading-5 ${choiceTitleTheme}`}>
+                {copy.authenticatorOption}
+              </div>
+              <div className={`mt-0.5 text-[11px] leading-[1.5] ${choiceHintTheme}`}>
+                {copy.authenticatorHint}
+              </div>
             </div>
           </button>
 
@@ -409,12 +416,22 @@ export default function DashboardMfaStep({
             disabled={loading || !passkeySupported || challengeExpired}
             className={`login-mfa-option group flex min-h-[72px] w-full items-center gap-3.5 rounded-[18px] border px-3.5 py-3 text-start transition duration-200 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 ${choiceCardTheme}`}
           >
-            <div className={`grid size-11 shrink-0 place-items-center rounded-[14px] transition ${passkeyIconTheme}`}>
-              {loading ? <Loader2 className="size-[18px] animate-spin" /> : <Fingerprint className="size-[18px]" />}
+            <div
+              className={`grid size-11 shrink-0 place-items-center rounded-[14px] transition ${passkeyIconTheme}`}
+            >
+              {loading ? (
+                <Loader2 className="size-[18px] animate-spin" />
+              ) : (
+                <Fingerprint className="size-[18px]" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className={`text-[13px] font-bold leading-5 ${choiceTitleTheme}`}>{copy.passkeyOption}</div>
-              <div className={`mt-0.5 text-[11px] leading-[1.5] ${choiceHintTheme}`}>{copy.passkeyHint}</div>
+              <div className={`text-[13px] font-bold leading-5 ${choiceTitleTheme}`}>
+                {copy.passkeyOption}
+              </div>
+              <div className={`mt-0.5 text-[11px] leading-[1.5] ${choiceHintTheme}`}>
+                {copy.passkeyHint}
+              </div>
             </div>
           </button>
 
@@ -479,9 +496,7 @@ export default function DashboardMfaStep({
                 <Copy className="size-3.5" />
               </button>
             </div>
-            <p className="mt-2 text-[9px] leading-4 text-slate-500">
-              {copy.keyNotice}
-            </p>
+            <p className="mt-2 text-[9px] leading-4 text-slate-500">{copy.keyNotice}</p>
           </div>
 
           {enrollment.uri.startsWith("otpauth://") ? (
@@ -497,30 +512,34 @@ export default function DashboardMfaStep({
       ) : null}
 
       {mode !== "choice" ? (
-      <label className="block">
-        <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
-          {copy.codeLabel}
-        </span>
-        <div className="relative">
-          <KeyRound className={isRtl ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"} />
-          <input
-            value={code}
-            onChange={(event) =>
-              setCode(event.target.value.replace(/\D/g, "").slice(0, 10))
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Enter") void verify();
-            }}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-            disabled={challengeExpired}
-            placeholder="000000"
-            aria-label={copy.codeLabel}
-            className="login-input h-[54px] w-full rounded-[14px] border border-white/10 bg-white/[.065] px-10 text-center text-[18px] font-bold tracking-[.32em] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
-          />
-        </div>
-      </label>
+        <label className="block">
+          <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
+            {copy.codeLabel}
+          </span>
+          <div className="relative">
+            <KeyRound
+              className={
+                isRtl
+                  ? "absolute end-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+                  : "absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+              }
+            />
+            <input
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 10))}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void verify();
+              }}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              disabled={challengeExpired}
+              placeholder="000000"
+              aria-label={copy.codeLabel}
+              className="login-input h-[54px] w-full rounded-[14px] border border-white/10 bg-white/[.065] px-10 text-center text-[18px] font-bold tracking-[.32em] text-white outline-none transition placeholder:text-slate-600 focus:border-[#7b86ff] focus:bg-white/[.09] focus:ring-4 focus:ring-[#6874f5]/10"
+            />
+          </div>
+        </label>
       ) : null}
 
       {mode !== "choice" && error ? (
@@ -533,33 +552,33 @@ export default function DashboardMfaStep({
       ) : null}
 
       {mode !== "choice" ? (
-      <button
-        type="button"
-        onClick={() => void verify()}
-        disabled={loading || challengeExpired}
-        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white shadow-[0_12px_30px_rgba(103,113,245,.28)] disabled:opacity-60"
-      >
-        {loading ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <>
-            <ShieldCheck className="size-4" />
-            {mode === "enroll" ? copy.enableContinue : copy.verifyContinue}
-          </>
-        )}
-      </button>
+        <button
+          type="button"
+          onClick={() => void verify()}
+          disabled={loading || challengeExpired}
+          className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6271f6] to-[#785fe8] text-[12px] font-bold text-white shadow-[0_12px_30px_rgba(103,113,245,.28)] disabled:opacity-60"
+        >
+          {loading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <>
+              <ShieldCheck className="size-4" />
+              {mode === "enroll" ? copy.enableContinue : copy.verifyContinue}
+            </>
+          )}
+        </button>
       ) : null}
 
       {mode !== "choice" ? (
-      <button
-        type="button"
-        onClick={() => void cancel()}
-        disabled={loading}
-        className="login-muted mt-2 flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
-      >
-        <LogOut className="size-3.5" />
-        {copy.signOut}
-      </button>
+        <button
+          type="button"
+          onClick={() => void cancel()}
+          disabled={loading}
+          className="login-muted mt-2 flex h-10 w-full items-center justify-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-slate-300 disabled:opacity-50"
+        >
+          <LogOut className="size-3.5" />
+          {copy.signOut}
+        </button>
       ) : null}
     </div>
   );

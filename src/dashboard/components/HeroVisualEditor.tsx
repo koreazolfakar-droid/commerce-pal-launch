@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { HeroScene } from "@/components/HeroScene";
 import { localizedCmsText, type CmsHeroSlide } from "@/lib/cms";
@@ -20,6 +21,7 @@ export function HeroVisualEditor({
   mode: "desktop" | "mobile";
   language: "en" | "ar";
 }) {
+  const { t } = useLanguage();
   const ar = language === "ar";
   const [selected, setSelected] = useState<keyof HeroLayout>("content");
   const [cropMode, setCropMode] = useState(false);
@@ -57,12 +59,10 @@ export function HeroVisualEditor({
   };
   const config = normalizeHeroVisualConfig(form.visualConfig);
   const layoutKey = mode === "mobile" ? "mobileLayout" : "desktopLayout";
-  const layout =
-    config[layoutKey] ?? defaultHeroLayout(config, form.contentAlignment, ar);
+  const layout = config[layoutKey] ?? defaultHeroLayout(config, form.contentAlignment, ar);
   const focusKey: "focalPoint" | "mobileFocalPoint" =
     mode === "mobile" ? "mobileFocalPoint" : "focalPoint";
-  const focus =
-    config[focusKey] ?? config.focalPoint ?? { x: 50, y: 50 };
+  const focus = config[focusKey] ?? config.focalPoint ?? { x: 50, y: 50 };
   const updateFocusFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
     if (!box.width || !box.height) return;
@@ -84,34 +84,16 @@ export function HeroVisualEditor({
     apply({ ...form, visualConfig: { ...config, ...patch } });
   const slide: CmsHeroSlide = {
     id: "preview",
-    title:
-      localizedCmsText(language, form.titleEn, form.titleAr, form.titleEn) ??
-      null,
-    subtitle:
-      localizedCmsText(
-        language,
-        form.subtitleEn,
-        form.subtitleAr,
-        form.subtitleEn,
-      ) ?? null,
-    eyebrow:
-      localizedCmsText(
-        language,
-        form.eyebrowEn,
-        form.eyebrowAr,
-        form.eyebrowEn,
-      ) ?? null,
+    title: localizedCmsText(language, form.titleEn, form.titleAr, form.titleEn) ?? null,
+    subtitle: localizedCmsText(language, form.subtitleEn, form.subtitleAr, form.subtitleEn) ?? null,
+    eyebrow: localizedCmsText(language, form.eyebrowEn, form.eyebrowAr, form.eyebrowEn) ?? null,
     image_url: form.imageUrl,
     mobile_image_url: form.mobileImageUrl || null,
     image_alt_en: form.imageAltEn,
     image_alt_ar: form.imageAltAr,
     button_label:
-      localizedCmsText(
-        language,
-        form.buttonLabelEn,
-        form.buttonLabelAr,
-        form.buttonLabelEn,
-      ) ?? null,
+      localizedCmsText(language, form.buttonLabelEn, form.buttonLabelAr, form.buttonLabelEn) ??
+      null,
     target_type: form.targetType,
     target_value: form.targetValue,
     secondary_button_label:
@@ -133,9 +115,7 @@ export function HeroVisualEditor({
   };
 
   const hasPreviewImage =
-    mode === "mobile"
-      ? Boolean(form.mobileImageUrl || form.imageUrl)
-      : Boolean(form.imageUrl);
+    mode === "mobile" ? Boolean(form.mobileImageUrl || form.imageUrl) : Boolean(form.imageUrl);
 
   useEffect(() => {
     if (!hasPreviewImage && cropMode) setCropMode(false);
@@ -149,9 +129,7 @@ export function HeroVisualEditor({
           aria-pressed={!cropMode}
           onClick={() => setCropMode(false)}
           className={`min-h-11 rounded-lg px-3 text-[10px] font-bold transition ${
-            !cropMode
-              ? "bg-white text-[#14203a] shadow-sm"
-              : "text-slate-500"
+            !cropMode ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"
           }`}
         >
           <span className="block">{ar ? "المحتوى" : "Content"}</span>
@@ -165,9 +143,7 @@ export function HeroVisualEditor({
           disabled={!hasPreviewImage}
           onClick={() => setCropMode(true)}
           className={`min-h-11 rounded-lg px-3 text-[10px] font-bold transition disabled:opacity-40 ${
-            cropMode
-              ? "bg-white text-indigo-700 shadow-sm"
-              : "text-slate-500"
+            cropMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500"
           }`}
         >
           <span className="block">{ar ? "الصورة" : "Image"}</span>
@@ -213,8 +189,7 @@ export function HeroVisualEditor({
                 onSelect: setSelected,
                 onStart: checkpoint,
                 onEnd: () => {},
-                onChange: (visualConfig) =>
-                  onChange({ ...latest.current, visualConfig }),
+                onChange: (visualConfig) => onChange({ ...latest.current, visualConfig }),
               }}
             />
           ) : (
@@ -233,9 +208,7 @@ export function HeroVisualEditor({
             className="absolute inset-0 z-20 touch-none cursor-crosshair bg-slate-950/5 outline-none ring-inset focus-visible:ring-2 focus-visible:ring-indigo-500"
             tabIndex={0}
             role="group"
-            aria-label={
-              ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"
-            }
+            aria-label={ar ? "حرّك نقطة تركيز صورة الهيرو" : "Move the hero image focal point"}
             onPointerDown={(event) => {
               checkpoint();
               event.currentTarget.setPointerCapture(event.pointerId);
@@ -257,11 +230,7 @@ export function HeroVisualEditor({
               }
             }}
             onKeyDown={(event) => {
-              if (
-                !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-                  event.key,
-                )
-              ) {
+              if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
                 return;
               }
               event.preventDefault();
@@ -272,11 +241,7 @@ export function HeroVisualEditor({
                   Math.min(
                     100,
                     focus.x +
-                      (event.key === "ArrowLeft"
-                        ? -step
-                        : event.key === "ArrowRight"
-                          ? step
-                          : 0),
+                      (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
                   ),
                 ),
                 y: Math.max(
@@ -284,18 +249,14 @@ export function HeroVisualEditor({
                   Math.min(
                     100,
                     focus.y +
-                      (event.key === "ArrowUp"
-                        ? -step
-                        : event.key === "ArrowDown"
-                          ? step
-                          : 0),
+                      (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0),
                   ),
                 ),
               };
               updateConfig({ [focusKey]: next });
             }}
           >
-            <span className="absolute left-3 top-3 rounded-full bg-slate-950/65 px-2.5 py-1 text-[9px] font-semibold text-white shadow-sm backdrop-blur">
+            <span className="absolute start-3 top-3 rounded-full bg-slate-950/65 px-2.5 py-1 text-[9px] font-semibold text-white shadow-sm backdrop-blur">
               {ar ? "اسحب الصورة" : "Drag image focus"}
             </span>
             <span
@@ -365,9 +326,7 @@ export function HeroVisualEditor({
             className="mt-2 min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-600"
             onClick={() =>
               updateConfig(
-                mode === "mobile"
-                  ? { mobileFocalPoint: undefined }
-                  : { focalPoint: undefined },
+                mode === "mobile" ? { mobileFocalPoint: undefined } : { focalPoint: undefined },
               )
             }
           >
@@ -407,14 +366,12 @@ export function HeroVisualEditor({
                       : "Second button label";
             return (
               <label key={key} className="text-[10px] font-semibold text-slate-600">
-                {label}
+                {t(label)}
                 <input
                   className="mt-1 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] outline-none focus:border-indigo-400"
                   value={form[key]}
                   onFocus={checkpoint}
-                  onChange={(event) =>
-                    onChange({ ...form, [key]: event.target.value })
-                  }
+                  onChange={(event) => onChange({ ...form, [key]: event.target.value })}
                 />
               </label>
             );
@@ -493,15 +450,12 @@ export function HeroVisualEditor({
                   value={config.buttonPlacement ?? "inline"}
                   onChange={(event) =>
                     updateConfig({
-                      buttonPlacement: event.target
-                        .value as HeroVisualConfig["buttonPlacement"],
+                      buttonPlacement: event.target.value as HeroVisualConfig["buttonPlacement"],
                     })
                   }
                 >
                   <option value="inline">{ar ? "مع النص" : "With text"}</option>
-                  <option value="free">
-                    {ar ? "حر داخل الصورة" : "Drag inside hero"}
-                  </option>
+                  <option value="free">{ar ? "حر داخل الصورة" : "Drag inside hero"}</option>
                   <option value="below">{ar ? "تحت الصورة" : "Below hero"}</option>
                 </select>
               </label>
@@ -512,9 +466,7 @@ export function HeroVisualEditor({
                   <select
                     className="mt-1 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-2"
                     value={selected}
-                    onChange={(event) =>
-                      setSelected(event.target.value as keyof HeroLayout)
-                    }
+                    onChange={(event) => setSelected(event.target.value as keyof HeroLayout)}
                   >
                     <option value="content">{ar ? "النص" : "Text"}</option>
                     {config.buttonPlacement === "free" ? (
@@ -523,18 +475,9 @@ export function HeroVisualEditor({
                   </select>
                 </label>
                 {(["x", "y"] as const).map((axis) => (
-                  <label
-                    key={axis}
-                    className="text-[10px] font-semibold text-slate-600"
-                  >
-                    {axis === "x"
-                      ? ar
-                        ? "أفقي"
-                        : "Horizontal"
-                      : ar
-                        ? "عمودي"
-                        : "Vertical"}{" "}
-                    · {layout[selected][axis]}%
+                  <label key={axis} className="text-[10px] font-semibold text-slate-600">
+                    {axis === "x" ? (ar ? "أفقي" : "Horizontal") : ar ? "عمودي" : "Vertical"} ·{" "}
+                    {layout[selected][axis]}%
                     <input
                       type="range"
                       min="0"

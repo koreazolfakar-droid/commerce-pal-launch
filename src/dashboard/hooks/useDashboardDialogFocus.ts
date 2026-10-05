@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -14,18 +14,19 @@ export function useDashboardDialogFocus(
   containerRef: RefObject<HTMLElement | null>,
   onEscape?: () => void,
 ) {
+  const escapeRef = useRef(onEscape);
+  escapeRef.current = onEscape;
   useEffect(() => {
     if (!open) return;
 
-    const previous = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const focusInitial = () => {
       const container = containerRef.current;
       if (!container) return;
       const autofocus = container.querySelector<HTMLElement>("[autofocus]");
-      const first = autofocus ?? container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ?? container;
+      const first =
+        autofocus ?? container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ?? container;
       first.focus();
     };
 
@@ -35,15 +36,19 @@ export function useDashboardDialogFocus(
       const container = containerRef.current;
       if (!container) return;
 
-      if (event.key === "Escape" && onEscape) {
+      if (event.key === "Escape" && escapeRef.current) {
         event.preventDefault();
-        onEscape();
+        escapeRef.current();
         return;
       }
 
       if (event.key !== "Tab") return;
-      const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)]
-        .filter((element) => !element.hasAttribute("disabled") && element.tabIndex !== -1);
+      const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
+        (element) =>
+          !element.hasAttribute("disabled") &&
+          element.tabIndex !== -1 &&
+          element.getClientRects().length > 0,
+      );
 
       if (!focusable.length) {
         event.preventDefault();
@@ -70,5 +75,5 @@ export function useDashboardDialogFocus(
       document.removeEventListener("keydown", onKeyDown);
       if (previous?.isConnected) previous.focus();
     };
-  }, [containerRef, onEscape, open]);
+  }, [containerRef, open]);
 }

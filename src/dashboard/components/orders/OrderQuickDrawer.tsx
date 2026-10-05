@@ -1,13 +1,5 @@
-import {
-  ArrowRight,
-  Copy,
-  Loader2,
-  Package,
-  Phone,
-  RefreshCw,
-  User,
-  X,
-} from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
+import { ArrowRight, Copy, Loader2, Package, Phone, RefreshCw, User, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
 import { toast } from "sonner";
@@ -21,6 +13,7 @@ import {
 } from "@/dashboard/data/orders";
 
 function Badge({ status }: { status: DashboardOrderStatus }) {
+  const { t } = useLanguage();
   const label = orderStatusLabel(status);
   const tone =
     status === "delivered" || status === "done"
@@ -34,9 +27,11 @@ function Badge({ status }: { status: DashboardOrderStatus }) {
             : "bg-blue-50 text-blue-700 ring-blue-100";
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-bold ring-1 ${tone}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-bold ring-1 ${tone}`}
+    >
       <span className="size-1.5 rounded-full bg-current" />
-      {label}
+      {t(label)}
     </span>
   );
 }
@@ -57,18 +52,23 @@ export default function OrderQuickDrawer({
   onClose: () => void;
   onOpenFull: (orderId: string) => void;
 }) {
+  const { t } = useLanguage();
   const [order, setOrder] = useState<DashboardOrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const drawerRef = useRef<HTMLElement>(null);
+  const requestVersion = useRef(0);
   useDashboardDialogFocus(Boolean(orderId), drawerRef, onClose);
 
   const load = useCallback(async () => {
     if (!orderId) return;
+    const version = ++requestVersion.current;
+    setOrder(null);
     setLoading(true);
     setError("");
     try {
       const next = await getDashboardOrder(orderId);
+      if (version !== requestVersion.current) return;
       if (!next) {
         setOrder(null);
         setError("Order not found.");
@@ -76,10 +76,11 @@ export default function OrderQuickDrawer({
       }
       setOrder(next);
     } catch (cause) {
+      if (version !== requestVersion.current) return;
       setOrder(null);
       setError(cause instanceof Error ? cause.message : "Unable to load order.");
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [orderId]);
 
@@ -90,6 +91,9 @@ export default function OrderQuickDrawer({
       return;
     }
     void load();
+    return () => {
+      requestVersion.current += 1;
+    };
   }, [load, orderId]);
 
   useEffect(() => {
@@ -123,7 +127,7 @@ export default function OrderQuickDrawer({
     <div className="fixed inset-0 z-[95]">
       <button
         type="button"
-        aria-label="Close order quick view"
+        aria-label={t("Close order quick view")}
         className="absolute inset-0 bg-slate-950/35 backdrop-blur-[1px]"
         onClick={onClose}
       />
@@ -133,17 +137,19 @@ export default function OrderQuickDrawer({
         role="dialog"
         tabIndex={-1}
         aria-modal="true"
-        aria-label={order ? `Quick view for order #${order.publicOrderNumber}` : "Order quick view"}
+        aria-label={
+          order ? `Quick view for order #${order.publicOrderNumber}` : t("Order quick view")
+        }
         className="absolute inset-y-0 end-0 flex w-full max-w-[560px] flex-col bg-white shadow-[-18px_0_48px_rgba(15,23,42,.16)]"
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-4 sm:px-5">
           <div className="min-w-0">
             <div className="text-[9px] font-bold uppercase tracking-[.15em] text-[#6a70e7]">
-              Order quick view
+              {t("Order quick view")}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h2 className="truncate text-[20px] font-black tracking-[-.04em] text-[#14203a]">
-                {order ? `Order #${order.publicOrderNumber}` : "Loading order"}
+                {order ? `Order #${order.publicOrderNumber}` : t("Loading order")}
               </h2>
               {order ? <Badge status={order.status} /> : null}
             </div>
@@ -157,7 +163,7 @@ export default function OrderQuickDrawer({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close quick view"
+            aria-label={t("Close quick view")}
             className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50"
           >
             <X className="size-4" />
@@ -169,13 +175,15 @@ export default function OrderQuickDrawer({
             <div className="grid min-h-[320px] place-items-center">
               <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
                 <Loader2 className="size-4 animate-spin text-[#5968ea]" />
-                Loading order details…
+                {t("Loading order details…")}
               </div>
             </div>
           ) : error && !order ? (
             <div className="p-5">
               <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
-                <div className="text-[11px] font-bold text-rose-700">Order could not be loaded.</div>
+                <div className="text-[11px] font-bold text-rose-700">
+                  {t("Order could not be loaded.")}
+                </div>
                 <div className="mt-1 break-words text-[10px] leading-5 text-rose-600">{error}</div>
                 <button
                   type="button"
@@ -183,7 +191,7 @@ export default function OrderQuickDrawer({
                   className="mt-3 inline-flex h-9 items-center gap-2 rounded-xl bg-white px-3 text-[10px] font-bold text-rose-700 ring-1 ring-rose-200"
                 >
                   <RefreshCw className="size-3.5" />
-                  Retry
+                  {t("Retry")}
                 </button>
               </div>
             </div>
@@ -195,17 +203,21 @@ export default function OrderQuickDrawer({
                     <User className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[12px] font-black text-slate-700">{order.customerName}</div>
+                    <div className="text-[12px] font-black text-slate-700">
+                      {order.customerName}
+                    </div>
                     <div className="mt-1 text-[10px] text-slate-500">{order.customerPhone}</div>
                     {order.customerEmail ? (
-                      <div className="mt-0.5 truncate text-[9px] text-slate-400">{order.customerEmail}</div>
+                      <div className="mt-0.5 truncate text-[9px] text-slate-400">
+                        {order.customerEmail}
+                      </div>
                     ) : null}
                   </div>
                   {order.customerPhone ? (
                     <a
                       href={`tel:${order.customerPhone}`}
                       className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
-                      aria-label="Call customer"
+                      aria-label={t("Call customer")}
                     >
                       <Phone className="size-3.5" />
                     </a>
@@ -213,9 +225,12 @@ export default function OrderQuickDrawer({
                 </div>
 
                 <div className="mt-4 border-t border-slate-100 pt-3">
-                  <div className="text-[8px] font-bold uppercase tracking-[.12em] text-slate-400">Delivery</div>
+                  <div className="text-[8px] font-bold uppercase tracking-[.12em] text-slate-400">
+                    {t("Delivery")}
+                  </div>
                   <div className="mt-1 text-[10px] leading-5 text-slate-600">
-                    {[order.deliveryAddress, order.city].filter(Boolean).join(", ") || "No delivery address provided."}
+                    {[order.deliveryAddress, order.city].filter(Boolean).join(", ") ||
+                      t("No delivery address provided.")}
                   </div>
                 </div>
               </section>
@@ -223,9 +238,10 @@ export default function OrderQuickDrawer({
               <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
                 <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                   <div>
-                    <div className="text-[11px] font-black text-slate-700">Items</div>
+                    <div className="text-[11px] font-black text-slate-700">{t("Items")}</div>
                     <div className="mt-0.5 text-[9px] text-slate-400">
-                      {order.items.length} line item{order.items.length === 1 ? "" : "s"} · {unitCount} unit{unitCount === 1 ? "" : "s"}
+                      {order.items.length} {t("line item")} {order.items.length === 1 ? "" : "s"} ·{" "}
+                      {unitCount} {t("unit")} {unitCount === 1 ? "" : "s"}
                     </div>
                   </div>
                   <Package className="size-4 text-slate-300" />
@@ -237,7 +253,11 @@ export default function OrderQuickDrawer({
                       <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-50">
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt="" className="size-full object-contain p-1" />
+                            <img
+                              src={item.imageUrl}
+                              alt=""
+                              className="size-full object-contain p-1"
+                            />
                           ) : (
                             <Package className="size-4 text-slate-300" />
                           )}
@@ -247,7 +267,11 @@ export default function OrderQuickDrawer({
                             {item.title}
                           </div>
                           <div className="mt-0.5 truncate text-[9px] text-slate-400">
-                            {[item.variantTitle, item.sku ? `SKU ${item.sku}` : "", `Qty ${item.quantity}`]
+                            {[
+                              item.variantTitle,
+                              item.sku ? `SKU ${item.sku}` : "",
+                              `Qty ${item.quantity}`,
+                            ]
                               .filter(Boolean)
                               .join(" · ")}
                           </div>
@@ -259,21 +283,27 @@ export default function OrderQuickDrawer({
                     ))}
                   </div>
                 ) : (
-                  <div className="px-4 py-8 text-center text-[10px] text-slate-400">No order items found.</div>
+                  <div className="px-4 py-8 text-center text-[10px] text-slate-400">
+                    {t("No order items found.")}
+                  </div>
                 )}
               </section>
 
               <section className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">Payment</div>
+                    <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
+                      {t("Payment")}
+                    </div>
                     <div className="mt-1 text-[10px] font-bold text-slate-700">
                       {paymentStatusLabel(order.paymentStatus)}
                     </div>
                     <div className="mt-0.5 text-[9px] text-slate-400">{order.paymentMethod}</div>
                   </div>
                   <div>
-                    <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">Delivery fee</div>
+                    <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
+                      {t("Delivery fee")}
+                    </div>
                     <div className="mt-1 text-[10px] font-bold text-slate-700">
                       {money(order, order.shippingTotal)}
                     </div>
@@ -282,7 +312,7 @@ export default function OrderQuickDrawer({
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-3">
-                  <span className="text-[11px] font-bold text-slate-600">Order total</span>
+                  <span className="text-[11px] font-bold text-slate-600">{t("Order total")}</span>
                   <span className="text-[18px] font-black tracking-[-.03em] text-[#14203a]">
                     {money(order, order.total)}
                   </span>
@@ -291,7 +321,9 @@ export default function OrderQuickDrawer({
 
               {order.notes ? (
                 <section className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
-                  <div className="text-[8px] font-bold uppercase tracking-[.12em] text-amber-600">Order note</div>
+                  <div className="text-[8px] font-bold uppercase tracking-[.12em] text-amber-600">
+                    {t("Order note")}
+                  </div>
                   <div className="mt-1 text-[10px] leading-5 text-amber-800">{order.notes}</div>
                 </section>
               ) : null}
@@ -307,7 +339,7 @@ export default function OrderQuickDrawer({
             className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-40"
           >
             <Copy className="size-3.5" />
-            Copy order #
+            {t("Copy order #")}
           </button>
           <button
             type="button"
@@ -315,7 +347,7 @@ export default function OrderQuickDrawer({
             disabled={!order}
             className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white transition active:scale-[.98] disabled:opacity-40"
           >
-            Open full order
+            {t("Open full order")}
             <ArrowRight className="size-3.5" />
           </button>
         </div>
