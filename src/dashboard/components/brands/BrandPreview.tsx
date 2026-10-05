@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { EyeOff, Sparkles } from "lucide-react";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
 import type { CatalogBrand } from "@/dashboard/data/brands";
@@ -10,6 +11,7 @@ export default function BrandPreview({
   brand: CatalogBrand;
   products: DashboardProduct[];
 }) {
+  const { t } = useLanguage();
   const visible = brand.active && brand.featured;
 
   return (
@@ -19,9 +21,11 @@ export default function BrandPreview({
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <div className="text-[12px] font-black text-[#14203a]">Brand Preview on Homepage</div>
+          <div className="text-[12px] font-black text-[#14203a]">
+            {t("Brand Preview on Homepage")}
+          </div>
           <div className="mt-1 text-[10px] text-slate-400">
-            Visual preview only — no duplicate homepage data is created.
+            {t("Visual preview only — no duplicate homepage data is created.")}
           </div>
         </div>
         <span
@@ -30,7 +34,7 @@ export default function BrandPreview({
             (visible ? "bg-violet-50 text-violet-700" : "bg-slate-100 text-slate-500")
           }
         >
-          {visible ? "Featured" : "Not visible"}
+          {visible ? t("Featured") : t("Not visible")}
         </span>
       </div>
 
@@ -51,7 +55,7 @@ export default function BrandPreview({
                 <Sparkles className="size-3.5 text-violet-500" />
               </div>
               <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
-                {brand.description || "Explore products from this Space Call brand."}
+                {brand.description || t("Explore products from this Space Call brand.")}
               </p>
             </div>
             <div className="flex shrink-0 -space-x-2 rtl:space-x-reverse">
@@ -66,7 +70,7 @@ export default function BrandPreview({
               ))}
               {!products.length && (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2 text-[9px] text-slate-400">
-                  No products yet
+                  {t("No products yet")}
                 </div>
               )}
             </div>
@@ -79,12 +83,12 @@ export default function BrandPreview({
           </span>
           <div>
             <div className="text-[11px] font-bold text-slate-600">
-              This brand is currently hidden from homepage sections.
+              {t("This brand is currently hidden from homepage sections.")}
             </div>
             <div className="mt-1 text-[9px] leading-4 text-slate-400">
               {brand.active
-                ? "Enable Featured to include it in homepage brand sections."
-                : "Hidden storefront status takes precedence even if Featured is enabled."}
+                ? t("Enable Featured to include it in homepage brand sections.")
+                : t("Hidden storefront status takes precedence even if Featured is enabled.")}
             </div>
           </div>
         </div>

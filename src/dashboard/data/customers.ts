@@ -1,3 +1,4 @@
+import { loadAllRows } from "@/dashboard/lib/loadAllRows";
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -112,7 +113,7 @@ async function loadCustomerStats(): Promise<DashboardCustomerStats> {
     countCustomers("all"),
     countCustomers("vip"),
     countCustomers("blocked"),
-    supabase.from("store_customers").select("total_spent"),
+    loadAllRows(supabase.from("store_customers").select("total_spent")),
   ]);
   throwIfError(spendResult.error, "Loading customer lifetime value failed");
   const spends = (spendResult.data ?? []).map((row) => Number(row.total_spent) || 0);
@@ -175,14 +176,27 @@ export async function listDashboardCustomers(input?: {
 export async function getDashboardCustomer(id: string): Promise<DashboardCustomerDetail | null> {
   await requireDashboardStaff();
 
-  const { data, error } = await supabase.from("store_customers").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("store_customers")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
   throwIfError(error, "Loading customer failed");
   if (!data) return null;
 
-  const { data: orders, error: ordersError } = await supabase.rpc("get_store_customer_orders", rpcArgs({
-    p_customer_id: id,
-    p_limit: 50,
-  }));
+  const { data: orders, error: ordersError } = await loadAllRows<OrderRow>({
+    order: () => ({
+      range: (from, to) =>
+        supabase.rpc(
+          "get_store_customer_orders_page",
+          rpcArgs({
+            p_customer_id: id,
+            p_limit: to - from + 1,
+            p_offset: from,
+          }),
+        ),
+    }),
+  });
   throwIfError(ordersError, "Loading customer orders failed");
 
   const row = data as CustomerRow;
@@ -208,17 +222,20 @@ export async function createDashboardCustomer(
   input: DashboardCustomerCreateInput,
 ): Promise<DashboardCustomerDetail | null> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_store_customer", rpcArgs({
-    p_name: input.name,
-    p_phone: input.phone,
-    p_email: input.email || null,
-    p_city: input.city || null,
-    p_default_address: input.defaultAddress || null,
-    p_tags: input.tags,
-    p_is_vip: input.isVip,
-    p_is_blocked: input.isBlocked,
-    p_internal_notes: input.internalNotes || null,
-  }));
+  const { data, error } = await supabase.rpc(
+    "create_store_customer",
+    rpcArgs({
+      p_name: input.name,
+      p_phone: input.phone,
+      p_email: input.email || null,
+      p_city: input.city || null,
+      p_default_address: input.defaultAddress || null,
+      p_tags: input.tags,
+      p_is_vip: input.isVip,
+      p_is_blocked: input.isBlocked,
+      p_internal_notes: input.internalNotes || null,
+    }),
+  );
   throwIfError(error, "Creating customer failed");
   const row = data as CustomerRow | null;
   return row ? getDashboardCustomer(row.id) : null;
@@ -229,17 +246,20 @@ export async function updateDashboardCustomer(
   input: DashboardCustomerInput,
 ): Promise<DashboardCustomerDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_customer_profile", rpcArgs({
-    p_customer_id: id,
-    p_name: input.name,
-    p_email: input.email || null,
-    p_city: input.city || null,
-    p_default_address: input.defaultAddress || null,
-    p_tags: input.tags,
-    p_is_vip: input.isVip,
-    p_is_blocked: input.isBlocked,
-    p_internal_notes: input.internalNotes || null,
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_customer_profile",
+    rpcArgs({
+      p_customer_id: id,
+      p_name: input.name,
+      p_email: input.email || null,
+      p_city: input.city || null,
+      p_default_address: input.defaultAddress || null,
+      p_tags: input.tags,
+      p_is_vip: input.isVip,
+      p_is_blocked: input.isBlocked,
+      p_internal_notes: input.internalNotes || null,
+    }),
+  );
   throwIfError(error, "Updating customer failed");
   return getDashboardCustomer(id);
 }

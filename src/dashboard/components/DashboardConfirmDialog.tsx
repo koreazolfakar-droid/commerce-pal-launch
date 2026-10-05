@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { Loader2, X } from "lucide-react";
 import { useRef } from "react";
 import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
@@ -25,6 +26,7 @@ export default function DashboardConfirmDialog({
   onClose,
   onConfirm,
 }: DashboardConfirmDialogProps) {
+  const { t } = useLanguage();
   const dialogRef = useRef<HTMLDivElement>(null);
   useDashboardDialogFocus(open, dialogRef, pending ? undefined : onClose);
 
@@ -53,20 +55,20 @@ export default function DashboardConfirmDialog({
               id="dashboard-confirm-title"
               className="text-[18px] font-black tracking-[-.03em] text-[#14203a]"
             >
-              {title}
+              {t(title)}
             </h2>
             <p
               id="dashboard-confirm-description"
               className="mt-2 text-[11px] leading-5 text-slate-500"
             >
-              {description}
+              {t(description)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
-            aria-label="Close confirmation"
+            aria-label={t("Close confirmation")}
             className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <X className="size-4" />
@@ -80,7 +82,7 @@ export default function DashboardConfirmDialog({
             disabled={pending}
             className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             type="button"

@@ -1,12 +1,6 @@
-import {
-  Archive,
-  Check,
-  Copy,
-  Loader2,
-  Save,
-  Trash2,
-  UploadCloud,
-} from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { Archive, Check, Copy, Loader2, Save, Trash2, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -78,11 +72,16 @@ const EMPTY: ProductDraft = {
 };
 
 export default function ProductFormPage({ id }: { id?: string }) {
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [existing, setExisting] = useState<DashboardProduct | null>(null);
   const [brands, setBrands] = useState<Awaited<ReturnType<typeof listDashboardBrands>>>([]);
-  const [categories, setCategories] = useState<Awaited<ReturnType<typeof listDashboardCategories>>>([]);
-  const [collections, setCollections] = useState<Awaited<ReturnType<typeof listDashboardCollections>>>([]);
+  const [categories, setCategories] = useState<Awaited<ReturnType<typeof listDashboardCategories>>>(
+    [],
+  );
+  const [collections, setCollections] = useState<
+    Awaited<ReturnType<typeof listDashboardCollections>>
+  >([]);
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
   const [persistedCollectionIds, setPersistedCollectionIds] = useState<string[]>([]);
   const [variantCount, setVariantCount] = useState(0);
@@ -90,10 +89,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [role, setRole] = useState<"admin" | "editor" | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
-  const [pendingAction, setPendingAction] = useState<"duplicate" | "archive" | "delete" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"duplicate" | "archive" | "delete" | null>(
+    null,
+  );
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
+  const [stockBaseline, setStockBaseline] = useState(0);
   const [specifications, setSpecifications] = useState<ProductSpecificationValues>({});
   const [aiSpecificationKeys, setAiSpecificationKeys] = useState<Set<string>>(new Set());
 
@@ -108,39 +110,49 @@ export default function ProductFormPage({ id }: { id?: string }) {
       id ? loadDashboardProductCollectionIds(id) : Promise.resolve([]),
       getDashboardRole(),
     ])
-      .then(([product, brandRows, categoryRows, collectionRows, productCollectionIds, dashboardRole]) => {
-        if (cancelled) return;
-        setExisting(product);
-        setBrands(brandRows);
-        setCategories(categoryRows);
-        setCollections(collectionRows);
-        setCollectionIds(productCollectionIds);
-        setPersistedCollectionIds(productCollectionIds);
-        setRole(dashboardRole);
-        setVariantCount(product?.variantCount ?? 0);
-        setSaved(false);
-        setSpecifications(product?.specifications ?? {});
-        setAiSpecificationKeys(new Set());
-        if (product) {
-          setForm({
-            title: product.name,
-            description: product.description,
-            brandId: product.brandId ?? "",
-            categoryId: product.categoryId ?? "",
-            status: product.status,
-            price: String(product.price),
-            compareAt: product.compareAt == null ? "" : String(product.compareAt),
-            sku: product.sku,
-            barcode: product.barcode,
-            stock: String(product.stock),
-            imageUrl: product.image,
-            seoTitle: product.seoTitle,
-            seoDescription: product.seoDescription,
-          });
-        } else {
-          setForm(EMPTY);
-        }
-      })
+      .then(
+        ([
+          product,
+          brandRows,
+          categoryRows,
+          collectionRows,
+          productCollectionIds,
+          dashboardRole,
+        ]) => {
+          if (cancelled) return;
+          setExisting(product);
+          setStockBaseline(product?.stock ?? 0);
+          setBrands(brandRows);
+          setCategories(categoryRows);
+          setCollections(collectionRows);
+          setCollectionIds(productCollectionIds);
+          setPersistedCollectionIds(productCollectionIds);
+          setRole(dashboardRole);
+          setVariantCount(product?.variantCount ?? 0);
+          setSaved(false);
+          setSpecifications(product?.specifications ?? {});
+          setAiSpecificationKeys(new Set());
+          if (product) {
+            setForm({
+              title: product.name,
+              description: product.description,
+              brandId: product.brandId ?? "",
+              categoryId: product.categoryId ?? "",
+              status: product.status,
+              price: String(product.price),
+              compareAt: product.compareAt == null ? "" : String(product.compareAt),
+              sku: product.sku,
+              barcode: product.barcode,
+              stock: String(product.stock),
+              imageUrl: product.image,
+              seoTitle: product.seoTitle,
+              seoDescription: product.seoDescription,
+            });
+          } else {
+            setForm(EMPTY);
+          }
+        },
+      )
       .catch((cause) => {
         toast.error(cause instanceof Error ? cause.message : "Unable to load product.");
       })
@@ -162,7 +174,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
     () => categories.find((category) => category.id === form.categoryId) ?? null,
     [categories, form.categoryId],
   );
-  const specificationTemplate = selectedCategory?.specTemplate ?? { sections: [] };
+  const specificationTemplate = useMemo(
+    () => selectedCategory?.specTemplate ?? { sections: [] },
+    [selectedCategory],
+  );
   const allowedSpecificationKeys = useMemo(
     () => new Set(specificationKeys(specificationTemplate)),
     [specificationTemplate],
@@ -244,9 +259,44 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
 
   const variantLocked = variantCount > 1;
+  const dirty = existing
+    ? form.title.trim() !== existing.name ||
+      form.description.trim() !== existing.description ||
+      form.brandId !== (existing.brandId ?? "") ||
+      form.categoryId !== (existing.categoryId ?? "") ||
+      form.status !== existing.status ||
+      form.imageUrl.trim() !== existing.image ||
+      form.seoTitle.trim() !== existing.seoTitle ||
+      form.seoDescription.trim() !== existing.seoDescription ||
+      (!variantLocked &&
+        (Number(form.price) !== existing.price ||
+          (form.compareAt.trim() ? Number(form.compareAt) : null) !== existing.compareAt ||
+          form.sku.trim() !== existing.sku ||
+          form.barcode.trim() !== existing.barcode ||
+          Number(form.stock) !== stockBaseline)) ||
+      JSON.stringify(specifications) !== JSON.stringify(existing.specifications) ||
+      JSON.stringify([...collectionIds].sort()) !==
+        JSON.stringify([...persistedCollectionIds].sort())
+    : JSON.stringify(form) !== JSON.stringify(EMPTY) ||
+      Object.keys(specifications).length > 0 ||
+      collectionIds.length > 0;
+  const markDraftSaved = useDashboardUnsavedChanges(!loading && dirty);
 
   const handleSingleVariantChange = useCallback((variant: DashboardProductVariant | null) => {
     if (!variant) return;
+    setStockBaseline(variant.stock);
+    setExisting((current) =>
+      current
+        ? {
+            ...current,
+            price: variant.price,
+            compareAt: variant.compareAt,
+            sku: variant.sku,
+            barcode: variant.barcode,
+            stock: variant.stock,
+          }
+        : current,
+    );
     setForm((current) => {
       const next = {
         price: String(variant.price),
@@ -304,18 +354,18 @@ export default function ProductFormPage({ id }: { id?: string }) {
     const previousCollectionIds = [...new Set(persistedCollectionIds)].sort();
     const collectionsChanged =
       nextCollectionIds.length !== previousCollectionIds.length ||
-      nextCollectionIds.some((collectionId, index) => collectionId !== previousCollectionIds[index]);
+      nextCollectionIds.some(
+        (collectionId, index) => collectionId !== previousCollectionIds[index],
+      );
     const variantFieldsChanged = Boolean(
       id &&
-        existing &&
-        variantCount <= 1 &&
-        (
-          existing.price !== nextPrice ||
-          existing.compareAt !== nextCompareAt ||
-          existing.sku !== form.sku.trim() ||
-          existing.barcode !== form.barcode.trim() ||
-          existing.stock !== nextStock
-        ),
+      existing &&
+      variantCount <= 1 &&
+      (existing.price !== nextPrice ||
+        existing.compareAt !== nextCompareAt ||
+        existing.sku !== form.sku.trim() ||
+        existing.barcode !== form.barcode.trim() ||
+        existing.stock !== nextStock),
     );
     const shouldRefreshVariantManager = Boolean(
       id && variantCount <= 1 && (variantCount === 0 || variantFieldsChanged),
@@ -335,6 +385,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         sku: form.sku,
         barcode: form.barcode,
         stock: nextStock,
+        expectedStock: id && !variantLocked && nextStock !== stockBaseline ? stockBaseline : null,
         imageUrl: form.imageUrl,
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
@@ -342,6 +393,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
         collectionIds: nextCollectionIds,
       });
       setPersistedCollectionIds(nextCollectionIds);
+      if (!savedProduct.variantManagedSeparately) {
+        setStockBaseline(savedProduct.stock);
+        setForm((current) => ({
+          ...current,
+          stock: current.stock === form.stock ? String(savedProduct.stock) : current.stock,
+        }));
+      }
 
       if (id) {
         const selectedBrand = brands.find((brand) => brand.id === form.brandId);
@@ -358,10 +416,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 category: selectedCategory?.name ?? "",
                 status: form.status,
                 price: savedProduct.variantManagedSeparately ? current.price : nextPrice,
-                compareAt: savedProduct.variantManagedSeparately ? current.compareAt : nextCompareAt,
-                stock: savedProduct.variantManagedSeparately ? current.stock : nextStock,
+                compareAt: savedProduct.variantManagedSeparately
+                  ? current.compareAt
+                  : nextCompareAt,
+                stock: savedProduct.variantManagedSeparately ? current.stock : savedProduct.stock,
                 sku: savedProduct.variantManagedSeparately ? current.sku : form.sku.trim(),
-                barcode: savedProduct.variantManagedSeparately ? current.barcode : form.barcode.trim(),
+                barcode: savedProduct.variantManagedSeparately
+                  ? current.barcode
+                  : form.barcode.trim(),
                 image: form.imageUrl.trim(),
                 seoTitle: form.seoTitle.trim(),
                 seoDescription: form.seoDescription.trim(),
@@ -386,7 +448,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
             ? "Product and collections saved to Supabase."
             : "Product saved to Supabase.",
       );
-      if (!id) navigate(`/dashboard/products/${savedProduct.id}`);
+      if (!id) {
+        markDraftSaved();
+        navigate(`/dashboard/products/${savedProduct.id}`);
+      }
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product save failed.");
     } finally {
@@ -414,7 +479,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
     try {
       await setDashboardProductsStatus([id], "Archived");
       setForm((current) => ({ ...current, status: "Archived" }));
-      setExisting((current) => current ? { ...current, status: "Archived" } : current);
+      setExisting((current) => (current ? { ...current, status: "Archived" } : current));
       setConfirmAction(null);
       toast.success("Product archived safely.");
     } catch (cause) {
@@ -442,7 +507,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const collectionSummary = useMemo(() => {
     if (!collectionIds.length) return "No collections";
     if (collectionIds.length === 1) {
-      return collections.find((collection) => collection.id === collectionIds[0])?.title ?? "1 collection";
+      return (
+        collections.find((collection) => collection.id === collectionIds[0])?.title ??
+        "1 collection"
+      );
     }
     return `${collectionIds.length} collections selected`;
   }, [collectionIds, collections]);
@@ -458,7 +526,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   if (id && !existing) {
     return (
       <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
-        Product not found.
+        {t("Product not found.")}
       </div>
     );
   }
@@ -469,19 +537,21 @@ export default function ProductFormPage({ id }: { id?: string }) {
         onClick={() => navigate("/dashboard/products")}
         className="mb-5 text-[11px] font-bold text-slate-500 hover:text-indigo-600"
       >
-        ← Back to products
+        {t("← Back to products")}
       </button>
 
       <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">
-            Catalog / {id ? "Edit product" : "New product"}
+            {t("Catalog /")} {id ? t("Edit product") : t("New product")}
           </div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            {id ? form.title || "Edit product" : "Add a product"}
+            {id ? form.title || t("Edit product") : t("Add a product")}
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            Product details, multi-collection membership, gallery and variants are connected to the live Supabase catalog.
+            {t(
+              "Product details, multi-collection membership, gallery and variants are connected to the live Supabase catalog.",
+            )}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -492,15 +562,19 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 disabled={saving || pendingAction !== null}
                 className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
               >
-                {pendingAction === "duplicate" ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
-                {pendingAction === "duplicate" ? "Duplicating..." : "Duplicate"}
+                {pendingAction === "duplicate" ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+                {pendingAction === "duplicate" ? t("Duplicating...") : t("Duplicate")}
               </button>
               <button
                 onClick={() => setConfirmAction("archive")}
                 disabled={saving || pendingAction !== null || form.status === "Archived"}
                 className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-[10px] font-bold text-amber-700 disabled:opacity-40"
               >
-                <Archive className="size-3.5" /> Archive
+                <Archive className="size-3.5" /> {t("Archive")}
               </button>
               {role === "admin" ? (
                 <button
@@ -508,7 +582,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   disabled={saving || pendingAction !== null}
                   className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 text-[10px] font-bold text-rose-700 disabled:opacity-50"
                 >
-                  <Trash2 className="size-3.5" /> Delete
+                  <Trash2 className="size-3.5" /> {t("Delete")}
                 </button>
               ) : null}
             </>
@@ -617,19 +691,31 @@ export default function ProductFormPage({ id }: { id?: string }) {
             disabled={saving || pendingAction !== null}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
-            {saved ? "Saved" : "Save product"}
+            {saving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : saved ? (
+              <Check className="size-4" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            {saved ? t("Saved") : t("Save product")}
           </button>
         </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
         <div className="space-y-4">
-          <Panel title="Product information" subtitle="Live catalog fields">
+          <Panel title={t("Product information")} subtitle={t("Live catalog fields")}>
             <div className="space-y-4 p-5">
-              <Field label="Title" value={form.title} onChange={(value) => update("title", value)} />
+              <Field
+                label={t("Title")}
+                value={form.title}
+                onChange={(value) => update("title", value)}
+              />
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Description</span>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                  {t("Description")}
+                </span>
                 <textarea
                   value={form.description}
                   onChange={(event) => update("description", event.target.value)}
@@ -638,24 +724,50 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <SelectField label="Brand" value={form.brandId} onChange={(value) => update("brandId", value)}>
-                  <option value="">No brand</option>
-                  {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}{brand.active ? "" : " (Hidden)"}</option>)}
+                <SelectField
+                  label={t("Brand")}
+                  value={form.brandId}
+                  onChange={(value) => update("brandId", value)}
+                >
+                  <option value="">{t("No brand")}</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.id}>
+                      {brand.name}
+                      {brand.active ? "" : t(" (Hidden)")}
+                    </option>
+                  ))}
                 </SelectField>
-                <SelectField label="Category" value={form.categoryId} onChange={changeCategory}>
-                  <option value="">No category</option>
-                  {categories.map((category) => <option key={category.id} value={category.id}>{category.name}{category.active ? "" : " (Hidden)"}</option>)}
+                <SelectField
+                  label={t("Category")}
+                  value={form.categoryId}
+                  onChange={changeCategory}
+                >
+                  <option value="">{t("No category")}</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                      {category.active ? "" : t(" (Hidden)")}
+                    </option>
+                  ))}
                 </SelectField>
-                <SelectField label="Status" value={form.status} onChange={(value) => update("status", value as ProductStatus)}>
-                  <option>Active</option><option>Draft</option><option>Archived</option>
+                <SelectField
+                  label={t("Status")}
+                  value={form.status}
+                  onChange={(value) => update("status", value as ProductStatus)}
+                >
+                  <option>{t("Active")}</option>
+                  <option>{t("Draft")}</option>
+                  <option>{t("Archived")}</option>
                 </SelectField>
               </div>
             </div>
           </Panel>
 
           <Panel
-            title="Specifications"
-            subtitle={selectedCategory ? `${selectedCategory.name} template` : "Select a category"}
+            title={t("Specifications")}
+            subtitle={
+              selectedCategory ? `${selectedCategory.name} template` : t("Select a category")
+            }
           >
             <div className="p-5">
               <ProductSpecificationEditor
@@ -677,28 +789,37 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </div>
           </Panel>
 
-          <Panel title="Collections" subtitle={collectionSummary}>
+          <Panel title={t("Collections")} subtitle={collectionSummary}>
             <div className="p-5">
               <div className="mb-3 text-[10px] leading-4 text-slate-400">
-                A product can now belong to multiple collections. Saving synchronizes the complete membership list.
+                {t(
+                  "A product can now belong to multiple collections. Saving synchronizes the complete membership list.",
+                )}
               </div>
               <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-100 p-2 sm:grid-cols-2">
                 {collections.map((collection) => {
                   const checked = collectionIds.includes(collection.id);
                   return (
-                    <label key={collection.id} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-[11px] font-semibold transition ${checked ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-100 text-slate-600 hover:bg-slate-50"}`}>
+                    <label
+                      key={collection.id}
+                      className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-3 text-[11px] font-semibold transition ${checked ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-100 text-slate-600 hover:bg-slate-50"}`}
+                    >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => {
                           setSaved(false);
                           setCollectionIds((current) =>
-                            checked ? current.filter((id) => id !== collection.id) : [...current, collection.id],
+                            checked
+                              ? current.filter((id) => id !== collection.id)
+                              : [...current, collection.id],
                           );
                         }}
                       />
                       <span className="min-w-0 flex-1 truncate">{collection.title}</span>
-                      {!collection.active ? <span className="text-[9px] text-slate-400">Hidden</span> : null}
+                      {!collection.active ? (
+                        <span className="text-[9px] text-slate-400">{t("Hidden")}</span>
+                      ) : null}
                     </label>
                   );
                 })}
@@ -706,22 +827,59 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </div>
           </Panel>
 
-          <Panel title="Pricing & inventory" subtitle={variantLocked ? "Managed per variant" : "Default / single variant"}>
+          <Panel
+            title={t("Pricing & inventory")}
+            subtitle={variantLocked ? t("Managed per variant") : t("Default / single variant")}
+          >
             <div className="grid gap-4 p-5 sm:grid-cols-2">
-              <Field label="Price" type="number" value={form.price} onChange={(value) => update("price", value)} disabled={variantLocked} />
-              <Field label="Compare-at price" type="number" value={form.compareAt} onChange={(value) => update("compareAt", value)} disabled={variantLocked} />
-              <Field label="SKU" value={form.sku} onChange={(value) => update("sku", value)} disabled={variantLocked} />
-              <Field label="Barcode" value={form.barcode} onChange={(value) => update("barcode", value)} disabled={variantLocked} />
-              <Field label="Stock" type="number" value={form.stock} onChange={(value) => update("stock", value)} disabled={variantLocked} />
+              <Field
+                label={t("Price")}
+                type="number"
+                value={form.price}
+                onChange={(value) => update("price", value)}
+                disabled={variantLocked}
+              />
+              <Field
+                label={t("Compare-at price")}
+                type="number"
+                value={form.compareAt}
+                onChange={(value) => update("compareAt", value)}
+                disabled={variantLocked}
+              />
+              <Field
+                label={t("SKU")}
+                value={form.sku}
+                onChange={(value) => update("sku", value)}
+                disabled={variantLocked}
+              />
+              <Field
+                label={t("Barcode")}
+                value={form.barcode}
+                onChange={(value) => update("barcode", value)}
+                disabled={variantLocked}
+              />
+              <Field
+                label={t("Stock")}
+                type="number"
+                value={form.stock}
+                onChange={(value) => update("stock", value)}
+                disabled={variantLocked}
+              />
             </div>
             {variantLocked ? (
               <div className="mx-5 mb-5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-[10px] leading-5 text-indigo-700">
-                This product has {variantCount} variants. Price, SKU, barcode and stock are controlled from Variant Manager below so one product-level save cannot overwrite them.
+                {t("This product has")} {variantCount}{" "}
+                {t(
+                  "variants. Price, SKU, barcode and stock are controlled from Variant Manager below so one product-level save cannot overwrite them.",
+                )}
               </div>
             ) : null}
           </Panel>
 
-          <Panel title="Variant Manager" subtitle="Color · storage · identifiers · price · stock · image">
+          <Panel
+            title={t("Variant Manager")}
+            subtitle={t("Color · storage · identifiers · price · stock · image")}
+          >
             {id ? (
               <ProductVariantManager
                 key={variantRevision}
@@ -731,14 +889,17 @@ export default function ProductFormPage({ id }: { id?: string }) {
               />
             ) : (
               <div className="p-8 text-center text-[11px] text-slate-400">
-                Save the product first, then add or edit variants.
+                {t("Save the product first, then add or edit variants.")}
               </div>
             )}
           </Panel>
         </div>
 
         <div className="space-y-4">
-          <Panel title="Media" subtitle={id ? "Live Supabase product gallery" : "Save first to upload"}>
+          <Panel
+            title={t("Media")}
+            subtitle={id ? t("Live Supabase product gallery") : t("Save first to upload")}
+          >
             {id ? (
               <ProductMediaManager
                 productId={id}
@@ -749,18 +910,28 @@ export default function ProductFormPage({ id }: { id?: string }) {
               <div className="m-5 grid min-h-44 place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center">
                 <div>
                   <UploadCloud className="mx-auto size-5 text-indigo-400" />
-                  <div className="mt-2 text-[11px] font-bold text-slate-600">Save the product first</div>
-                  <div className="mt-1 text-[9px] text-slate-400">Then manage the real product gallery.</div>
+                  <div className="mt-2 text-[11px] font-bold text-slate-600">
+                    {t("Save the product first")}
+                  </div>
+                  <div className="mt-1 text-[9px] text-slate-400">
+                    {t("Then manage the real product gallery.")}
+                  </div>
                 </div>
               </div>
             )}
           </Panel>
 
-          <Panel title="SEO" subtitle="Product search metadata">
+          <Panel title={t("SEO")} subtitle={t("Product search metadata")}>
             <div className="space-y-4 p-5">
-              <Field label="SEO title" value={form.seoTitle} onChange={(value) => update("seoTitle", value)} />
+              <Field
+                label={t("SEO title")}
+                value={form.seoTitle}
+                onChange={(value) => update("seoTitle", value)}
+              />
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">SEO description</span>
+                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                  {t("SEO description")}
+                </span>
                 <textarea
                   value={form.seoDescription}
                   onChange={(event) => update("seoDescription", event.target.value)}
@@ -772,12 +943,24 @@ export default function ProductFormPage({ id }: { id?: string }) {
           </Panel>
 
           {existing ? (
-            <Panel title="Product record">
+            <Panel title={t("Product record")}>
               <div className="space-y-2 p-5 text-[10px] text-slate-500">
-                <div className="flex justify-between gap-4"><span>Handle</span><span className="truncate font-mono text-slate-700">{existing.handle}</span></div>
-                <div className="flex justify-between gap-4"><span>Variants</span><span className="font-bold text-slate-700">{variantCount}</span></div>
-                <div className="flex justify-between gap-4"><span>Collections</span><span className="font-bold text-slate-700">{collectionIds.length}</span></div>
-                <div className="flex justify-between gap-4"><span>Current stock</span><span className="font-bold text-slate-700">{existing.stock}</span></div>
+                <div className="flex justify-between gap-4">
+                  <span>{t("Handle")}</span>
+                  <span className="truncate font-mono text-slate-700">{existing.handle}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span>{t("Variants")}</span>
+                  <span className="font-bold text-slate-700">{variantCount}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span>{t("Collections")}</span>
+                  <span className="font-bold text-slate-700">{collectionIds.length}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span>{t("Current stock")}</span>
+                  <span className="font-bold text-slate-700">{existing.stock}</span>
+                </div>
               </div>
             </Panel>
           ) : null}
@@ -786,7 +969,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
       <DashboardConfirmDialog
         open={confirmAction === "archive"}
-        title="Archive this product?"
+        title={t("Archive this product?")}
         description="The product will be removed from the live storefront but kept in the dashboard, including its variants, media, inventory history and order references."
         confirmLabel="Archive product"
         pendingLabel="Archiving..."
@@ -799,7 +982,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
       <DashboardConfirmDialog
         open={confirmAction === "delete"}
-        title="Permanently delete this product?"
+        title={t("Permanently delete this product?")}
         description="Safe deletion is allowed only when the product has no protected stock, order references or inventory history. Otherwise the server will reject the deletion and the product will remain unchanged."
         confirmLabel="Delete permanently"
         pendingLabel="Deleting..."
@@ -814,12 +997,21 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
 }
 
-function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  const { t } = useLanguage();
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
       <div className="border-b border-slate-100 px-5 py-4">
-        <div className="text-[12px] font-bold text-[#14203a]">{title}</div>
-        {subtitle ? <div className="mt-0.5 text-[10px] text-slate-400">{subtitle}</div> : null}
+        <div className="text-[12px] font-bold text-[#14203a]">{t(title)}</div>
+        {subtitle ? <div className="mt-0.5 text-[10px] text-slate-400">{t(subtitle)}</div> : null}
       </div>
       {children}
     </section>
@@ -839,9 +1031,10 @@ function Field({
   type?: string;
   disabled?: boolean;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <input
         value={value}
         type={type}
@@ -864,9 +1057,10 @@ function SelectField({
   onChange: (value: string) => void;
   children: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}

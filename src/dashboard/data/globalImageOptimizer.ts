@@ -80,32 +80,26 @@ function asset(
 export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAsset[]> {
   await requireDashboardAdmin();
 
-  const [
-    mediaResult,
-    productImageResult,
-    productResult,
-    brandResult,
-    categoryResult,
-    heroResult,
-  ] = await Promise.all([
-    supabase
-      .from("cms_media_assets")
-      .select("id,bucket_id,object_path,file_name,mime_type,size_bytes")
-      .order("created_at", { ascending: false })
-      .limit(1000),
-    supabase
-      .from("store_product_images")
-      .select("id,product_id,url")
-      .order("created_at", { ascending: false })
-      .limit(1000),
-    supabase.from("store_products").select("id,title").limit(1000),
-    supabase.from("cms_brands").select("id,name,logo_url,cover_image_url").limit(1000),
-    supabase.from("store_categories").select("id,name,image_url").limit(1000),
-    supabase
-      .from("cms_hero_slides")
-      .select("id,title,title_en,image_url,mobile_image_url")
-      .limit(1000),
-  ]);
+  const [mediaResult, productImageResult, productResult, brandResult, categoryResult, heroResult] =
+    await Promise.all([
+      supabase
+        .from("cms_media_assets")
+        .select("id,bucket_id,object_path,file_name,mime_type,size_bytes")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      supabase
+        .from("store_product_images")
+        .select("id,product_id,url")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      supabase.from("store_products").select("id,title").limit(1000),
+      supabase.from("cms_brands").select("id,name,logo_url,cover_image_url").limit(1000),
+      supabase.from("store_categories").select("id,name,image_url").limit(1000),
+      supabase
+        .from("cms_hero_slides")
+        .select("id,title,title_en,image_url,mobile_image_url")
+        .limit(1000),
+    ]);
 
   throwIfError(mediaResult.error, "Loading media assets failed");
   throwIfError(productImageResult.error, "Loading product images failed");
@@ -136,20 +130,17 @@ export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAs
   for (const row of productImageResult.data ?? []) {
     if (!row.url) continue;
     rows.push(
-      asset(
-        "product",
-        row.id,
-        "url",
-        productNames.get(row.product_id) ?? "Product image",
-        row.url,
-      ),
+      asset("product", row.id, "url", productNames.get(row.product_id) ?? "Product image", row.url),
     );
   }
 
   for (const row of brandResult.data ?? []) {
-    if (row.logo_url) rows.push(asset("brand", row.id, "logo_url", `${row.name} · Logo`, row.logo_url));
+    if (row.logo_url)
+      rows.push(asset("brand", row.id, "logo_url", `${row.name} · Logo`, row.logo_url));
     if (row.cover_image_url) {
-      rows.push(asset("brand", row.id, "cover_image_url", `${row.name} · Cover`, row.cover_image_url));
+      rows.push(
+        asset("brand", row.id, "cover_image_url", `${row.name} · Cover`, row.cover_image_url),
+      );
     }
   }
 
@@ -159,9 +150,12 @@ export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAs
 
   for (const row of heroResult.data ?? []) {
     const title = row.title_en || row.title || "Hero slide";
-    if (row.image_url) rows.push(asset("hero", row.id, "image_url", `${title} · Desktop`, row.image_url));
+    if (row.image_url)
+      rows.push(asset("hero", row.id, "image_url", `${title} · Desktop`, row.image_url));
     if (row.mobile_image_url) {
-      rows.push(asset("hero", row.id, "mobile_image_url", `${title} · Mobile`, row.mobile_image_url));
+      rows.push(
+        asset("hero", row.id, "mobile_image_url", `${title} · Mobile`, row.mobile_image_url),
+      );
     }
   }
 
@@ -222,9 +216,7 @@ export async function backfillStorefrontProductThumbnails(
     .eq("status", "active");
   throwIfError(productError, "Loading active products for thumbnail backfill failed");
 
-  const productNames = new Map(
-    (products ?? []).map((row) => [row.id, row.title || "Product"]),
-  );
+  const productNames = new Map((products ?? []).map((row) => [row.id, row.title || "Product"]));
   const eligibleRows = candidateRows.filter((row) => productNames.has(row.product_id));
   const pending = eligibleRows.slice(0, safeLimit);
   const total = pending.length;
@@ -293,7 +285,10 @@ export async function backfillStorefrontProductThumbnails(
       processed += 1;
     } catch (cause) {
       if (objectPath) {
-        await supabase.storage.from(OUTPUT_BUCKET).remove([objectPath]).catch(() => undefined);
+        await supabase.storage
+          .from(OUTPUT_BUCKET)
+          .remove([objectPath])
+          .catch(() => undefined);
       }
       failed.push({
         imageId: row.id,
@@ -424,7 +419,10 @@ export async function replaceGlobalLegacyImageWithWebp(
   }
 
   if (error) {
-    await supabase.storage.from(OUTPUT_BUCKET).remove([uploaded.objectPath]).catch(() => undefined);
+    await supabase.storage
+      .from(OUTPUT_BUCKET)
+      .remove([uploaded.objectPath])
+      .catch(() => undefined);
     throw new Error(`Updating ${assetRow.source} image reference failed: ${error.message}`);
   }
 
@@ -439,7 +437,6 @@ export async function replaceGlobalLegacyImageWithWebp(
     objectPath: uploaded.objectPath,
   };
 }
-
 
 export type SafeCleanupCandidate = {
   key: string;
@@ -473,7 +470,10 @@ function storageObjectPathFromPublicUrl(url?: string | null) {
   const marker = `/storage/v1/object/public/${OUTPUT_BUCKET}/`;
   const index = url.indexOf(marker);
   if (index < 0) return null;
-  const raw = url.slice(index + marker.length).split("?")[0].split("#")[0];
+  const raw = url
+    .slice(index + marker.length)
+    .split("?")[0]
+    .split("#")[0];
   try {
     return decodeURIComponent(raw);
   } catch {
@@ -496,7 +496,11 @@ async function loadAllKnownReferencedObjectPaths(): Promise<Set<string>> {
     heroResult,
     settingsResult,
   ] = await Promise.all([
-    supabase.from("cms_media_assets").select("bucket_id,object_path").eq("bucket_id", OUTPUT_BUCKET).limit(5000),
+    supabase
+      .from("cms_media_assets")
+      .select("bucket_id,object_path")
+      .eq("bucket_id", OUTPUT_BUCKET)
+      .limit(5000),
     supabase.from("store_product_images").select("url,thumbnail_url").limit(5000),
     supabase.from("store_product_variants").select("image_url").limit(5000),
     supabase.from("cms_brands").select("logo_url,cover_image_url").limit(5000),
@@ -546,11 +550,13 @@ type ListedStorageObject = {
   } | null;
 };
 
-async function listStorageFilesRecursive(prefix: string): Promise<Array<{
-  objectPath: string;
-  sizeBytes: number;
-  mimeType: string;
-}>> {
+async function listStorageFilesRecursive(prefix: string): Promise<
+  Array<{
+    objectPath: string;
+    sizeBytes: number;
+    mimeType: string;
+  }>
+> {
   const output: Array<{ objectPath: string; sizeBytes: number; mimeType: string }> = [];
   const queue = [prefix];
 
@@ -628,7 +634,8 @@ export async function scanSafeOldOriginals(): Promise<SafeCleanupScan> {
       fileName: row.objectPath.split("/").pop() || row.objectPath,
       sizeBytes: row.sizeBytes,
       mimeType: row.mimeType,
-      reason: "No current dashboard/storefront database reference points to this managed storage object.",
+      reason:
+        "No current dashboard/storefront database reference points to this managed storage object.",
     }))
     .sort((a, b) => b.sizeBytes - a.sizeBytes);
 
@@ -640,9 +647,11 @@ export async function scanSafeOldOriginals(): Promise<SafeCleanupScan> {
   };
 }
 
-export async function deleteSafeOldOriginals(
-  candidates: SafeCleanupCandidate[],
-): Promise<{ deleted: number; reclaimedBytes: number; failed: Array<{ objectPath: string; error: string }> }> {
+export async function deleteSafeOldOriginals(candidates: SafeCleanupCandidate[]): Promise<{
+  deleted: number;
+  reclaimedBytes: number;
+  failed: Array<{ objectPath: string; error: string }>;
+}> {
   await requireDashboardAdmin();
   if (!candidates.length) return { deleted: 0, reclaimedBytes: 0, failed: [] };
 

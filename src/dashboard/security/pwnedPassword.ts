@@ -2,9 +2,7 @@ const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range/";
 const HIBP_TIMEOUT_MS = 8_000;
 
 function toUpperHex(buffer: ArrayBuffer) {
-  return Array.from(new Uint8Array(buffer), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  )
+  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0"))
     .join("")
     .toUpperCase();
 }
@@ -30,9 +28,7 @@ export type PwnedPasswordResult = {
  * Only the first five hexadecimal characters of the digest are requested.
  * Response padding is enabled to reduce response-size side channels.
  */
-export async function checkPwnedPassword(
-  password: string,
-): Promise<PwnedPasswordResult> {
+export async function checkPwnedPassword(password: string): Promise<PwnedPasswordResult> {
   const digest = await sha1Hex(password);
   const prefix = digest.slice(0, 5);
   const suffix = digest.slice(5);

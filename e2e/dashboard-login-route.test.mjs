@@ -7,7 +7,7 @@ const route = await readFile(new URL("../src/routes/dashboard.$.tsx", import.met
 
 test("dashboard login stays inside the mounted dashboard route", () => {
   assert.match(route, /createFileRoute\("\/dashboard\/\$"\)/);
-  assert.match(app, /<Route path="\/dashboard\/login" component=\{LoginPage\}/);
+  assert.match(app, /<Route path="\/dashboard\/login">[\s\S]*<DashboardLoginPage \/>/);
   assert.doesNotMatch(app, /navigate\("\/login"\)/);
   assert.match(app, /navigate\("\/dashboard\/login"\)/);
 });

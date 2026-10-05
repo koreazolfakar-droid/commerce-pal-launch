@@ -99,7 +99,10 @@ export default function ProductSpecificationEditor({
           );
 
           return (
-            <section key={section.title} className="overflow-hidden rounded-xl border border-slate-200">
+            <section
+              key={section.title}
+              className="overflow-hidden rounded-xl border border-slate-200"
+            >
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3">
                 <div className="text-[10px] font-black uppercase tracking-[.1em] text-slate-500">
                   {ar ? section.titleAr || section.title : section.title}

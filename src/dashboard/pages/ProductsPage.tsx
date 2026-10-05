@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import {
   Archive,
   Copy,
@@ -33,20 +34,26 @@ function money(value: number) {
 }
 
 function StatusPill({ status }: { status: DashboardProduct["status"] }) {
+  const { t } = useLanguage();
   const tone =
     status === "Active"
       ? "bg-emerald-50 text-emerald-700"
       : status === "Draft"
         ? "bg-amber-50 text-amber-700"
         : "bg-slate-100 text-slate-600";
-  return <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${tone}`}>{status}</span>;
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${tone}`}>{t(status)}</span>
+  );
 }
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [catalog, setCatalog] = useState<DashboardProduct[]>([]);
   const [brands, setBrands] = useState<Awaited<ReturnType<typeof listDashboardBrands>>>([]);
-  const [categories, setCategories] = useState<Awaited<ReturnType<typeof listDashboardCategories>>>([]);
+  const [categories, setCategories] = useState<Awaited<ReturnType<typeof listDashboardCategories>>>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
@@ -69,7 +76,9 @@ export default function ProductsPage() {
       setCatalog(products);
       setBrands(brandRows);
       setCategories(categoryRows);
-      setSelected((current) => new Set([...current].filter((id) => products.some((p) => p.id === id))));
+      setSelected(
+        (current) => new Set([...current].filter((id) => products.some((p) => p.id === id))),
+      );
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to load products.");
@@ -90,7 +99,8 @@ export default function ProductsPage() {
         !`${product.name} ${product.brand} ${product.sku} ${product.barcode} ${product.handle} ${product.category}`
           .toLowerCase()
           .includes(needle)
-      ) return false;
+      )
+        return false;
       if (status !== "All" && product.status !== status) return false;
       if (brandId && product.brandId !== brandId) return false;
       if (categoryId && product.categoryId !== categoryId) return false;
@@ -162,11 +172,15 @@ export default function ProductsPage() {
       <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">
-            Commerce / Product management
+            {t("Commerce / Product management")}
           </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Products</h1>
+          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
+            {t("Products")}
+          </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            Manage live products, variants, stock state and merchandising without leaving the Space Call dashboard.
+            {t(
+              "Manage live products, variants, stock state and merchandising without leaving the Space Call dashboard.",
+            )}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -174,13 +188,13 @@ export default function ProductsPage() {
             onClick={() => void load()}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
-            <RefreshCw className="size-3.5" /> Refresh
+            <RefreshCw className="size-3.5" /> {t("Refresh")}
           </button>
           <button
             onClick={() => navigate("/dashboard/products/new")}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
           >
-            <Plus className="size-4" /> Add product
+            <Plus className="size-4" /> {t("Add product")}
           </button>
         </div>
       </div>
@@ -194,7 +208,7 @@ export default function ProductsPage() {
           ["Low stock", lowStock, "text-rose-600"],
         ].map(([label, value, tone]) => (
           <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="text-[10px] font-semibold text-slate-400">{label}</div>
+            <div className="text-[10px] font-semibold text-slate-400">{t(String(label))}</div>
             <div className={`mt-1 text-xl font-bold ${tone}`}>{value}</div>
           </div>
         ))}
@@ -203,41 +217,67 @@ export default function ProductsPage() {
       <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_repeat(5,minmax(130px,auto))]">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Product, brand, SKU, barcode or handle"
-              className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[12px] outline-none focus:border-indigo-400"
+              placeholder={t("Product, brand, SKU, barcode or handle")}
+              className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[12px] outline-none focus:border-indigo-400"
             />
           </div>
           <Select value={status} onChange={(value) => setStatus(value as StatusFilter)}>
-            <option>All</option><option>Active</option><option>Draft</option><option>Archived</option>
+            <option>{t("All")}</option>
+            <option>{t("Active")}</option>
+            <option>{t("Draft")}</option>
+            <option>{t("Archived")}</option>
           </Select>
           <Select value={brandId} onChange={setBrandId}>
-            <option value="">All brands</option>
-            {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+            <option value="">{t("All brands")}</option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.name}
+              </option>
+            ))}
           </Select>
           <Select value={categoryId} onChange={setCategoryId}>
-            <option value="">All categories</option>
-            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            <option value="">{t("All categories")}</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </Select>
           <Select value={stock} onChange={(value) => setStock(value as StockFilter)}>
-            <option value="all">All stock</option><option value="available">In stock</option><option value="low">Low stock</option><option value="out">Out of stock</option>
+            <option value="all">{t("All stock")}</option>
+            <option value="available">{t("In stock")}</option>
+            <option value="low">{t("Low stock")}</option>
+            <option value="out">{t("Out of stock")}</option>
           </Select>
           <Select value={sort} onChange={(value) => setSort(value as SortMode)}>
-            <option value="updated">Recently updated</option><option value="name">Name A–Z</option><option value="price-asc">Price ↑</option><option value="price-desc">Price ↓</option><option value="stock-asc">Stock ↑</option><option value="stock-desc">Stock ↓</option>
+            <option value="updated">{t("Recently updated")}</option>
+            <option value="name">{t("Name A–Z")}</option>
+            <option value="price-asc">{t("Price ↑")}</option>
+            <option value="price-desc">{t("Price ↓")}</option>
+            <option value="stock-asc">{t("Stock ↑")}</option>
+            <option value="stock-desc">{t("Stock ↓")}</option>
           </Select>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
           <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
-            <Filter className="size-3.5" /> {filtered.length} shown · {selected.size} selected
+            <Filter className="size-3.5" /> {filtered.length} {t("shown ·")} {selected.size}{" "}
+            {t("selected")}
           </div>
           {selected.size ? (
             <div className="flex flex-wrap gap-2">
-              <BulkButton disabled={working} onClick={() => void bulkStatus("Active")}>Activate</BulkButton>
-              <BulkButton disabled={working} onClick={() => void bulkStatus("Draft")}>Move to draft</BulkButton>
-              <BulkButton disabled={working} onClick={() => void bulkStatus("Archived")}><Archive className="size-3.5" /> Archive</BulkButton>
+              <BulkButton disabled={working} onClick={() => void bulkStatus("Active")}>
+                {t("Activate")}
+              </BulkButton>
+              <BulkButton disabled={working} onClick={() => void bulkStatus("Draft")}>
+                {t("Move to draft")}
+              </BulkButton>
+              <BulkButton disabled={working} onClick={() => void bulkStatus("Archived")}>
+                <Archive className="size-3.5" /> {t("Archive")}
+              </BulkButton>
             </div>
           ) : null}
         </div>
@@ -248,36 +288,105 @@ export default function ProductsPage() {
           <Loader2 className="size-6 animate-spin text-indigo-500" />
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-5 text-sm font-semibold text-rose-700">{error}</div>
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-5 text-sm font-semibold text-rose-700">
+          {error}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[980px] text-left">
+            <table className="w-full min-w-[980px] text-start">
               <thead className="bg-[#fafbfe]">
                 <tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.1em] text-slate-400">
-                  <th className="px-4 py-3"><input type="checkbox" checked={allFilteredSelected} onChange={toggleAll} /></th>
-                  <th className="px-3 py-3">Product</th><th className="px-3 py-3">SKU</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Variants</th><th className="px-3 py-3">Price</th><th className="px-3 py-3">Stock</th><th className="px-3 py-3">Status</th><th className="px-4 py-3" />
+                  <th className="px-4 py-3">
+                    <input type="checkbox" checked={allFilteredSelected} onChange={toggleAll} />
+                  </th>
+                  <th className="px-3 py-3">{t("Product")}</th>
+                  <th className="px-3 py-3">{t("SKU")}</th>
+                  <th className="px-3 py-3">{t("Category")}</th>
+                  <th className="px-3 py-3">{t("Variants")}</th>
+                  <th className="px-3 py-3">{t("Price")}</th>
+                  <th className="px-3 py-3">{t("Stock")}</th>
+                  <th className="px-3 py-3">{t("Status")}</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((product) => (
                   <tr key={product.id} className="border-b border-slate-50 hover:bg-[#fafbff]">
-                    <td className="px-4 py-3.5"><input type="checkbox" checked={selected.has(product.id)} onChange={() => setSelected((current) => { const next=new Set(current); if (next.has(product.id)) next.delete(product.id); else next.add(product.id); return next; })} /></td>
+                    <td className="px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(product.id)}
+                        onChange={() =>
+                          setSelected((current) => {
+                            const next = new Set(current);
+                            if (next.has(product.id)) next.delete(product.id);
+                            else next.add(product.id);
+                            return next;
+                          })
+                        }
+                      />
+                    </td>
                     <td className="px-3 py-3.5">
-                      <button onClick={() => navigate(`/dashboard/products/${product.id}`)} className="flex max-w-[280px] items-center gap-3 text-left">
+                      <button
+                        onClick={() => navigate(`/dashboard/products/${product.id}`)}
+                        className="flex max-w-[280px] items-center gap-3 text-start"
+                      >
                         <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
-                          {product.image ? <img src={product.image} alt="" className="size-full object-contain" /> : <Package className="size-4 text-slate-400" />}
+                          {product.image ? (
+                            <img src={product.image} alt="" className="size-full object-contain" />
+                          ) : (
+                            <Package className="size-4 text-slate-400" />
+                          )}
                         </div>
-                        <div className="min-w-0"><div className="truncate text-[12px] font-bold text-slate-700">{product.name}</div><div className="mt-0.5 truncate text-[10px] text-slate-400">{product.brand || "No brand"} · {product.handle}</div></div>
+                        <div className="min-w-0">
+                          <div className="truncate text-[12px] font-bold text-slate-700">
+                            {product.name}
+                          </div>
+                          <div className="mt-0.5 truncate text-[10px] text-slate-400">
+                            {product.brand || t("No brand")} · {product.handle}
+                          </div>
+                        </div>
                       </button>
                     </td>
-                    <td className="px-3 py-3.5 font-mono text-[10px] text-slate-500">{product.sku || "—"}</td>
-                    <td className="px-3 py-3.5 text-[11px] text-slate-500">{product.category || "—"}</td>
-                    <td className="px-3 py-3.5 text-[11px] font-bold text-slate-600">{product.variantCount}</td>
-                    <td className="px-3 py-3.5 text-[11px] font-bold text-slate-700">{money(product.price)}</td>
-                    <td className={`px-3 py-3.5 text-[11px] font-bold ${product.stock === 0 ? "text-rose-600" : product.stock < 10 ? "text-amber-600" : "text-slate-700"}`}>{product.stock}</td>
-                    <td className="px-3 py-3.5"><StatusPill status={product.status} /></td>
-                    <td className="px-4 py-3.5"><div className="flex justify-end gap-1"><button onClick={() => void duplicate(product)} className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" title="Duplicate"><Copy className="size-3.5" /></button><button onClick={() => navigate(`/dashboard/products/${product.id}`)} className="grid size-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50" title="Edit"><Pencil className="size-3.5" /></button></div></td>
+                    <td className="px-3 py-3.5 font-mono text-[10px] text-slate-500">
+                      {product.sku || "—"}
+                    </td>
+                    <td className="px-3 py-3.5 text-[11px] text-slate-500">
+                      {product.category || "—"}
+                    </td>
+                    <td className="px-3 py-3.5 text-[11px] font-bold text-slate-600">
+                      {product.variantCount}
+                    </td>
+                    <td className="px-3 py-3.5 text-[11px] font-bold text-slate-700">
+                      {money(product.price)}
+                    </td>
+                    <td
+                      className={`px-3 py-3.5 text-[11px] font-bold ${product.stock === 0 ? "text-rose-600" : product.stock < 10 ? "text-amber-600" : "text-slate-700"}`}
+                    >
+                      {product.stock}
+                    </td>
+                    <td className="px-3 py-3.5">
+                      <StatusPill status={product.status} />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => void duplicate(product)}
+                          className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
+                          title={t("Duplicate")}
+                        >
+                          <Copy className="size-3.5" />
+                        </button>
+                        <button
+                          onClick={() => navigate(`/dashboard/products/${product.id}`)}
+                          className="grid size-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50"
+                          title={t("Edit")}
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -286,33 +395,121 @@ export default function ProductsPage() {
 
           <div className="divide-y divide-slate-100 md:hidden">
             <div className="flex items-center justify-between px-4 py-3 text-[10px] text-slate-400">
-              <label className="flex items-center gap-2"><input type="checkbox" checked={allFilteredSelected} onChange={toggleAll} /> Select visible</label>
-              <span>{filtered.length} products</span>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={allFilteredSelected} onChange={toggleAll} />{" "}
+                {t("Select visible")}
+              </label>
+              <span>
+                {filtered.length} {t("products")}
+              </span>
             </div>
             {filtered.map((product) => (
               <div key={product.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  <input type="checkbox" checked={selected.has(product.id)} onChange={() => setSelected((current) => { const next=new Set(current); if (next.has(product.id)) next.delete(product.id); else next.add(product.id); return next; })} className="mt-4" />
-                  <button onClick={() => navigate(`/dashboard/products/${product.id}`)} className="flex min-w-0 flex-1 items-start gap-3 text-left">
-                    <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">{product.image ? <img src={product.image} alt="" className="size-full object-contain" /> : <Package className="size-5 text-slate-400" />}</div>
-                    <div className="min-w-0 flex-1"><div className="truncate text-[12px] font-bold text-slate-700">{product.name}</div><div className="mt-1 truncate text-[10px] text-slate-400">{product.brand || "No brand"} · {product.category || "Uncategorized"}</div><div className="mt-2 flex flex-wrap items-center gap-2 text-[10px]"><StatusPill status={product.status} /><span className="font-bold text-slate-700">{money(product.price)}</span><span className={product.stock < 10 ? "font-bold text-rose-600" : "text-slate-500"}>{product.stock} stock</span><span className="text-slate-400">{product.variantCount} variants</span></div></div>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(product.id)}
+                    onChange={() =>
+                      setSelected((current) => {
+                        const next = new Set(current);
+                        if (next.has(product.id)) next.delete(product.id);
+                        else next.add(product.id);
+                        return next;
+                      })
+                    }
+                    className="mt-4"
+                  />
+                  <button
+                    onClick={() => navigate(`/dashboard/products/${product.id}`)}
+                    className="flex min-w-0 flex-1 items-start gap-3 text-start"
+                  >
+                    <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
+                      {product.image ? (
+                        <img src={product.image} alt="" className="size-full object-contain" />
+                      ) : (
+                        <Package className="size-5 text-slate-400" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] font-bold text-slate-700">
+                        {product.name}
+                      </div>
+                      <div className="mt-1 truncate text-[10px] text-slate-400">
+                        {product.brand || t("No brand")} · {product.category || t("Uncategorized")}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px]">
+                        <StatusPill status={product.status} />
+                        <span className="font-bold text-slate-700">{money(product.price)}</span>
+                        <span
+                          className={
+                            product.stock < 10 ? "font-bold text-rose-600" : "text-slate-500"
+                          }
+                        >
+                          {product.stock} {t("stock")}
+                        </span>
+                        <span className="text-slate-400">
+                          {product.variantCount} {t("variants")}
+                        </span>
+                      </div>
+                    </div>
                   </button>
-                  <button onClick={() => void duplicate(product)} className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500"><Copy className="size-4" /></button>
+                  <button
+                    onClick={() => void duplicate(product)}
+                    className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500"
+                  >
+                    <Copy className="size-4" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-          {!filtered.length ? <div className="p-10 text-center text-sm text-slate-400">No products match the current filters.</div> : null}
+          {!filtered.length ? (
+            <div className="p-10 text-center text-sm text-slate-400">
+              {t("No products match the current filters.")}
+            </div>
+          ) : null}
         </div>
       )}
     </div>
   );
 }
 
-function Select({ value, onChange, children }: { value: string; onChange: (value: string) => void; children: React.ReactNode }) {
-  return <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400">{children}</select>;
+function Select({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400"
+    >
+      {children}
+    </select>
+  );
 }
 
-function BulkButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-  return <button onClick={onClick} disabled={disabled} className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50">{children}</button>;
+function BulkButton({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50"
+    >
+      {children}
+    </button>
+  );
 }

@@ -26,17 +26,9 @@ export type DashboardOrderStatus =
 
 export type DashboardDeliveryType = "pending" | "paid" | "free";
 
-export type DashboardPaymentStatus =
-  | "unpaid"
-  | "paid"
-  | "refunded"
-  | "partially_refunded";
+export type DashboardPaymentStatus = "unpaid" | "paid" | "refunded" | "partially_refunded";
 
-export type DashboardOrdersSort =
-  | "newest"
-  | "oldest"
-  | "total_high"
-  | "total_low";
+export type DashboardOrdersSort = "newest" | "oldest" | "total_high" | "total_low";
 
 export type DashboardOrderListItem = {
   id: string;
@@ -235,13 +227,9 @@ export async function listDashboardOrders(input?: {
   if (sort === "oldest") {
     query = query.order("created_at", { ascending: true });
   } else if (sort === "total_high") {
-    query = query
-      .order("total", { ascending: false })
-      .order("created_at", { ascending: false });
+    query = query.order("total", { ascending: false }).order("created_at", { ascending: false });
   } else if (sort === "total_low") {
-    query = query
-      .order("total", { ascending: true })
-      .order("created_at", { ascending: false });
+    query = query.order("total", { ascending: true }).order("created_at", { ascending: false });
   } else {
     query = query.order("created_at", { ascending: false });
   }
@@ -305,8 +293,7 @@ export async function listDashboardOrders(input?: {
         customerName: row.customer_name,
         customerPhone: row.customer_phone,
         customerEmail: row.customer_email,
-        itemSummary:
-          preview + (orderItems.length > 2 ? ` +${orderItems.length - 2} more` : ""),
+        itemSummary: preview + (orderItems.length > 2 ? ` +${orderItems.length - 2} more` : ""),
         itemCount,
         total: Number(row.total) || 0,
         currency: row.currency,
@@ -376,7 +363,9 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
     total: Number(order.total) || 0,
     source: order.source,
     deliveryType:
-      order.delivery_type === "paid" || order.delivery_type === "free" ? order.delivery_type : "pending",
+      order.delivery_type === "paid" || order.delivery_type === "free"
+        ? order.delivery_type
+        : "pending",
     deliveryLocation: order.delivery_location,
     version: order.version,
     completedAt: order.completed_at,
@@ -393,7 +382,7 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
       quantity: item.quantity,
       lineTotal: Number(item.line_total) || 0,
       options: item.options,
-      imageUrl: item.product_id ? imageByProduct.get(item.product_id) ?? "" : "",
+      imageUrl: item.product_id ? (imageByProduct.get(item.product_id) ?? "") : "",
     })),
   };
 }
@@ -404,11 +393,14 @@ export async function updateDashboardOrderStatus(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_status", rpcArgs({
-    p_order_id: id,
-    p_status: status,
-    p_expected_version: expectedVersion,
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_order_status",
+    rpcArgs({
+      p_order_id: id,
+      p_status: status,
+      p_expected_version: expectedVersion,
+    }),
+  );
   throwIfError(error, "Updating order status failed");
   return getDashboardOrder(id);
 }
@@ -419,11 +411,14 @@ export async function updateDashboardOrderPaymentStatus(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_payment_status", rpcArgs({
-    p_order_id: id,
-    p_payment_status: paymentStatus,
-    p_expected_version: expectedVersion,
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_order_payment_status",
+    rpcArgs({
+      p_order_id: id,
+      p_payment_status: paymentStatus,
+      p_expected_version: expectedVersion,
+    }),
+  );
   throwIfError(error, "Updating order payment status failed");
   return getDashboardOrder(id);
 }
@@ -435,12 +430,15 @@ export async function updateDashboardOrderDelivery(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await looseSupabase.rpc("update_store_order_delivery", rpcArgs({
-    p_order_id: id,
-    p_delivery_type: deliveryType,
-    p_shipping_total: deliveryType === "free" ? 0 : shippingTotal,
-    p_expected_version: expectedVersion,
-  }));
+  const { error } = await looseSupabase.rpc(
+    "update_store_order_delivery",
+    rpcArgs({
+      p_order_id: id,
+      p_delivery_type: deliveryType,
+      p_shipping_total: deliveryType === "free" ? 0 : shippingTotal,
+      p_expected_version: expectedVersion,
+    }),
+  );
   throwIfError(error, "Updating order delivery failed");
   return getDashboardOrder(id);
 }

@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -39,24 +40,21 @@ const atomicVisualMigration = await readFile(
 );
 
 test("dedicated hero dashboard route uses the real CMS page", () => {
-  assert.match(app, /HeroBannersPageLive/);
-  assert.match(
-    app,
-    /route === "\/dashboard\/homepage\/hero"[\s\S]+<HeroBannersPageLive \/>/,
-  );
+assertDashboardRoute("/dashboard/homepage/hero","heroBannersPage");
+
   assert.doesNotMatch(page, /@\/dashboard\/mock\//);
   assert.doesNotMatch(data, /@\/dashboard\/mock\//);
 });
 
 test("hero dashboard supports real Supabase CRUD, storage upload and media library", () => {
   assert.match(data, /from\("cms_hero_slides"\)/);
-  assert.match(data, /rpc\("create_cms_hero_slide_v3"/);
-  assert.match(data, /rpc\("update_cms_hero_slide_v3"/);
-  assert.match(data, /rpc\("delete_cms_hero_slide"/);
-  assert.match(data, /rpc\("reorder_cms_hero_slides"/);
+  assert.match(data, /rpc\(\s*"create_cms_hero_slide_v3"/);
+  assert.match(data, /rpc\(\s*"update_cms_hero_slide_v3"/);
+  assert.match(data, /rpc\(\s*"delete_cms_hero_slide"/);
+  assert.match(data, /rpc\(\s*"reorder_cms_hero_slides"/);
   assert.match(data, /supabase\.functions\.invoke\("sync-current-hero"/);
-  assert.match(data, /storage\.from\(HERO_BUCKET\)\.upload/);
-  assert.match(data, /rpc\("register_cms_media_asset"/);
+  assert.match(data, /storage\s*\.from\(HERO_BUCKET\)\s*\.upload/);
+  assert.match(data, /rpc\(\s*"register_cms_media_asset"/);
   assert.match(data, /from\("cms_media_assets"\)/);
   assert.match(page, /Desktop image/);
   assert.match(page, /Mobile image/);

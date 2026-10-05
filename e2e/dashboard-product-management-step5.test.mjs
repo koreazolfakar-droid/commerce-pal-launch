@@ -59,10 +59,10 @@ test("product editor core persists in one PostgreSQL transaction", () => {
 });
 
 test("variant manager uses atomic RPCs and inventory-aware stock updates", () => {
-  assert.match(data, /rpc\("create_store_product_variant"/);
-  assert.match(data, /rpc\("update_store_product_variant"/);
-  assert.match(data, /rpc\("reorder_store_product_variants"/);
-  assert.match(data, /rpc\("delete_store_product_variant_safe"/);
+  assert.match(data, /rpc\(\s*"create_store_product_variant"/);
+  assert.match(data, /rpc\(\s*"update_store_product_variant"/);
+  assert.match(data, /rpc\(\s*"reorder_store_product_variants"/);
+  assert.match(data, /rpc\(\s*"delete_store_product_variant_safe"/);
   assert.match(variants, /Color/);
   assert.match(variants, /Storage \/ capacity/);
   assert.match(variants, /SKU/);
@@ -81,7 +81,7 @@ test("variant loading is stable across product-form rerenders and exposes recove
   assert.match(variants, /onSingleVariantChangeRef/);
   assert.match(variants, /const publishState = useCallback/);
   assert.match(variants, /setLoadError\(message\)/);
-  assert.match(variants, />\s*Retry/);
+  assert.match(variants, /t\("Retry"\)/);
 });
 
 test("product management supports multi-collection, duplication, bulk status and safe deletion", () => {

@@ -672,6 +672,7 @@ export type Database = {
       }
       store_categories: {
         Row: {
+          spec_template: Json
           created_at: string
           description: string | null
           icon: string | null
@@ -705,6 +706,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          spec_template?: Json
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -2608,6 +2610,45 @@ export type Database = {
       generate_store_order_public_number: { Args: never; Returns: string }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
+        Returns: {
+          city: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          customer_reference: string | null
+          customer_user_id: string | null
+          delivery_address: string | null
+          delivery_location: Json | null
+          delivery_type: string
+          discount_total: number
+          id: string
+          idempotency_fingerprint: string | null
+          idempotency_key: string | null
+          notes: string | null
+          order_number: number
+          payment_method: string
+          payment_status: string
+          public_order_number: string
+          shipping_total: number
+          source: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "store_orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_store_customer_orders_page: {
+        Args: { p_customer_id: string; p_limit: number; p_offset: number }
         Returns: {
           city: string | null
           completed_at: string | null

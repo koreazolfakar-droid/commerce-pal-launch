@@ -1,5 +1,6 @@
+import { checkDashboardAiAccess } from "./access.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2.116.0";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.116.0";
 
 const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 const MAX_BODY_BYTES = 32 * 1024;
@@ -847,7 +848,7 @@ function allowedIconNames(context: Record<string, unknown>) {
 }
 
 async function databaseChecks(args: {
-  admin: ReturnType<typeof createClient>;
+  admin: SupabaseClient;
   entity: string;
   field: string;
   value: string;
@@ -938,7 +939,7 @@ async function databaseChecks(args: {
 }
 
 async function trustedOfficialDomains(args: {
-  admin: ReturnType<typeof createClient>;
+  admin: SupabaseClient;
   entity: string;
   currentData: Record<string, string>;
 }) {
@@ -1094,7 +1095,7 @@ function decisionFor(args: {
 }
 
 async function verifySuggestions(args: {
-  admin: ReturnType<typeof createClient>;
+  admin: SupabaseClient;
   entity: string;
   fields: AiField[];
   currentData: Record<string, string>;
@@ -1260,6 +1261,19 @@ Deno.serve(async (req) => {
   if (roleError) return json(req, { error: "authorization_unavailable" }, 503);
   const allowed = (roleRows ?? []).some((row) => row.role === "admin" || row.role === "editor");
   if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);
+
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")?.trim();
+  if (!anonKey) return json(req, { error: "server_not_configured" }, 503);
+  const staff = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const denied = await checkDashboardAiAccess(staff, admin, user.id);
+  if (denied) {
+    const response = json(req, { error: denied.error }, denied.status);
+    if (denied.retryAfter) response.headers.set("Retry-After", String(denied.retryAfter));
+    return response;
+  }
 
   console.info(
     `[dashboard-ai] provider config gemini=${Boolean(geminiKey)} lovable=${lovableConfigured}`,

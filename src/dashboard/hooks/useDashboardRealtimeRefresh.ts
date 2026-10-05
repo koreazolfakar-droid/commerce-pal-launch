@@ -3,10 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const REALTIME_DEBOUNCE_MS = 350;
 
-export function useDashboardRealtimeRefresh(
-  tables: readonly string[],
-  onRefresh: () => void,
-) {
+export function useDashboardRealtimeRefresh(tables: readonly string[], onRefresh: () => void) {
   const callbackRef = useRef(onRefresh);
   callbackRef.current = onRefresh;
 
@@ -21,14 +18,10 @@ export function useDashboardRealtimeRefresh(
 
     for (const table of key.split(",")) {
       if (!table) continue;
-      channel = channel.on(
-        "postgres_changes",
-        { event: "*", schema: "public", table },
-        () => {
-          if (timer != null) window.clearTimeout(timer);
-          timer = window.setTimeout(() => callbackRef.current(), REALTIME_DEBOUNCE_MS);
-        },
-      );
+      channel = channel.on("postgres_changes", { event: "*", schema: "public", table }, () => {
+        if (timer != null) window.clearTimeout(timer);
+        timer = window.setTimeout(() => callbackRef.current(), REALTIME_DEBOUNCE_MS);
+      });
     }
 
     channel.subscribe();

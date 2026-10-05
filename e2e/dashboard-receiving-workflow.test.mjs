@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -66,10 +67,10 @@ test("dashboard data layer uses real procurement tables and RPCs", () => {
   ]) {
     assert.match(data, new RegExp(`from\\("${table}"\\)`));
   }
-  assert.match(data, /rpc\("create_store_purchase_order_v2"/);
-  assert.match(data, /rpc\("submit_store_purchase_order_v2"/);
-  assert.match(data, /rpc\("create_store_receiving"/);
-  assert.match(data, /rpc\("approve_store_receiving_v2"/);
+  assert.match(data, /rpc\(\s*"create_store_purchase_order_v2"/);
+  assert.match(data, /rpc\(\s*"submit_store_purchase_order_v2"/);
+  assert.match(data, /rpc\(\s*"create_store_receiving"/);
+  assert.match(data, /rpc\(\s*"approve_store_receiving_v2"/);
   assert.match(data, /invalidateNativeStoreCache\(\)/);
 });
 
@@ -154,8 +155,7 @@ test("purchase orders expose Toters-style operational filters and actions", () =
 });
 
 test("purchase order creation uses its own dedicated route", () => {
-  assert.match(app, /import PurchaseOrderCreatePage from/);
-  assert.match(app, /route === "\/dashboard\/purchase-orders\/new"/);
+assertDashboardRoute("/dashboard/purchase-orders/new","purchaseOrderCreatePage");
   assert.match(purchaseOrderCreatePage, /mode="purchase-order-create"/);
   assert.match(page, /purchaseOrderCreateMode/);
   assert.match(page, /navigate\("\/dashboard\/purchase-orders\/new"\)/);
@@ -166,9 +166,7 @@ test("purchase order creation uses its own dedicated route", () => {
 });
 
 test("PO number opens a dedicated detail page and receiving stays separate", () => {
-  assert.match(app, /import PurchaseOrderDetailPage from/);
-  assert.match(app, /purchaseOrderDetail/);
-  assert.match(app, /PurchaseOrderDetailPage id=/);
+assertDashboardRoute("/dashboard/purchase-orders/test-id","purchaseOrderDetailPage");
   assert.match(page, /dashboard\/purchase-orders\/\$\{po\.id\}/);
   assert.match(purchaseOrderDetailPage, /Purchase order details and ordered items/);
   assert.match(purchaseOrderDetailPage, /Purchase order items/);
@@ -195,13 +193,9 @@ test("purchase order detail loads only the requested PO dataset", () => {
 });
 
 test("purchase orders and receiving are separate routed workspaces", () => {
-  assert.match(app, /import PurchaseOrdersPage from/);
-  assert.match(app, /import ReceivingPage from/);
-  assert.match(app, /route === "\/dashboard\/purchase-orders"/);
-  assert.match(app, /route === "\/dashboard\/receiving"/);
-  assert.match(app, /receivingPoDetail/);
-  assert.match(nav, /label: "Purchase Orders",\s+href: "\/dashboard\/purchase-orders"/);
-  assert.match(nav, /label: "Receiving",\s+href: "\/dashboard\/receiving"/);
+assertDashboardRoute("/dashboard/purchase-orders","purchaseOrdersPage");
+assertDashboardRoute("/dashboard/receiving","receivingPage");
+assertDashboardRoute("/dashboard/receiving/test-id","receivingPage");
   assert.match(purchaseOrdersPage, /mode="purchase-orders"/);
   assert.match(page, /mode = "receiving"/);
   assert.match(page, /navigate\(\`\/dashboard\/receiving\/\$\{po\.id\}\`\)/);
@@ -255,8 +249,7 @@ test("PO lifecycle requires approval before issue and admin protects privileged 
 });
 
 test("draft PO editing, deletion and expected delivery are routed separately", () => {
-  assert.match(app, /PurchaseOrderEditPage/);
-  assert.match(app, /purchaseOrderEdit/);
+assertDashboardRoute("/dashboard/purchase-orders/test-id/edit","purchaseOrderEditPage");
   assert.match(purchaseOrderEditPage, /Edit Purchase Order/);
   assert.match(purchaseOrderEditPage, /Save draft changes/);
   assert.match(purchaseOrderEditPage, /Delete draft/);
@@ -274,8 +267,7 @@ test("PO edit uses targeted form data instead of the full procurement workspace"
 });
 
 test("receiving review supports editable drafts, invoice matching, serials and void", () => {
-  assert.match(app, /ReceivingDetailPage/);
-  assert.match(app, /receivingDetail/);
+assertDashboardRoute("/dashboard/receivings/test-id","receivingDetailPage");
   assert.match(receivingDetailPage, /Draft receiving details/);
   assert.match(receivingDetailPage, /Save draft/);
   assert.match(receivingDetailPage, /updateReceivingDraft/);
@@ -328,10 +320,8 @@ test("procurement documents are private and audit timelines are exposed", () => 
 });
 
 test("supplier management, analytics and reorder suggestions are live modules", () => {
-  assert.match(app, /SuppliersPage/);
-  assert.match(app, /ProcurementAnalyticsPage/);
-  assert.match(nav, /label: "Suppliers",\s+href: "\/dashboard\/suppliers"/);
-  assert.match(nav, /label: "Procurement",\s+href: "\/dashboard\/procurement"/);
+assertDashboardRoute("/dashboard/suppliers","suppliersPage");
+assertDashboardRoute("/dashboard/procurement","procurementPage");
   assert.match(suppliersPage, /Suppliers & Locations/);
   assert.match(suppliersPage, /Phone/);
   assert.match(suppliersPage, /Email/);

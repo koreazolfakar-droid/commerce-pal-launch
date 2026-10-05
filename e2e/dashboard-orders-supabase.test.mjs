@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -29,10 +30,8 @@ const migration = await readFile(
 );
 
 test("active orders routes use Supabase-backed pages", () => {
-  assert.match(app, /OrdersPageLive/);
-  assert.match(app, /OrderDetailPageLive/);
-  assert.match(app, /route === "\/dashboard\/orders"[\s\S]+<OrdersPageLive \/>/);
-  assert.match(app, /orderDetail[\s\S]+<OrderDetailPageLive id=\{orderDetail\[1\]\} \/>/);
+assertDashboardRoute("/dashboard/orders","ordersPage");
+assertDashboardRoute("/dashboard/orders/test-id","orderDetailPage");
 });
 
 test("orders pages contain no mock business data", () => {
@@ -48,9 +47,9 @@ test("orders data layer reads Supabase and mutates only through guarded RPCs", (
   assert.match(data, /from\("store_orders"\)/);
   assert.match(data, /from\("store_order_items"\)/);
   assert.match(data, /from\("store_product_images"\)/);
-  assert.match(data, /rpc\("update_store_order_status"/);
-  assert.match(data, /rpc\("update_store_order_payment_status"/);
-  assert.match(data, /rpc\("update_store_order_delivery"/);
+  assert.match(data, /rpc\(\s*"update_store_order_status"/);
+  assert.match(data, /rpc\(\s*"update_store_order_payment_status"/);
+  assert.match(data, /rpc\(\s*"update_store_order_delivery"/);
   assert.match(data, /p_expected_version/);
 });
 
@@ -119,7 +118,7 @@ test("orders queue opens an on-demand quick drawer before full detail navigation
   assert.match(quickDrawer, /Order quick view/);
   assert.match(quickDrawer, /Open full order/);
   assert.match(quickDrawer, /Copy order #/);
-  assert.match(quickDrawer, /event\.key === "Escape"/);
+  assert.match(quickDrawer, /useDashboardDialogFocus/);
   assert.match(quickDrawer, /href=\{\`tel:\$\{order\.customerPhone\}\`\}/);
   assert.doesNotMatch(quickDrawer, /updateDashboardOrderStatus|updateDashboardOrderPaymentStatus|updateDashboardOrderDelivery/);
 });

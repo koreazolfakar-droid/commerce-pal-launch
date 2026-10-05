@@ -67,7 +67,7 @@ test("MFA UI is bilingual and does not expose internal assurance labels", () => 
 test("TOTP verification upgrades to AAL2 and activates DB enforcement", () => {
   assert.match(catalog, /auth\.mfa\.challengeAndVerify/);
   assert.match(catalog, /currentLevel !== "aal2"/);
-  assert.match(catalog, /rpc\("activate_dashboard_mfa"\)/);
+  assert.match(catalog, /rpc\(\s*"activate_dashboard_mfa"\)/);
   assert.match(catalog, /status\?\.ready/);
   assert.match(catalog, /Verification code could not be confirmed\./);
   assert.match(catalog, /Too many verification attempts/);

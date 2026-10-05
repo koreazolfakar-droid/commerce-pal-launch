@@ -128,7 +128,8 @@ export async function saveDashboardSeoPage(input: DashboardSeoInput): Promise<Da
 export async function deleteDashboardSeoPage(pageSlug: string): Promise<void> {
   const role = await requireDashboardStaff();
   if (role !== "admin") throw new Error("Only dashboard admins can delete SEO pages.");
-  if (pageSlug === "home") throw new Error("The home SEO row is protected. Set it non-public instead.");
+  if (pageSlug === "home")
+    throw new Error("The home SEO row is protected. Set it non-public instead.");
 
   const { error } = await supabase.from("cms_seo_pages").delete().eq("page_slug", pageSlug);
   throwIfError(error, "Deleting SEO page failed");

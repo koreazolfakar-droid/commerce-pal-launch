@@ -24,6 +24,7 @@ export type DashboardNavigationSection = {
 };
 
 type LazyPage = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Each route render adapter supplies a different page prop shape.
   Component: LazyExoticComponent<ComponentType<any>>;
   preload: () => Promise<unknown>;
 };
@@ -50,7 +51,9 @@ type DashboardRouteDefinition = {
 
 const SECTION_ORDER = [
   "Overview",
-  "Commerce",
+  "Catalog",
+  "Sales",
+  "Stock & purchasing",
   "Store content",
   "Marketing",
   "Management",
@@ -60,8 +63,7 @@ const SECTION_ORDER = [
 const DASHBOARD_ROUTE_CHUNK_RELOAD_KEY = "space-call:dashboard-route-chunk-reload";
 
 function isRouteChunkLoadError(error: unknown) {
-  const message =
-    error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 
   return /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk|error loading dynamically imported module/i.test(
     message,
@@ -75,8 +77,7 @@ async function recoverRouteChunk(error: unknown): Promise<never> {
 
   let alreadyReloaded = false;
   try {
-    alreadyReloaded =
-      window.sessionStorage.getItem(DASHBOARD_ROUTE_CHUNK_RELOAD_KEY) === "1";
+    alreadyReloaded = window.sessionStorage.getItem(DASHBOARD_ROUTE_CHUNK_RELOAD_KEY) === "1";
   } catch {
     throw error;
   }
@@ -93,9 +94,8 @@ async function recoverRouteChunk(error: unknown): Promise<never> {
   return await new Promise<never>(() => undefined);
 }
 
-function lazyPage<T extends ComponentType<any>>(
-  loader: () => Promise<{ default: T }>,
-): LazyPage {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Props are supplied by the matching route adapter.
+function lazyPage<T extends ComponentType<any>>(loader: () => Promise<{ default: T }>): LazyPage {
   let request: Promise<{ default: T }> | null = null;
 
   const load = async () => {
@@ -146,8 +146,7 @@ function safeDecode(value: string) {
 }
 
 function exact(path: string) {
-  return (candidate: string): RouteMatch | null =>
-    candidate === path ? { params: {} } : null;
+  return (candidate: string): RouteMatch | null => (candidate === path ? { params: {} } : null);
 }
 
 function pattern(regex: RegExp, names: string[]) {
@@ -229,16 +228,17 @@ const routes: DashboardRouteDefinition[] = [
     id: "analytics",
     path: "/dashboard/analytics",
     page: homePage,
+    render: (Page) => createElement(Page, { analyticsView: true }),
     meta: {
       eyebrow: "Management / Insights",
       title: "Analytics",
       description: "Explore a clear view of store performance and trends.",
     },
     navigation: {
-      section: "Management",
+      section: "Overview",
       label: "Analytics",
       icon: "ChartNoAxesCombined",
-      order: 0,
+      order: 1,
     },
   }),
   staticRoute({
@@ -251,7 +251,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Track, filter, and manage every customer order.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Sales",
       label: "Orders",
       icon: "ShoppingBag",
       order: 0,
@@ -267,7 +267,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Review completed order snapshots recorded when orders reach DONE.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Sales",
       label: "Sales",
       icon: "ChartNoAxesCombined",
       order: 1,
@@ -294,7 +294,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Keep your product catalog clean, current, and ready to sell.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Catalog",
       label: "Products",
       icon: "Package",
       order: 2,
@@ -316,7 +316,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Curate product groups for your storefront experience.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Catalog",
       label: "Collections",
       icon: "Layers3",
       order: 3,
@@ -338,7 +338,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Organize your catalog with a clear browsing structure.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Catalog",
       label: "Categories",
       icon: "Tags",
       order: 4,
@@ -354,7 +354,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Stay ahead of stock levels across products and variants.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Stock & purchasing",
       label: "Inventory",
       icon: "Boxes",
       order: 5,
@@ -370,7 +370,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Track purchasing spend, supplier performance and reorder needs.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Stock & purchasing",
       label: "Procurement",
       icon: "ChartNoAxesCombined",
       order: 6,
@@ -397,7 +397,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Create, submit and track supplier purchase orders before receiving.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Stock & purchasing",
       label: "Purchase Orders",
       icon: "ClipboardList",
       order: 7,
@@ -419,7 +419,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Receive issued purchase orders, review invoices and approve stock intake.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Stock & purchasing",
       label: "Receiving",
       icon: "ClipboardList",
       order: 8,
@@ -429,8 +429,7 @@ const routes: DashboardRouteDefinition[] = [
     id: "receiving-po-detail",
     page: receivingPage,
     match: pattern(/^\/dashboard\/receiving\/([^/]+)$/, ["purchaseOrderId"]),
-    render: (Page, match) =>
-      createElement(Page, { purchaseOrderId: match.params.purchaseOrderId }),
+    render: (Page, match) => createElement(Page, { purchaseOrderId: match.params.purchaseOrderId }),
   },
   {
     id: "receiving-detail",
@@ -448,7 +447,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Manage supplier contacts and purchasing destinations.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Stock & purchasing",
       label: "Suppliers",
       icon: "UserCog",
       order: 9,
@@ -464,7 +463,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Understand your customer base and build stronger relationships.",
     },
     navigation: {
-      section: "Commerce",
+      section: "Sales",
       label: "Customers",
       icon: "Users",
       order: 10,
@@ -519,7 +518,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Manage the brands that make Space Call distinctive.",
     },
     navigation: {
-      section: "Store content",
+      section: "Catalog",
       label: "Brands",
       icon: "Badge",
       order: 2,
@@ -551,7 +550,7 @@ const routes: DashboardRouteDefinition[] = [
       description: "Plan offers and promotional moments for your customers.",
     },
     navigation: {
-      section: "Store content",
+      section: "Marketing",
       label: "Promotions",
       icon: "BadgePercent",
       order: 4,
@@ -760,8 +759,8 @@ export function preloadDashboardRoute(pathname: string) {
   return (resolved?.definition.page ?? workspacePage).preload();
 }
 
-export const dashboardNavigationSections: DashboardNavigationSection[] =
-  SECTION_ORDER.map((section) => ({
+export const dashboardNavigationSections: DashboardNavigationSection[] = SECTION_ORDER.map(
+  (section) => ({
     label: section,
     items: routes
       .filter((route) => route.navigation?.section === section && route.path)
@@ -771,14 +770,15 @@ export const dashboardNavigationSections: DashboardNavigationSection[] =
         href: route.path!,
         icon: route.navigation!.icon,
       })),
-  })).filter((section) => section.items.length > 0);
+  }),
+).filter((section) => section.items.length > 0);
 
 export const dashboardPageMeta: Record<string, DashboardPageMeta> = Object.fromEntries(
   routes.flatMap((route) => {
     if (!route.meta || !route.path) return [];
     return [
       [route.path, route.meta],
-      ...(route.aliases ?? []).map((alias) => [alias, route.meta] as const),
+      ...(route.aliases ?? []).map((alias) => [alias, route.meta!] as const),
     ];
   }),
 );

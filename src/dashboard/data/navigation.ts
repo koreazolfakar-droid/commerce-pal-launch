@@ -63,7 +63,9 @@ function normalizeHref(value: string) {
   if (!href) return "";
   const safe = safeStoreHref(href);
   if (!safe) {
-    throw new Error("Navigation URL must be a site path, #anchor, or a valid http(s) URL without embedded credentials.");
+    throw new Error(
+      "Navigation URL must be a site path, #anchor, or a valid http(s) URL without embedded credentials.",
+    );
   }
   return safe;
 }

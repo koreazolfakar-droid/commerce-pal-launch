@@ -22,14 +22,7 @@ const clientId = (import.meta.env.VITE_AUTH0_CLIENT_ID as string | undefined)?.t
 export const isDashboardAuth0Configured = Boolean(domain && clientId);
 
 function Auth0Gate({ children }: { children: ReactNode }) {
-  const {
-    error,
-    isAuthenticated,
-    isLoading,
-    loginWithRedirect,
-    logout,
-    user,
-  } = useAuth0();
+  const { error, isAuthenticated, isLoading, loginWithRedirect, logout, user } = useAuth0();
 
   const logoutAuth0 = async () => {
     await logout({
@@ -163,9 +156,7 @@ export default function DashboardAuth0Security({ children }: { children: ReactNo
       cacheLocation="memory"
       authorizationParams={{
         redirect_uri:
-          typeof window === "undefined"
-            ? undefined
-            : `${window.location.origin}/dashboard`,
+          typeof window === "undefined" ? undefined : `${window.location.origin}/dashboard`,
         scope: "openid profile email",
       }}
       onRedirectCallback={(appState) => {

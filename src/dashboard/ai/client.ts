@@ -61,12 +61,9 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
           confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)),
           verified: item.verified === true,
           reason: text(item.reason),
-          risk:
-            item.risk === "low" || item.risk === "high" ? item.risk : "medium",
+          risk: item.risk === "low" || item.risk === "high" ? item.risk : "medium",
           decision:
-            item.decision === "allow" || item.decision === "block"
-              ? item.decision
-              : "review",
+            item.decision === "allow" || item.decision === "block" ? item.decision : "review",
           checks: Array.isArray(item.checks) ? item.checks.map(text).filter(Boolean) : [],
           sourceUrls: Array.isArray(item.sourceUrls)
             ? item.sourceUrls.map(safeHttpUrl).filter(Boolean).slice(0, 5)
@@ -100,8 +97,7 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
     model: text(row.model),
     grounded: row.grounded === true,
     entityMatch: {
-      status:
-        match.status === "exact" || match.status === "partial" ? match.status : "uncertain",
+      status: match.status === "exact" || match.status === "partial" ? match.status : "uncertain",
       canonicalName: text(match.canonicalName),
       reason: text(match.reason),
     },

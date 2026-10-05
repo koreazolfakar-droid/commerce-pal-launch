@@ -1,3 +1,5 @@
+import { useLanguage } from "@/dashboard/i18n";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { HeroVisualEditor } from "@/dashboard/components/HeroVisualEditor";
 import {
   ArrowDown,
@@ -133,15 +135,19 @@ function statusBadge(slide: DashboardHeroSlide) {
 
 function targetHref(form: DashboardHeroInput) {
   if (form.targetType === "product" && form.targetValue) return `/product/${form.targetValue}`;
-  if (form.targetType === "collection" && form.targetValue) return `/collections/${form.targetValue}`;
+  if (form.targetType === "collection" && form.targetValue)
+    return `/collections/${form.targetValue}`;
   if (form.targetType === "url" && form.targetValue) return form.targetValue;
   return "";
 }
 
 function secondaryTargetHref(form: DashboardHeroInput) {
-  if (form.secondaryTargetType === "product" && form.secondaryTargetValue) return `/product/${form.secondaryTargetValue}`;
-  if (form.secondaryTargetType === "collection" && form.secondaryTargetValue) return `/collections/${form.secondaryTargetValue}`;
-  if (form.secondaryTargetType === "url" && form.secondaryTargetValue) return form.secondaryTargetValue;
+  if (form.secondaryTargetType === "product" && form.secondaryTargetValue)
+    return `/product/${form.secondaryTargetValue}`;
+  if (form.secondaryTargetType === "collection" && form.secondaryTargetValue)
+    return `/collections/${form.secondaryTargetValue}`;
+  if (form.secondaryTargetType === "url" && form.secondaryTargetValue)
+    return form.secondaryTargetValue;
   return "";
 }
 
@@ -173,15 +179,21 @@ function MediaLibraryModal({
   onSelect: (asset: DashboardHeroMediaAsset) => void;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm">
       <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[.16em] text-indigo-500">Supabase Storage</div>
-            <div className="mt-1 text-lg font-bold text-[#14203a]">Hero media library</div>
+            <div className="text-[10px] font-bold uppercase tracking-[.16em] text-indigo-500">
+              {t("Supabase Storage")}
+            </div>
+            <div className="mt-1 text-lg font-bold text-[#14203a]">{t("Hero media library")}</div>
           </div>
-          <button onClick={onClose} className="grid size-9 place-items-center rounded-xl bg-slate-100 text-slate-500">
+          <button
+            onClick={onClose}
+            className="grid size-9 place-items-center rounded-xl bg-slate-100 text-slate-500"
+          >
             <X className="size-4" />
           </button>
         </div>
@@ -192,22 +204,32 @@ function MediaLibraryModal({
                 <button
                   key={asset.id}
                   onClick={() => onSelect(asset)}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition hover:border-indigo-400 hover:shadow-md"
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-start transition hover:border-indigo-400 hover:shadow-md"
                 >
                   <div className="aspect-[4/3] bg-slate-50">
-                    <img src={asset.url} alt={asset.altText || asset.fileName} className="size-full object-cover" />
+                    <img
+                      src={asset.url}
+                      alt={asset.altText || asset.fileName}
+                      className="size-full object-cover"
+                    />
                   </div>
                   <div className="p-3">
-                    <div className="truncate text-[10px] font-bold text-slate-700">{asset.fileName}</div>
+                    <div className="truncate text-[10px] font-bold text-slate-700">
+                      {asset.fileName}
+                    </div>
                     <div className="mt-1 text-[9px] text-slate-400">
-                      {asset.sizeBytes ? `${(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB` : "Stored media"}
+                      {asset.sizeBytes
+                        ? `${(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB`
+                        : t("Stored media")}
                     </div>
                   </div>
                 </button>
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center text-sm text-slate-400">No hero images uploaded yet.</div>
+            <div className="py-16 text-center text-sm text-slate-400">
+              {t("No hero images uploaded yet.")}
+            </div>
           )}
         </div>
       </div>
@@ -216,6 +238,7 @@ function MediaLibraryModal({
 }
 
 export default function HeroBannersPage() {
+  const { t } = useLanguage();
   const [slides, setSlides] = useState<DashboardHeroSlide[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<DashboardHeroInput>(EMPTY_FORM);
@@ -228,8 +251,12 @@ export default function HeroBannersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<HeroImageTarget | null>(null);
-  const [pendingHeroImages, setPendingHeroImages] = useState<Partial<Record<HeroImageTarget, File>>>({});
-  const [pendingPreviewUrls, setPendingPreviewUrls] = useState<Partial<Record<HeroImageTarget, string>>>({});
+  const [pendingHeroImages, setPendingHeroImages] = useState<
+    Partial<Record<HeroImageTarget, File>>
+  >({});
+  const [pendingPreviewUrls, setPendingPreviewUrls] = useState<
+    Partial<Record<HeroImageTarget, string>>
+  >({});
   const [lastOptimizations, setLastOptimizations] = useState<
     Partial<Record<HeroImageTarget, DashboardHeroImageOptimization>>
   >({});
@@ -321,13 +348,17 @@ export default function HeroBannersPage() {
   }, [form, selected]);
   const hasPendingHeroImages = Boolean(pendingHeroImages.desktop || pendingHeroImages.mobile);
   const dirty = formDirty || hasPendingHeroImages;
+  useDashboardUnsavedChanges(dirty);
   const busy = saving || uploading !== null || imageEditor.isEditing;
 
-  const previewForm = useMemo<DashboardHeroInput>(() => ({
-    ...form,
-    imageUrl: pendingPreviewUrls.desktop || form.imageUrl,
-    mobileImageUrl: pendingPreviewUrls.mobile || form.mobileImageUrl,
-  }), [form, pendingPreviewUrls.desktop, pendingPreviewUrls.mobile]);
+  const previewForm = useMemo<DashboardHeroInput>(
+    () => ({
+      ...form,
+      imageUrl: pendingPreviewUrls.desktop || form.imageUrl,
+      mobileImageUrl: pendingPreviewUrls.mobile || form.mobileImageUrl,
+    }),
+    [form, pendingPreviewUrls.desktop, pendingPreviewUrls.mobile],
+  );
 
   const handleVisualEditorChange = useCallback((next: DashboardHeroInput) => {
     setForm((current) => ({
@@ -339,7 +370,10 @@ export default function HeroBannersPage() {
 
   useEffect(() => {
     if (!dirty) return;
-    const protect = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    const protect = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
   }, [dirty]);
@@ -391,7 +425,11 @@ export default function HeroBannersPage() {
       toast.error("Choose a destination for the primary button.");
       return;
     }
-    if (form.targetType === "url" && form.targetValue.trim() && !isSafeHeroCustomUrl(form.targetValue)) {
+    if (
+      form.targetType === "url" &&
+      form.targetValue.trim() &&
+      !isSafeHeroCustomUrl(form.targetValue)
+    ) {
       toast.error("Primary custom URL must be an internal /path or an HTTP(S) URL.");
       return;
     }
@@ -514,7 +552,9 @@ export default function HeroBannersPage() {
     const next = ordered.map((slide, sortOrder) => ({ ...slide, sortOrder }));
     setSlides(next);
     try {
-      await reorderDashboardHeroSlides(next.map((slide) => ({ id: slide.id, sortOrder: slide.sortOrder })));
+      await reorderDashboardHeroSlides(
+        next.map((slide) => ({ id: slide.id, sortOrder: slide.sortOrder })),
+      );
       toast.success("Hero order saved.");
     } catch (cause) {
       handleHeroActionError(cause, "Reorder failed.");
@@ -527,9 +567,14 @@ export default function HeroBannersPage() {
     let completed = false;
     setUploading(target);
     try {
-      const alt = target === "desktop"
-        ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
-        : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
+      const alt =
+        target === "desktop"
+          ? language === "ar"
+            ? form.imageAltAr
+            : form.imageAltEn
+          : language === "ar"
+            ? form.mobileImageAltAr
+            : form.mobileImageAltEn;
       const result = await uploadDashboardHeroImage(file, alt, target);
       const { asset, optimization } = result;
       setMedia((current) => [asset, ...current.filter((item) => item.id !== asset.id)]);
@@ -564,9 +609,7 @@ export default function HeroBannersPage() {
         try {
           const saved = await updateDashboardHeroSlide(selectedId, nextForm);
           if (!saved) throw new Error("Hero image save returned no record.");
-          setSlides((current) =>
-            current.map((slide) => (slide.id === saved.id ? saved : slide)),
-          );
+          setSlides((current) => current.map((slide) => (slide.id === saved.id ? saved : slide)));
           setForm(fromSlide(saved));
           persisted = true;
         } catch (cause) {
@@ -614,17 +657,11 @@ export default function HeroBannersPage() {
     await upload(file, target);
   };
 
-  const adjustExistingHero = async (
-    target: HeroImageTarget,
-    url: string,
-  ) => {
+  const adjustExistingHero = async (target: HeroImageTarget, url: string) => {
     if (!url) return;
     setPreviewMode(target);
     const edited = await imageEditor.editUrl(url, {
-      title:
-        target === "desktop"
-          ? "Adjust existing desktop hero"
-          : "Adjust existing mobile hero",
+      title: target === "desktop" ? "Adjust existing desktop hero" : "Adjust existing mobile hero",
       preset: target === "desktop" ? "hero-desktop" : "hero-mobile",
       transparent: true,
       defaultFit: "cover",
@@ -659,17 +696,22 @@ export default function HeroBannersPage() {
 
   const activePreviewTarget: HeroImageTarget = previewMode;
   const activePreviewUrl =
-    previewMode === "desktop"
-      ? form.imageUrl
-      : form.mobileImageUrl || form.imageUrl;
+    previewMode === "desktop" ? form.imageUrl : form.mobileImageUrl || form.imageUrl;
   const activePendingHeroImage = pendingHeroImages[activePreviewTarget];
 
-  const linkOptions = form.targetType === "product" ? products : form.targetType === "collection" ? collections : [];
-  const secondaryLinkOptions = form.secondaryTargetType === "product" ? products : form.secondaryTargetType === "collection" ? collections : [];
-
+  const linkOptions =
+    form.targetType === "product" ? products : form.targetType === "collection" ? collections : [];
+  const secondaryLinkOptions =
+    form.secondaryTargetType === "product"
+      ? products
+      : form.secondaryTargetType === "collection"
+        ? collections
+        : [];
 
   const liveCount = slides.filter((slide) => getHeroScheduleState(slide) === "live").length;
-  const scheduledCount = slides.filter((slide) => getHeroScheduleState(slide) === "scheduled").length;
+  const scheduledCount = slides.filter(
+    (slide) => getHeroScheduleState(slide) === "scheduled",
+  ).length;
   const editorMode = selected ? "edit" : "create";
   const editorTitle = selected
     ? selected.titleEn || selected.titleAr || "Untitled hero"
@@ -679,7 +721,11 @@ export default function HeroBannersPage() {
     : "New draft · changes stay local until you create the slide.";
 
   if (loading && !slides.length) {
-    return <div className="grid min-h-[480px] place-items-center rounded-2xl border border-slate-200 bg-white"><Loader2 className="size-6 animate-spin text-[#5968ea]" /></div>;
+    return (
+      <div className="grid min-h-[480px] place-items-center rounded-2xl border border-slate-200 bg-white">
+        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      </div>
+    );
   }
 
   return (
@@ -687,19 +733,38 @@ export default function HeroBannersPage() {
       {imageEditor.dialog}
       <div className="mb-4 flex flex-col justify-between gap-3 sm:mb-7 sm:gap-4 xl:flex-row xl:items-end">
         <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">Store content / CMS</div>
-          <h1 className="text-[24px] font-bold tracking-[-.04em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">Hero banners</h1>
-          <p className="mt-1 text-[11px] leading-5 text-slate-500 sm:mt-1.5 sm:text-sm">Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.</p>
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
+            {t("Store content / CMS")}
+          </div>
+          <h1 className="text-[24px] font-bold tracking-[-.04em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">
+            {t("Hero banners")}
+          </h1>
+          <p className="mt-1 text-[11px] leading-5 text-slate-500 sm:mt-1.5 sm:text-sm">
+            {t(
+              "Control the storefront hero, scheduling, links, responsive images and bilingual content from Supabase.",
+            )}
+          </p>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-          <button onClick={() => window.open("/", "_blank", "noopener,noreferrer")} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
-            <ExternalLink className="size-3.5" /> View storefront
+          <button
+            onClick={() => window.open("/", "_blank", "noopener,noreferrer")}
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+          >
+            <ExternalLink className="size-3.5" /> {t("View storefront")}
           </button>
-          <button onClick={() => void refresh()} disabled={busy} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50">
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          <button
+            onClick={() => void refresh()}
+            disabled={busy}
+            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50"
+          >
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> {t("Refresh")}
           </button>
-          <button onClick={newSlide} disabled={busy} className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50">
-            <Plus className="size-4" /> New slide
+          <button
+            onClick={newSlide}
+            disabled={busy}
+            className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50"
+          >
+            <Plus className="size-4" /> {t("New slide")}
           </button>
         </div>
       </div>
@@ -711,8 +776,11 @@ export default function HeroBannersPage() {
           ["Scheduled", scheduledCount],
           ["Media assets", media.length],
         ].map(([label, value]) => (
-          <div key={String(label)} className="min-w-[108px] flex-1 rounded-xl border border-slate-200 bg-white p-3 sm:min-w-0 sm:rounded-2xl sm:p-4">
-            <div className="text-[10px] text-slate-400">{label}</div>
+          <div
+            key={String(label)}
+            className="min-w-[108px] flex-1 rounded-xl border border-slate-200 bg-white p-3 sm:min-w-0 sm:rounded-2xl sm:p-4"
+          >
+            <div className="text-[10px] text-slate-400">{t(String(label))}</div>
             <div className="mt-1 text-xl font-bold text-[#14203a]">{value}</div>
           </div>
         ))}
@@ -721,8 +789,13 @@ export default function HeroBannersPage() {
       <div className="grid gap-3 sm:gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <div className="text-[12px] font-bold text-[#14203a]">Slides</div>
-            <button onClick={newSlide} className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"><Plus className="size-4" /></button>
+            <div className="text-[12px] font-bold text-[#14203a]">{t("Slides")}</div>
+            <button
+              onClick={newSlide}
+              className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600"
+            >
+              <Plus className="size-4" />
+            </button>
           </div>
           <div className="flex gap-2 overflow-x-auto p-2.5 sm:p-3 xl:block xl:max-h-[760px] xl:divide-y xl:divide-slate-100 xl:overflow-y-auto xl:p-0">
             {slides.map((slide, index) => {
@@ -741,22 +814,36 @@ export default function HeroBannersPage() {
                     setSelectedId(slide.id);
                     setForm(fromSlide(slide));
                   }}
-                  className={`grid min-w-[196px] grid-cols-[52px_1fr] gap-2.5 rounded-xl border p-2.5 text-left transition sm:min-w-[230px] sm:grid-cols-[64px_1fr] sm:gap-3 sm:p-3 xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
+                  className={`grid min-w-[196px] grid-cols-[52px_1fr] gap-2.5 rounded-xl border p-2.5 text-start transition sm:min-w-[230px] sm:grid-cols-[64px_1fr] sm:gap-3 sm:p-3 xl:min-w-0 xl:rounded-none xl:border-x-0 xl:border-b-0 xl:first:border-t-0 ${selectedId === slide.id ? "border-indigo-200 bg-indigo-50/70" : "border-slate-100 bg-white hover:bg-slate-50"}`}
                 >
                   <div className="grid h-12 w-[52px] place-items-center overflow-hidden rounded-lg bg-slate-100 sm:h-14 sm:w-16 sm:rounded-xl">
-                    {slide.imageUrl ? <img src={slide.imageUrl} alt="" className="size-full object-cover" /> : <ImageIcon className="size-5 text-slate-300" />}
+                    {slide.imageUrl ? (
+                      <img src={slide.imageUrl} alt="" className="size-full object-cover" />
+                    ) : (
+                      <ImageIcon className="size-5 text-slate-300" />
+                    )}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate text-[11px] font-bold text-slate-700">{slide.titleEn || slide.titleAr || `Slide ${index + 1}`}</div>
+                    <div className="truncate text-[11px] font-bold text-slate-700">
+                      {slide.titleEn || slide.titleAr || `Slide ${index + 1}`}
+                    </div>
                     <div className="mt-1 flex items-center gap-1.5">
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${badge.className}`}>{badge.label}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${badge.className}`}
+                      >
+                        {badge.label}
+                      </span>
                       <span className="text-[9px] text-slate-400">#{index + 1}</span>
                     </div>
                   </div>
                 </button>
               );
             })}
-            {!slides.length ? <div className="min-w-full px-5 py-10 text-center text-[11px] text-slate-400">No hero slides yet.</div> : null}
+            {!slides.length ? (
+              <div className="min-w-full px-5 py-10 text-center text-[11px] text-slate-400">
+                {t("No hero slides yet.")}
+              </div>
+            ) : null}
           </div>
         </aside>
 
@@ -765,50 +852,112 @@ export default function HeroBannersPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] ${
-                    editorMode === "edit"
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "bg-amber-50 text-amber-700"
-                  }`}>
-                    {editorMode === "edit" ? "Editing slide" : "New slide"}
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[.12em] ${
+                      editorMode === "edit"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {editorMode === "edit" ? t("Editing slide") : t("New slide")}
                   </span>
                   {selected ? (
-                    <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${statusBadge(selected).className}`}>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[9px] font-bold ${statusBadge(selected).className}`}
+                    >
                       {statusBadge(selected).label}
                     </span>
                   ) : null}
                 </div>
-                <h2 className="truncate text-[18px] font-bold tracking-[-.03em] text-[#14203a]">{editorTitle}</h2>
+                <h2 className="truncate text-[18px] font-bold tracking-[-.03em] text-[#14203a]">
+                  {editorTitle}
+                </h2>
                 <p className="mt-1 text-[10px] text-slate-400">{editorSubtitle}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 {selected ? (
                   <>
-                    <button aria-label="Move slide up" onClick={() => void move(-1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowUp className="size-4" /></button>
-                    <button aria-label="Move slide down" onClick={() => void move(1)} disabled={busy || dirty} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"><ArrowDown className="size-4" /></button>
-                    <button onClick={() => void duplicate()} disabled={busy || dirty} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-40"><Copy className="size-3.5" /> Duplicate</button>
-                    <button onClick={() => void remove()} disabled={busy} className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"><Trash2 className="size-3.5" /> Delete</button>
+                    <button
+                      aria-label={t("Move slide up")}
+                      onClick={() => void move(-1)}
+                      disabled={busy || dirty}
+                      className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"
+                    >
+                      <ArrowUp className="size-4" />
+                    </button>
+                    <button
+                      aria-label={t("Move slide down")}
+                      onClick={() => void move(1)}
+                      disabled={busy || dirty}
+                      className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 disabled:opacity-40"
+                    >
+                      <ArrowDown className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => void duplicate()}
+                      disabled={busy || dirty}
+                      className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-40"
+                    >
+                      <Copy className="size-3.5" /> {t("Duplicate")}
+                    </button>
+                    <button
+                      onClick={() => void remove()}
+                      disabled={busy}
+                      className="flex h-9 items-center gap-2 rounded-xl border border-rose-200 px-3 text-[10px] font-bold text-rose-600 disabled:opacity-40"
+                    >
+                      <Trash2 className="size-3.5" /> {t("Delete")}
+                    </button>
                   </>
                 ) : null}
-                <button onClick={() => void save()} disabled={busy || hasPendingHeroImages || !formDirty} className="order-first col-span-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40 sm:order-none sm:col-auto sm:h-9 sm:w-auto">
-                  {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-                  {editorMode === "edit" ? "Save changes" : "Create slide"}
+                <button
+                  onClick={() => void save()}
+                  disabled={busy || hasPendingHeroImages || !formDirty}
+                  className="order-first col-span-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40 sm:order-none sm:col-auto sm:h-9 sm:w-auto"
+                >
+                  {saving ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Save className="size-3.5" />
+                  )}
+                  {editorMode === "edit" ? t("Save changes") : t("Create slide")}
                 </button>
               </div>
             </div>
           </section>
 
           <section className="order-2 rounded-xl border border-slate-200 bg-white p-3.5 sm:rounded-2xl sm:p-5 xl:order-2">
-            <div className="mb-3 text-[13px] font-bold text-[#14203a] sm:mb-4">Design & live preview</div>
+            <div className="mb-3 text-[13px] font-bold text-[#14203a] sm:mb-4">
+              {t("Design & live preview")}
+            </div>
             <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:justify-between">
               <div className="flex rounded-xl bg-slate-100 p-1">
-                <button onClick={() => setPreviewMode("desktop")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "desktop" ? "bg-white shadow-sm" : "text-slate-500"}`}><Monitor className="size-3.5" /> Desktop</button>
-                <button onClick={() => setPreviewMode("mobile")} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "mobile" ? "bg-white shadow-sm" : "text-slate-500"}`}><Smartphone className="size-3.5" /> Mobile</button>
+                <button
+                  onClick={() => setPreviewMode("desktop")}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "desktop" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                >
+                  <Monitor className="size-3.5" /> {t("Desktop")}
+                </button>
+                <button
+                  onClick={() => setPreviewMode("mobile")}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-bold ${previewMode === "mobile" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                >
+                  <Smartphone className="size-3.5" /> {t("Mobile")}
+                </button>
               </div>
               <div className="flex rounded-xl bg-slate-100 p-1">
-                <button onClick={() => setLanguage("en")} className={`rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white shadow-sm" : "text-slate-500"}`}>EN</button>
-                <button onClick={() => setLanguage("ar")} className={`rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white shadow-sm" : "text-slate-500"}`}>AR</button>
+                <button
+                  onClick={() => setLanguage("en")}
+                  className={`rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                >
+                  {t("EN")}
+                </button>
+                <button
+                  onClick={() => setLanguage("ar")}
+                  className={`rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white shadow-sm" : "text-slate-500"}`}
+                >
+                  {t("AR")}
+                </button>
               </div>
             </div>
 
@@ -829,7 +978,7 @@ export default function HeroBannersPage() {
                 ) : (
                   <UploadCloud className="size-3.5" />
                 )}
-                {activePreviewUrl ? "Replace image" : "Upload image"}
+                {activePreviewUrl ? t("Replace image") : t("Upload image")}
               </button>
               <button
                 type="button"
@@ -837,18 +986,16 @@ export default function HeroBannersPage() {
                 disabled={uploading !== null}
                 className="flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50"
               >
-                <ImageIcon className="size-3.5" /> Library
+                <ImageIcon className="size-3.5" /> {t("Library")}
               </button>
               {activePreviewUrl ? (
                 <button
                   type="button"
-                  onClick={() =>
-                    void adjustExistingHero(activePreviewTarget, activePreviewUrl)
-                  }
+                  onClick={() => void adjustExistingHero(activePreviewTarget, activePreviewUrl)}
                   disabled={uploading !== null}
                   className="flex min-h-10 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
                 >
-                  Adjust
+                  {t("Adjust")}
                 </button>
               ) : null}
             </div>
@@ -858,28 +1005,24 @@ export default function HeroBannersPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-[10px] font-bold text-amber-900">
-                      {previewMode === "desktop" ? "Desktop" : "Mobile"} image ready
+                      {previewMode === "desktop" ? t("Desktop") : t("Mobile")} {t("image ready")}
                     </div>
                     <div className="mt-0.5 text-[9px] leading-4 text-amber-700">
-                      Review the Hero above, then confirm the upload.
+                      {t("Review the Hero above, then confirm the upload.")}
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[8px] font-bold text-amber-700">
-                    Not uploaded yet
+                    {t("Not uploaded yet")}
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      void upload(activePendingHeroImage, activePreviewTarget)
-                    }
+                    onClick={() => void upload(activePendingHeroImage, activePreviewTarget)}
                     disabled={uploading !== null}
                     className="min-h-11 rounded-lg bg-[#14203a] px-3 text-[10px] font-bold text-white disabled:opacity-50"
                   >
-                    {uploading === activePreviewTarget
-                      ? "Uploading…"
-                      : "Confirm upload"}
+                    {uploading === activePreviewTarget ? t("Uploading…") : t("Confirm upload")}
                   </button>
                   <button
                     type="button"
@@ -887,7 +1030,7 @@ export default function HeroBannersPage() {
                     disabled={uploading !== null}
                     className="min-h-11 rounded-lg border border-amber-200 bg-white px-3 text-[10px] font-bold text-amber-800 disabled:opacity-50"
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                 </div>
               </div>
@@ -900,238 +1043,350 @@ export default function HeroBannersPage() {
               mode={previewMode}
               language={language}
             />
-
           </section>
           <details className="group order-3 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-3">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
-                <div className="text-[13px] font-bold text-[#14203a]">Content</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">Title, subtitle and bilingual button labels.</div>
+                <div className="text-[13px] font-bold text-[#14203a]">{t("Content")}</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">
+                  {t("Title, subtitle and bilingual button labels.")}
+                </div>
               </div>
               <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-slate-100 p-4 sm:p-5">
               <div className="mb-5 flex gap-2 rounded-xl bg-slate-100 p-1">
-              <button onClick={() => setLanguage("en")} className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}>English</button>
-              <button onClick={() => setLanguage("ar")} className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}>العربية</button>
-            </div>
+                <button
+                  onClick={() => setLanguage("en")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "en" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}
+                >
+                  {t("English")}
+                </button>
+                <button
+                  onClick={() => setLanguage("ar")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-[10px] font-bold ${language === "ar" ? "bg-white text-[#14203a] shadow-sm" : "text-slate-500"}`}
+                >
+                  العربية
+                </button>
+              </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Eyebrow text</span>
-                <input
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                  value={language === "ar" ? form.eyebrowAr : form.eyebrowEn}
-                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, eyebrowAr: e.target.value } : { ...current, eyebrowEn: e.target.value })}
-                  placeholder={language === "ar" ? "مثال: وصل حديثاً" : "e.g. New arrival"}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title</span>
-                <input
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                  value={language === "ar" ? form.titleAr : form.titleEn}
-                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, titleAr: e.target.value } : { ...current, titleEn: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label className="block lg:col-span-2">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Subtitle</span>
-                <textarea
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                  value={language === "ar" ? form.subtitleAr : form.subtitleEn}
-                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, subtitleAr: e.target.value } : { ...current, subtitleEn: e.target.value })}
-                  className="min-h-20 w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Primary button label</span>
-                <input
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                  value={language === "ar" ? form.buttonLabelAr : form.buttonLabelEn}
-                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, buttonLabelAr: e.target.value } : { ...current, buttonLabelEn: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Secondary button label</span>
-                <input
-                  dir={language === "ar" ? "rtl" : "ltr"}
-                  value={language === "ar" ? form.secondaryButtonLabelAr : form.secondaryButtonLabelEn}
-                  onChange={(e) => setForm((current) => language === "ar" ? { ...current, secondaryButtonLabelAr: e.target.value } : { ...current, secondaryButtonLabelEn: e.target.value })}
-                  placeholder={language === "ar" ? "اختياري" : "Optional"}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-            </div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Eyebrow text")}
+                  </span>
+                  <input
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={language === "ar" ? form.eyebrowAr : form.eyebrowEn}
+                    onChange={(e) =>
+                      setForm((current) =>
+                        language === "ar"
+                          ? { ...current, eyebrowAr: e.target.value }
+                          : { ...current, eyebrowEn: e.target.value },
+                      )
+                    }
+                    placeholder={language === "ar" ? "مثال: وصل حديثاً" : t("e.g. New arrival")}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Title")}
+                  </span>
+                  <input
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={language === "ar" ? form.titleAr : form.titleEn}
+                    onChange={(e) =>
+                      setForm((current) =>
+                        language === "ar"
+                          ? { ...current, titleAr: e.target.value }
+                          : { ...current, titleEn: e.target.value },
+                      )
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+                <label className="block lg:col-span-2">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Subtitle")}
+                  </span>
+                  <textarea
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={language === "ar" ? form.subtitleAr : form.subtitleEn}
+                    onChange={(e) =>
+                      setForm((current) =>
+                        language === "ar"
+                          ? { ...current, subtitleAr: e.target.value }
+                          : { ...current, subtitleEn: e.target.value },
+                      )
+                    }
+                    className="min-h-20 w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Primary button label")}
+                  </span>
+                  <input
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={language === "ar" ? form.buttonLabelAr : form.buttonLabelEn}
+                    onChange={(e) =>
+                      setForm((current) =>
+                        language === "ar"
+                          ? { ...current, buttonLabelAr: e.target.value }
+                          : { ...current, buttonLabelEn: e.target.value },
+                      )
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Secondary button label")}
+                  </span>
+                  <input
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={
+                      language === "ar" ? form.secondaryButtonLabelAr : form.secondaryButtonLabelEn
+                    }
+                    onChange={(e) =>
+                      setForm((current) =>
+                        language === "ar"
+                          ? { ...current, secondaryButtonLabelAr: e.target.value }
+                          : { ...current, secondaryButtonLabelEn: e.target.value },
+                      )
+                    }
+                    placeholder={language === "ar" ? "اختياري" : t("Optional")}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                </label>
+              </div>
             </div>
           </details>
 
-          <details open={hasPendingHeroImages || undefined} className="group order-4 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-4">
+          <details
+            open={hasPendingHeroImages || undefined}
+            className="group order-4 overflow-hidden rounded-2xl border border-slate-200 bg-white xl:order-4"
+          >
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
-                <div className="text-[13px] font-bold text-[#14203a]">Media</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">Desktop and mobile Hero images, upload and optimization.</div>
+                <div className="text-[13px] font-bold text-[#14203a]">{t("Media")}</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">
+                  {t("Desktop and mobile Hero images, upload and optimization.")}
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                {hasPendingHeroImages ? <span className="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">Upload pending</span> : null}
+                {hasPendingHeroImages ? (
+                  <span className="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">
+                    {t("Upload pending")}
+                  </span>
+                ) : null}
                 <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
               </div>
             </summary>
             <div className="border-t border-slate-100 p-4 sm:p-5">
               <div className="grid gap-4 lg:grid-cols-2">
-            {(["desktop", "mobile"] as const).map((target) => {
-              const isDesktop = target === "desktop";
-              const url = isDesktop ? form.imageUrl : form.mobileImageUrl;
-              const pendingPreviewUrl = pendingPreviewUrls[target];
-              const displayUrl = pendingPreviewUrl || url;
-              const alt = isDesktop
-                ? (language === "ar" ? form.imageAltAr : form.imageAltEn)
-                : (language === "ar" ? form.mobileImageAltAr : form.mobileImageAltEn);
-              const optimization = lastOptimizations[target];
-              return (
-                <div key={target} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 sm:p-5">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">
-                        {isDesktop ? (
-                          <Monitor className="size-4" />
+                {(["desktop", "mobile"] as const).map((target) => {
+                  const isDesktop = target === "desktop";
+                  const url = isDesktop ? form.imageUrl : form.mobileImageUrl;
+                  const pendingPreviewUrl = pendingPreviewUrls[target];
+                  const displayUrl = pendingPreviewUrl || url;
+                  const alt = isDesktop
+                    ? language === "ar"
+                      ? form.imageAltAr
+                      : form.imageAltEn
+                    : language === "ar"
+                      ? form.mobileImageAltAr
+                      : form.mobileImageAltEn;
+                  const optimization = lastOptimizations[target];
+                  return (
+                    <div
+                      key={target}
+                      className="rounded-xl border border-slate-200 bg-slate-50/40 p-4 sm:p-5"
+                    >
+                      <div className="mb-4 flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 text-[12px] font-bold text-[#14203a]">
+                            {isDesktop ? (
+                              <Monitor className="size-4" />
+                            ) : (
+                              <Smartphone className="size-4" />
+                            )}{" "}
+                            {isDesktop ? t("Desktop image") : t("Mobile image")}
+                          </div>
+                          <div className="mt-1 text-[10px] text-slate-400">
+                            {isDesktop
+                              ? t("Required when published · 16:9 landscape")
+                              : t("Optional mobile-specific crop · 16:9 landscape")}
+                          </div>
+                          <div className="mt-1 text-[9px] font-semibold text-emerald-600">
+                            {t("JPG / PNG / WebP / AVIF → WebP · max")}{" "}
+                            {isDesktop ? "1920" : "1080"} {t("px")}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative mb-3 grid aspect-[16/9] w-full max-w-[220px] overflow-hidden rounded-xl bg-slate-100">
+                        {displayUrl ? (
+                          <img src={displayUrl} alt={alt} className="size-full object-cover" />
                         ) : (
-                          <Smartphone className="size-4" />
-                        )}{" "}
-                        {isDesktop ? "Desktop image" : "Mobile image"}
+                          <div className="grid place-items-center">
+                            <ImageIcon className="size-7 text-slate-300" />
+                          </div>
+                        )}
+                        {pendingPreviewUrl ? (
+                          <div className="absolute bottom-2 start-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
+                            {t("Ready to upload")}
+                          </div>
+                        ) : null}
                       </div>
-                      <div className="mt-1 text-[10px] text-slate-400">
-                        {isDesktop
-                          ? "Required when published · 16:9 landscape"
-                          : "Optional mobile-specific crop · 16:9 landscape"}
-                      </div>
-                      <div className="mt-1 text-[9px] font-semibold text-emerald-600">
-                        JPG / PNG / WebP / AVIF → WebP · max{" "}
-                        {isDesktop ? "1920" : "1080"}px
-                      </div>
-                    </div>
-                  </div>
-                  <div className="relative mb-3 grid aspect-[16/9] w-full max-w-[220px] overflow-hidden rounded-xl bg-slate-100">
-                    {displayUrl ? (
-                      <img src={displayUrl} alt={alt} className="size-full object-cover" />
-                    ) : (
-                      <div className="grid place-items-center">
-                        <ImageIcon className="size-7 text-slate-300" />
-                      </div>
-                    )}
-                    {pendingPreviewUrl ? (
-                      <div className="absolute bottom-2 left-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
-                        Ready to upload
-                      </div>
-                    ) : null}
-                  </div>
-                  <input
-                    ref={isDesktop ? desktopFileRef : mobileFileRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/svg+xml,image/heic,image/heif"
-                    className="hidden"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      event.currentTarget.value = "";
-                      if (!file) return;
-                      void editHeroFile(file, target);
-                    }}
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => (isDesktop ? desktopFileRef.current : mobileFileRef.current)?.click()} disabled={uploading !== null} className="flex h-9 items-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 disabled:opacity-50">
-                      {uploading === target ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />} Upload
-                    </button>
-                    <button onClick={() => setMediaTarget(target)} disabled={uploading !== null} className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50">
-                      <ImageIcon className="size-3.5" /> Library
-                    </button>
-                    {url ? (
-                      <button
-                        type="button"
-                        onClick={() => void adjustExistingHero(target, url)}
-                        disabled={uploading !== null}
-                        className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
-                      >
-                        Adjust
-                      </button>
-                    ) : null}
-                    {url ? (
-                      <button
-                        type="button"
-                        disabled={uploading !== null}
-                        onClick={() => {
-                          setForm((current) => isDesktop ? { ...current, imageUrl: "" } : { ...current, mobileImageUrl: "" });
-                          setLastOptimizations((current) => ({ ...current, [target]: undefined }));
-                          setPendingHeroImages((current) => {
-                            const next = { ...current };
-                            delete next[target];
-                            return next;
-                          });
+                      <input
+                        ref={isDesktop ? desktopFileRef : mobileFileRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/svg+xml,image/heic,image/heif"
+                        className="hidden"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.currentTarget.value = "";
+                          if (!file) return;
+                          void editHeroFile(file, target);
                         }}
-                        className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500 disabled:opacity-50"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
-                  {pendingHeroImages[target] ? (
-                    <div className="mt-3 space-y-2">
-                      <ImageOptimizationPreview
-                        files={[pendingHeroImages[target]!]}
-                        resolution={isDesktop ? "1920" : "1080"}
-                        title={isDesktop ? "Desktop hero compression preview" : "Mobile hero compression preview"}
-                        compact
-                        busy={uploading === target}
-                        confirmLabel={isDesktop ? "Upload desktop hero" : "Upload mobile hero"}
-                        onConfirm={() => void upload(pendingHeroImages[target], target)}
-                        onCancel={() => clearPendingHeroImages(target)}
                       />
-                    </div>
-                  ) : null}
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() =>
+                            (isDesktop ? desktopFileRef.current : mobileFileRef.current)?.click()
+                          }
+                          disabled={uploading !== null}
+                          className="flex h-9 items-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 disabled:opacity-50"
+                        >
+                          {uploading === target ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <UploadCloud className="size-3.5" />
+                          )}{" "}
+                          {t("Upload")}
+                        </button>
+                        <button
+                          onClick={() => setMediaTarget(target)}
+                          disabled={uploading !== null}
+                          className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50"
+                        >
+                          <ImageIcon className="size-3.5" /> {t("Library")}
+                        </button>
+                        {url ? (
+                          <button
+                            type="button"
+                            onClick={() => void adjustExistingHero(target, url)}
+                            disabled={uploading !== null}
+                            className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
+                          >
+                            {t("Adjust")}
+                          </button>
+                        ) : null}
+                        {url ? (
+                          <button
+                            type="button"
+                            disabled={uploading !== null}
+                            onClick={() => {
+                              setForm((current) =>
+                                isDesktop
+                                  ? { ...current, imageUrl: "" }
+                                  : { ...current, mobileImageUrl: "" },
+                              );
+                              setLastOptimizations((current) => ({
+                                ...current,
+                                [target]: undefined,
+                              }));
+                              setPendingHeroImages((current) => {
+                                const next = { ...current };
+                                delete next[target];
+                                return next;
+                              });
+                            }}
+                            className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-500 disabled:opacity-50"
+                          >
+                            {t("Remove")}
+                          </button>
+                        ) : null}
+                      </div>
+                      {pendingHeroImages[target] ? (
+                        <div className="mt-3 space-y-2">
+                          <ImageOptimizationPreview
+                            files={[pendingHeroImages[target]!]}
+                            resolution={isDesktop ? "1920" : "1080"}
+                            title={
+                              isDesktop
+                                ? t("Desktop hero compression preview")
+                                : t("Mobile hero compression preview")
+                            }
+                            compact
+                            busy={uploading === target}
+                            confirmLabel={isDesktop ? "Upload desktop hero" : "Upload mobile hero"}
+                            onConfirm={() => void upload(pendingHeroImages[target], target)}
+                            onCancel={() => clearPendingHeroImages(target)}
+                          />
+                        </div>
+                      ) : null}
 
-                  {optimization ? (
-                    <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold text-emerald-700">
-                          {optimization.mode === "webp" ? "Real WebP optimization complete" : "Original format preserved"}
-                        </span>
-                        <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold text-slate-500">
-                          {imageFormatLabel(optimization.output.mimeType)}
-                        </span>
-                      </div>
-                      <div className="mt-2 grid gap-2 text-[9px] text-slate-600 sm:grid-cols-2">
-                        <div className="rounded-lg bg-white/80 p-2">
-                          <span className="block font-bold text-slate-400">Before</span>
-                          <span className="mt-0.5 block font-semibold">
-                            {formatImageDimensions(optimization.source)} · {formatBytes(optimization.source.bytes)} · {imageFormatLabel(optimization.source.mimeType)}
-                          </span>
+                      {optimization ? (
+                        <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold text-emerald-700">
+                              {optimization.mode === "webp"
+                                ? t("Real WebP optimization complete")
+                                : t("Original format preserved")}
+                            </span>
+                            <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold text-slate-500">
+                              {imageFormatLabel(optimization.output.mimeType)}
+                            </span>
+                          </div>
+                          <div className="mt-2 grid gap-2 text-[9px] text-slate-600 sm:grid-cols-2">
+                            <div className="rounded-lg bg-white/80 p-2">
+                              <span className="block font-bold text-slate-400">{t("Before")}</span>
+                              <span className="mt-0.5 block font-semibold">
+                                {formatImageDimensions(optimization.source)} ·{" "}
+                                {formatBytes(optimization.source.bytes)} ·{" "}
+                                {imageFormatLabel(optimization.source.mimeType)}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-white/80 p-2">
+                              <span className="block font-bold text-slate-400">{t("After")}</span>
+                              <span className="mt-0.5 block font-semibold">
+                                {formatImageDimensions(optimization.output)} ·{" "}
+                                {formatBytes(optimization.output.bytes)} ·{" "}
+                                {imageFormatLabel(optimization.output.mimeType)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-[9px] font-medium text-emerald-700">
+                            {optimization.note}
+                          </div>
                         </div>
-                        <div className="rounded-lg bg-white/80 p-2">
-                          <span className="block font-bold text-slate-400">After</span>
-                          <span className="mt-0.5 block font-semibold">
-                            {formatImageDimensions(optimization.output)} · {formatBytes(optimization.output.bytes)} · {imageFormatLabel(optimization.output.mimeType)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-2 text-[9px] font-medium text-emerald-700">{optimization.note}</div>
+                      ) : null}
+                      <label className="mt-3 block">
+                        <span className="mb-1.5 block text-[10px] font-bold text-slate-500">
+                          {t("Alt text (")} {language.toUpperCase()})
+                        </span>
+                        <input
+                          value={alt}
+                          disabled={uploading === target}
+                          onChange={(e) =>
+                            setForm((current) => {
+                              if (isDesktop)
+                                return language === "ar"
+                                  ? { ...current, imageAltAr: e.target.value }
+                                  : { ...current, imageAltEn: e.target.value };
+                              return language === "ar"
+                                ? { ...current, mobileImageAltAr: e.target.value }
+                                : { ...current, mobileImageAltEn: e.target.value };
+                            })
+                          }
+                          className="h-9 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50 disabled:opacity-60"
+                        />
+                      </label>
                     </div>
-                  ) : null}
-                  <label className="mt-3 block">
-                    <span className="mb-1.5 block text-[10px] font-bold text-slate-500">Alt text ({language.toUpperCase()})</span>
-                    <input
-                      value={alt}
-                      disabled={uploading === target}
-                      onChange={(e) => setForm((current) => {
-                        if (isDesktop) return language === "ar" ? { ...current, imageAltAr: e.target.value } : { ...current, imageAltEn: e.target.value };
-                        return language === "ar" ? { ...current, mobileImageAltAr: e.target.value } : { ...current, mobileImageAltEn: e.target.value };
-                      })}
-                      className="h-9 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50 disabled:opacity-60"
-                    />
-                  </label>
-                </div>
-              );
-            })}
+                  );
+                })}
               </div>
             </div>
           </details>
@@ -1139,194 +1394,441 @@ export default function HeroBannersPage() {
           <details className="group order-5 xl:order-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
-                <div className="text-[13px] font-bold text-[#14203a]">Link & CTA</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">Primary and optional secondary destinations.</div>
+                <div className="text-[13px] font-bold text-[#14203a]">{t("Link & CTA")}</div>
+                <div className="mt-0.5 text-[10px] text-slate-400">
+                  {t("Primary and optional secondary destinations.")}
+                </div>
               </div>
               <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-slate-100 p-4 sm:p-5">
-            <div className="grid gap-4 lg:grid-cols-3">
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Target type</span>
-                <select value={form.targetType} onChange={(e) => setForm((current) => ({ ...current, targetType: e.target.value as HeroTargetType, targetValue: "" }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="none">No link</option>
-                  <option value="product">Product</option>
-                  <option value="collection">Collection</option>
-                  <option value="url">Custom URL</option>
-                </select>
-              </label>
-              <label className="lg:col-span-2">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Destination</span>
-                {form.targetType === "product" || form.targetType === "collection" ? (
-                  <select value={form.targetValue} onChange={(e) => setForm((current) => ({ ...current, targetValue: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                    <option value="">Choose {form.targetType}</option>
-                    {linkOptions.map((option) => <option key={option.id} value={option.value} disabled={option.status !== "active"}>{option.label} · {option.status}</option>)}
+              <div className="grid gap-4 lg:grid-cols-3">
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Target type")}
+                  </span>
+                  <select
+                    value={form.targetType}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        targetType: e.target.value as HeroTargetType,
+                        targetValue: "",
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="none">{t("No link")}</option>
+                    <option value="product">{t("Product")}</option>
+                    <option value="collection">{t("Collection")}</option>
+                    <option value="url">{t("Custom URL")}</option>
                   </select>
-                ) : (
-                  <input value={form.targetValue} onChange={(e) => setForm((current) => ({ ...current, targetValue: e.target.value }))} disabled={form.targetType === "none"} placeholder="/shop or https://..." className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50" />
-                )}
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button style</span>
-                <select value={form.buttonStyle} onChange={(e) => setForm((current) => ({ ...current, buttonStyle: e.target.value as HeroButtonStyle }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="primary">Primary</option>
-                  <option value="secondary">Secondary</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-2 self-end rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-600">
-                <input type="checkbox" checked={form.openInNewTab} onChange={(e) => setForm((current) => ({ ...current, openInNewTab: e.target.checked }))} />
-                Open in new tab
-              </label>
-              <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">Resolved path: {targetHref(form) || "No destination"}</div>
-            </div>
+                </label>
+                <label className="lg:col-span-2">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Destination")}
+                  </span>
+                  {form.targetType === "product" || form.targetType === "collection" ? (
+                    <select
+                      value={form.targetValue}
+                      onChange={(e) =>
+                        setForm((current) => ({ ...current, targetValue: e.target.value }))
+                      }
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                    >
+                      <option value="">
+                        {t("Choose")} {form.targetType}
+                      </option>
+                      {linkOptions.map((option) => (
+                        <option
+                          key={option.id}
+                          value={option.value}
+                          disabled={option.status !== "active"}
+                        >
+                          {option.label} · {option.status}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={form.targetValue}
+                      onChange={(e) =>
+                        setForm((current) => ({ ...current, targetValue: e.target.value }))
+                      }
+                      disabled={form.targetType === "none"}
+                      placeholder={t("/shop or https://...")}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50"
+                    />
+                  )}
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Button style")}
+                  </span>
+                  <select
+                    value={form.buttonStyle}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        buttonStyle: e.target.value as HeroButtonStyle,
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="primary">{t("Primary")}</option>
+                    <option value="secondary">{t("Secondary")}</option>
+                    <option value="light">{t("Light")}</option>
+                    <option value="dark">{t("Dark")}</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 self-end rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={form.openInNewTab}
+                    onChange={(e) =>
+                      setForm((current) => ({ ...current, openInNewTab: e.target.checked }))
+                    }
+                  />
+                  {t("Open in new tab")}
+                </label>
+                <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">
+                  {t("Resolved path:")} {targetHref(form) || t("No destination")}
+                </div>
+              </div>
 
-            <div className="my-5 border-t border-slate-100" />
-            <div className="mb-3 text-[11px] font-bold text-slate-500">Secondary CTA (optional)</div>
-            <div className="grid gap-4 lg:grid-cols-3">
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Target type</span>
-                <select value={form.secondaryTargetType} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetType: e.target.value as HeroTargetType, secondaryTargetValue: "" }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="none">No second button</option>
-                  <option value="product">Product</option>
-                  <option value="collection">Collection</option>
-                  <option value="url">Custom URL</option>
-                </select>
-              </label>
-              <label className="lg:col-span-2">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Destination</span>
-                {form.secondaryTargetType === "product" || form.secondaryTargetType === "collection" ? (
-                  <select value={form.secondaryTargetValue} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                    <option value="">Choose {form.secondaryTargetType}</option>
-                    {secondaryLinkOptions.map((option) => <option key={option.id} value={option.value} disabled={option.status !== "active"}>{option.label} · {option.status}</option>)}
+              <div className="my-5 border-t border-slate-100" />
+              <div className="mb-3 text-[11px] font-bold text-slate-500">
+                {t("Secondary CTA (optional)")}
+              </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Target type")}
+                  </span>
+                  <select
+                    value={form.secondaryTargetType}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        secondaryTargetType: e.target.value as HeroTargetType,
+                        secondaryTargetValue: "",
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="none">{t("No second button")}</option>
+                    <option value="product">{t("Product")}</option>
+                    <option value="collection">{t("Collection")}</option>
+                    <option value="url">{t("Custom URL")}</option>
                   </select>
-                ) : (
-                  <input value={form.secondaryTargetValue} onChange={(e) => setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))} disabled={form.secondaryTargetType === "none"} placeholder="/shop or https://..." className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50" />
-                )}
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button style</span>
-                <select value={form.secondaryButtonStyle} onChange={(e) => setForm((current) => ({ ...current, secondaryButtonStyle: e.target.value as HeroButtonStyle }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="secondary">Secondary</option>
-                  <option value="primary">Primary</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-2 self-end rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-600">
-                <input type="checkbox" checked={form.secondaryOpenInNewTab} onChange={(e) => setForm((current) => ({ ...current, secondaryOpenInNewTab: e.target.checked }))} />
-                Open in new tab
-              </label>
-              <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">Resolved path: {secondaryTargetHref(form) || "No destination"}</div>
-            </div>
+                </label>
+                <label className="lg:col-span-2">
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Destination")}
+                  </span>
+                  {form.secondaryTargetType === "product" ||
+                  form.secondaryTargetType === "collection" ? (
+                    <select
+                      value={form.secondaryTargetValue}
+                      onChange={(e) =>
+                        setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))
+                      }
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                    >
+                      <option value="">
+                        {t("Choose")} {form.secondaryTargetType}
+                      </option>
+                      {secondaryLinkOptions.map((option) => (
+                        <option
+                          key={option.id}
+                          value={option.value}
+                          disabled={option.status !== "active"}
+                        >
+                          {option.label} · {option.status}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={form.secondaryTargetValue}
+                      onChange={(e) =>
+                        setForm((current) => ({ ...current, secondaryTargetValue: e.target.value }))
+                      }
+                      disabled={form.secondaryTargetType === "none"}
+                      placeholder={t("/shop or https://...")}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] disabled:bg-slate-50"
+                    />
+                  )}
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Button style")}
+                  </span>
+                  <select
+                    value={form.secondaryButtonStyle}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        secondaryButtonStyle: e.target.value as HeroButtonStyle,
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="secondary">{t("Secondary")}</option>
+                    <option value="primary">{t("Primary")}</option>
+                    <option value="light">{t("Light")}</option>
+                    <option value="dark">{t("Dark")}</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 self-end rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-[11px] font-semibold text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={form.secondaryOpenInNewTab}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        secondaryOpenInNewTab: e.target.checked,
+                      }))
+                    }
+                  />
+                  {t("Open in new tab")}
+                </label>
+                <div className="self-end rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-500">
+                  {t("Resolved path:")} {secondaryTargetHref(form) || t("No destination")}
+                </div>
+              </div>
             </div>
           </details>
 
           <details className="group order-6 xl:order-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
-                <div className="text-[13px] font-bold text-[#14203a]">Publishing & schedule</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">{form.isPublished ? "Published" : "Draft"} · optional start and end dates.</div>
+                <div className="text-[13px] font-bold text-[#14203a]">
+                  {t("Publishing & schedule")}
+                </div>
+                <div className="mt-0.5 text-[10px] text-slate-400">
+                  {form.isPublished ? t("Published") : t("Draft")}{" "}
+                  {t("· optional start and end dates.")}
+                </div>
               </div>
               <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-slate-100 p-4 sm:p-5">
-            <div className="grid gap-4 lg:grid-cols-3">
-              <label className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                <input type="checkbox" checked={form.isPublished} onChange={(e) => setForm((current) => ({ ...current, isPublished: e.target.checked }))} />
-                <span><span className="block text-[11px] font-bold text-slate-700">Published</span><span className="text-[9px] text-slate-400">Subject to schedule dates</span></span>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Starts at</span>
-                <input type="datetime-local" value={form.startsAt} onChange={(e) => setForm((current) => ({ ...current, startsAt: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]" />
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Ends at</span>
-                <input type="datetime-local" value={form.endsAt} onChange={(e) => setForm((current) => ({ ...current, endsAt: e.target.value }))} className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]" />
-              </label>
-            </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <label className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                  <input
+                    type="checkbox"
+                    checked={form.isPublished}
+                    onChange={(e) =>
+                      setForm((current) => ({ ...current, isPublished: e.target.checked }))
+                    }
+                  />
+                  <span>
+                    <span className="block text-[11px] font-bold text-slate-700">
+                      {t("Published")}
+                    </span>
+                    <span className="text-[9px] text-slate-400">
+                      {t("Subject to schedule dates")}
+                    </span>
+                  </span>
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Starts at")}
+                  </span>
+                  <input
+                    type="datetime-local"
+                    value={form.startsAt}
+                    onChange={(e) =>
+                      setForm((current) => ({ ...current, startsAt: e.target.value }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]"
+                  />
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Ends at")}
+                  </span>
+                  <input
+                    type="datetime-local"
+                    value={form.endsAt}
+                    onChange={(e) => setForm((current) => ({ ...current, endsAt: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px]"
+                  />
+                </label>
+              </div>
             </div>
           </details>
 
           <details className="group order-7 xl:order-7 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
               <div>
-                <div className="text-[13px] font-bold text-[#14203a]">Advanced appearance</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">Overlay, alignment, sizing and positioning controls.</div>
+                <div className="text-[13px] font-bold text-[#14203a]">
+                  {t("Advanced appearance")}
+                </div>
+                <div className="mt-0.5 text-[10px] text-slate-400">
+                  {t("Overlay, alignment, sizing and positioning controls.")}
+                </div>
               </div>
               <ChevronDown className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
             </summary>
             <div className="border-t border-slate-100 p-4 sm:p-5">
-            <div className="mb-4 grid gap-4 sm:grid-cols-2">
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content alignment</span>
-                <select value={form.contentAlignment} onChange={(e) => setForm((current) => ({ ...current, contentAlignment: e.target.value as HeroAlignment }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="start">Start</option>
-                  <option value="center">Center</option>
-                  <option value="end">End</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 flex justify-between text-[11px] font-bold text-slate-600"><span>Overlay opacity</span><span>{form.overlayOpacity}%</span></span>
-                <input type="range" min="0" max="90" step="5" value={form.overlayOpacity} onChange={(e) => setForm((current) => ({ ...current, overlayOpacity: Number(e.target.value) }))} className="w-full" />
-              </label>
-            </div>
+              <div className="mb-4 grid gap-4 sm:grid-cols-2">
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Content alignment")}
+                  </span>
+                  <select
+                    value={form.contentAlignment}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        contentAlignment: e.target.value as HeroAlignment,
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="start">{t("Start")}</option>
+                    <option value="center">{t("Center")}</option>
+                    <option value="end">{t("End")}</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="mb-1.5 flex justify-between text-[11px] font-bold text-slate-600">
+                    <span>{t("Overlay opacity")}</span>
+                    <span>{form.overlayOpacity}%</span>
+                  </span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="90"
+                    step="5"
+                    value={form.overlayOpacity}
+                    onChange={(e) =>
+                      setForm((current) => ({ ...current, overlayOpacity: Number(e.target.value) }))
+                    }
+                    className="w-full"
+                  />
+                </label>
+              </div>
 
-            <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Vertical position</span>
-                <select value={form.visualConfig.vertical} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, vertical: e.target.value as HeroVisualConfig["vertical"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="top">Top</option>
-                  <option value="center">Center</option>
-                  <option value="bottom">Bottom</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Title size</span>
-                <select value={form.visualConfig.titleSize} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, titleSize: e.target.value as HeroVisualConfig["titleSize"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="compact">Compact</option>
-                  <option value="standard">Standard</option>
-                  <option value="large">Large</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Content width</span>
-                <select value={form.visualConfig.contentWidth} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, contentWidth: e.target.value as HeroVisualConfig["contentWidth"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="narrow">Narrow</option>
-                  <option value="standard">Standard</option>
-                  <option value="wide">Wide</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Button shape</span>
-                <select value={form.visualConfig.buttonRadius} onChange={(e) => setForm((current) => ({ ...current, visualConfig: { ...current.visualConfig, buttonRadius: e.target.value as HeroVisualConfig["buttonRadius"] } }))} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]">
-                  <option value="soft">Soft</option>
-                  <option value="rounded">Rounded</option>
-                  <option value="pill">Pill</option>
-                </select>
-              </label>
-            </div>
-
-
+              <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Vertical position")}
+                  </span>
+                  <select
+                    value={form.visualConfig.vertical}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        visualConfig: {
+                          ...current.visualConfig,
+                          vertical: e.target.value as HeroVisualConfig["vertical"],
+                        },
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="top">{t("Top")}</option>
+                    <option value="center">{t("Center")}</option>
+                    <option value="bottom">{t("Bottom")}</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Title size")}
+                  </span>
+                  <select
+                    value={form.visualConfig.titleSize}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        visualConfig: {
+                          ...current.visualConfig,
+                          titleSize: e.target.value as HeroVisualConfig["titleSize"],
+                        },
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="compact">{t("Compact")}</option>
+                    <option value="standard">{t("Standard")}</option>
+                    <option value="large">{t("Large")}</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Content width")}
+                  </span>
+                  <select
+                    value={form.visualConfig.contentWidth}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        visualConfig: {
+                          ...current.visualConfig,
+                          contentWidth: e.target.value as HeroVisualConfig["contentWidth"],
+                        },
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="narrow">{t("Narrow")}</option>
+                    <option value="standard">{t("Standard")}</option>
+                    <option value="wide">{t("Wide")}</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    {t("Button shape")}
+                  </span>
+                  <select
+                    value={form.visualConfig.buttonRadius}
+                    onChange={(e) =>
+                      setForm((current) => ({
+                        ...current,
+                        visualConfig: {
+                          ...current.visualConfig,
+                          buttonRadius: e.target.value as HeroVisualConfig["buttonRadius"],
+                        },
+                      }))
+                    }
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                  >
+                    <option value="soft">{t("Soft")}</option>
+                    <option value="rounded">{t("Rounded")}</option>
+                    <option value="pill">{t("Pill")}</option>
+                  </select>
+                </label>
+              </div>
             </div>
           </details>
-
-
         </div>
       </div>
 
       {dirty ? (
         <div className="fixed bottom-[calc(76px+env(safe-area-inset-bottom))] left-1/2 z-50 flex w-[calc(100%-24px)] max-w-sm -translate-x-1/2 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl lg:bottom-5 lg:w-auto lg:max-w-none">
           <span className="text-[11px] font-semibold text-slate-600">
-            {hasPendingHeroImages ? "Hero image ready to upload" : "Unsaved Hero changes"}
+            {hasPendingHeroImages ? t("Hero image ready to upload") : t("Unsaved Hero changes")}
           </span>
-          <button onClick={() => void save()} disabled={busy || hasPendingHeroImages} className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50">Save</button>
+          <button
+            onClick={() => void save()}
+            disabled={busy || hasPendingHeroImages}
+            className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50"
+          >
+            {t("Save")}
+          </button>
         </div>
       ) : null}
 
-      {mediaTarget ? <MediaLibraryModal assets={media} onSelect={chooseMedia} onClose={() => setMediaTarget(null)} /> : null}
+      {mediaTarget ? (
+        <MediaLibraryModal
+          assets={media}
+          onSelect={chooseMedia}
+          onClose={() => setMediaTarget(null)}
+        />
+      ) : null}
     </div>
   );
 }
-

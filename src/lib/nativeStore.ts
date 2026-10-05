@@ -730,11 +730,11 @@ function buildPreviewProduct(row: RustCatalogCardRow): StoreProduct {
       node: {
         id: variant.id,
         title: variant.title,
-        price: money(moneyValue(variant.price), row.currency),
+        price: money(Number(variant.price), row.currency),
         compareAtPrice:
           variant.compare_at_price == null
             ? null
-            : money(moneyValue(variant.compare_at_price), row.currency),
+            : money(Number(variant.compare_at_price), row.currency),
         availableForSale,
         trackInventory: variant.track_inventory,
         allowBackorder: variant.allow_backorder,

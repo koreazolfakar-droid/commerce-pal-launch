@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -40,6 +41,7 @@ export default function ImageOptimizationPreview({
   confirmLabel = "Confirm & upload",
   busy = false,
 }: Props) {
+  const { t } = useLanguage();
   const [compression, setCompression] = useState<ImageCompressionPreset>(() =>
     getImageCompressionPreset(),
   );
@@ -101,13 +103,7 @@ export default function ImageOptimizationPreview({
     return () => {
       cancelled = true;
     };
-  }, [
-    files,
-    resolution,
-    compression,
-    backgroundRemovalEnabled,
-    backgroundRemovalTolerance,
-  ]);
+  }, [files, resolution, compression, backgroundRemovalEnabled, backgroundRemovalTolerance]);
 
   useEffect(() => {
     const urls = results.map((item) => URL.createObjectURL(item.file));
@@ -131,15 +127,17 @@ export default function ImageOptimizationPreview({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[.12em] text-indigo-700">
-            {title}
+            {t(title)}
           </div>
           <div className="mt-1 text-[9px] leading-4 text-slate-500">
-            Preview is generated locally before upload. Nothing is sent to Storage until you confirm the upload.
+            {t(
+              "Preview is generated locally before upload. Nothing is sent to Storage until you confirm the upload.",
+            )}
           </div>
         </div>
         {previewing ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[9px] font-bold text-indigo-600">
-            <Loader2 className="size-3 animate-spin" /> Calculating…
+            <Loader2 className="size-3 animate-spin" /> {t("Calculating…")}
           </span>
         ) : null}
       </div>
@@ -147,7 +145,7 @@ export default function ImageOptimizationPreview({
       <div className={"mt-3 grid gap-2 " + (compact ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
         <label className="rounded-xl border border-slate-200 bg-white px-3 py-2">
           <span className="block text-[8px] font-black uppercase tracking-[.11em] text-slate-400">
-            Compression
+            {t("Compression")}
           </span>
           <select
             value={compression}
@@ -173,14 +171,12 @@ export default function ImageOptimizationPreview({
         {onResolutionChange ? (
           <label className="rounded-xl border border-slate-200 bg-white px-3 py-2">
             <span className="block text-[8px] font-black uppercase tracking-[.11em] text-slate-400">
-              Max resolution
+              {t("Max resolution")}
             </span>
             <select
               value={resolution}
               disabled={busy}
-              onChange={(event) =>
-                onResolutionChange(event.target.value as ProductImageResolution)
-              }
+              onChange={(event) => onResolutionChange(event.target.value as ProductImageResolution)}
               className="mt-1 w-full bg-transparent text-[10px] font-bold text-slate-700 outline-none disabled:opacity-50"
             >
               {PRODUCT_IMAGE_RESOLUTIONS.map((option) => (
@@ -193,10 +189,10 @@ export default function ImageOptimizationPreview({
         ) : (
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
             <span className="block text-[8px] font-black uppercase tracking-[.11em] text-slate-400">
-              Max resolution
+              {t("Max resolution")}
             </span>
             <span className="mt-1 block text-[10px] font-bold text-slate-700">
-              {resolution === "original" ? "Original dimensions" : `${resolution} px`}
+              {resolution === "original" ? t("Original dimensions") : `${resolution} px`}
             </span>
           </div>
         )}
@@ -204,10 +200,10 @@ export default function ImageOptimizationPreview({
         {!compact ? (
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
             <span className="block text-[8px] font-black uppercase tracking-[.11em] text-slate-400">
-              Selected
+              {t("Selected")}
             </span>
             <span className="mt-1 block text-[10px] font-bold text-slate-700">
-              {files.length} {files.length === 1 ? "image" : "images"}
+              {files.length} {files.length === 1 ? t("image") : t("images")}
             </span>
           </div>
         ) : null}
@@ -252,19 +248,22 @@ export default function ImageOptimizationPreview({
                       {item.source.name}
                     </div>
                     <div className="mt-1 text-[9px] text-slate-500">
-                      {item.source.width}×{item.source.height}px · {formatImageBytes(item.source.bytes)}
+                      {item.source.width}×{item.source.height} {t("px ·")}{" "}
+                      {formatImageBytes(item.source.bytes)}
                       {" → "}
-                      {item.output.width}×{item.output.height}px · {formatImageBytes(item.output.bytes)}
+                      {item.output.width}×{item.output.height} {t("px ·")}{" "}
+                      {formatImageBytes(item.output.bytes)}
                     </div>
                     {backgroundRemovalEnabled ? (
                       <div className="mt-1 text-[8px] font-bold text-emerald-700">
-                        Transparent background preview · tolerance {backgroundRemovalTolerance}
+                        {t("Transparent background preview · tolerance")}{" "}
+                        {backgroundRemovalTolerance}
                       </div>
                     ) : null}
                   </div>
                 </div>
                 <span className="self-center rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black text-emerald-700">
-                  {reduction}% smaller
+                  {reduction} {t("% smaller")}
                 </span>
               </div>
             );
@@ -272,9 +271,10 @@ export default function ImageOptimizationPreview({
 
           {results.length > 1 ? (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-900 px-3 py-2 text-white">
-              <span className="text-[9px] font-bold">Total after optimization</span>
+              <span className="text-[9px] font-bold">{t("Total after optimization")}</span>
               <span className="text-[9px]">
-                {formatImageBytes(totals.source)} → {formatImageBytes(totals.output)} · {totals.reduction}% smaller
+                {formatImageBytes(totals.source)} → {formatImageBytes(totals.output)} ·{" "}
+                {totals.reduction} {t("% smaller")}
               </span>
             </div>
           ) : null}
@@ -291,7 +291,7 @@ export default function ImageOptimizationPreview({
                 disabled={busy}
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[10px] font-bold text-slate-600 disabled:opacity-50 sm:w-auto"
               >
-                Cancel
+                {t("Cancel")}
               </button>
             ) : null}
             <button
@@ -301,7 +301,7 @@ export default function ImageOptimizationPreview({
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-5 text-[11px] font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-              {busy ? "Uploading…" : confirmLabel}
+              {busy ? t("Uploading…") : confirmLabel}
             </button>
           </div>
         </div>

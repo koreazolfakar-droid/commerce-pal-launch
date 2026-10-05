@@ -20,7 +20,7 @@ export default function CategorySpecificationTemplateEditor({
   value: ProductSpecificationTemplate;
   onChange: (value: ProductSpecificationTemplate) => void;
 }) {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const ar = lang === "ar";
   const template = value;
 
@@ -51,12 +51,14 @@ export default function CategorySpecificationTemplateEditor({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-black text-slate-700">
-            {ar ? "قالب المواصفات" : "Specification template"}
+            {ar ? "قالب المواصفات" : t("Specification template")}
           </div>
           <p className="mt-1 max-w-xl text-[10px] leading-4 text-slate-400">
             {ar
               ? "تظهر هذه الحقول تلقائيًا في المنتجات التابعة لهذا التصنيف وتحدد أقسام المواصفات في المتجر."
-              : "These fields appear automatically in products assigned to this category and define the storefront specification sections."}
+              : t(
+                  "These fields appear automatically in products assigned to this category and define the storefront specification sections.",
+                )}
           </p>
         </div>
         <button
@@ -65,7 +67,7 @@ export default function CategorySpecificationTemplateEditor({
           className="inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 text-[10px] font-bold text-indigo-600"
         >
           <Plus className="size-3.5" />
-          {ar ? "إضافة قسم" : "Add section"}
+          {ar ? "إضافة قسم" : t("Add section")}
         </button>
       </div>
 
@@ -80,8 +82,8 @@ export default function CategorySpecificationTemplateEditor({
                   sections[sectionIndex] = { ...section, title: event.target.value };
                   commit({ sections });
                 }}
-                placeholder="Section title"
-                aria-label="Specification section title"
+                placeholder={t("Section title")}
+                aria-label={t("Specification section title")}
                 className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
               />
               <input
@@ -96,12 +98,12 @@ export default function CategorySpecificationTemplateEditor({
                   commit({ sections });
                 }}
                 placeholder="عنوان القسم"
-                aria-label="Arabic specification section title"
+                aria-label={t("Arabic specification section title")}
                 className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
               />
               <button
                 type="button"
-                aria-label="Delete specification section"
+                aria-label={t("Delete specification section")}
                 onClick={() =>
                   commit({
                     sections: template.sections.filter((_, index) => index !== sectionIndex),
@@ -128,8 +130,8 @@ export default function CategorySpecificationTemplateEditor({
                       sections[sectionIndex] = { ...section, fields };
                       commit({ sections });
                     }}
-                    placeholder="Label"
-                    aria-label="Specification field label"
+                    placeholder={t("Label")}
+                    aria-label={t("Specification field label")}
                     className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
                   />
                   <input
@@ -146,7 +148,7 @@ export default function CategorySpecificationTemplateEditor({
                       commit({ sections });
                     }}
                     placeholder="الاسم بالعربية"
-                    aria-label="Arabic specification field label"
+                    aria-label={t("Arabic specification field label")}
                     className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
                   />
                   <input
@@ -161,8 +163,8 @@ export default function CategorySpecificationTemplateEditor({
                       sections[sectionIndex] = { ...section, fields };
                       commit({ sections });
                     }}
-                    placeholder="field_key"
-                    aria-label="Specification field key"
+                    placeholder={t("field_key")}
+                    aria-label={t("Specification field key")}
                     className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 font-mono text-[9px] outline-none focus:border-indigo-400"
                   />
                   <input
@@ -177,13 +179,13 @@ export default function CategorySpecificationTemplateEditor({
                       sections[sectionIndex] = { ...section, fields };
                       commit({ sections });
                     }}
-                    placeholder="Unit"
-                    aria-label="Specification field unit"
+                    placeholder={t("Unit")}
+                    aria-label={t("Specification field unit")}
                     className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] outline-none focus:border-indigo-400"
                   />
                   <button
                     type="button"
-                    aria-label="Delete specification field"
+                    aria-label={t("Delete specification field")}
                     onClick={() => {
                       const sections = [...template.sections];
                       const fields = section.fields.filter((_, index) => index !== fieldIndex);
@@ -205,7 +207,9 @@ export default function CategorySpecificationTemplateEditor({
                 type="button"
                 onClick={() => {
                   const used = new Set(
-                    template.sections.flatMap((item) => item.fields.map((itemField) => itemField.key)),
+                    template.sections.flatMap((item) =>
+                      item.fields.map((itemField) => itemField.key),
+                    ),
                   );
                   const key = nextFieldKey("new field", used);
                   const sections = [...template.sections];
@@ -218,7 +222,7 @@ export default function CategorySpecificationTemplateEditor({
                 className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-[10px] font-bold text-slate-500"
               >
                 <Plus className="size-3.5" />
-                {ar ? "إضافة حقل" : "Add field"}
+                {ar ? "إضافة حقل" : t("Add field")}
               </button>
             </div>
           </section>
@@ -228,7 +232,9 @@ export default function CategorySpecificationTemplateEditor({
           <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-[10px] text-slate-400">
             {ar
               ? "لا توجد حقول مواصفات بعد. أضف قسمًا لربط هذا التصنيف بالمواصفات."
-              : "No specification fields yet. Add a section to make this category specification-aware."}
+              : t(
+                  "No specification fields yet. Add a section to make this category specification-aware.",
+                )}
           </div>
         ) : null}
       </div>

@@ -1,18 +1,9 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  RefreshCw,
-  Search,
-  ShoppingBag,
-} from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
+import { ChevronLeft, ChevronRight, Loader2, RefreshCw, Search, ShoppingBag } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
-import {
-  listDashboardSales,
-  type DashboardSalesResult,
-} from "@/dashboard/data/sales";
+import { listDashboardSales, type DashboardSalesResult } from "@/dashboard/data/sales";
 
 function money(value: number, currency: string) {
   try {
@@ -35,6 +26,7 @@ function when(value: string) {
 }
 
 export default function SalesPage() {
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
@@ -80,11 +72,11 @@ export default function SalesPage() {
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
             <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            Commerce / Completed orders
+            {t("Commerce / Completed orders")}
           </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Sales</h1>
+          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">{t("Sales")}</h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            Read-only sales ledger created when an order reaches DONE.
+            {t("Read-only sales ledger created when an order reaches DONE.")}
           </p>
         </div>
         <button
@@ -93,22 +85,24 @@ export default function SalesPage() {
           className="flex h-10 items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50 md:self-auto"
         >
           <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          {t("Refresh")}
         </button>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="text-[11px] text-slate-400">Completed sales</div>
+          <div className="text-[11px] text-slate-400">{t("Completed sales")}</div>
           <div className="mt-1 text-2xl font-bold text-[#14203a]">
             {(result?.total ?? 0).toLocaleString()}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="text-[11px] text-slate-400">Ledger rule</div>
-          <div className="mt-1 text-sm font-bold text-[#14203a]">DELIVERED → DONE → Sales</div>
+          <div className="text-[11px] text-slate-400">{t("Ledger rule")}</div>
+          <div className="mt-1 text-sm font-bold text-[#14203a]">
+            {t("DELIVERED → DONE → Sales")}
+          </div>
           <div className="mt-1 text-[10px] text-slate-400">
-            One immutable sales snapshot per order.
+            {t("One immutable sales snapshot per order.")}
           </div>
         </div>
       </div>
@@ -116,16 +110,16 @@ export default function SalesPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
           <form onSubmit={submitSearch} className="relative w-full md:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-300" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-300" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search order number, customer or phone"
-              className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+              placeholder={t("Search order number, customer or phone")}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-3 text-[12px] text-slate-700 outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
             />
           </form>
           <div className="text-[10px] font-semibold text-slate-400">
-            Page {page} of {totalPages}
+            {t("Page")} {page} {t("of")} {totalPages}
           </div>
         </div>
 
@@ -141,24 +135,26 @@ export default function SalesPage() {
           <div className="grid min-h-[300px] place-items-center px-6 text-center">
             <div>
               <ShoppingBag className="mx-auto size-8 text-slate-300" />
-              <div className="mt-3 text-sm font-bold text-slate-700">No completed sales yet.</div>
+              <div className="mt-3 text-sm font-bold text-slate-700">
+                {t("No completed sales yet.")}
+              </div>
               <div className="mt-1 text-xs text-slate-400">
-                A sale appears here only after an order reaches DONE.
+                {t("A sale appears here only after an order reaches DONE.")}
               </div>
             </div>
           </div>
         ) : (
           <>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[840px] border-collapse text-left">
+              <table className="w-full min-w-[840px] border-collapse text-start">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/60 text-[10px] uppercase tracking-wide text-slate-400">
-                    <th className="px-5 py-3">Order</th>
-                    <th className="px-5 py-3">Customer</th>
-                    <th className="px-5 py-3">Payment</th>
-                    <th className="px-5 py-3">Delivery</th>
-                    <th className="px-5 py-3">Total</th>
-                    <th className="px-5 py-3">Completed</th>
+                    <th className="px-5 py-3">{t("Order")}</th>
+                    <th className="px-5 py-3">{t("Customer")}</th>
+                    <th className="px-5 py-3">{t("Payment")}</th>
+                    <th className="px-5 py-3">{t("Delivery")}</th>
+                    <th className="px-5 py-3">{t("Total")}</th>
+                    <th className="px-5 py-3">{t("Completed")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,14 +167,16 @@ export default function SalesPage() {
                       <td className="px-5 py-4 font-bold text-[#14203a]">#{sale.orderNumber}</td>
                       <td className="px-5 py-4">
                         <div className="font-semibold text-slate-700">{sale.customerName}</div>
-                        <div className="mt-0.5 text-[10px] text-slate-400">{sale.customerPhone}</div>
+                        <div className="mt-0.5 text-[10px] text-slate-400">
+                          {sale.customerPhone}
+                        </div>
                       </td>
                       <td className="px-5 py-4 capitalize text-slate-500">
                         {sale.paymentMethod} · {sale.paymentStatus.replaceAll("_", " ")}
                       </td>
                       <td className="px-5 py-4 text-slate-500">
                         {sale.shippingTotal === 0
-                          ? "Free"
+                          ? t("Free")
                           : money(sale.shippingTotal, sale.currency)}
                       </td>
                       <td className="px-5 py-4 font-bold text-slate-700">
@@ -197,11 +195,13 @@ export default function SalesPage() {
                   key={sale.id}
                   type="button"
                   onClick={() => navigate(`/dashboard/orders/${sale.orderId}`)}
-                  className="w-full rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm"
+                  className="w-full rounded-xl border border-slate-100 bg-white p-3 text-start shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-[12px] font-bold text-[#14203a]">#{sale.orderNumber}</div>
+                      <div className="text-[12px] font-bold text-[#14203a]">
+                        #{sale.orderNumber}
+                      </div>
                       <div className="mt-0.5 text-[11px] font-semibold text-slate-600">
                         {sale.customerName}
                       </div>
@@ -224,10 +224,10 @@ export default function SalesPage() {
             disabled={page <= 1 || loading}
             className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-500 disabled:opacity-40"
           >
-            <ChevronLeft className="size-3.5" /> Previous
+            <ChevronLeft className="size-3.5" /> {t("Previous")}
           </button>
           <span className="text-[10px] font-semibold text-slate-400">
-            {(result?.total ?? 0).toLocaleString()} sales
+            {(result?.total ?? 0).toLocaleString()} {t("sales")}
           </span>
           <button
             type="button"
@@ -235,7 +235,8 @@ export default function SalesPage() {
             disabled={page >= totalPages || loading}
             className="flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-500 disabled:opacity-40"
           >
-            Next <ChevronRight className="size-3.5" />
+            {t("Next")}
+            <ChevronRight className="size-3.5" />
           </button>
         </div>
       </div>

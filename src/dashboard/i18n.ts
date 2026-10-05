@@ -1,3 +1,4 @@
+import { dashboardUiArabic } from "@/dashboard/uiTranslations";
 import { createContext, useContext } from "react";
 
 export type Language = "en" | "ar";
@@ -66,6 +67,7 @@ export const translations: Record<Language, Record<string, string>> = {
     العربية: "Arabic",
   },
   ar: {
+    ...dashboardUiArabic,
     Overview: "نظرة عامة",
     Commerce: "التجارة",
     "Store content": "محتوى المتجر",
@@ -129,5 +131,9 @@ export const translations: Record<Language, Record<string, string>> = {
   },
 };
 
-export const LanguageContext = createContext<{ lang: Language; setLang: (lang: Language) => void; t: (key: string) => string }>({ lang: "en", setLang: () => undefined, t: (key) => key });
+export const LanguageContext = createContext<{
+  lang: Language;
+  setLang: (lang: Language) => void;
+  t: (key: string) => string;
+}>({ lang: "en", setLang: () => undefined, t: (key) => key });
 export const useLanguage = () => useContext(LanguageContext);
