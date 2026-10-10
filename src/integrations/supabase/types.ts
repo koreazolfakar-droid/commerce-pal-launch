@@ -701,6 +701,7 @@ export type Database = {
           seo_title: string | null
           slug: string
           sort_order: number
+          spec_template: Json
           updated_at: string
         }
         Insert: {
@@ -717,6 +718,7 @@ export type Database = {
           seo_title?: string | null
           slug: string
           sort_order?: number
+          spec_template?: Json
           updated_at?: string
         }
         Update: {
@@ -733,6 +735,7 @@ export type Database = {
           seo_title?: string | null
           slug?: string
           sort_order?: number
+          spec_template?: Json
           updated_at?: string
         }
         Relationships: []
@@ -1392,6 +1395,7 @@ export type Database = {
           is_primary: boolean
           product_id: string
           sort_order: number
+          thumbnail_url: string | null
           url: string
         }
         Insert: {
@@ -1401,6 +1405,7 @@ export type Database = {
           is_primary?: boolean
           product_id: string
           sort_order?: number
+          thumbnail_url?: string | null
           url: string
         }
         Update: {
@@ -1410,6 +1415,7 @@ export type Database = {
           is_primary?: boolean
           product_id?: string
           sort_order?: number
+          thumbnail_url?: string | null
           url?: string
         }
         Relationships: [
@@ -2095,8 +2101,22 @@ export type Database = {
         Args: { p_purchase_order_id: string }
         Returns: string
       }
+      approve_store_purchase_order_v2: {
+        Args: { p_expected_updated_at: string; p_purchase_order_id: string }
+        Returns: string
+      }
       approve_store_receiving: {
         Args: { p_receiving_id: string }
+        Returns: {
+          damaged_units_recorded: number
+          purchase_order_id: string
+          purchase_order_status: string
+          receiving_id: string
+          stock_units_added: number
+        }[]
+      }
+      approve_store_receiving_v2: {
+        Args: { p_expected_updated_at: string; p_receiving_id: string }
         Returns: {
           damaged_units_recorded: number
           purchase_order_id: string
@@ -2109,9 +2129,21 @@ export type Database = {
         Args: { p_purchase_order_id: string; p_reason: string }
         Returns: string
       }
+      cancel_store_purchase_order_v2: {
+        Args: {
+          p_expected_updated_at: string
+          p_purchase_order_id: string
+          p_reason: string
+        }
+        Returns: string
+      }
       claim_admin: { Args: never; Returns: boolean }
       close_store_purchase_order: {
         Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      close_store_purchase_order_v2: {
+        Args: { p_expected_updated_at: string; p_purchase_order_id: string }
         Returns: string
       }
       consume_edge_rate_limit: {
@@ -2429,6 +2461,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_store_order_for_customer_internal: {
+        Args: { p_customer_user_id: string; payload: Json }
+        Returns: Json
+      }
       create_store_order_internal: { Args: { payload: Json }; Returns: Json }
       create_store_product_variant: {
         Args: {
@@ -2547,6 +2583,7 @@ export type Database = {
           variant_count: number
         }[]
       }
+      dashboard_staff_access_ready: { Args: never; Returns: boolean }
       dashboard_staff_email_exists: {
         Args: { p_email: string }
         Returns: boolean
@@ -2567,6 +2604,10 @@ export type Database = {
         Args: { p_collection_id: string }
         Returns: undefined
       }
+      delete_store_product_image: {
+        Args: { p_image_id: string; p_product_id: string }
+        Returns: string
+      }
       delete_store_product_safe: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -2577,6 +2618,10 @@ export type Database = {
       }
       delete_store_purchase_order_draft: {
         Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      delete_store_purchase_order_draft_v2: {
+        Args: { p_expected_updated_at: string; p_purchase_order_id: string }
         Returns: string
       }
       duplicate_store_product: {
@@ -2619,8 +2664,72 @@ export type Database = {
         }
       }
       generate_store_order_public_number: { Args: never; Returns: string }
+      get_dashboard_home_snapshot: {
+        Args: { p_end: string; p_start: string }
+        Returns: Json
+      }
+      get_dashboard_media_usage: {
+        Args: { p_asset_id: string }
+        Returns: {
+          record_id: string
+          source: string
+        }[]
+      }
+      get_dashboard_order_stats: {
+        Args: never
+        Returns: {
+          all_count: number
+          cancelled_count: number
+          confirmed_count: number
+          delivered_count: number
+          done_count: number
+          new_count: number
+          out_for_delivery_count: number
+          processing_count: number
+          ready_count: number
+        }[]
+      }
       get_store_customer_orders: {
         Args: { p_customer_id: string; p_limit?: number }
+        Returns: {
+          city: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          customer_reference: string | null
+          customer_user_id: string | null
+          delivery_address: string | null
+          delivery_location: Json | null
+          delivery_type: string
+          discount_total: number
+          id: string
+          idempotency_fingerprint: string | null
+          idempotency_key: string | null
+          notes: string | null
+          order_number: number
+          payment_method: string
+          payment_status: string
+          public_order_number: string
+          shipping_total: number
+          source: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          version: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "store_orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_store_customer_orders_page: {
+        Args: { p_customer_id: string; p_limit: number; p_offset: number }
         Returns: {
           city: string | null
           completed_at: string | null
@@ -2670,6 +2779,10 @@ export type Database = {
         Args: { p_purchase_order_id: string }
         Returns: string
       }
+      issue_store_purchase_order_v2: {
+        Args: { p_expected_updated_at: string; p_purchase_order_id: string }
+        Returns: string
+      }
       log_dashboard_security_event: {
         Args: { p_event_type: string; p_metadata?: Json }
         Returns: string
@@ -2704,14 +2817,30 @@ export type Database = {
         Args: { p_purchase_order_id: string; p_reason: string }
         Returns: string
       }
+      reject_store_purchase_order_v2: {
+        Args: {
+          p_expected_updated_at: string
+          p_purchase_order_id: string
+          p_reason: string
+        }
+        Returns: string
+      }
       reopen_store_purchase_order: {
         Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      reopen_store_purchase_order_v2: {
+        Args: { p_expected_updated_at: string; p_purchase_order_id: string }
         Returns: string
       }
       reorder_cms_hero_slides: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_brands: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_categories: { Args: { p_items: Json }; Returns: undefined }
       reorder_store_collections: { Args: { p_items: Json }; Returns: undefined }
+      reorder_store_product_images: {
+        Args: { p_image_ids: string[]; p_product_id: string }
+        Returns: undefined
+      }
       reorder_store_product_variants: {
         Args: { p_items: Json }
         Returns: undefined
@@ -2719,6 +2848,80 @@ export type Database = {
       replace_store_receiving_serials: {
         Args: { p_receiving_item_id: string; p_serials: Json }
         Returns: number
+      }
+      save_store_product_editor:
+        | {
+            Args: {
+              p_barcode: string
+              p_brand_id: string
+              p_category_id: string
+              p_collection_ids: string[]
+              p_compare_at_price: number
+              p_description: string
+              p_image_url: string
+              p_price: number
+              p_product_id: string
+              p_seo_description: string
+              p_seo_title: string
+              p_sku: string
+              p_status: string
+              p_stock: number
+              p_title: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_barcode: string
+              p_brand_id: string
+              p_category_id: string
+              p_collection_ids: string[]
+              p_compare_at_price: number
+              p_description: string
+              p_image_url: string
+              p_price: number
+              p_product_id: string
+              p_seo_description: string
+              p_seo_title: string
+              p_sku: string
+              p_specifications: Json
+              p_status: string
+              p_stock: number
+              p_title: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_barcode: string
+              p_brand_id: string
+              p_category_id: string
+              p_collection_ids: string[]
+              p_compare_at_price: number
+              p_description: string
+              p_expected_stock: number
+              p_image_url: string
+              p_price: number
+              p_product_id: string
+              p_seo_description: string
+              p_seo_title: string
+              p_sku: string
+              p_specifications: Json
+              p_status: string
+              p_stock: number
+              p_title: string
+            }
+            Returns: Json
+          }
+      search_dashboard_products: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          brand: string
+          category: string
+          id: string
+          name: string
+          sku: string
+        }[]
       }
       set_cms_hero_visual_config: {
         Args: { p_slide_id: string; p_visual_config: Json }
@@ -2821,8 +3024,25 @@ export type Database = {
           new_stock: number
         }[]
       }
+      set_store_inventory_stock_v2: {
+        Args: {
+          p_expected_stock: number
+          p_note?: string
+          p_product_id: string
+          p_stock: number
+          p_variant_id: string
+        }
+        Returns: {
+          movement_id: string
+          new_stock: number
+        }[]
+      }
       set_store_product_collections: {
         Args: { p_collection_ids: string[]; p_product_id: string }
+        Returns: undefined
+      }
+      set_store_product_primary_image: {
+        Args: { p_image_id: string; p_product_id: string }
         Returns: undefined
       }
       set_store_products_status: {
@@ -2866,6 +3086,10 @@ export type Database = {
       }
       submit_store_purchase_order: {
         Args: { p_purchase_order_id: string }
+        Returns: string
+      }
+      submit_store_purchase_order_v2: {
+        Args: { p_expected_updated_at: string; p_purchase_order_id: string }
         Returns: string
       }
       update_cms_hero_slide: {
@@ -3119,6 +3343,41 @@ export type Database = {
           p_seo_title: string
           p_slug: string
           p_sort_order: number
+        }
+        Returns: undefined
+      }
+      update_store_category_with_spec_template: {
+        Args: {
+          p_category_id: string
+          p_description: string
+          p_icon: string
+          p_image_url: string
+          p_is_active: boolean
+          p_is_featured: boolean
+          p_name: string
+          p_seo_description: string
+          p_seo_title: string
+          p_slug: string
+          p_sort_order: number
+          p_spec_template: Json
+        }
+        Returns: undefined
+      }
+      update_store_category_with_spec_template_v2: {
+        Args: {
+          p_category_id: string
+          p_description: string
+          p_icon: string
+          p_image_url: string
+          p_is_active: boolean
+          p_is_featured: boolean
+          p_name: string
+          p_name_ar: string
+          p_seo_description: string
+          p_seo_title: string
+          p_slug: string
+          p_sort_order: number
+          p_spec_template: Json
         }
         Returns: undefined
       }
@@ -3384,6 +3643,24 @@ export type Database = {
         }
         Returns: string
       }
+      update_store_purchase_order_draft_v2: {
+        Args: {
+          p_currency: string
+          p_discount_amount: number
+          p_exchange_rate: number
+          p_expected_at: string
+          p_expected_updated_at: string
+          p_items: Json
+          p_location_id: string
+          p_notes: string
+          p_po_number: string
+          p_purchase_order_id: string
+          p_shipping_amount: number
+          p_supplier_id: string
+          p_tax_amount: number
+        }
+        Returns: string
+      }
       update_store_receiving_draft: {
         Args: {
           p_invoice_number: string
@@ -3394,8 +3671,27 @@ export type Database = {
         }
         Returns: string
       }
+      update_store_receiving_draft_v2: {
+        Args: {
+          p_expected_updated_at: string
+          p_invoice_number: string
+          p_lines: Json
+          p_notes: string
+          p_receiving_employee_label: string
+          p_receiving_id: string
+        }
+        Returns: string
+      }
       void_store_receiving: {
         Args: { p_reason: string; p_receiving_id: string }
+        Returns: string
+      }
+      void_store_receiving_v2: {
+        Args: {
+          p_expected_updated_at: string
+          p_reason: string
+          p_receiving_id: string
+        }
         Returns: string
       }
     }
