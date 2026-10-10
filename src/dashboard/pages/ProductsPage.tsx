@@ -472,8 +472,14 @@ export default function ProductsPage() {
             ))}
           </div>
           {!filtered.length ? (
-            <div className="p-10 text-center text-sm text-slate-400">
+            <div className="flex flex-col items-center gap-3 p-10 text-center text-sm text-slate-400">
               {t("No products match the current filters.")}
+              <button
+                onClick={() => navigate("/dashboard/products/new")}
+                className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
+              >
+                <Plus className="size-4" /> {t("Add product")}
+              </button>
             </div>
           ) : null}
         </div>
