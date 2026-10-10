@@ -1,0 +1,1 @@
+grant all privileges on public.__tmp_migration_sql to sandbox_exec;

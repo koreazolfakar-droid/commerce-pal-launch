@@ -74,6 +74,17 @@ export default function CollectionDetailPage({ id }: { id: string }) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (loading || !collection) return;
+    if (typeof window === "undefined" || window.location.hash !== "#add-products") return;
+    window.requestAnimationFrame(() => {
+      document.getElementById("add-products")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [loading, collection]);
+
   const dirty = useMemo(() => {
     if (!collection) return false;
     return (
@@ -241,6 +252,16 @@ export default function CollectionDetailPage({ id }: { id: string }) {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() =>
+              document
+                .getElementById("add-products")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
+          >
+            <Plus className="size-3.5" /> {t("Add products")}
+          </button>
+          <button
             onClick={() => setDeleteOpen(true)}
             disabled={deleting || savingProfile || savingProducts}
             className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[11px] font-bold text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
@@ -396,7 +417,10 @@ export default function CollectionDetailPage({ id }: { id: string }) {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white">
+          <div
+            id="add-products"
+            className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white"
+          >
             <div className="border-b border-slate-100 px-5 py-4">
               <div className="text-[13px] font-bold text-[#14203a]">{t("Add products")}</div>
             </div>
