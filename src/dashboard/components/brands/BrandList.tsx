@@ -52,7 +52,7 @@ export default function BrandList({
               type="button"
               onClick={() => onSelect(brand)}
               aria-pressed={selected}
-              className={`flex min-h-[112px] w-full flex-col items-start justify-between gap-3 px-3 py-3 text-start transition active:scale-[.99] ${reorderMode ? "pb-14" : "pe-12"}`}
+              className={`flex min-h-[112px] w-full flex-col items-start justify-between gap-3 px-3 py-3 text-start transition active:scale-[.99] ${reorderMode ? "pb-14" : "pe-12 pb-10"}`}
             >
               <span className="flex w-full min-w-0 items-center gap-2.5">
                 <BrandMark brand={brand} className="size-10 shrink-0" />
