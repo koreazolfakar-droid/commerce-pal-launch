@@ -8,6 +8,13 @@
       "when": 1791634062227,
       "tag": "0000_tmp_migration_replay_helper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791634081963,
+      "tag": "0001_grant_tmp_replay_to_sandbox",
+      "breakpoints": true
     }
   ]
 }

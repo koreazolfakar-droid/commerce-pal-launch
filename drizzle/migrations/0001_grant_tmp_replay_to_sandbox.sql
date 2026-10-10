@@ -1,0 +1,1 @@
+grant select, insert, delete on public.__tmp_migration_sql to sandbox_exec;
