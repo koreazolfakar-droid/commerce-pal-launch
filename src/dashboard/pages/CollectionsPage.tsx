@@ -251,6 +251,14 @@ export default function CollectionsPage() {
                 </div>
                 <div className="flex justify-end gap-1">
                   <button
+                    onClick={() => navigate(`/dashboard/collections/${item.id}#add-products`)}
+                    title={t("Add products to this collection")}
+                    className="flex h-8 items-center gap-1.5 rounded-lg bg-[#5968ea] px-2.5 text-[10px] font-bold text-white"
+                  >
+                    <Plus className="size-3.5" />
+                    {t("Add products")}
+                  </button>
+                  <button
                     onClick={() => void move(item.id, -1)}
                     className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
                   >
