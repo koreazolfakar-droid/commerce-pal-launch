@@ -69,7 +69,6 @@ export type Database = {
           seo_title: string | null
           slug: string
           sort_order: number
-          spec_template: Json
           updated_at: string
         }
         Insert: {
@@ -87,7 +86,6 @@ export type Database = {
           seo_title?: string | null
           slug: string
           sort_order?: number
-          spec_template?: Json
           updated_at?: string
         }
         Update: {
@@ -672,7 +670,6 @@ export type Database = {
       }
       store_categories: {
         Row: {
-          spec_template: Json
           created_at: string
           description: string | null
           icon: string | null
@@ -702,11 +699,9 @@ export type Database = {
           seo_title?: string | null
           slug: string
           sort_order?: number
-          spec_template?: Json
           updated_at?: string
         }
         Update: {
-          spec_template?: Json
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -1379,7 +1374,6 @@ export type Database = {
           is_primary: boolean
           product_id: string
           sort_order: number
-          thumbnail_url: string | null
           url: string
         }
         Insert: {
@@ -1389,7 +1383,6 @@ export type Database = {
           is_primary?: boolean
           product_id: string
           sort_order?: number
-          thumbnail_url?: string | null
           url: string
         }
         Update: {
@@ -1399,7 +1392,6 @@ export type Database = {
           is_primary?: boolean
           product_id?: string
           sort_order?: number
-          thumbnail_url?: string | null
           url?: string
         }
         Relationships: [
@@ -2647,45 +2639,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_store_customer_orders_page: {
-        Args: { p_customer_id: string; p_limit: number; p_offset: number }
-        Returns: {
-          city: string | null
-          completed_at: string | null
-          created_at: string
-          currency: string
-          customer_email: string | null
-          customer_name: string
-          customer_phone: string
-          customer_reference: string | null
-          customer_user_id: string | null
-          delivery_address: string | null
-          delivery_location: Json | null
-          delivery_type: string
-          discount_total: number
-          id: string
-          idempotency_fingerprint: string | null
-          idempotency_key: string | null
-          notes: string | null
-          order_number: number
-          payment_method: string
-          payment_status: string
-          public_order_number: string
-          shipping_total: number
-          source: string
-          status: string
-          subtotal: number
-          total: number
-          updated_at: string
-          version: number
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "store_orders"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3147,41 +3100,6 @@ export type Database = {
           p_seo_title: string
           p_slug: string
           p_sort_order: number
-        }
-        Returns: undefined
-      }
-      update_store_category_with_spec_template: {
-        Args: {
-          p_category_id: string
-          p_description: string
-          p_icon: string
-          p_image_url: string
-          p_is_active: boolean
-          p_is_featured: boolean
-          p_name: string
-          p_seo_description: string
-          p_seo_title: string
-          p_slug: string
-          p_sort_order: number
-          p_spec_template: Json
-        }
-        Returns: undefined
-      }
-      update_store_category_with_spec_template_v2: {
-        Args: {
-          p_category_id: string
-          p_description: string
-          p_icon: string
-          p_image_url: string
-          p_is_active: boolean
-          p_is_featured: boolean
-          p_name: string
-          p_name_ar: string
-          p_seo_description: string
-          p_seo_title: string
-          p_slug: string
-          p_sort_order: number
-          p_spec_template: Json
         }
         Returns: undefined
       }
