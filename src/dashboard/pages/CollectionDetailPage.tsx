@@ -74,6 +74,17 @@ export default function CollectionDetailPage({ id }: { id: string }) {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (loading || !collection) return;
+    if (typeof window === "undefined" || window.location.hash !== "#add-products") return;
+    window.requestAnimationFrame(() => {
+      document.getElementById("add-products")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [loading, collection]);
+
   const dirty = useMemo(() => {
     if (!collection) return false;
     return (

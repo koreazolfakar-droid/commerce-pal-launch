@@ -90,6 +90,19 @@ export default function BrandList({
               </span>
             </button>
 
+            {!reorderMode && (
+              <button
+                type="button"
+                onClick={() => onAddProduct(brand)}
+                aria-label={t("Add product to") + " " + brand.name}
+                title={t("Add product to") + " " + brand.name}
+                className="absolute bottom-2 end-2 flex h-7 items-center gap-1 rounded-lg bg-[#5968ea] px-2 text-[9px] font-bold text-white shadow-sm transition hover:bg-[#4a58d9] active:scale-95"
+              >
+                <Plus className="size-3" />
+                {t("Product")}
+              </button>
+            )}
+
             <div className={reorderMode ? "absolute inset-x-2 bottom-2" : "absolute end-2 top-2"}>
               {reorderMode ? (
                 <div className="flex justify-end gap-1">
