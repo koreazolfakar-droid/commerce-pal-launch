@@ -199,6 +199,14 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      <button
+        onClick={() => navigate("/dashboard/products/new")}
+        aria-label={t("Add product")}
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-40 flex h-12 items-center gap-2 rounded-full bg-[#5968ea] px-5 text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(89,104,234,.35)] transition active:scale-95 lg:hidden"
+      >
+        <Plus className="size-4" /> {t("Add product")}
+      </button>
+
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         {[
           ["Total", catalog.length, "text-[#14203a]"],
