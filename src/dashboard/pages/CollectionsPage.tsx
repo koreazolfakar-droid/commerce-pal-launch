@@ -5,6 +5,7 @@ import {
   FolderPlus,
   Loader2,
   Pencil,
+  Plus,
   RefreshCw,
   Search,
   Trash2,
