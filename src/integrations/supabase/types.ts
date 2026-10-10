@@ -14,24 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      __tmp_migration_sql: {
-        Row: {
-          id: number
-          sql: string
-          version: string
-        }
-        Insert: {
-          id: number
-          sql: string
-          version: string
-        }
-        Update: {
-          id?: number
-          sql?: string
-          version?: string
-        }
-        Relationships: []
-      }
       cms_audit_log: {
         Row: {
           action: string
@@ -2076,7 +2058,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      __tmp_replay_migration: { Args: { p_id: number }; Returns: string }
       activate_dashboard_mfa: {
         Args: never
         Returns: {
