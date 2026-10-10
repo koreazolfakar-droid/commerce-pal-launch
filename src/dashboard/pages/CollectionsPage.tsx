@@ -171,6 +171,15 @@ export default function CollectionsPage() {
         </div>
       </div>
 
+      <button
+        type="button"
+        onClick={() => setShowCreate(true)}
+        aria-label={t("New collection")}
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-40 flex h-12 items-center gap-2 rounded-full bg-[#5968ea] px-5 text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(89,104,234,.35)] transition active:scale-95 lg:hidden"
+      >
+        <FolderPlus className="size-4" /> {t("New collection")}
+      </button>
+
       <div className="mb-4 grid gap-4 sm:grid-cols-4">
         {[
           ["Total", collections.length],
