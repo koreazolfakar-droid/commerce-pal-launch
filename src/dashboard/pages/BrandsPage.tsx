@@ -554,6 +554,16 @@ export default function BrandsPage() {
 
   return (
     <div className="pb-4 sm:pb-8">
+      {!reorderMode && (
+        <button
+          type="button"
+          onClick={openCreate}
+          aria-label={t("Add Brand")}
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-40 flex h-12 items-center gap-2 rounded-full bg-[#5968ea] px-5 text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(89,104,234,.35)] transition active:scale-95 lg:hidden"
+        >
+          <Plus className="size-4" /> {t("Add Brand")}
+        </button>
+      )}
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
