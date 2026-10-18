@@ -58,7 +58,6 @@ export const dashboardUiArabic: Record<string, string> = {
   "Storefront & marketing": "واجهة المتجر والتسويق",
   "Insights & settings": "التقارير والإعدادات",
   "Quick actions": "إجراءات سريعة",
-  "Needs attention": "بحاجة لانتباهك",
   "Receive stock": "استلام بضاعة",
   "Edit homepage": "تعديل الصفحة الرئيسية",
   "View orders": "عرض الطلبات",
