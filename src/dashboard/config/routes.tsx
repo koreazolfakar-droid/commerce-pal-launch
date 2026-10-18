@@ -283,6 +283,17 @@ const routes: DashboardRouteDefinition[] = [
     id: "products-new",
     path: "/dashboard/products/new",
     page: productFormPage,
+    meta: {
+      eyebrow: "Commerce / Catalog",
+      title: "Add New Product",
+      description: "Create a product with images, price, stock, brand, category and collections.",
+    },
+    navigation: {
+      section: "Catalog",
+      label: "Add New Product",
+      icon: "PackagePlus",
+      order: 1,
+    },
   }),
   staticRoute({
     id: "products",
