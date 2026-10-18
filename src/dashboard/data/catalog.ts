@@ -425,7 +425,15 @@ async function dashboardLoginThrottle(
   outcome: "attempt" | "success",
 ): Promise<DashboardThrottleDecision> {
   const normalizedEmail = email.trim().toLowerCase();
-  if (!normalizedEmail) return { allowed: true, retryAfter: 0 };
+  // The throttle endpoint rejects malformed emails with 400; such sign-ins fail
+  // at the auth step anyway, so skip the call instead of surfacing an error.
+  if (
+    !normalizedEmail ||
+    normalizedEmail.length > 320 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+  ) {
+    return { allowed: true, retryAfter: 0 };
+  }
 
   const { data, error } = await supabase.functions.invoke("dashboard-auth-throttle", {
     body: { email: normalizedEmail, outcome },
