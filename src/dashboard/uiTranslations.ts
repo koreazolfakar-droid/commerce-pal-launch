@@ -80,7 +80,6 @@ export const dashboardUiArabic: Record<string, string> = {
   "No image yet": "لا توجد صورة بعد",
   "Product name": "اسم المنتج",
   "Product image": "صورة المنتج",
-  "Draft": "مسودة",
   "Add New Product": "إضافة منتج جديد",
   "Create a product with images, price, stock, brand, category and collections.":
     "أنشئ منتجاً مع الصور والسعر والمخزون والبراند والفئة والمجموعات.",
