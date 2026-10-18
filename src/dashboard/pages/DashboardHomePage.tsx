@@ -4,6 +4,10 @@ import {
   BarChart3,
   Boxes,
   Package,
+  PackagePlus,
+  PackageCheck,
+  LayoutTemplate,
+  AlertTriangle,
   RefreshCw,
   ShoppingBag,
   Tags,
@@ -190,6 +194,60 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
           </button>
         </div>
       </div>
+
+      {!analyticsView ? (
+        <div className="mb-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+          <Panel title="Quick actions">
+            <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
+              {[
+                { label: "Add New Product", href: "/dashboard/products/new", icon: PackagePlus },
+                { label: "View orders", href: "/dashboard/orders", icon: ShoppingBag },
+                { label: "Receive stock", href: "/dashboard/receiving", icon: PackageCheck },
+                { label: "Edit homepage", href: "/dashboard/homepage", icon: LayoutTemplate },
+              ].map(({ label, href, icon: Icon }) => (
+                <button
+                  key={href}
+                  type="button"
+                  onClick={() => navigate(href)}
+                  className="flex min-h-[88px] flex-col items-start justify-between gap-3 rounded-xl border border-slate-200/80 p-3 text-start text-[12px] font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50 active:scale-[.98]"
+                >
+                  <span className="grid size-9 place-items-center rounded-lg bg-indigo-50 text-[#5968ea]">
+                    <Icon className="size-[18px]" />
+                  </span>
+                  {t(label)}
+                </button>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Needs attention">
+            {snapshot.lowStockVariants || snapshot.outOfStockVariants ? (
+              <div className="divide-y divide-slate-100">
+                {[
+                  { label: "Out of stock", value: snapshot.outOfStockVariants, tone: "text-rose-600 bg-rose-50" },
+                  { label: "Low stock", value: snapshot.lowStockVariants, tone: "text-amber-600 bg-amber-50" },
+                ]
+                  .filter((row) => row.value > 0)
+                  .map((row) => (
+                    <button
+                      key={row.label}
+                      type="button"
+                      onClick={() => navigate("/dashboard/inventory")}
+                      className="flex w-full items-center gap-3 px-5 py-3.5 text-start hover:bg-slate-50"
+                    >
+                      <span className={`grid size-8 place-items-center rounded-lg ${row.tone}`}>
+                        <AlertTriangle className="size-4" />
+                      </span>
+                      <span className="flex-1 text-[12px] font-semibold text-slate-700">{t(row.label)}</span>
+                      <span className="text-[13px] font-bold text-[#14203a]">{integer(row.value)}</span>
+                    </button>
+                  ))}
+              </div>
+            ) : (
+              <EmptyState>{t("All clear — nothing needs attention.")}</EmptyState>
+            )}
+          </Panel>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard

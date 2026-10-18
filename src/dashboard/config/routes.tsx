@@ -49,16 +49,21 @@ type DashboardRouteDefinition = {
   };
 };
 
-const SECTION_ORDER = [
-  "Overview",
-  "Catalog",
-  "Sales",
-  "Stock & purchasing",
-  "Store content",
-  "Marketing",
-  "Management",
-  "System",
-] as const;
+const NAVIGATION_GROUPS: { label: string; items: string[] }[] = [
+  {
+    label: "Daily operations",
+    items: ["Dashboard", "Orders", "Customers", "Inventory", "Receiving", "Purchase Orders", "Suppliers"],
+  },
+  { label: "Catalog", items: ["Add New Product", "Products", "Brands", "Collections", "Categories"] },
+  {
+    label: "Storefront & marketing",
+    items: ["Homepage", "Hero banners", "Navigation", "Media library", "Promotions", "Campaigns", "Coupons", "SEO", "Reviews", "Messages"],
+  },
+  {
+    label: "Insights & settings",
+    items: ["Analytics", "Sales", "Procurement", "Users", "Activity logs", "Security", "Settings"],
+  },
+];
 
 const DASHBOARD_ROUTE_CHUNK_RELOAD_KEY = "space-call:dashboard-route-chunk-reload";
 
@@ -770,12 +775,12 @@ export function preloadDashboardRoute(pathname: string) {
   return (resolved?.definition.page ?? workspacePage).preload();
 }
 
-export const dashboardNavigationSections: DashboardNavigationSection[] = SECTION_ORDER.map(
-  (section) => ({
-    label: section,
-    items: routes
-      .filter((route) => route.navigation?.section === section && route.path)
-      .sort((a, b) => (a.navigation?.order ?? 0) - (b.navigation?.order ?? 0))
+export const dashboardNavigationSections: DashboardNavigationSection[] = NAVIGATION_GROUPS.map(
+  (group) => ({
+    label: group.label,
+    items: group.items
+      .map((label) => routes.find((route) => route.navigation?.label === label && route.path))
+      .filter((route): route is DashboardRouteDefinition => Boolean(route))
       .map((route) => ({
         label: route.navigation!.label,
         href: route.path!,

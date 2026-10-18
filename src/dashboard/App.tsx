@@ -130,6 +130,23 @@ function Sidebar({
   const sidebarRef = useRef<HTMLElement>(null);
   useDashboardDialogFocus(mobileOpen, sidebarRef, () => setMobileOpen(false));
   const [smallSidebar, setSmallSidebar] = useState(false);
+  const [closedSections, setClosedSections] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(readPreference("dashboard:closed-sections") ?? "[]");
+      if (Array.isArray(saved)) setClosedSections(saved.filter((v) => typeof v === "string"));
+    } catch {
+      /* ignore malformed preference */
+    }
+  }, []);
+  const toggleSection = (label: string) =>
+    setClosedSections((current) => {
+      const next = current.includes(label)
+        ? current.filter((v) => v !== label)
+        : [...current, label];
+      writePreference("dashboard:closed-sections", JSON.stringify(next));
+      return next;
+    });
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1023px)");
     const update = () => {
@@ -195,12 +212,29 @@ function Sidebar({
           {navSections.map((section) => (
             <div key={section.label} className="mb-6">
               {(!collapsed || mobileOpen) && (
-                <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500">
-                  {t(section.label)}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.label)}
+                  aria-expanded={!closedSections.includes(section.label)}
+                  className="mb-2 flex w-full items-center justify-between rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500 hover:text-slate-300"
+                >
+                  <span>{t(section.label)}</span>
+                  <span
+                    aria-hidden
+                    className={`text-[11px] transition-transform ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
+                  >
+                    ▾
+                  </span>
+                </button>
               )}
               <div className="space-y-1">
                 {section.items
+                  .filter(
+                    (item) =>
+                      collapsed && !mobileOpen
+                        ? true
+                        : !closedSections.includes(section.label) || item.href === activeHref,
+                  )
                   .filter((item) => item.href !== "/dashboard/users" || identity.role === "admin")
                   .map((item) => {
                     const Icon = iconMap[item.icon] ?? LayoutDashboard;
@@ -614,7 +648,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
     { label: "Products", href: "/dashboard/products", icon: Package },
-    { label: "Inventory", href: "/dashboard/inventory", icon: Boxes },
+    { label: "Add", href: "/dashboard/products/new", icon: PackagePlus },
   ];
 
   return (
@@ -627,7 +661,9 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
           const active =
             href === "/dashboard"
               ? location === href || location === "/dashboard/"
-              : location.startsWith(href);
+              : href === "/dashboard/products"
+                ? location.startsWith(href) && !location.startsWith("/dashboard/products/new")
+                : location.startsWith(href);
           return (
             <button
               key={href}
