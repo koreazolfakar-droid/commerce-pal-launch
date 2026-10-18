@@ -1,7 +1,8 @@
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { Archive, Check, Copy, Loader2, Save, Trash2, UploadCloud } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ProductCreatePreview from "@/dashboard/components/products/ProductCreatePreview";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -320,7 +321,16 @@ export default function ProductFormPage({ id }: { id?: string }) {
     });
   }, []);
 
-  const handleSave = async () => {
+  const saveLockRef = useRef(false);
+  const submitProduct = (statusOverride?: ProductStatus) => {
+    if (saveLockRef.current) return;
+    saveLockRef.current = true;
+    void handleSave(statusOverride).finally(() => {
+      saveLockRef.current = false;
+    });
+  };
+  const handleSave = async (statusOverride?: ProductStatus) => {
+    const status = statusOverride ?? form.status;
     const validation = validateProductDraft({
       title: form.title,
       price: form.price,
@@ -379,7 +389,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         description: form.description,
         brandId: form.brandId || null,
         categoryId: form.categoryId || null,
-        status: form.status,
+        status,
         price: nextPrice,
         compareAt: nextCompareAt,
         sku: form.sku,
@@ -414,7 +424,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 brand: selectedBrand?.name ?? "",
                 categoryId: form.categoryId || null,
                 category: selectedCategory?.name ?? "",
-                status: form.status,
+                status,
                 price: savedProduct.variantManagedSeparately ? current.price : nextPrice,
                 compareAt: savedProduct.variantManagedSeparately
                   ? current.compareAt
@@ -532,7 +542,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   }
 
   return (
-    <div>
+    <div className={id ? undefined : "pb-24 lg:pb-0"}>
       <button
         onClick={() => navigate("/dashboard/products")}
         className="mb-5 text-[11px] font-bold text-slate-500 hover:text-indigo-600"
@@ -686,9 +696,51 @@ export default function ProductFormPage({ id }: { id?: string }) {
             }}
             onApply={applyAiPatch}
           />
+          {!id ? (
+            <>
+              <span className="inline-flex h-10 items-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">
+                {t("Draft")}
+              </span>
+              <button
+                onClick={() => submitProduct("Draft")}
+                disabled={saving || pendingAction !== null}
+                className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700 disabled:opacity-60 lg:flex"
+              >
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                {t("Save as Draft")}
+              </button>
+              <button
+                onClick={() => submitProduct("Active")}
+                disabled={saving || pendingAction !== null}
+                className="hidden h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-60 lg:flex"
+              >
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                {t("Publish Product")}
+              </button>
+              <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-slate-200 bg-white/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+                <button
+                  onClick={() => submitProduct("Draft")}
+                  disabled={saving || pendingAction !== null}
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 text-[12px] font-bold text-slate-700 disabled:opacity-60"
+                >
+                  {t("Save as Draft")}
+                </button>
+                <button
+                  onClick={() => submitProduct("Active")}
+                  disabled={saving || pendingAction !== null}
+                  aria-busy={saving}
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#5968ea] text-[12px] font-bold text-white disabled:opacity-60"
+                >
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+                  {t("Publish Product")}
+                </button>
+              </div>
+            </>
+          ) : null}
           <button
-            onClick={() => void handleSave()}
+            onClick={() => submitProduct()}
             disabled={saving || pendingAction !== null}
+            hidden={!id}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
           >
             {saving ? (
@@ -896,6 +948,16 @@ export default function ProductFormPage({ id }: { id?: string }) {
         </div>
 
         <div className="space-y-4">
+          {!id ? (
+            <ProductCreatePreview
+              title={form.title}
+              brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
+              price={form.price}
+              compareAt={form.compareAt}
+              stock={form.stock}
+              imageUrl={form.imageUrl}
+            />
+          ) : null}
           <Panel
             title={t("Media")}
             subtitle={id ? t("Live Supabase product gallery") : t("Save first to upload")}
