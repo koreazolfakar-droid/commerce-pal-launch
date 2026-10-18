@@ -322,7 +322,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   }, []);
 
   const saveLockRef = useRef(false);
-  const handleSave = async (statusOverride?: ProductStatusValue) => {
+  const handleSave = async (statusOverride?: ProductStatus) => {
     if (saveLockRef.current) return;
     const status = statusOverride ?? form.status;
     const validation = validateProductDraft({
@@ -419,7 +419,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 brand: selectedBrand?.name ?? "",
                 categoryId: form.categoryId || null,
                 category: selectedCategory?.name ?? "",
-                status: form.status,
+                status,
                 price: savedProduct.variantManagedSeparately ? current.price : nextPrice,
                 compareAt: savedProduct.variantManagedSeparately
                   ? current.compareAt
@@ -944,6 +944,16 @@ export default function ProductFormPage({ id }: { id?: string }) {
         </div>
 
         <div className="space-y-4">
+          {!id ? (
+            <ProductCreatePreview
+              title={form.title}
+              brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
+              price={form.price}
+              compareAt={form.compareAt}
+              stock={form.stock}
+              imageUrl={form.imageUrl}
+            />
+          ) : null}
           <Panel
             title={t("Media")}
             subtitle={id ? t("Live Supabase product gallery") : t("Save first to upload")}
