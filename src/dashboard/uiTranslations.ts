@@ -73,6 +73,9 @@ export const dashboardUiArabic: Record<string, string> = {
   Adjust: "تعديل",
   Damaged: "تالف",
   "Assign Products": "ربط المنتجات",
+  "Add New Product": "إضافة منتج جديد",
+  "Create a product with images, price, stock, brand, category and collections.":
+    "أنشئ منتجاً مع الصور والسعر والمخزون والبراند والفئة والمجموعات.",
   Stock: "المخزون",
   products: "منتجات",
   Draft: "مسودة",
