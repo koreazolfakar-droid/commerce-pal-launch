@@ -1,3 +1,4 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   Archive,
@@ -171,17 +172,7 @@ export default function ProductsPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">
-            {t("Commerce / Product management")}
-          </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            {t("Products")}
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            {t(
-              "Manage live products, variants, stock state and merchandising without leaving the Space Call dashboard.",
-            )}
-          </p>
+          <PageTitle eyebrow="Commerce / Product management" title="Products" description="Manage live products, variants, stock state and merchandising without leaving the Space Call dashboard." />
         </div>
         <div className="flex flex-wrap gap-2">
           <button

@@ -1,3 +1,4 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   ArrowDown,
@@ -145,15 +146,7 @@ export default function CollectionsPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            {t("Catalog / Collections")}
-          </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            {t("Collections")}
-          </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            {t("Real storefront collections powered by Supabase.")}
-          </p>
+          <PageTitle eyebrow="Catalog / Collections" title="Collections" description="Real storefront collections powered by Supabase." />
         </div>
         <div className="flex gap-2">
           <button
