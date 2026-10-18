@@ -65,6 +65,7 @@ export const dashboardUiArabic: Record<string, string> = {
   "Pending orders": "طلبات قيد الانتظار",
   "All clear — nothing needs attention.": "كل شيء جيد — لا شيء يحتاج انتباهك.",
   "More": "المزيد",
+  "Add": "إضافة",
   Administrator: "المسؤول",
   Editor: "المحرر",
   Staff: "الموظف",

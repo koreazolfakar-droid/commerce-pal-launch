@@ -661,7 +661,9 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
           const active =
             href === "/dashboard"
               ? location === href || location === "/dashboard/"
-              : location.startsWith(href);
+              : href === "/dashboard/products"
+                ? location.startsWith(href) && !location.startsWith("/dashboard/products/new")
+                : location.startsWith(href);
           return (
             <button
               key={href}
