@@ -648,7 +648,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
     { label: "Products", href: "/dashboard/products", icon: Package },
-    { label: "Inventory", href: "/dashboard/inventory", icon: Boxes },
+    { label: "Add", href: "/dashboard/products/new", icon: PackagePlus },
   ];
 
   return (
