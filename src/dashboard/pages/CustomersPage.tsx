@@ -1,3 +1,4 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardResponsiveTable from "@/dashboard/components/DashboardResponsiveTable";
 import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
@@ -167,16 +168,7 @@ export default function CustomersPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            {t("Commerce / Customers")}
-          </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            {t("Customers")}
-          </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            {t("Commerce CRM backed by real Supabase customer and order data.")}
-          </p>
+          <PageTitle eyebrow="Commerce / Customers" title="Customers" description="Commerce CRM backed by real Supabase customer and order data." />
         </div>
         <div className="flex gap-2">
           <button

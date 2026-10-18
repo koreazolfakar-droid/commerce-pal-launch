@@ -1,3 +1,4 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardModal from "@/dashboard/components/DashboardModal";
 import {
@@ -525,18 +526,7 @@ export default function CategoriesPage() {
     return (
       <div>
         <div className="mb-6">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            {t("Commerce / Catalog")}
-          </div>
-          <h1 className="text-[24px] font-black tracking-[-.04em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">
-            {t("Categories Management")}
-          </h1>
-          <p className="mt-1.5 text-[12px] text-slate-500">
-            {t(
-              "Manage Space Call browsing categories, icons, visibility, order, and product assignments.",
-            )}
-          </p>
+          <PageTitle eyebrow="Commerce / Catalog" title="Categories Management" description="Manage Space Call browsing categories, icons, visibility, order, and product assignments." />
         </div>
         <div className="grid min-h-[320px] place-items-center rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center">
           <div>
@@ -573,18 +563,7 @@ export default function CategoriesPage() {
     <div className="pb-4 sm:pb-8">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            {t("Commerce / Catalog")}
-          </div>
-          <h1 className="text-[30px] font-black tracking-[-.05em] text-[#14203a]">
-            {t("Categories Management")}
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-500">
-            {t(
-              "Manage Space Call browsing categories, icons, visibility, order, and product assignments.",
-            )}
-          </p>
+          <PageTitle eyebrow="Commerce / Catalog" title="Categories Management" description="Manage Space Call browsing categories, icons, visibility, order, and product assignments." />
         </div>
 
         <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">

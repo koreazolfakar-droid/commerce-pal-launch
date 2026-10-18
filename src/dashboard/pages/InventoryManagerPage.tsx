@@ -1,3 +1,4 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import {
@@ -369,18 +370,7 @@ export default function InventoryManagerPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            {t("Commerce / Operations")}
-          </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            {t("Inventory control")}
-          </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            {t(
-              "Live variant inventory from Supabase. Every stock change is recorded as an inventory movement.",
-            )}
-          </p>
+          <PageTitle eyebrow="Commerce / Operations" title="Inventory control" description="Live variant inventory from Supabase. Every stock change is recorded as an inventory movement." />
         </div>
         <button
           onClick={() => void load(true)}
