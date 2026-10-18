@@ -322,8 +322,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
   }, []);
 
   const saveLockRef = useRef(false);
-  const handleSave = async (statusOverride?: ProductStatus) => {
+  const submitProduct = (statusOverride?: ProductStatus) => {
     if (saveLockRef.current) return;
+    saveLockRef.current = true;
+    void handleSave(statusOverride).finally(() => {
+      saveLockRef.current = false;
+    });
+  };
+  const handleSave = async (statusOverride?: ProductStatus) => {
     const status = statusOverride ?? form.status;
     const validation = validateProductDraft({
       title: form.title,
@@ -375,7 +381,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
       id && variantCount <= 1 && (variantCount === 0 || variantFieldsChanged),
     );
 
-    saveLockRef.current = true;
     setSaving(true);
     try {
       const savedProduct = await saveDashboardProduct({
@@ -460,7 +465,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product save failed.");
     } finally {
-      saveLockRef.current = false;
       setSaving(false);
     }
   };
@@ -698,7 +702,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 {t("Draft")}
               </span>
               <button
-                onClick={() => void handleSave("Draft")}
+                onClick={() => submitProduct("Draft")}
                 disabled={saving || pendingAction !== null}
                 className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700 disabled:opacity-60 lg:flex"
               >
@@ -706,7 +710,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 {t("Save as Draft")}
               </button>
               <button
-                onClick={() => void handleSave("Active")}
+                onClick={() => submitProduct("Active")}
                 disabled={saving || pendingAction !== null}
                 className="hidden h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-60 lg:flex"
               >
@@ -715,14 +719,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
               </button>
               <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-slate-200 bg-white/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
                 <button
-                  onClick={() => void handleSave("Draft")}
+                  onClick={() => submitProduct("Draft")}
                   disabled={saving || pendingAction !== null}
                   className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 text-[12px] font-bold text-slate-700 disabled:opacity-60"
                 >
                   {t("Save as Draft")}
                 </button>
                 <button
-                  onClick={() => void handleSave("Active")}
+                  onClick={() => submitProduct("Active")}
                   disabled={saving || pendingAction !== null}
                   aria-busy={saving}
                   className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#5968ea] text-[12px] font-bold text-white disabled:opacity-60"
@@ -734,7 +738,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </>
           ) : null}
           <button
-            onClick={() => void handleSave()}
+            onClick={() => submitProduct()}
             disabled={saving || pendingAction !== null}
             hidden={!id}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"

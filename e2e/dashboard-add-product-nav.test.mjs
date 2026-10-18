@@ -21,8 +21,8 @@ const migration = await readFile(
 );
 
 test("create page offers draft and publish with a double-submit lock", () => {
-  assert.match(form, /handleSave\("Draft"\)/);
-  assert.match(form, /handleSave\("Active"\)/);
+  assert.match(form, /submitProduct\("Draft"\)/);
+  assert.match(form, /submitProduct\("Active"\)/);
   assert.match(form, /if \(saveLockRef\.current\) return;/);
   assert.match(form, /<ProductCreatePreview/);
 });
