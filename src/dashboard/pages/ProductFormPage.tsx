@@ -20,6 +20,7 @@ import {
   listDashboardCategories,
   listDashboardCollections,
   saveDashboardProduct,
+  uploadDashboardProductImage,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import {
@@ -30,6 +31,9 @@ import {
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
 import { validateProductDraft } from "@/dashboard/lib/validation";
+import { createDashboardBrand, normalizeBrandSlug } from "@/dashboard/data/brands";
+import { createDashboardCollection } from "@/dashboard/data/collections";
+import { getProductImageResolution } from "@/dashboard/lib/imageProcessing";
 import {
   aiSpecificationFieldKey,
   normalizeProductSpecifications,
@@ -39,6 +43,7 @@ import {
 } from "@/lib/productSpecifications";
 
 type ProductStatus = "Active" | "Draft" | "Archived";
+type PendingProductImage = { file: File; preview: string };
 
 type ProductDraft = {
   title: string;
@@ -84,6 +89,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
     Awaited<ReturnType<typeof listDashboardCollections>>
   >([]);
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
+  const [brandSearch, setBrandSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
+  const [collectionSearch, setCollectionSearch] = useState("");
+  const [showBrandCreate, setShowBrandCreate] = useState(false);
+  const [showCollectionCreate, setShowCollectionCreate] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [creatingReference, setCreatingReference] = useState(false);
   const [persistedCollectionIds, setPersistedCollectionIds] = useState<string[]>([]);
   const [variantCount, setVariantCount] = useState(0);
   const [variantRevision, setVariantRevision] = useState(0);
@@ -96,6 +109,43 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
+  const [pendingImages, setPendingImages] = useState<PendingProductImage[]>([]);
+  const queuedPreviewUrlsRef = useRef<string[]>([]);
+  const pendingImageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(
+    () => () => queuedPreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)),
+    [],
+  );
+
+  const stageProductImages = (files: File[]) => {
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+    const validFiles = files.filter(
+      (file) => allowedTypes.has(file.type) && file.size <= 20 * 1024 * 1024,
+    );
+    if (validFiles.length !== files.length) {
+      toast.error(t("Only JPG, PNG, WebP or AVIF images up to 20 MB are accepted."));
+    }
+    const remaining = Math.max(0, 12 - pendingImages.length);
+    if (validFiles.length > remaining) {
+      toast.error(t("You can select up to 12 images per new product."));
+    }
+    const staged = validFiles.slice(0, remaining).map((file) => {
+      const preview = URL.createObjectURL(file);
+      queuedPreviewUrlsRef.current.push(preview);
+      return { file, preview };
+    });
+    if (staged.length) {
+      setSaved(false);
+      setPendingImages((current) => [...current, ...staged]);
+    }
+  };
+
+  const removePendingImage = (index: number) => {
+    const removed = pendingImages[index];
+    if (removed) URL.revokeObjectURL(removed.preview);
+    setPendingImages((current) => current.filter((_, position) => position !== index));
+  };
   const [stockBaseline, setStockBaseline] = useState(0);
   const [specifications, setSpecifications] = useState<ProductSpecificationValues>({});
   const [aiSpecificationKeys, setAiSpecificationKeys] = useState<Set<string>>(new Set());
@@ -170,6 +220,34 @@ export default function ProductFormPage({ id }: { id?: string }) {
     setSaved(false);
     setForm((current) => ({ ...current, [key]: value }));
   };
+
+  const visibleBrands = useMemo(
+    () =>
+      brands.filter(
+        (brand) =>
+          brand.id === form.brandId ||
+          brand.name.toLocaleLowerCase().includes(brandSearch.trim().toLocaleLowerCase()),
+      ),
+    [brands, brandSearch, form.brandId],
+  );
+  const visibleCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) =>
+          category.id === form.categoryId ||
+          category.name.toLocaleLowerCase().includes(categorySearch.trim().toLocaleLowerCase()),
+      ),
+    [categories, categorySearch, form.categoryId],
+  );
+  const visibleCollections = useMemo(
+    () =>
+      collections.filter(
+        (collection) =>
+          collectionIds.includes(collection.id) ||
+          collection.title.toLocaleLowerCase().includes(collectionSearch.trim().toLocaleLowerCase()),
+      ),
+    [collections, collectionIds, collectionSearch],
+  );
 
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === form.categoryId) ?? null,
@@ -259,6 +337,121 @@ export default function ProductFormPage({ id }: { id?: string }) {
     [brands, categories, specificationTemplate, variantCount],
   );
 
+  const createBrandInline = async () => {
+    if (role !== "admin" || creatingReference) return;
+    const name = newBrandName.trim();
+    if (name.length < 2 || name.length > 120) {
+      toast.error(t("Enter a brand name between 2 and 120 characters."));
+      return;
+    }
+    const existingBrand = brands.find(
+      (brand) => brand.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+    );
+    if (existingBrand) {
+      update("brandId", existingBrand.id);
+      setBrandSearch("");
+      setShowBrandCreate(false);
+      return;
+    }
+    const baseSlug = normalizeBrandSlug(name) || "brand";
+    const takenSlugs = new Set(brands.map((brand) => brand.slug.toLowerCase()));
+    let slug = baseSlug;
+    let suffix = 2;
+    while (takenSlugs.has(slug)) slug = `${baseSlug}-${suffix++}`;
+    setCreatingReference(true);
+    try {
+      const brand = await createDashboardBrand({
+        id: "",
+        name,
+        slug,
+        description: "",
+        active: true,
+        featured: false,
+        order: brands.length,
+      });
+      setBrands((current) => [
+        ...current,
+        {
+          id: brand.id,
+          name: brand.name,
+          slug: brand.slug,
+          active: brand.active,
+          logo: brand.logo ?? null,
+          website: brand.website ?? null,
+        },
+      ]);
+      update("brandId", brand.id);
+      setNewBrandName("");
+      setBrandSearch("");
+      setShowBrandCreate(false);
+      toast.success(t("Brand created and selected."));
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : t("Brand creation failed."));
+    } finally {
+      setCreatingReference(false);
+    }
+  };
+
+  const createCollectionInline = async () => {
+    if (role !== "admin" || creatingReference) return;
+    const title = newCollectionName.trim();
+    if (title.length < 2 || title.length > 180) {
+      toast.error(t("Enter a collection name between 2 and 180 characters."));
+      return;
+    }
+    const existingCollection = collections.find(
+      (collection) => collection.title.toLocaleLowerCase() === title.toLocaleLowerCase(),
+    );
+    if (existingCollection) {
+      setCollectionIds((current) =>
+        current.includes(existingCollection.id) ? current : [...current, existingCollection.id],
+      );
+      setCollectionSearch("");
+      setShowCollectionCreate(false);
+      return;
+    }
+    const baseHandle =
+      title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") ||
+      `collection-${crypto.randomUUID().slice(0, 8)}`;
+    const usedHandles = new Set(collections.map((collection) => collection.handle.toLowerCase()));
+    let handle = baseHandle;
+    let suffix = 2;
+    while (usedHandles.has(handle)) handle = `${baseHandle}-${suffix++}`;
+    setCreatingReference(true);
+    try {
+      const collection = await createDashboardCollection({
+        title,
+        handle,
+        titleAr: "",
+        description: "",
+        imageUrl: "",
+        isActive: true,
+        isFeatured: false,
+        seoTitle: "",
+        seoDescription: "",
+      });
+      setCollections((current) => [
+        ...current,
+        {
+          id: collection.id,
+          title: collection.title,
+          handle: collection.handle,
+          active: collection.isActive,
+        },
+      ]);
+      setCollectionIds((current) => [...new Set([...current, collection.id])]);
+      setSaved(false);
+      setNewCollectionName("");
+      setCollectionSearch("");
+      setShowCollectionCreate(false);
+      toast.success(t("Collection created and selected."));
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : t("Collection creation failed."));
+    } finally {
+      setCreatingReference(false);
+    }
+  };
+
   const variantLocked = variantCount > 1;
   const dirty = existing
     ? form.title.trim() !== existing.name ||
@@ -280,7 +473,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
         JSON.stringify([...persistedCollectionIds].sort())
     : JSON.stringify(form) !== JSON.stringify(EMPTY) ||
       Object.keys(specifications).length > 0 ||
-      collectionIds.length > 0;
+      collectionIds.length > 0 ||
+      pendingImages.length > 0;
   const markDraftSaved = useDashboardUnsavedChanges(!loading && dirty);
 
   const handleSingleVariantChange = useCallback((variant: DashboardProductVariant | null) => {
@@ -331,6 +525,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
   const handleSave = async (statusOverride?: ProductStatus) => {
     const status = statusOverride ?? form.status;
+    if (!id && status === "Active" && pendingImages.length === 0) {
+      toast.error(t("Add at least one image before publishing."));
+      return;
+    }
     const validation = validateProductDraft({
       title: form.title,
       price: form.price,
@@ -381,15 +579,17 @@ export default function ProductFormPage({ id }: { id?: string }) {
       id && variantCount <= 1 && (variantCount === 0 || variantFieldsChanged),
     );
 
+    const createWithImages = !id && pendingImages.length > 0;
+    let createdDraftId: string | null = null;
     setSaving(true);
     try {
-      const savedProduct = await saveDashboardProduct({
+      const productInput = {
         id,
         title: form.title,
         description: form.description,
         brandId: form.brandId || null,
         categoryId: form.categoryId || null,
-        status,
+        status: createWithImages ? ("Draft" as const) : status,
         price: nextPrice,
         compareAt: nextCompareAt,
         sku: form.sku,
@@ -401,7 +601,33 @@ export default function ProductFormPage({ id }: { id?: string }) {
         seoDescription: form.seoDescription,
         specifications: cleanSpecifications,
         collectionIds: nextCollectionIds,
-      });
+      };
+      const savedProduct = await saveDashboardProduct(productInput);
+      if (createWithImages) {
+        createdDraftId = savedProduct.id;
+        let firstImageUrl = "";
+        for (const [position, pending] of pendingImages.entries()) {
+          const uploaded = await uploadDashboardProductImage(
+            savedProduct.id,
+            pending.file,
+            getProductImageResolution(),
+            form.title,
+            position,
+            position === 0,
+          );
+          if (position === 0) firstImageUrl = uploaded.image.url;
+        }
+        // Never make a new product public before all queued images are persisted.
+        if (status === "Active") {
+          await saveDashboardProduct({
+            ...productInput,
+            id: savedProduct.id,
+            status: "Active",
+            imageUrl: firstImageUrl,
+            expectedStock: null,
+          });
+        }
+      }
       setPersistedCollectionIds(nextCollectionIds);
       if (!savedProduct.variantManagedSeparately) {
         setStockBaseline(savedProduct.stock);
@@ -463,7 +689,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
         navigate(`/dashboard/products/${savedProduct.id}`);
       }
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Product save failed.");
+      const message = cause instanceof Error ? cause.message : "Product save failed.";
+      if (createdDraftId) {
+        toast.error(`${t("Product saved as draft because image upload failed.")} ${message}`);
+        markDraftSaved();
+        navigate(`/dashboard/products/${createdDraftId}`);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setSaving(false);
     }
@@ -567,6 +800,24 @@ export default function ProductFormPage({ id }: { id?: string }) {
         <div className="flex flex-wrap gap-2">
           {id ? (
             <>
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard/products/new")}
+                disabled={saving || pendingAction !== null}
+                className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-700 disabled:opacity-50"
+              >
+                {t("Add another product")}
+              </button>
+              {existing?.status === "Active" ? (
+                <a
+                  href={`/product/${encodeURIComponent(existing.handle)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 items-center rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 text-[10px] font-bold text-indigo-700"
+                >
+                  {t("View product")}
+                </a>
+              ) : null}
               <button
                 onClick={() => void duplicate()}
                 disabled={saving || pendingAction !== null}
@@ -776,40 +1027,91 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <SelectField
-                  label={t("Brand")}
-                  value={form.brandId}
-                  onChange={(value) => update("brandId", value)}
-                >
+                <div className="space-y-1.5">
+                  <input
+                    type="search"
+                    value={brandSearch}
+                    onChange={(event) => setBrandSearch(event.target.value)}
+                    placeholder={t("Search brands...")}
+                    aria-label={t("Search brands...")}
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                  <SelectField
+                    label={t("Brand")}
+                    value={form.brandId}
+                    onChange={(value) => update("brandId", value)}
+                  >
                   <option value="">{t("No brand")}</option>
-                  {brands.map((brand) => (
+                  {visibleBrands.map((brand) => (
                     <option key={brand.id} value={brand.id}>
                       {brand.name}
                       {brand.active ? "" : t(" (Hidden)")}
                     </option>
                   ))}
-                </SelectField>
-                <SelectField
+                  </SelectField>
+                  {role === "admin" ? (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowBrandCreate((value) => !value)}
+                        className="text-[11px] font-bold text-indigo-600"
+                      >
+                        {t("Create brand")}
+                      </button>
+                      {showBrandCreate ? (
+                        <div className="space-y-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+                          <input
+                            value={newBrandName}
+                            onChange={(event) => setNewBrandName(event.target.value)}
+                            aria-label={t("New brand name")}
+                            placeholder={t("New brand name")}
+                            maxLength={120}
+                            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                          />
+                          <button
+                            type="button"
+                            disabled={creatingReference}
+                            onClick={() => void createBrandInline()}
+                            className="rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-bold text-white disabled:opacity-60"
+                          >
+                            {creatingReference ? t("Saving…") : t("Create and select")}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <input
+                    type="search"
+                    value={categorySearch}
+                    onChange={(event) => setCategorySearch(event.target.value)}
+                    placeholder={t("Search categories...")}
+                    aria-label={t("Search categories...")}
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                  <SelectField
                   label={t("Category")}
                   value={form.categoryId}
                   onChange={changeCategory}
                 >
                   <option value="">{t("No category")}</option>
-                  {categories.map((category) => (
+                  {visibleCategories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                       {category.active ? "" : t(" (Hidden)")}
                     </option>
                   ))}
-                </SelectField>
+                  </SelectField>
+                </div>
                 <SelectField
                   label={t("Status")}
                   value={form.status}
                   onChange={(value) => update("status", value as ProductStatus)}
                 >
-                  <option>{t("Active")}</option>
-                  <option>{t("Draft")}</option>
-                  <option>{t("Archived")}</option>
+                  <option value="Active">{t("Active")}</option>
+                  <option value="Draft">{t("Draft")}</option>
+                  <option value="Archived">{t("Archived")}</option>
                 </SelectField>
               </div>
             </div>
@@ -848,8 +1150,16 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   "A product can now belong to multiple collections. Saving synchronizes the complete membership list.",
                 )}
               </div>
+              <input
+                type="search"
+                value={collectionSearch}
+                onChange={(event) => setCollectionSearch(event.target.value)}
+                placeholder={t("Search collections...")}
+                aria-label={t("Search collections...")}
+                className="mb-3 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+              />
               <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-100 p-2 sm:grid-cols-2">
-                {collections.map((collection) => {
+                {visibleCollections.map((collection) => {
                   const checked = collectionIds.includes(collection.id);
                   return (
                     <label
@@ -876,6 +1186,37 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   );
                 })}
               </div>
+              {role === "admin" ? (
+                <div className="mt-3 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCollectionCreate((value) => !value)}
+                    className="text-[11px] font-bold text-indigo-600"
+                  >
+                    {t("Create collection")}
+                  </button>
+                  {showCollectionCreate ? (
+                    <div className="flex flex-wrap gap-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+                      <input
+                        value={newCollectionName}
+                        onChange={(event) => setNewCollectionName(event.target.value)}
+                        aria-label={t("New collection name")}
+                        placeholder={t("New collection name")}
+                        maxLength={180}
+                        className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                      />
+                      <button
+                        type="button"
+                        disabled={creatingReference}
+                        onClick={() => void createCollectionInline()}
+                        className="rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-bold text-white disabled:opacity-60"
+                      >
+                        {creatingReference ? t("Saving…") : t("Create and select")}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </Panel>
 
@@ -955,30 +1296,89 @@ export default function ProductFormPage({ id }: { id?: string }) {
               price={form.price}
               compareAt={form.compareAt}
               stock={form.stock}
-              imageUrl={form.imageUrl}
+              imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
             />
           ) : null}
           <Panel
             title={t("Media")}
-            subtitle={id ? t("Live Supabase product gallery") : t("Save first to upload")}
+            subtitle={id ? t("Live Supabase product gallery") : t("Images upload after save")}
           >
             {id ? (
               <ProductMediaManager
                 productId={id}
                 productTitle={form.title}
-                onPrimaryChange={(url) => update("imageUrl", url)}
+                onPrimaryChange={(url) => {
+                  // Media Manager already persists primary-image changes independently.
+                  // Keep the baseline in sync so the unsaved-changes guard does not
+                  // mistakenly mark the product dirty after a successful media save.
+                  setForm((current) =>
+                    current.imageUrl === url ? current : { ...current, imageUrl: url },
+                  );
+                  setExisting((current) =>
+                    current && current.image !== url ? { ...current, image: url } : current,
+                  );
+                }}
               />
             ) : (
-              <div className="m-5 grid min-h-44 place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center">
-                <div>
-                  <UploadCloud className="mx-auto size-5 text-indigo-400" />
-                  <div className="mt-2 text-[11px] font-bold text-slate-600">
-                    {t("Save the product first")}
-                  </div>
-                  <div className="mt-1 text-[9px] text-slate-400">
-                    {t("Then manage the real product gallery.")}
-                  </div>
-                </div>
+              <div className="space-y-3 p-5">
+                <input
+                  ref={pendingImageInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  onChange={(event) => {
+                    stageProductImages(Array.from(event.target.files ?? []));
+                    event.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => pendingImageInputRef.current?.click()}
+                  className="grid min-h-36 w-full place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center hover:border-indigo-300"
+                >
+                  <span>
+                    <UploadCloud className="mx-auto size-5 text-indigo-400" />
+                    <span className="mt-2 block text-[11px] font-bold text-slate-600">
+                      {t("Select product images")}
+                    </span>
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      {t("Images upload after save")}
+                    </span>
+                  </span>
+                </button>
+                {pendingImages.length ? (
+                  <>
+                    <div className="text-[11px] font-semibold text-slate-600">
+                      {t("Images to upload")} ({pendingImages.length}/12)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {pendingImages.map((pending, index) => (
+                        <div key={pending.preview} className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white">
+                          <img
+                            src={pending.preview}
+                            alt={pending.file.name}
+                            className="size-full object-contain"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePendingImage(index)}
+                            disabled={saving}
+                            aria-label={t("Remove image")}
+                            className="absolute end-1 top-1 grid size-6 place-items-center rounded-full bg-rose-600 text-white disabled:opacity-50"
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                          {index === 0 ? (
+                            <span className="absolute bottom-1 start-1 rounded bg-indigo-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                              {t("Primary")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
               </div>
             )}
           </Panel>

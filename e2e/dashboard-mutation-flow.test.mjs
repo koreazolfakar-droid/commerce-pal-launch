@@ -91,7 +91,7 @@ test("product save is one atomic editor mutation and avoids redundant catalog re
 
   const editorSave = functionSlice(
     form,
-    "const handleSave = async () =>",
+    "const handleSave = async (statusOverride?: ProductStatus) =>",
     "const duplicate = async",
   );
 
