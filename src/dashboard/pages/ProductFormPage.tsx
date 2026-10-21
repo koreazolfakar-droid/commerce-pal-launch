@@ -801,6 +801,24 @@ export default function ProductFormPage({ id }: { id?: string }) {
           {id ? (
             <>
               <button
+                type="button"
+                onClick={() => navigate("/dashboard/products/new")}
+                disabled={saving || pendingAction !== null}
+                className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-700 disabled:opacity-50"
+              >
+                {t("Add another product")}
+              </button>
+              {existing?.status === "Active" ? (
+                <a
+                  href={`/product/${encodeURIComponent(existing.handle)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 items-center rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 text-[10px] font-bold text-indigo-700"
+                >
+                  {t("View product")}
+                </a>
+              ) : null}
+              <button
                 onClick={() => void duplicate()}
                 disabled={saving || pendingAction !== null}
                 className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
