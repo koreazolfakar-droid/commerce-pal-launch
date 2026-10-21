@@ -83,6 +83,7 @@ export const dashboardUiArabic: Record<string, string> = {
   Damaged: "تالف",
   "Assign Products": "ربط المنتجات",
   "Save as Draft": "حفظ كمسودة",
+  "Product save actions": "خيارات حفظ المنتج ونشره",
   "Publish Product": "نشر المنتج",
   "Live preview": "معاينة مباشرة",
   "Unpublished": "غير منشور",
