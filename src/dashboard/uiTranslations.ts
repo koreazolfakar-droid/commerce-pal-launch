@@ -96,6 +96,8 @@ export const dashboardUiArabic: Record<string, string> = {
   "New brand name": "اسم البراند الجديد",
   "New collection name": "اسم المجموعة الجديدة",
   "Create and select": "إنشاء واختيار",
+  "Add another product": "إضافة منتج آخر",
+  "View product": "عرض المنتج",
   "Enter a brand name between 2 and 120 characters.": "أدخل اسم براند من حرفين إلى 120 حرفاً.",
   "Enter a collection name between 2 and 180 characters.": "أدخل اسم مجموعة من حرفين إلى 180 حرفاً.",
   "Brand created and selected.": "تم إنشاء البراند واختياره.",
