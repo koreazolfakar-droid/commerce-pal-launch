@@ -52,3 +52,26 @@ test("persisted primary media synchronizes both editor draft and original baseli
   assert.match(form, /setForm\(\(current\) =>[\s\S]*?imageUrl: url/);
   assert.match(form, /setExisting\(\(current\) =>[\s\S]*?image: url/);
 });
+
+test("new-product save and publish actions remain visible on mobile and desktop", () => {
+  const actionStart = form.indexOf('const renderCreateActions = (placement: "header" | "footer") =>');
+  assert.ok(actionStart > 0, "shared create action buttons must be rendered in the page flow");
+  const actionEnd = form.indexOf("\\n  if (loading)", actionStart);
+  const actions = form.slice(actionStart, actionEnd);
+  assert.match(actions, /role="group"/);
+  assert.match(actions, /onClick=\\{\\(\\) => submitProduct\\("Draft"\\)\\}/);
+  assert.match(actions, /onClick=\\{\\(\\) => submitProduct\\("Active"\\)\\}/);
+  assert.match(actions, /inline-flex min-h-11/);
+  assert.doesNotMatch(actions, /hidden|fixed|lg:hidden|lg:flex/);
+
+  // The header is immediately actionable even before scrolling past AI and product fields.
+  const header = form.indexOf('renderCreateActions("header")');
+  const aiPanel = form.indexOf("<AiAssistPanel", header);
+  assert.ok(header > actionEnd && aiPanel > header, "header buttons appear before AI controls");
+  assert.match(form, /renderCreateActions\\("footer"\\)/);
+
+  // The Dashboard already owns a fixed mobile bottom nav; no competing create-action overlay.
+  assert.doesNotMatch(form, /fixed inset-x-0 bottom-0 z-40 flex gap-2/);
+  assert.doesNotMatch(form, /hidden=\\{!id\\}/);
+  assert.match(translations, /"Product save actions": "خيارات حفظ المنتج ونشره"/);
+});
