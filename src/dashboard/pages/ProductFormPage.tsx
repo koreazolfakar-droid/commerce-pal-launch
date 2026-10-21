@@ -988,20 +988,21 @@ export default function ProductFormPage({ id }: { id?: string }) {
             onApply={applyAiPatch}
           />
           {id ? (
-          <button
-            onClick={() => submitProduct()}
-            disabled={saving || pendingAction !== null}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
-          >
-            {saving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : saved ? (
-              <Check className="size-4" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            {saved ? t("Saved") : t("Save product")}
-          </button>
+            <button
+              type="button"
+              onClick={() => submitProduct()}
+              disabled={saving || pendingAction !== null}
+              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
+            >
+              {saving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : saved ? (
+                <Check className="size-4" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              {saved ? t("Saved") : t("Save product")}
+            </button>
           ) : null}
         </div>
       </div>
