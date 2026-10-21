@@ -351,7 +351,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
         JSON.stringify([...persistedCollectionIds].sort())
     : JSON.stringify(form) !== JSON.stringify(EMPTY) ||
       Object.keys(specifications).length > 0 ||
-      collectionIds.length > 0;
+      collectionIds.length > 0 ||
+      pendingImages.length > 0;
   const markDraftSaved = useDashboardUnsavedChanges(!loading && dirty);
 
   const handleSingleVariantChange = useCallback((variant: DashboardProductVariant | null) => {
@@ -1093,12 +1094,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
               price={form.price}
               compareAt={form.compareAt}
               stock={form.stock}
-              imageUrl={form.imageUrl}
+              imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
             />
           ) : null}
           <Panel
             title={t("Media")}
-            subtitle={id ? t("Live Supabase product gallery") : t("Save first to upload")}
+            subtitle={id ? t("Live Supabase product gallery") : t("Images upload after save")}
           >
             {id ? (
               <ProductMediaManager
@@ -1117,16 +1118,65 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 }}
               />
             ) : (
-              <div className="m-5 grid min-h-44 place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center">
-                <div>
-                  <UploadCloud className="mx-auto size-5 text-indigo-400" />
-                  <div className="mt-2 text-[11px] font-bold text-slate-600">
-                    {t("Save the product first")}
-                  </div>
-                  <div className="mt-1 text-[9px] text-slate-400">
-                    {t("Then manage the real product gallery.")}
-                  </div>
-                </div>
+              <div className="space-y-3 p-5">
+                <input
+                  ref={pendingImageInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  onChange={(event) => {
+                    stageProductImages(Array.from(event.target.files ?? []));
+                    event.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => pendingImageInputRef.current?.click()}
+                  className="grid min-h-36 w-full place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center hover:border-indigo-300"
+                >
+                  <span>
+                    <UploadCloud className="mx-auto size-5 text-indigo-400" />
+                    <span className="mt-2 block text-[11px] font-bold text-slate-600">
+                      {t("Select product images")}
+                    </span>
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      {t("Images upload after save")}
+                    </span>
+                  </span>
+                </button>
+                {pendingImages.length ? (
+                  <>
+                    <div className="text-[11px] font-semibold text-slate-600">
+                      {t("Images to upload")} ({pendingImages.length}/12)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {pendingImages.map((pending, index) => (
+                        <div key={pending.preview} className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white">
+                          <img
+                            src={pending.preview}
+                            alt={pending.file.name}
+                            className="size-full object-contain"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePendingImage(index)}
+                            disabled={saving}
+                            aria-label={t("Remove image")}
+                            className="absolute end-1 top-1 grid size-6 place-items-center rounded-full bg-rose-600 text-white disabled:opacity-50"
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                          {index === 0 ? (
+                            <span className="absolute bottom-1 start-1 rounded bg-indigo-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                              {t("Primary")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
               </div>
             )}
           </Panel>
