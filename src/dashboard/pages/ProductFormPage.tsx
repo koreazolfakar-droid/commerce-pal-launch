@@ -758,6 +758,38 @@ export default function ProductFormPage({ id }: { id?: string }) {
     return `${collectionIds.length} collections selected`;
   }, [collectionIds, collections]);
 
+  // Keep create actions inside the page flow. A fixed mobile action bar at
+  // bottom: 0 competed with Dashboard's fixed bottom navigation (both z-40),
+  // hiding the buttons on narrow screens.
+  const renderCreateActions = (placement: "header" | "footer") => (
+    <div
+      role="group"
+      aria-label={t("Product save actions")}
+      className={`flex w-full min-w-0 flex-wrap gap-2 ${placement === "header" ? "sm:w-auto" : ""}`}
+    >
+      <button
+        type="button"
+        onClick={() => submitProduct("Draft")}
+        disabled={saving || pendingAction !== null}
+        aria-busy={saving}
+        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-bold text-slate-700 disabled:cursor-wait disabled:opacity-60 sm:flex-none"
+      >
+        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        {t("Save as Draft")}
+      </button>
+      <button
+        type="button"
+        onClick={() => submitProduct("Active")}
+        disabled={saving || pendingAction !== null}
+        aria-busy={saving}
+        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2 text-[12px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-wait disabled:opacity-60 sm:flex-none"
+      >
+        {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+        {t("Publish Product")}
+      </button>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="grid min-h-[420px] place-items-center">
@@ -846,6 +878,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <Trash2 className="size-3.5" /> {t("Delete")}
                 </button>
               ) : null}
+            </>
+          ) : null}
+          {!id ? (
+            <>
+              <span className="inline-flex min-h-11 items-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">
+                {t("Draft")}
+              </span>
+              {renderCreateActions("header")}
             </>
           ) : null}
           <AiAssistPanel
@@ -947,51 +987,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
             }}
             onApply={applyAiPatch}
           />
-          {!id ? (
-            <>
-              <span className="inline-flex h-10 items-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">
-                {t("Draft")}
-              </span>
-              <button
-                onClick={() => submitProduct("Draft")}
-                disabled={saving || pendingAction !== null}
-                className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700 disabled:opacity-60 lg:flex"
-              >
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                {t("Save as Draft")}
-              </button>
-              <button
-                onClick={() => submitProduct("Active")}
-                disabled={saving || pendingAction !== null}
-                className="hidden h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-60 lg:flex"
-              >
-                {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                {t("Publish Product")}
-              </button>
-              <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-slate-200 bg-white/95 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
-                <button
-                  onClick={() => submitProduct("Draft")}
-                  disabled={saving || pendingAction !== null}
-                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 text-[12px] font-bold text-slate-700 disabled:opacity-60"
-                >
-                  {t("Save as Draft")}
-                </button>
-                <button
-                  onClick={() => submitProduct("Active")}
-                  disabled={saving || pendingAction !== null}
-                  aria-busy={saving}
-                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#5968ea] text-[12px] font-bold text-white disabled:opacity-60"
-                >
-                  {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {t("Publish Product")}
-                </button>
-              </div>
-            </>
-          ) : null}
+          {id ? (
           <button
             onClick={() => submitProduct()}
             disabled={saving || pendingAction !== null}
-            hidden={!id}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
           >
             {saving ? (
@@ -1003,6 +1002,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             )}
             {saved ? t("Saved") : t("Save product")}
           </button>
+          ) : null}
         </div>
       </div>
 
@@ -1428,6 +1428,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
           ) : null}
         </div>
       </div>
+
+      {!id ? (
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+          <div className="mb-3 text-sm font-bold text-slate-700">{t("Save as Draft")} / {t("Publish Product")}</div>
+          {renderCreateActions("footer")}
+        </div>
+      ) : null}
 
       <DashboardConfirmDialog
         open={confirmAction === "archive"}
