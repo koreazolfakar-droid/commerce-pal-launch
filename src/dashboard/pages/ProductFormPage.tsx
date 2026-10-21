@@ -20,6 +20,7 @@ import {
   listDashboardCategories,
   listDashboardCollections,
   saveDashboardProduct,
+  uploadDashboardProductImage,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
 import {
@@ -30,6 +31,7 @@ import {
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
 import { validateProductDraft } from "@/dashboard/lib/validation";
+import { getProductImageResolution } from "@/dashboard/lib/imageProcessing";
 import {
   aiSpecificationFieldKey,
   normalizeProductSpecifications,
@@ -39,6 +41,7 @@ import {
 } from "@/lib/productSpecifications";
 
 type ProductStatus = "Active" | "Draft" | "Archived";
+type PendingProductImage = { file: File; preview: string };
 
 type ProductDraft = {
   title: string;
@@ -99,6 +102,43 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
+  const [pendingImages, setPendingImages] = useState<PendingProductImage[]>([]);
+  const queuedPreviewUrlsRef = useRef<string[]>([]);
+  const pendingImageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(
+    () => () => queuedPreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)),
+    [],
+  );
+
+  const stageProductImages = (files: File[]) => {
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+    const validFiles = files.filter(
+      (file) => allowedTypes.has(file.type) && file.size <= 20 * 1024 * 1024,
+    );
+    if (validFiles.length !== files.length) {
+      toast.error(t("Only JPG, PNG, WebP or AVIF images up to 20 MB are accepted."));
+    }
+    const remaining = Math.max(0, 12 - pendingImages.length);
+    if (validFiles.length > remaining) {
+      toast.error(t("You can select up to 12 images per new product."));
+    }
+    const staged = validFiles.slice(0, remaining).map((file) => {
+      const preview = URL.createObjectURL(file);
+      queuedPreviewUrlsRef.current.push(preview);
+      return { file, preview };
+    });
+    if (staged.length) {
+      setSaved(false);
+      setPendingImages((current) => [...current, ...staged]);
+    }
+  };
+
+  const removePendingImage = (index: number) => {
+    const removed = pendingImages[index];
+    if (removed) URL.revokeObjectURL(removed.preview);
+    setPendingImages((current) => current.filter((_, position) => position !== index));
+  };
   const [stockBaseline, setStockBaseline] = useState(0);
   const [specifications, setSpecifications] = useState<ProductSpecificationValues>({});
   const [aiSpecificationKeys, setAiSpecificationKeys] = useState<Set<string>>(new Set());
@@ -362,6 +402,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
   const handleSave = async (statusOverride?: ProductStatus) => {
     const status = statusOverride ?? form.status;
+    if (!id && status === "Active" && pendingImages.length === 0) {
+      toast.error(t("Add at least one image before publishing."));
+      return;
+    }
     const validation = validateProductDraft({
       title: form.title,
       price: form.price,
@@ -412,15 +456,17 @@ export default function ProductFormPage({ id }: { id?: string }) {
       id && variantCount <= 1 && (variantCount === 0 || variantFieldsChanged),
     );
 
+    const createWithImages = !id && pendingImages.length > 0;
+    let createdDraftId: string | null = null;
     setSaving(true);
     try {
-      const savedProduct = await saveDashboardProduct({
+      const productInput = {
         id,
         title: form.title,
         description: form.description,
         brandId: form.brandId || null,
         categoryId: form.categoryId || null,
-        status,
+        status: createWithImages ? ("Draft" as const) : status,
         price: nextPrice,
         compareAt: nextCompareAt,
         sku: form.sku,
@@ -432,7 +478,33 @@ export default function ProductFormPage({ id }: { id?: string }) {
         seoDescription: form.seoDescription,
         specifications: cleanSpecifications,
         collectionIds: nextCollectionIds,
-      });
+      };
+      const savedProduct = await saveDashboardProduct(productInput);
+      if (createWithImages) {
+        createdDraftId = savedProduct.id;
+        let firstImageUrl = "";
+        for (const [position, pending] of pendingImages.entries()) {
+          const uploaded = await uploadDashboardProductImage(
+            savedProduct.id,
+            pending.file,
+            getProductImageResolution(),
+            form.title,
+            position,
+            position === 0,
+          );
+          if (position === 0) firstImageUrl = uploaded.image.url;
+        }
+        // Never make a new product public before all queued images are persisted.
+        if (status === "Active") {
+          await saveDashboardProduct({
+            ...productInput,
+            id: savedProduct.id,
+            status: "Active",
+            imageUrl: firstImageUrl,
+            expectedStock: null,
+          });
+        }
+      }
       setPersistedCollectionIds(nextCollectionIds);
       if (!savedProduct.variantManagedSeparately) {
         setStockBaseline(savedProduct.stock);
@@ -494,7 +566,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
         navigate(`/dashboard/products/${savedProduct.id}`);
       }
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Product save failed.");
+      const message = cause instanceof Error ? cause.message : "Product save failed.";
+      if (createdDraftId) {
+        toast.error(`${t("Product saved as draft because image upload failed.")} ${message}`);
+        markDraftSaved();
+        navigate(`/dashboard/products/${createdDraftId}`);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setSaving(false);
     }
