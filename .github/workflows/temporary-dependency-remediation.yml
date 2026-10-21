@@ -1,0 +1,45 @@
+name: One-time Space Call dependency security repair
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    # Strictly scope this temporary maintenance job to this trusted same-repository branch.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/product-create-flow-20261021' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout requested feature branch
+        uses: actions/checkout@v6.1.0
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Resolve vulnerable versions
+        run: |
+          set +e
+          bun audit fix --audit-level=high
+          echo "Remediation may be partial; preserve candidate fixes for review."
+          bun audit --audit-level=high
+          exit 0
+      - name: Commit dependency remediation to the feature branch only
+        run: |
+          if git diff --quiet -- package.json bun.lock; then
+            echo "No dependency changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- package.json bun.lock
+          git commit -m "fix(deps): upgrade vulnerable lockfile packages (Bun audit remediation)"
+          git push origin HEAD:refs/heads/feat/product-create-flow-20261021
