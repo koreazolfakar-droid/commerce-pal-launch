@@ -1031,6 +1031,37 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     </option>
                   ))}
                   </SelectField>
+                  {role === "admin" ? (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowBrandCreate((value) => !value)}
+                        className="text-[11px] font-bold text-indigo-600"
+                      >
+                        {t("Create brand")}
+                      </button>
+                      {showBrandCreate ? (
+                        <div className="space-y-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+                          <input
+                            value={newBrandName}
+                            onChange={(event) => setNewBrandName(event.target.value)}
+                            aria-label={t("New brand name")}
+                            placeholder={t("New brand name")}
+                            maxLength={120}
+                            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                          />
+                          <button
+                            type="button"
+                            disabled={creatingReference}
+                            onClick={() => void createBrandInline()}
+                            className="rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-bold text-white disabled:opacity-60"
+                          >
+                            {creatingReference ? t("Saving…") : t("Create and select")}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <input
@@ -1137,6 +1168,37 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   );
                 })}
               </div>
+              {role === "admin" ? (
+                <div className="mt-3 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCollectionCreate((value) => !value)}
+                    className="text-[11px] font-bold text-indigo-600"
+                  >
+                    {t("Create collection")}
+                  </button>
+                  {showCollectionCreate ? (
+                    <div className="flex flex-wrap gap-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+                      <input
+                        value={newCollectionName}
+                        onChange={(event) => setNewCollectionName(event.target.value)}
+                        aria-label={t("New collection name")}
+                        placeholder={t("New collection name")}
+                        maxLength={180}
+                        className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                      />
+                      <button
+                        type="button"
+                        disabled={creatingReference}
+                        onClick={() => void createCollectionInline()}
+                        className="rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-bold text-white disabled:opacity-60"
+                      >
+                        {creatingReference ? t("Saving…") : t("Create and select")}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </Panel>
 
