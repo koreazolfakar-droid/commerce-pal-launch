@@ -31,6 +31,8 @@ import {
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
 import { validateProductDraft } from "@/dashboard/lib/validation";
+import { createDashboardBrand, normalizeBrandSlug } from "@/dashboard/data/brands";
+import { createDashboardCollection } from "@/dashboard/data/collections";
 import { getProductImageResolution } from "@/dashboard/lib/imageProcessing";
 import {
   aiSpecificationFieldKey,
@@ -90,6 +92,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [brandSearch, setBrandSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState("");
+  const [showBrandCreate, setShowBrandCreate] = useState(false);
+  const [showCollectionCreate, setShowCollectionCreate] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [creatingReference, setCreatingReference] = useState(false);
   const [persistedCollectionIds, setPersistedCollectionIds] = useState<string[]>([]);
   const [variantCount, setVariantCount] = useState(0);
   const [variantRevision, setVariantRevision] = useState(0);
@@ -329,6 +336,121 @@ export default function ProductFormPage({ id }: { id?: string }) {
     },
     [brands, categories, specificationTemplate, variantCount],
   );
+
+  const createBrandInline = async () => {
+    if (role !== "admin" || creatingReference) return;
+    const name = newBrandName.trim();
+    if (name.length < 2 || name.length > 120) {
+      toast.error(t("Enter a brand name between 2 and 120 characters."));
+      return;
+    }
+    const existingBrand = brands.find(
+      (brand) => brand.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+    );
+    if (existingBrand) {
+      update("brandId", existingBrand.id);
+      setBrandSearch("");
+      setShowBrandCreate(false);
+      return;
+    }
+    const baseSlug = normalizeBrandSlug(name) || "brand";
+    const takenSlugs = new Set(brands.map((brand) => brand.slug.toLowerCase()));
+    let slug = baseSlug;
+    let suffix = 2;
+    while (takenSlugs.has(slug)) slug = `${baseSlug}-${suffix++}`;
+    setCreatingReference(true);
+    try {
+      const brand = await createDashboardBrand({
+        id: "",
+        name,
+        slug,
+        description: "",
+        active: true,
+        featured: false,
+        order: brands.length,
+      });
+      setBrands((current) => [
+        ...current,
+        {
+          id: brand.id,
+          name: brand.name,
+          slug: brand.slug,
+          active: brand.active,
+          logo: brand.logo ?? null,
+          website: brand.website ?? null,
+        },
+      ]);
+      update("brandId", brand.id);
+      setNewBrandName("");
+      setBrandSearch("");
+      setShowBrandCreate(false);
+      toast.success(t("Brand created and selected."));
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : t("Brand creation failed."));
+    } finally {
+      setCreatingReference(false);
+    }
+  };
+
+  const createCollectionInline = async () => {
+    if (role !== "admin" || creatingReference) return;
+    const title = newCollectionName.trim();
+    if (title.length < 2 || title.length > 180) {
+      toast.error(t("Enter a collection name between 2 and 180 characters."));
+      return;
+    }
+    const existingCollection = collections.find(
+      (collection) => collection.title.toLocaleLowerCase() === title.toLocaleLowerCase(),
+    );
+    if (existingCollection) {
+      setCollectionIds((current) =>
+        current.includes(existingCollection.id) ? current : [...current, existingCollection.id],
+      );
+      setCollectionSearch("");
+      setShowCollectionCreate(false);
+      return;
+    }
+    const baseHandle =
+      title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") ||
+      `collection-${crypto.randomUUID().slice(0, 8)}`;
+    const usedHandles = new Set(collections.map((collection) => collection.handle.toLowerCase()));
+    let handle = baseHandle;
+    let suffix = 2;
+    while (usedHandles.has(handle)) handle = `${baseHandle}-${suffix++}`;
+    setCreatingReference(true);
+    try {
+      const collection = await createDashboardCollection({
+        title,
+        handle,
+        titleAr: "",
+        description: "",
+        imageUrl: "",
+        isActive: true,
+        isFeatured: false,
+        seoTitle: "",
+        seoDescription: "",
+      });
+      setCollections((current) => [
+        ...current,
+        {
+          id: collection.id,
+          title: collection.title,
+          handle: collection.handle,
+          active: collection.isActive,
+        },
+      ]);
+      setCollectionIds((current) => [...new Set([...current, collection.id])]);
+      setSaved(false);
+      setNewCollectionName("");
+      setCollectionSearch("");
+      setShowCollectionCreate(false);
+      toast.success(t("Collection created and selected."));
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : t("Collection creation failed."));
+    } finally {
+      setCreatingReference(false);
+    }
+  };
 
   const variantLocked = variantCount > 1;
   const dirty = existing
