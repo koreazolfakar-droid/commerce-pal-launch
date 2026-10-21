@@ -98,7 +98,17 @@ export function normalizeProductSpecifications(
   template?: ProductSpecificationTemplate,
 ): ProductSpecificationValues {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  const source = value as Record<string, unknown>;
+  const document = value as Record<string, unknown>;
+  // Historical catalog rows use { values: {...}, keySpecs: [...] }, while
+  // product-editor mutations submit the flat key/value map. Read both formats
+  // without exposing document metadata as product specification fields.
+  const source =
+    document.values &&
+    typeof document.values === "object" &&
+    !Array.isArray(document.values) &&
+    Array.isArray(document.keySpecs)
+      ? (document.values as Record<string, unknown>)
+      : document;
   const allowed = template ? new Set(specificationKeys(template)) : null;
   const result: ProductSpecificationValues = {};
 
