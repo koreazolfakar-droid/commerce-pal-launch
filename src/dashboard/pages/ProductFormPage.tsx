@@ -807,9 +807,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   value={form.status}
                   onChange={(value) => update("status", value as ProductStatus)}
                 >
-                  <option>{t("Active")}</option>
-                  <option>{t("Draft")}</option>
-                  <option>{t("Archived")}</option>
+                  <option value="Active">{t("Active")}</option>
+                  <option value="Draft">{t("Draft")}</option>
+                  <option value="Archived">{t("Archived")}</option>
                 </SelectField>
               </div>
             </div>
@@ -966,7 +966,17 @@ export default function ProductFormPage({ id }: { id?: string }) {
               <ProductMediaManager
                 productId={id}
                 productTitle={form.title}
-                onPrimaryChange={(url) => update("imageUrl", url)}
+                onPrimaryChange={(url) => {
+                  // Media Manager already persists primary-image changes independently.
+                  // Keep the baseline in sync so the unsaved-changes guard does not
+                  // mistakenly mark the product dirty after a successful media save.
+                  setForm((current) =>
+                    current.imageUrl === url ? current : { ...current, imageUrl: url },
+                  );
+                  setExisting((current) =>
+                    current && current.image !== url ? { ...current, image: url } : current,
+                  );
+                }}
               />
             ) : (
               <div className="m-5 grid min-h-44 place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center">
