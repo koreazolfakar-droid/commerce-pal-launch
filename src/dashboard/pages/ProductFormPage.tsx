@@ -84,6 +84,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
     Awaited<ReturnType<typeof listDashboardCollections>>
   >([]);
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
+  const [brandSearch, setBrandSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
+  const [collectionSearch, setCollectionSearch] = useState("");
   const [persistedCollectionIds, setPersistedCollectionIds] = useState<string[]>([]);
   const [variantCount, setVariantCount] = useState(0);
   const [variantRevision, setVariantRevision] = useState(0);
@@ -170,6 +173,34 @@ export default function ProductFormPage({ id }: { id?: string }) {
     setSaved(false);
     setForm((current) => ({ ...current, [key]: value }));
   };
+
+  const visibleBrands = useMemo(
+    () =>
+      brands.filter(
+        (brand) =>
+          brand.id === form.brandId ||
+          brand.name.toLocaleLowerCase().includes(brandSearch.trim().toLocaleLowerCase()),
+      ),
+    [brands, brandSearch, form.brandId],
+  );
+  const visibleCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) =>
+          category.id === form.categoryId ||
+          category.name.toLocaleLowerCase().includes(categorySearch.trim().toLocaleLowerCase()),
+      ),
+    [categories, categorySearch, form.categoryId],
+  );
+  const visibleCollections = useMemo(
+    () =>
+      collections.filter(
+        (collection) =>
+          collectionIds.includes(collection.id) ||
+          collection.title.toLocaleLowerCase().includes(collectionSearch.trim().toLocaleLowerCase()),
+      ),
+    [collections, collectionIds, collectionSearch],
+  );
 
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === form.categoryId) ?? null,
@@ -776,32 +807,52 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <SelectField
-                  label={t("Brand")}
-                  value={form.brandId}
-                  onChange={(value) => update("brandId", value)}
-                >
+                <div className="space-y-1.5">
+                  <input
+                    type="search"
+                    value={brandSearch}
+                    onChange={(event) => setBrandSearch(event.target.value)}
+                    placeholder={t("Search brands...")}
+                    aria-label={t("Search brands...")}
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                  <SelectField
+                    label={t("Brand")}
+                    value={form.brandId}
+                    onChange={(value) => update("brandId", value)}
+                  >
                   <option value="">{t("No brand")}</option>
-                  {brands.map((brand) => (
+                  {visibleBrands.map((brand) => (
                     <option key={brand.id} value={brand.id}>
                       {brand.name}
                       {brand.active ? "" : t(" (Hidden)")}
                     </option>
                   ))}
-                </SelectField>
-                <SelectField
+                  </SelectField>
+                </div>
+                <div className="space-y-1.5">
+                  <input
+                    type="search"
+                    value={categorySearch}
+                    onChange={(event) => setCategorySearch(event.target.value)}
+                    placeholder={t("Search categories...")}
+                    aria-label={t("Search categories...")}
+                    className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+                  />
+                  <SelectField
                   label={t("Category")}
                   value={form.categoryId}
                   onChange={changeCategory}
                 >
                   <option value="">{t("No category")}</option>
-                  {categories.map((category) => (
+                  {visibleCategories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                       {category.active ? "" : t(" (Hidden)")}
                     </option>
                   ))}
-                </SelectField>
+                  </SelectField>
+                </div>
                 <SelectField
                   label={t("Status")}
                   value={form.status}
@@ -848,8 +899,16 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   "A product can now belong to multiple collections. Saving synchronizes the complete membership list.",
                 )}
               </div>
+              <input
+                type="search"
+                value={collectionSearch}
+                onChange={(event) => setCollectionSearch(event.target.value)}
+                placeholder={t("Search collections...")}
+                aria-label={t("Search collections...")}
+                className="mb-3 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+              />
               <div className="grid max-h-72 gap-2 overflow-y-auto rounded-xl border border-slate-100 p-2 sm:grid-cols-2">
-                {collections.map((collection) => {
+                {visibleCollections.map((collection) => {
                   const checked = collectionIds.includes(collection.id);
                   return (
                     <label
