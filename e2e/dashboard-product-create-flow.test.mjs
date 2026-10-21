@@ -52,3 +52,28 @@ test("persisted primary media synchronizes both editor draft and original baseli
   assert.match(form, /setForm\(\(current\) =>[\s\S]*?imageUrl: url/);
   assert.match(form, /setExisting\(\(current\) =>[\s\S]*?image: url/);
 });
+
+test("new-product save and publish actions remain visible on mobile and desktop", () => {
+  const actionStart = form.indexOf('const renderCreateActions = (placement: "header" | "footer") =>');
+  assert.ok(actionStart > 0, "shared create action buttons must be rendered in the page flow");
+  const actionEnd = form.indexOf("  if (loading) {", actionStart);
+  assert.ok(actionEnd > actionStart, "action buttons must be defined before early render states");
+  const actions = form.slice(actionStart, actionEnd);
+  assert.ok(actions.includes('role="group"'));
+  assert.ok(actions.includes('onClick={() => submitProduct("Draft")}'));
+  assert.ok(actions.includes('onClick={() => submitProduct("Active")}'));
+  assert.ok(actions.includes("inline-flex min-h-11"));
+  assert.ok(!actions.includes("fixed inset-"));
+  assert.ok(!actions.includes("lg:hidden"));
+
+  // Creation actions come before the AI controls; they are also available after the fields.
+  const header = form.indexOf('renderCreateActions("header")');
+  const aiPanel = form.indexOf("<AiAssistPanel", header);
+  assert.ok(header > actionEnd && aiPanel > header, "header buttons appear before AI controls");
+  assert.ok(form.includes('renderCreateActions("footer")'));
+
+  // Dashboard already owns the mobile bottom nav, so avoid a competing fixed action overlay.
+  assert.ok(!form.includes("fixed inset-x-0 bottom-0 z-40 flex gap-2"));
+  assert.ok(!form.includes("hidden={!id}"));
+  assert.ok(translations.includes('"Product save actions": "خيارات حفظ المنتج ونشره"'));
+});
