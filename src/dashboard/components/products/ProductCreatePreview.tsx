@@ -29,7 +29,7 @@ export default function ProductCreatePreview({
   const hasDiscount = hasPrice && compareAt.trim() !== "" && compareValue > priceValue;
   const discount = hasDiscount ? Math.round((1 - priceValue / compareValue) * 100) : 0;
   const inStock = Number(stock) > 0;
-  const safeImage = /^https:\/\//i.test(imageUrl.trim()) ? imageUrl.trim() : "";
+  const safeImage = /^(https:\/\/|blob:https?:\/\/)/i.test(imageUrl.trim()) ? imageUrl.trim() : "";
 
   return (
     <section
