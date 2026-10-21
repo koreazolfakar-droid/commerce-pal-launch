@@ -72,7 +72,8 @@ test("existing product thumbnails are backfilled safely from the dashboard", asy
   assert.match(data, /\.limit\(500\)/);
   assert.match(data, /\.in\("id", productIds\)/);
   assert.match(data, /\.eq\("status", "active"\)/);
-  assert.match(data, /Math\.min\(250, Math\.max\(1, Math\.trunc\(limit\)\)\)/);\n  assert.match(data, /const pending = eligibleRows\.slice\(0, safeLimit\)/);
+  assert.match(data, /Math\.min\(250, Math\.max\(1, Math\.trunc\(limit\)\)\)/);
+  assert.match(data, /const pending = eligibleRows\.slice\(0, safeLimit\)/);
   assert.match(data, /remaining: Math\.max\(0, eligibleRows\.length - processed\)/);
   assert.match(data, /convertProductThumbnailToWebp\(source\)/);
   assert.match(data, /products\/\$\{row\.product_id\}\/thumbnails\/\$\{row\.id\}\.webp/);
