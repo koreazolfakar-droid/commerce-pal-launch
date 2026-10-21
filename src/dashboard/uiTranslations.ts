@@ -100,6 +100,9 @@ export const dashboardUiArabic: Record<string, string> = {
   "Product saved as draft because image upload failed.": "حُفظ المنتج كمسودة بسبب تعذّر رفع الصور.",
   "Image upload failed; product remains a draft.": "تعذّر رفع الصور؛ بقي المنتج كمسودة.",
   "Remove image": "إزالة الصورة",
+  "Only JPG, PNG, WebP or AVIF images up to 20 MB are accepted.":
+    "يسمح فقط بصور JPG أو PNG أو WebP أو AVIF بحجم لا يتجاوز 20 ميغابايت.",
+  "You can select up to 12 images per new product.": "يمكن اختيار حتى 12 صورة للمنتج الجديد.",
   "Create a product with images, price, stock, brand, category and collections.":
     "أنشئ منتجاً مع الصور والسعر والمخزون والبراند والفئة والمجموعات.",
   Stock: "المخزون",
