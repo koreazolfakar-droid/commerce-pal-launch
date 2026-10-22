@@ -130,12 +130,14 @@ function normalizeSnapshot(value: unknown): DashboardHomeSnapshot {
   };
 }
 
-export async function loadDashboardHomeSnapshot(): Promise<DashboardHomeSnapshot> {
+export async function loadDashboardHomeSnapshot(
+  days: 7 | 30 | 90 = 30,
+): Promise<DashboardHomeSnapshot> {
   await requireDashboardStaff();
 
   const end = new Date();
   const start = new Date(end);
-  start.setUTCDate(start.getUTCDate() - 29);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
   start.setUTCHours(0, 0, 0, 0);
 
   const { data, error } = await looseSupabase.rpc("get_dashboard_home_snapshot", {

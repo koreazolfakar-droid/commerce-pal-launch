@@ -2,7 +2,7 @@ import { useLanguage } from "@/dashboard/i18n";
 import { ArrowLeft, Check, Loader2, Package, RefreshCw, Send, User, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   getDashboardOrder,
   nextOrderStatus,
@@ -312,7 +312,18 @@ export default function OrderDetailPage({ id }: { id: string }) {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[12px] font-bold text-slate-700">{item.title}</div>
+                      <div className="text-[12px] font-bold text-slate-700">
+                        {item.productId ? (
+                          <Link
+                            href={`/dashboard/products/${item.productId}`}
+                            className="hover:text-indigo-600 hover:underline"
+                          >
+                            {item.title}
+                          </Link>
+                        ) : (
+                          item.title
+                        )}
+                      </div>
                       <div className="mt-1 text-[11px] text-slate-400">
                         {[
                           item.variantTitle,
@@ -411,7 +422,14 @@ export default function OrderDetailPage({ id }: { id: string }) {
                 <User className="size-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-[13px] font-bold text-slate-700">{order.customerName}</div>
+                <div className="text-[13px] font-bold text-slate-700">
+                  <Link
+                    href={`/dashboard/customers?search=${encodeURIComponent(order.customerPhone || order.customerEmail || order.customerName)}`}
+                    className="text-indigo-600 hover:underline"
+                  >
+                    {order.customerName}
+                  </Link>
+                </div>
                 <div className="mt-1 text-[11px] text-slate-500">{order.customerPhone}</div>
                 {order.customerEmail ? (
                   <div className="mt-0.5 truncate text-[11px] text-slate-400">

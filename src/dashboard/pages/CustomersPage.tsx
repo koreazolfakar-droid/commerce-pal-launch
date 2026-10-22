@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import {
   createDashboardCustomer,
   listDashboardCustomers,
@@ -41,7 +41,12 @@ function StatCard({ label, value, detail }: { label: string; value: string; deta
 export default function CustomersPage() {
   const { t } = useLanguage();
   const [, navigate] = useLocation();
-  const [search, setSearch] = useState("");
+  const urlSearch = useSearch();
+  const [search, setSearch] = useState(() => new URLSearchParams(urlSearch).get("search") ?? "");
+  useEffect(() => {
+    setSearch(new URLSearchParams(urlSearch).get("search") ?? "");
+    setPage(1);
+  }, [urlSearch]);
   const [filter, setFilter] = useState<DashboardCustomerFilter>("all");
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<DashboardCustomerListResult | null>(null);
@@ -168,7 +173,11 @@ export default function CustomersPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <PageTitle eyebrow="Commerce / Customers" title="Customers" description="Commerce CRM backed by real Supabase customer and order data." />
+          <PageTitle
+            eyebrow="Commerce / Customers"
+            title="Customers"
+            description="Commerce CRM backed by real Supabase customer and order data."
+          />
         </div>
         <div className="flex gap-2">
           <button

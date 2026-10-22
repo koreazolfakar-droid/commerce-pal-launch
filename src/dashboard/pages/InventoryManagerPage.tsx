@@ -1,3 +1,4 @@
+import { Link, useSearch } from "wouter";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
@@ -90,12 +91,19 @@ function movementLabel(row: InventoryRow, loading: boolean) {
 
 export default function InventoryManagerPage() {
   const { t } = useLanguage();
+  const urlSearch = useSearch();
+  const attention = new URLSearchParams(urlSearch).get("attention");
   const [rows, setRows] = useState<InventoryRow[]>([]);
   const [query, setQuery] = useState("");
   const [serverQuery, setServerQuery] = useState("");
   const [category, setCategory] = useState("all");
-  const [threshold, setThreshold] = useState(10);
-  const [onlyLow, setOnlyLow] = useState(false);
+  const [threshold, setThreshold] = useState(attention === "out" ? 0 : 10);
+  const [onlyLow, setOnlyLow] = useState(attention === "low" || attention === "out");
+  useEffect(() => {
+    setOnlyLow(attention === "low" || attention === "out");
+    setThreshold(attention === "out" ? 0 : 10);
+    setPage(1);
+  }, [attention]);
   const [categories, setCategories] = useState<InventoryCategoryOptions>({
     items: [],
     hasUncategorized: false,
@@ -370,7 +378,11 @@ export default function InventoryManagerPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <PageTitle eyebrow="Commerce / Operations" title="Inventory control" description="Live variant inventory from Supabase. Every stock change is recorded as an inventory movement." />
+          <PageTitle
+            eyebrow="Commerce / Operations"
+            title="Inventory control"
+            description="Live variant inventory from Supabase. Every stock change is recorded as an inventory movement."
+          />
         </div>
         <button
           onClick={() => void load(true)}
@@ -499,7 +511,12 @@ export default function InventoryManagerPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.35] text-slate-800">
-                          {row.productName}
+                          <Link
+                            href={`/dashboard/products/${row.productId}`}
+                            className="hover:text-indigo-600 hover:underline"
+                          >
+                            {row.productName}
+                          </Link>
                         </h3>
                         <div className="mt-1 truncate text-[10px] font-medium text-slate-400">
                           {row.brand || t("No brand")} · {row.variantTitle || t("Default")}
@@ -631,7 +648,12 @@ export default function InventoryManagerPage() {
                         </div>
                         <div className="min-w-0">
                           <div className="max-w-[280px] truncate text-[13px] font-extrabold text-slate-800">
-                            {row.productName}
+                            <Link
+                              href={`/dashboard/products/${row.productId}`}
+                              className="hover:text-indigo-600 hover:underline"
+                            >
+                              {row.productName}
+                            </Link>
                           </div>
                           <div className="mt-1.5 text-[10px] font-medium text-slate-400">
                             {row.brand || t("No brand")} · {row.productStatus}

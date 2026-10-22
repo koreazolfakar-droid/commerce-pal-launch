@@ -1,59 +1,50 @@
-import { cn } from "@/dashboard/lib/utils";
+import { Component, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { Component, ReactNode } from "react";
+import { Link } from "wouter";
+import { useLanguage } from "@/dashboard/i18n";
 
-interface Props {
-  children: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: null };
+class RouteErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
   }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
   render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex items-center justify-center min-h-screen p-8 bg-background">
-          <div className="flex flex-col items-center w-full max-w-2xl p-8">
-            <AlertTriangle size={48} className="text-destructive mb-6 flex-shrink-0" />
-
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
-
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
-            </div>
-
-            <button
-              onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer",
-              )}
-            >
-              <RotateCcw size={16} />
-              Reload Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
+    return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
 
-export default ErrorBoundary;
+/** Keep the workspace navigation available when a single section cannot render. */
+export default function ErrorBoundary({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
+  return (
+    <RouteErrorBoundary
+      fallback={
+        <section className="dashboard-panel dashboard-empty-state" role="alert">
+          <AlertTriangle className="size-8 text-amber-600" />
+          <h1 className="text-xl font-bold text-foreground">
+            {t("This section could not be opened.")}
+          </h1>
+          <p>{t("Reload this section or return to the dashboard to continue.")}</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              className="dashboard-button dashboard-button-primary"
+              onClick={() => window.location.reload()}
+            >
+              <RotateCcw className="size-4" />
+              {t("Reload section")}
+            </button>
+            <Link href="/dashboard" className="dashboard-button">
+              {t("Back to dashboard")}
+            </Link>
+          </div>
+        </section>
+      }
+    >
+      {children}
+    </RouteErrorBoundary>
+  );
+}
