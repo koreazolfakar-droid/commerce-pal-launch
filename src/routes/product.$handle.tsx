@@ -479,8 +479,9 @@ function ProductPage() {
                 aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
                 className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
-                <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
-                <span className="truncate">{t(wishlisted ? "saved" : "saveWishlist")}</span>
+                <Heart className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")} />
+                <span className="truncate sm:hidden">{t(wishlisted ? "saved" : "wishlistShort")}</span>
+                <span className="hidden truncate sm:inline">{t(wishlisted ? "saved" : "saveWishlist")}</span>
               </Button>
               <Button
                 variant="ghost"
@@ -489,8 +490,9 @@ function ProductPage() {
                 aria-label={t("shareProduct")}
                 className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
-                <Share2 aria-hidden className="h-4 w-4" />
-                <span className="truncate">{t("shareProduct")}</span>
+                <Share2 aria-hidden className="h-4 w-4 shrink-0" />
+                <span className="truncate sm:hidden">{t("shareShort")}</span>
+                <span className="hidden truncate sm:inline">{t("shareProduct")}</span>
               </Button>
               <Button
                 asChild
