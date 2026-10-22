@@ -219,6 +219,15 @@ try {
     ).length,
     0,
   );
+  for (const reader of [customer, anonymous]) {
+    assert.equal(
+      data(
+        await reader.from("store_product_images").select("id").eq("product_id", draft.id),
+        "draft image isolation",
+      ).length,
+      0,
+    );
+  }
   checked(
     "verified staff can create draft media while customers and anonymous readers cannot see drafts",
   );

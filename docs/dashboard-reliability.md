@@ -5,7 +5,7 @@ This follow-up closes the 13 failing source assertions and three skipped Postgre
 ## Runtime fixes
 
 - Pending and approved purchase orders could not pass the optimistic-concurrency lock: invoker `FOR UPDATE` inherited the table policy permitting direct writes only to drafts. Only the two private, void-returning freshness helpers now use owner privileges, after the existing authenticated staff/MFA check. They still require an expected timestamp, lock the row and reject stale versions. Public lifecycle RPCs remain invoker; admin-only approval and draft-only direct writes remain enforced.
-- Verified staff can read draft catalog records, including images, independently of public published/active filters. This also permits `INSERT ... RETURNING` during draft-image saves. Customer and anonymous draft access remain blocked.
+- Verified staff can read draft catalog records, including images, independently of public published/active filters. This also permits `INSERT ... RETURNING` during draft-image saves. Customer and anonymous draft access remain blocked. Existing combined policies are reused, and image reads use separate anonymous/authenticated predicates to avoid redundant permissive policies.
 - `/categories` no longer serializes a catalog object containing React/Lucide components into loader data, which caused a production SSR 500. It still warms and uses the existing query cache.
 - The homepage always has a semantic H1, including configurations with the hero hidden. Payment status has an explicit accessible label. The mobile brand stays centered with balanced action columns and a compact narrow-screen layout. Product cards expose a stable semantic test marker across visual variants.
 
