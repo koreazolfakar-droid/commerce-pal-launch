@@ -6,6 +6,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronRight,
+  Cpu,
+  Cable,
+  HardDrive,
+  Monitor,
+  Battery,
+  Plug,
+  Palette,
+  Camera,
+  Bluetooth,
+  Sparkles,
   Heart,
   Loader2,
   MessageCircle,
@@ -28,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { buildProductHighlights, buildProductSuggestions } from "@/lib/productPresentation";
+import { buildDisplayOverview, buildDisplaySpecificationGroups, inferredBoxContents } from "@/lib/productDetailDisplay";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
@@ -103,6 +114,12 @@ export const Route = createFileRoute("/product/$handle")({
   },
   component: ProductPage,
 });
+
+const FEATURE_ICONS = {
+  power: Zap, technology: Cpu, port: Plug, display: Monitor, cable: Cable,
+  storage: HardDrive, ram: Cpu, battery: Battery, camera: Camera,
+  bluetooth: Bluetooth, color: Palette,
+} as const;
 
 function ProductPage() {
   const { t, language } = useLanguage();
@@ -258,13 +275,14 @@ function ProductPage() {
         : []),
     ].filter((row) => !structuredLabels.has(row.label.trim().toLocaleLowerCase()));
 
-    return [...structuredGroups, ...groupSpecs(fallbackRows)];
+    return buildDisplaySpecificationGroups([...structuredGroups, ...groupSpecs(fallbackRows)], node.title, language);
   }, [
     content.specs,
     selectedVariant,
     node.productType,
     node.vendor,
     node.specificationGroups,
+    node.title,
     language,
   ]);
 
@@ -277,11 +295,16 @@ function ProductPage() {
     [specGroups, node.title],
   );
 
-  // A lone fragment such as "30W" is a useful fact, not a full description card.
-  const hasOverview = content.overview.some(
-    (section) => section.bullets.length > 0 || section.paragraphs.some((text) => text.length >= 32),
+  const displayOverview = useMemo(
+    () => buildDisplayOverview(content.overview, node.title, node.vendor, language),
+    [content.overview, node.title, node.vendor, language],
   );
-  const hasBox = content.box.length > 0;
+  const displayBox = useMemo(
+    () => content.box.length ? content.box : inferredBoxContents(node.title, language),
+    [content.box, node.title, language],
+  );
+  const hasOverview = displayOverview.length > 0;
+  const hasBox = displayBox.length > 0;
   const hasShipping = content.shipping.length > 0;
   const hasSpecs = specGroups.length > 0;
   const defaultTab = hasOverview ? "overview" : "specifications";
@@ -515,21 +538,33 @@ function ProductPage() {
               ))}
             </ul>
             {highlights.length > 0 && (
-              <section aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}>
-                <h2 className="mb-2.5 text-sm font-semibold text-foreground">
-                  {language === "ar" ? "أبرز المواصفات" : "Key features"}
+              <section
+                data-testid="product-key-features"
+                aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
+                className="min-w-0"
+              >
+                <h2 className="mb-3 text-base font-semibold tracking-tight text-foreground">
+                  {language === "ar" ? "أبرز المميزات" : "Key features"}
                 </h2>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-                  {highlights.map((highlight) => (
-                    <div key={highlight.key} className="min-w-0 rounded-xl border border-primary/10 bg-primary/[0.045] px-3 py-3">
-                      <span className="block truncate text-[11px] font-medium text-muted-foreground">
-                        {language === "ar" ? highlight.labelAr : highlight.label}
-                      </span>
-                      <strong className="mt-1 block break-words text-sm font-semibold leading-snug text-foreground">
-                        {highlight.value}
-                      </strong>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                  {highlights.map((highlight) => {
+                    const HighlightIcon = FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
+                    return (
+                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 rounded-2xl border border-primary/10 bg-primary/[0.05] p-3.5">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <HighlightIcon aria-hidden className="h-[18px] w-[18px]" />
+                        </span>
+                        <div className="min-w-0">
+                          <strong className="block break-words text-sm font-semibold leading-snug text-foreground">
+                            {highlight.value}
+                          </strong>
+                          <span className="mt-1 block break-words text-[11px] leading-snug text-muted-foreground">
+                            {language === "ar" ? highlight.labelAr : highlight.label}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -537,13 +572,25 @@ function ProductPage() {
         </div>
 
         {(hasOverview || hasSpecs) && (
-          <section className="mt-8 border-t border-border/60 pt-6 sm:mt-10" aria-label="Product details">
-            <Tabs defaultValue={defaultTab} className="w-full">
-              <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b border-border/60 bg-transparent p-0">
+          <section
+            data-testid="product-information"
+            className="mt-9 min-w-0 border-t border-border/60 pt-7 sm:mt-11"
+            aria-label={language === "ar" ? "معلومات المنتج" : "Product details"}
+          >
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                {language === "ar" ? "معلومات المنتج" : "Product information"}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {language === "ar" ? "الوصف والمواصفات المتوفرة لهذا المنتج" : "Description and confirmed technical details"}
+              </p>
+            </div>
+            <Tabs defaultValue={defaultTab} className="w-full min-w-0">
+              <TabsList className="mb-5 h-auto w-full justify-start gap-7 rounded-none border-b border-border/70 bg-transparent p-0">
                 {hasOverview && (
                   <TabsTrigger
                     value="overview"
-                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none sm:text-base"
                   >
                     {language === "ar" ? "الوصف" : "Description"}
                   </TabsTrigger>
@@ -551,20 +598,25 @@ function ProductPage() {
                 {hasSpecs && (
                   <TabsTrigger
                     value="specifications"
-                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none sm:text-base"
                   >
-                    {language === "ar" ? "المواصفات" : "Specifications"}
+                    {language === "ar" ? "المواصفات التقنية" : "Specifications"}
                   </TabsTrigger>
                 )}
               </TabsList>
               {hasOverview && (
-                <TabsContent value="overview" className="pt-5">
-                  <ProseSections sections={content.overview} />
+                <TabsContent value="overview" className="mt-0 min-w-0">
+                  <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6">
+                    <h3 className="mb-3 text-base font-semibold text-foreground">
+                      {language === "ar" ? "نظرة عامة" : "Product overview"}
+                    </h3>
+                    <ProseSections sections={displayOverview} plain language={language} />
+                  </div>
                 </TabsContent>
               )}
               {hasSpecs && (
-                <TabsContent value="specifications" className="pt-5">
-                  <SpecSheet groups={specGroups} />
+                <TabsContent value="specifications" className="mt-0 min-w-0">
+                  <SpecSheet groups={specGroups} language={language} />
                 </TabsContent>
               )}
             </Tabs>
@@ -572,21 +624,21 @@ function ProductPage() {
         )}
 
         {(hasBox || hasShipping) && (
-          <section className="mt-8 grid gap-5 sm:grid-cols-2" aria-label={language === "ar" ? "محتويات المنتج والتوصيل" : "Product contents and delivery"}>
+          <section className="mt-7 grid min-w-0 gap-4 sm:grid-cols-2" aria-label={language === "ar" ? "محتويات المنتج والتوصيل" : "Product contents and delivery"}>
             {hasBox && (
-              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
+              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
                 <h2 className="mb-3 text-base font-semibold">
                   {language === "ar" ? "محتويات العلبة" : "What's in the box"}
                 </h2>
-                <ProseSections sections={content.box} />
+                <ProseSections sections={displayBox} plain language={language} />
               </div>
             )}
             {hasShipping && (
-              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
+              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
                 <h2 className="mb-3 text-base font-semibold">
                   {language === "ar" ? "الشحن والإرجاع" : "Shipping & returns"}
                 </h2>
-                <ProseSections sections={content.shipping} />
+                <ProseSections sections={content.shipping} plain language={language} />
               </div>
             )}
           </section>
