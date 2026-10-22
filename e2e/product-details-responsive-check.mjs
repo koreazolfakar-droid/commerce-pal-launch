@@ -53,7 +53,7 @@ try {
     }
     const recommendationHandles = new Set();
     for (const id of ["similar-products", "more-from-brand"]) {
-      const sectionElement = page.locator("#" + id).locator("..");
+      const sectionElement = page.locator('section[aria-labelledby="' + id + '"]');
       if (!(await sectionElement.count())) continue;
       const handles = await sectionElement.locator('[data-testid="product-card"]').evaluateAll((cards) =>
         cards.map((card) => card.querySelector('a[href^="/product/"]')?.getAttribute("href")).filter(Boolean));
