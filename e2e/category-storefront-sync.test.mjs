@@ -57,7 +57,8 @@ test("other managed visual sections resolve authoritative data before rendering 
   assert.match(categoriesPage, /Promise\.all\([\s\S]*?fetchManagedStoreCategories\(\)/);
   assert.match(categoryRoute, /Promise\.all\([\s\S]*?fetchManagedCategory\(params\.slug\)/);
   assert.match(brandsRoute, /Promise\.all\([\s\S]*?fetchCmsSnapshot\(\)/);
-  assert.match(homeRoute, /ensureQueryData\(cmsQueryOptions\(\)\)/);
+  assert.match(homeRoute, /useQuery\(cmsQueryOptions\(\)\)/);
+  assert.match(homeRoute, /<HomeHero cmsHeroSlides=\{cms\.heroSlides\}/);
 
   assert.doesNotMatch(categoriesPage, /findCategoryArtworkCollection/);
 });
@@ -65,10 +66,7 @@ test("other managed visual sections resolve authoritative data before rendering 
 test("empty managed category routes render instead of returning 404", async () => {
   const categoryRoute = await read("src/routes/category.$slug.tsx");
 
-  assert.doesNotMatch(
-    categoryRoute,
-    /if \(!products\.length\) throw notFound\(\)/,
-  );
+  assert.doesNotMatch(categoryRoute, /if \(!products\.length\) throw notFound\(\)/);
   assert.match(categoryRoute, /if \(managedCategory\) \{/);
 });
 

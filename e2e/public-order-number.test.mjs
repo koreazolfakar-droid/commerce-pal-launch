@@ -52,5 +52,9 @@ test("customer and dashboard surfaces display public order numbers", async () =>
   assert.match(ordersPage, /order\.publicOrderNumber/);
   assert.match(detailPage, /order\.publicOrderNumber/);
   assert.match(quickDrawer, /order\.publicOrderNumber/);
-  assert.match(homeData, /orderNumber: order\.public_order_number/);
+  assert.match(homeData, /orderNumber: text\(item\.orderNumber\)/);
+  const snapshotMigration = await read(
+    "supabase/migrations/20260928113000_dashboard_scale_hardening.sql",
+  );
+  assert.match(snapshotMigration, /'orderNumber', orders\.public_order_number/);
 });

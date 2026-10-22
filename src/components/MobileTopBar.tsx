@@ -64,7 +64,7 @@ export function MobileTopBar({
   return (
     <>
       <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/45 bg-background/96 shadow-[0_8px_24px_-24px_rgba(15,23,42,.48)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid h-[4.25rem] w-full max-w-md grid-cols-[2.75rem_minmax(0,1fr)_5.75rem] items-center gap-2 px-4">
+        <div className="mx-auto grid h-[4.25rem] w-full max-w-md grid-cols-[5.75rem_minmax(0,1fr)_5.75rem] items-center gap-2 px-4">
           <button
             type="button"
             aria-label={t("openMenu")}

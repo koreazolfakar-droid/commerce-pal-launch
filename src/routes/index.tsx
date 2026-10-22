@@ -786,6 +786,7 @@ function Index() {
 
   return (
     <StoreLayout>
+      <h1 className="sr-only">{t("homeTitle")}</h1>
       <div className="home-page">
         {orderedBlocks.map((block) => (
           <div key={block.key} className={cmsSectionDeviceClass(block.section)}>

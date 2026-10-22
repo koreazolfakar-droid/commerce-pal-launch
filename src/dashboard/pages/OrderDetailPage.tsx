@@ -518,6 +518,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
                   {t("Payment status")}
                 </span>
                 <select
+                  aria-label={t("Payment status")}
                   value={order.paymentStatus}
                   onChange={(event) =>
                     void changePayment(event.target.value as DashboardPaymentStatus)

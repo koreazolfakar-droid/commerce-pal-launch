@@ -1,5 +1,7 @@
 # Dashboard workflow review — 2026-10-22
 
+Follow-up: the [reliability completion](dashboard-reliability.md) resolves the 13 failures and three skips below and adds real local Auth/API/database acceptance coverage. The counts in this original review describe its earlier commit.
+
 The dashboard now preserves the operator's place when moving between lists and details, offers one keyboard-accessible search across sections and records, and protects editing work across overlapping dialogs and navigation. The implementation keeps the existing Space Call visual system and Arabic/English support.
 
 ## Changes

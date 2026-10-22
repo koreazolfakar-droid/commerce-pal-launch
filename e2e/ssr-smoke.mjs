@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-// Run after `bun run build`. The production SSR entry reads the public,
- // read-only Space Call Supabase storefront.
+// Run after build. CI preloads the deterministic Supabase read fixture; omit
+// SPACE_CALL_VISUAL_FIXTURES for an optional read-only live storefront probe.
 const { default: handler } = await import("../.output/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
@@ -16,7 +16,11 @@ async function request(path) {
     const location = response.headers.get("location");
     assert.ok(location, "Redirect must include a destination");
     url = new URL(location, url);
-    assert.equal(url.origin, "https://spacecallapp.store", "SSR tests only follow internal redirects");
+    assert.equal(
+      url.origin,
+      "https://spacecallapp.store",
+      "SSR tests only follow internal redirects",
+    );
   }
   const body = await response.text();
   assert.equal(response.status, 200, `${path} must render successfully`);
@@ -31,19 +35,24 @@ for (const [name, value] of Object.entries({
   "x-content-type-options": "nosniff",
   "x-frame-options": "SAMEORIGIN",
   "referrer-policy": "strict-origin-when-cross-origin",
-  "permissions-policy": "camera=(), microphone=(), geolocation=(self), payment=(), display-capture=()",
+  "permissions-policy":
+    "camera=(), microphone=(), geolocation=(self), payment=(), display-capture=()",
 })) {
   assert.equal(home.response.headers.get(name), value);
 }
 const csp = home.response.headers.get("content-security-policy") ?? "";
 assert.match(csp, /default-src 'self'/);
-assert.doesNotMatch(csp, /connect-src[^;]*myshopify|form-action[^;]*myshopify|frame-src[^;]*myshopify|checkout\.shopify\.com/);
+assert.doesNotMatch(
+  csp,
+  /connect-src[^;]*myshopify|form-action[^;]*myshopify|frame-src[^;]*myshopify|checkout\.shopify\.com/,
+);
 const nonce = csp.match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
 assert.ok(nonce, "SSR CSP includes a request nonce");
 
 const second = await request("/");
-const secondNonce = (second.response.headers.get("content-security-policy") ?? "")
-  .match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
+const secondNonce = (second.response.headers.get("content-security-policy") ?? "").match(
+  /script-src[^;]*'nonce-([a-f0-9]{32})'/,
+)?.[1];
 assert.ok(secondNonce);
 assert.notEqual(secondNonce, nonce, "Each SSR request gets a unique CSP nonce");
 
@@ -57,6 +66,8 @@ assert.equal((privacy.body.match(/<h1\b/g) ?? []).length, 1);
 
 const shop = await request("/shop");
 assert.equal((shop.body.match(/<h1\b/g) ?? []).length, 1);
+const categories = await request("/categories");
+assert.equal((categories.body.match(/<h1\b/g) ?? []).length, 1);
 
 const sitemap = await request("/sitemap.xml");
 assert.match(sitemap.body, /https:\/\/spacecallapp\.store\//);
@@ -66,5 +77,11 @@ const robots = await readFile(new URL("../public/robots.txt", import.meta.url), 
 assert.ok(!/^Disallow:\s*\/$/m.test(robots));
 
 await Promise.allSettled(pending);
-console.log(JSON.stringify({ passed: true, source: "supabase-native", paths: ["/", "/help", "/privacy", "/sitemap.xml"] }));
+console.log(
+  JSON.stringify({
+    passed: true,
+    source: process.env.SPACE_CALL_VISUAL_FIXTURES === "1" ? "supabase-fixture" : "supabase-native",
+    paths: ["/", "/help", "/privacy", "/shop", "/categories", "/sitemap.xml"],
+  }),
+);
 process.exit(0);

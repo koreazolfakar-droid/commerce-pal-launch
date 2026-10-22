@@ -161,6 +161,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   if (borderless) {
     return (
       <article
+        data-testid="product-card"
         role={listItem ? "listitem" : undefined}
         className={cn("group flex h-full min-w-0 w-full flex-col", className)}
       >
@@ -306,6 +307,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   if (market) {
     return (
       <article
+        data-testid="product-card"
         role={listItem ? "listitem" : undefined}
         className={cn(
           "market-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden border border-border/75 bg-card shadow-card transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover",
@@ -463,6 +465,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
   return (
     <article
+      data-testid="product-card"
       role={listItem ? "listitem" : undefined}
       className={cn(
         "sc-product-card group relative flex h-full min-w-0 w-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card shadow-card transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card-hover",

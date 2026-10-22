@@ -39,7 +39,10 @@ test("storefront cards prefer thumbnails while original product media stays avai
     ]);
 
   assert.match(storeTypes, /thumbnailUrl\?: string/);
-  assert.match(nativeStore, /STOREFRONT_IMAGE_SELECT = "product_id,url,thumbnail_url,alt_text,is_primary,sort_order"/);
+  assert.match(
+    nativeStore,
+    /STOREFRONT_IMAGE_SELECT = "product_id,url,thumbnail_url,alt_text,is_primary,sort_order"/,
+  );
   assert.match(nativeStore, /thumbnailUrl: image\.thumbnail_url/);
   assert.match(rust, /store_product_images\(url,thumbnail_url,alt_text,is_primary,sort_order\)/);
   assert.match(rust, /thumbnail_url: Option<String>/);
@@ -58,7 +61,6 @@ test("media cleanup treats thumbnails as referenced assets", async () => {
   assert.match(optimizer, /addReferencedUrl\(referenced, row\.thumbnail_url\)/);
   assert.match(optimizer, /update\(\{ url: uploaded\.url, thumbnail_url: null \}\)/);
 });
-
 
 test("existing product thumbnails are backfilled safely from the dashboard", async () => {
   const [data, ui] = await Promise.all([
@@ -92,6 +94,6 @@ test("existing product thumbnails are backfilled safely from the dashboard", asy
   assert.match(ui, /backfillStorefrontProductThumbnails\(250, setThumbnailProgress\)/);
   assert.match(ui, /all active primary product images still missing them/);
   assert.match(ui, /Still pending/);
-  assert.match(ui, /Original product images stay unchanged/);
+  assert.match(ui, /Product-page originals remain unchanged/);
   assert.match(ui, /Runs one image at a time to stay phone-friendly/);
 });
