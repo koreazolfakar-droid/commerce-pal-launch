@@ -507,7 +507,7 @@ function ProductPage() {
 
             {isPhone && <div className="-mt-2 flex justify-start"><CompareButton handle={node.handle} /></div>}
 
-            <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border/60 pb-5 text-xs text-muted-foreground">
+            <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs text-muted-foreground">
               {PURCHASE_ASSURANCES.slice(0, 3).map((item) => (
                 <li key={item.title} className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5">
                   <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
