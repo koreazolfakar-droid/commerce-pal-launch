@@ -1,33 +1,48 @@
 import type { SpecGroup } from "@/lib/productContent";
 
-/**
- * Grouped specification sheet. Rows come only from real catalog data; the
- * layout stacks on mobile and becomes a two-column label/value grid on wider
- * screens, so long values never break the page width.
- */
-export function SpecSheet({ groups }: { groups: SpecGroup[] }) {
+const GROUP_TRANSLATIONS: Record<string, string> = {
+  "Display": "الشاشة",
+  "Performance": "الأداء",
+  "Memory & Storage": "الذاكرة والتخزين",
+  "Camera": "الكاميرا",
+  "Battery & Charging": "البطارية والشحن",
+  "Connectivity": "الاتصالات",
+  "Audio": "الصوت",
+  "Design & Build": "التصميم",
+  "Software & Features": "النظام والميزات",
+  "Power & Compatibility": "الطاقة والتوافق",
+  "More details": "تفاصيل أخرى",
+};
+
+export function SpecSheet({
+  groups,
+  language = "en",
+}: {
+  groups: SpecGroup[];
+  language?: "ar" | "en";
+}) {
   if (groups.length === 0) return null;
   return (
-    <div className="gap-4 space-y-4 md:columns-2 md:space-y-0 [&>section]:mb-4 [&>section]:break-inside-avoid">
-      {groups.map((group) => (
+    <div data-testid="product-specification-sheet" className="grid min-w-0 gap-3.5 md:grid-cols-2 md:items-start">
+      {groups.map((group, index) => (
         <section
-          key={group.title}
-          className="overflow-hidden rounded-lg border bg-card shadow-card"
-          aria-labelledby={`spec-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
+          key={group.title + "-" + index}
+          className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm"
+          aria-labelledby={"product-spec-section-" + index}
         >
           <h3
-            id={`spec-${group.title.replace(/\s+/g, "-").toLowerCase()}`}
-            className="border-b bg-surface px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground"
+            id={"product-spec-section-" + index}
+            className="border-b border-border/60 bg-surface/60 px-4 py-3.5 text-sm font-semibold text-foreground sm:px-5"
           >
-            {group.title}
+            {language === "ar" ? GROUP_TRANSLATIONS[group.title] ?? group.title : group.title}
           </h3>
-          <dl className="divide-y">
-            {group.rows.map((row) => (
+          <dl className="divide-y divide-border/50">
+            {group.rows.map((row, rowIndex) => (
               <div
-                key={`${row.label}-${row.value}`}
-                className="grid gap-0.5 px-4 py-3 text-sm sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] sm:gap-4"
+                key={row.label + "-" + rowIndex}
+                className="grid min-w-0 grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] gap-3 px-4 py-3 text-sm sm:px-5"
               >
-                <dt className="min-w-0 text-muted-foreground">{row.label}</dt>
+                <dt className="min-w-0 break-words text-muted-foreground">{row.label}</dt>
                 <dd className="min-w-0 break-words font-medium text-foreground">{row.value}</dd>
               </div>
             ))}
