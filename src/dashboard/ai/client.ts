@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { planAiBatches, mergeAiResponses } from "@/dashboard/ai/formFill";
 import type { DashboardAiRequest, DashboardAiResponse } from "@/dashboard/ai/types";
 
 function text(value: unknown) {
@@ -65,6 +66,7 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
           decision:
             item.decision === "allow" || item.decision === "block" ? item.decision : "review",
           checks: Array.isArray(item.checks) ? item.checks.map(text).filter(Boolean) : [],
+          inputQuote: text(item.inputQuote).slice(0, 1200),
           sourceUrls: Array.isArray(item.sourceUrls)
             ? item.sourceUrls.map(safeHttpUrl).filter(Boolean).slice(0, 5)
             : [],
@@ -92,7 +94,13 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
       : {};
 
   return {
-    entity: row.entity === "category" || row.entity === "brand" ? row.entity : "product",
+    entity:
+      row.entity === "category" ||
+      row.entity === "brand" ||
+      row.entity === "collection" ||
+      row.entity === "seo_page"
+        ? row.entity
+        : "product",
     action: row.action === "seo" || row.action === "validate" ? row.action : "research_fill",
     model: text(row.model),
     grounded: row.grounded === true,
@@ -105,25 +113,48 @@ function normalizeResponse(value: unknown): DashboardAiResponse {
     suggestions: suggestions as DashboardAiResponse["suggestions"],
     warnings: Array.isArray(row.warnings) ? row.warnings.map(text).filter(Boolean) : [],
     sources,
+    missingFields: Array.isArray(row.missingFields)
+      ? row.missingFields
+          .filter(
+            (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
+          )
+          .map((item) => ({ field: text(item.field), reason: text(item.reason) }))
+          .filter((item) => item.field)
+      : [],
   };
 }
 
-export async function requestDashboardAiAssist(request: DashboardAiRequest) {
+export async function requestDashboardAiAssist(
+  request: DashboardAiRequest,
+  options: { signal?: AbortSignal; onProgress?: (completed: number, total: number) => void } = {},
+) {
   const query = request.query.trim();
-  if (query.length < 2) throw new Error("Enter a product, category, or brand name first.");
+  if (query.length < 2) throw new Error("Enter the name or subject of this form first.");
   if (query.length > 500) throw new Error("AI research query is too long.");
-
-  const { data, error } = await supabase.functions.invoke("dashboard-ai-assist", {
-    body: {
-      ...request,
-      query,
-      fields: request.fields.slice(0, 40),
-    },
-  });
-
-  if (error) {
-    throw new Error(await invokeErrorMessage(error));
+  if ((request.sourceText?.length ?? 0) > 12000)
+    throw new Error("Source information must be 12,000 characters or fewer.");
+  const batches = planAiBatches({ ...request, query });
+  if (!batches.length)
+    throw new Error(
+      "No empty fields to complete. Choose improve existing fields to review changes.",
+    );
+  const responses: DashboardAiResponse[] = [];
+  for (const batch of batches) {
+    options.signal?.throwIfAborted();
+    options.onProgress?.(responses.length, batches.length);
+    const { data, error } = await supabase.functions.invoke("dashboard-ai-assist", {
+      body: batch,
+      signal: options.signal,
+      timeout: 90000,
+    });
+    options.signal?.throwIfAborted();
+    if (error) throw new Error(await invokeErrorMessage(error));
+    const response = normalizeResponse(data);
+    const allowed = new Set(batch.fields.map((field) => field.key));
+    response.suggestions = response.suggestions.filter((item) => allowed.has(item.field));
+    response.missingFields = response.missingFields?.filter((item) => allowed.has(item.field));
+    responses.push(response);
+    options.onProgress?.(responses.length, batches.length);
   }
-
-  return normalizeResponse(data);
+  return mergeAiResponses(responses);
 }

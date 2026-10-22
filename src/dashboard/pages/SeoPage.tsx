@@ -1,3 +1,4 @@
+import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardResponsiveTable from "@/dashboard/components/DashboardResponsiveTable";
 import {
@@ -301,6 +302,25 @@ export default function SeoPage() {
               >
                 <X className="size-4" />
               </button>
+            </div>
+            <div className="mb-4">
+              <ContentAiAssist
+                entity="seo_page"
+                query={[draft.pageSlug, draft.titleEn || draft.title || "Space Call"]
+                  .filter(Boolean)
+                  .join(" ")}
+                pageSlug={draft.pageSlug}
+                entityId={editing?.pageSlug ?? ""}
+                values={draft}
+                onApply={(patch) =>
+                  setDraft((current) => ({
+                    ...current,
+                    ...patch,
+                    title: patch.titleEn ?? current.title,
+                    description: patch.descriptionEn ?? current.description,
+                  }))
+                }
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
