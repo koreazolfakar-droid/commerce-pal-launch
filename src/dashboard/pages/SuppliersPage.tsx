@@ -1,3 +1,6 @@
+import { useDashboardFormGuard } from "@/dashboard/hooks/useDashboardFormGuard";
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
 import { Building2, Loader2, MapPin, Plus, Search, Save, Truck, X } from "lucide-react";
 import { useCallback, useMemo, useState, useEffect } from "react";
@@ -54,13 +57,31 @@ export default function SuppliersPage() {
   const { t } = useLanguage();
   const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [supplierDraft, setSupplierDraft] = useState<SupplierDraft | null>(null);
   const [locationDraft, setLocationDraft] = useState<LocationDraft | null>(null);
 
+  const formGuard = useDashboardFormGuard(
+    Boolean(supplierDraft || locationDraft),
+    supplierDraft || locationDraft,
+    saving,
+    () => {
+      setSupplierDraft(null);
+      setLocationDraft(null);
+    },
+  );
+  const openSupplier = (draft: SupplierDraft) => {
+    if (formGuard.close()) setSupplierDraft(draft);
+  };
+  const openLocation = (draft: LocationDraft) => {
+    if (formGuard.close()) setLocationDraft(draft);
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       setWorkspace(
         await loadReceivingWorkspace({
@@ -71,7 +92,7 @@ export default function SuppliersPage() {
         }),
       );
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load suppliers.");
+      setLoadError(cause instanceof Error ? cause.message : "Unable to load suppliers.");
     } finally {
       setLoading(false);
     }
@@ -108,7 +129,7 @@ export default function SuppliersPage() {
   }, [query, workspace]);
 
   const editSupplier = (supplier: ReceivingSupplier) => {
-    setSupplierDraft({
+    openSupplier({
       id: supplier.id,
       name: supplier.name,
       code: supplier.code ?? "",
@@ -120,6 +141,7 @@ export default function SuppliersPage() {
   };
 
   const saveSupplier = async () => {
+    if (saving) return;
     if (!supplierDraft) return;
     if (!supplierDraft.name.trim()) return toast.error("Supplier name is required.");
     setSaving(true);
@@ -142,9 +164,11 @@ export default function SuppliersPage() {
           phone: supplierDraft.phone,
           email: supplierDraft.email,
           notes: supplierDraft.notes,
+          isActive: supplierDraft.isActive,
         });
         toast.success("Supplier created.");
       }
+      formGuard.markSaved();
       setSupplierDraft(null);
       await load();
     } catch (cause) {
@@ -155,7 +179,7 @@ export default function SuppliersPage() {
   };
 
   const editLocation = (location: ProcurementLocation) => {
-    setLocationDraft({
+    openLocation({
       id: location.id,
       name: location.name,
       code: location.code,
@@ -165,6 +189,7 @@ export default function SuppliersPage() {
   };
 
   const saveLocation = async () => {
+    if (saving) return;
     if (!locationDraft) return;
     setSaving(true);
     try {
@@ -176,6 +201,7 @@ export default function SuppliersPage() {
         isActive: locationDraft.isActive,
       });
       toast.success(locationDraft.id ? "Location updated." : "Location created.");
+      formGuard.markSaved();
       setLocationDraft(null);
       await load();
     } catch (cause) {
@@ -195,6 +221,9 @@ export default function SuppliersPage() {
 
   return (
     <div>
+      {loadError && (
+        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+      )}
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="text-[10px] font-bold uppercase tracking-[.18em] text-indigo-600">
@@ -209,13 +238,13 @@ export default function SuppliersPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setLocationDraft({ ...blankLocation })}
+            onClick={() => openLocation({ ...blankLocation })}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
           >
             <MapPin className="size-3.5" /> {t("New location")}
           </button>
           <button
-            onClick={() => setSupplierDraft({ ...blankSupplier })}
+            onClick={() => openSupplier({ ...blankSupplier })}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white"
           >
             <Plus className="size-3.5" /> {t("New supplier")}
@@ -230,13 +259,15 @@ export default function SuppliersPage() {
               {supplierDraft.id ? t("Edit supplier") : t("New supplier")}
             </div>
             <button
-              onClick={() => setSupplierDraft(null)}
+              onClick={formGuard.close}
+              disabled={saving}
+              aria-label={t("Close supplier form")}
               className="grid size-8 place-items-center rounded-lg hover:bg-slate-100"
             >
               <X className="size-4 text-slate-500" />
             </button>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <fieldset disabled={saving} className="min-w-0 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <input
               value={supplierDraft.name}
               onChange={(e) => setSupplierDraft({ ...supplierDraft, name: e.target.value })}
@@ -275,7 +306,7 @@ export default function SuppliersPage() {
               />
               {t("Active supplier")}
             </label>
-          </div>
+          </fieldset>
           <div className="mt-4 flex justify-end">
             <button
               onClick={() => void saveSupplier()}
@@ -294,11 +325,15 @@ export default function SuppliersPage() {
             <div className="text-[14px] font-bold text-[#14203a]">
               {locationDraft.id ? t("Edit location") : t("New store / warehouse")}
             </div>
-            <button onClick={() => setLocationDraft(null)}>
+            <button
+              onClick={formGuard.close}
+              disabled={saving}
+              aria-label={t("Close location form")}
+            >
               <X className="size-4 text-slate-500" />
             </button>
           </div>
-          <div className="grid gap-3 md:grid-cols-4">
+          <fieldset disabled={saving} className="min-w-0 grid gap-3 md:grid-cols-4">
             <input
               value={locationDraft.name}
               onChange={(e) => setLocationDraft({ ...locationDraft, name: e.target.value })}
@@ -325,7 +360,7 @@ export default function SuppliersPage() {
               />{" "}
               {t("Active")}
             </label>
-          </div>
+          </fieldset>
           <div className="mt-4 flex justify-end">
             <button
               onClick={() => void saveLocation()}

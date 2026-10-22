@@ -1,3 +1,4 @@
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 import { useLanguage } from "@/dashboard/i18n";
 import { Check, Focus, Loader2, Maximize2, RotateCcw, X } from "lucide-react";
 import {
@@ -386,6 +387,9 @@ function SmartImageEditorDialog({
   const [loaded, setLoaded] = useState<LoadedImage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const dialogRef = useDashboardModal(() => {
+    if (!saving) onDone(null);
+  });
   const [error, setError] = useState("");
   const [fit, setFit] = useState<"contain" | "cover">(initialFit);
   const [zoom, setZoom] = useState(1);
@@ -534,7 +538,14 @@ function SmartImageEditorDialog({
 
   return (
     <div className="fixed inset-0 z-[140] grid place-items-end bg-slate-950/65 p-0 backdrop-blur-sm sm:place-items-center sm:p-4">
-      <div className="max-h-[100dvh] w-full overscroll-contain overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-h-[96vh] sm:max-w-3xl sm:rounded-[28px]">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={request.options.title ?? t("Adjust image")}
+        tabIndex={-1}
+        className="max-h-[100dvh] w-full overscroll-contain overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:max-h-[96vh] sm:max-w-3xl sm:rounded-[28px]"
+      >
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 px-4 py-4 backdrop-blur sm:px-6">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[.16em] text-indigo-500">

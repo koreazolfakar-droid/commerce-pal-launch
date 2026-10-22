@@ -1,3 +1,4 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { useLanguage } from "@/dashboard/i18n";
 import { ArrowLeft, Loader2, Plus, Save, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -447,7 +448,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
               void deletePurchaseOrderDraft(po.id, po.updatedAt)
                 .then(() => {
                   toast.success("Purchase order draft deleted.");
-                  navigate("/dashboard/purchase-orders");
+                  navigate(dashboardListHref("/dashboard/purchase-orders"));
                 })
                 .catch((cause) =>
                   toast.error(cause instanceof Error ? cause.message : "Delete failed."),

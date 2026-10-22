@@ -1,3 +1,6 @@
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
+import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { Link, useSearch } from "wouter";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
@@ -94,16 +97,17 @@ export default function InventoryManagerPage() {
   const urlSearch = useSearch();
   const attention = new URLSearchParams(urlSearch).get("attention");
   const [rows, setRows] = useState<InventoryRow[]>([]);
-  const [query, setQuery] = useState("");
-  const [serverQuery, setServerQuery] = useState("");
-  const [category, setCategory] = useState("all");
-  const [threshold, setThreshold] = useState(attention === "out" ? 0 : 10);
-  const [onlyLow, setOnlyLow] = useState(attention === "low" || attention === "out");
-  useEffect(() => {
-    setOnlyLow(attention === "low" || attention === "out");
-    setThreshold(attention === "out" ? 0 : 10);
-    setPage(1);
-  }, [attention]);
+  const [query, setQuery] = useDashboardQueryState<string>("search", "");
+  const [serverQuery, setServerQuery] = useState(query.trim());
+  const [category, setCategory] = useDashboardQueryState<string>("category", "all");
+  const [threshold, setThreshold] = useDashboardQueryState<number>(
+    "threshold",
+    attention === "out" ? 0 : 10,
+  );
+  const [onlyLow, setOnlyLow] = useDashboardQueryState<boolean>(
+    "onlyLow",
+    attention === "low" || attention === "out",
+  );
   const [categories, setCategories] = useState<InventoryCategoryOptions>({
     items: [],
     hasUncategorized: false,
@@ -145,8 +149,8 @@ export default function InventoryManagerPage() {
   );
   useDashboardUnsavedChanges(inventoryDirty);
   const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useDashboardQueryState<number>("page", 1);
+  const [pageSize, setPageSize] = useDashboardQueryState<number>("pageSize", 20, [20, 50, 100]);
 
   const load = useCallback(
     async (manual = false) => {
@@ -218,7 +222,6 @@ export default function InventoryManagerPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setPage(1);
       setServerQuery(query.trim());
     }, 250);
     return () => window.clearTimeout(timer);
@@ -232,8 +235,8 @@ export default function InventoryManagerPage() {
   const pageVariantKey = pageRows.map((row) => row.variantId).join(",");
 
   useEffect(() => {
-    if (page !== safePage) setPage(safePage);
-  }, [page, safePage]);
+    if (hasLoadedRef.current && !loading && page !== safePage) setPage(safePage);
+  }, [loading, page, safePage, setPage]);
 
   useEffect(() => {
     const variantIds = pageVariantKey ? pageVariantKey.split(",") : [];
@@ -368,14 +371,18 @@ export default function InventoryManagerPage() {
 
   if (error && !rows.length) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
-        {error}
+      <div>
+        <h1 className="mb-5 text-2xl font-bold">{t("Inventory control")}</h1>
+        <DashboardLoadError message={error} busy={refreshing} onRetry={() => void load(true)} />
       </div>
     );
   }
 
   return (
     <div>
+      {error && (
+        <DashboardLoadError message={error} busy={refreshing} onRetry={() => void load(true)} />
+      )}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <PageTitle
@@ -394,7 +401,16 @@ export default function InventoryManagerPage() {
         </button>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+      <DashboardListViews
+        scope="inventory"
+        keys={["category", "onlyLow", "threshold", "pageSize", "attention"]}
+        presets={[
+          { name: "Low stock", query: "onlyLow=1&threshold=10" },
+          { name: "Out of stock", query: "onlyLow=1&threshold=0&attention=out" },
+        ]}
+      />
+
+      <div className="dashboard-summary-grid mb-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="text-[11px] text-slate-400">{t("Total units")}</div>
           <div className="mt-1 text-2xl font-bold text-[#14203a]">{totalUnits}</div>
@@ -442,7 +458,7 @@ export default function InventoryManagerPage() {
                 <option value="uncategorized">{t("Uncategorized")}</option>
               )}
             </select>
-            <label className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] font-semibold text-slate-600">
+            <label className="flex h-10 min-w-40 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] font-semibold text-slate-600">
               <SlidersHorizontal className="size-3.5" />
               {t("Low ≤")}
               <input

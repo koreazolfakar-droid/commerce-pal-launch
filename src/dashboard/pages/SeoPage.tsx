@@ -1,3 +1,7 @@
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
+import { useDashboardFormGuard } from "@/dashboard/hooks/useDashboardFormGuard";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardResponsiveTable from "@/dashboard/components/DashboardResponsiveTable";
@@ -46,21 +50,28 @@ export default function SeoPage() {
   const [pages, setPages] = useState<DashboardSeoPage[]>([]);
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [editing, setEditing] = useState<DashboardSeoPage | null>(null);
   const [draft, setDraft] = useState<DashboardSeoInput>(EMPTY);
   const [jsonText, setJsonText] = useState("{}");
   const [modalOpen, setModalOpen] = useState(false);
 
+  const formGuard = useDashboardFormGuard(modalOpen, { draft, jsonText }, saving, () =>
+    setModalOpen(false),
+  );
+  const modalRef = useDashboardModal(formGuard.close, modalOpen);
+
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const workspace = await loadDashboardSeoWorkspace();
       setPages(workspace.pages);
       setCanDelete(workspace.role === "admin");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "SEO load failed.");
+      setLoadError(cause instanceof Error ? cause.message : "SEO load failed.");
     } finally {
       setLoading(false);
     }
@@ -127,6 +138,7 @@ export default function SeoPage() {
           a.pageSlug.localeCompare(b.pageSlug),
         ),
       );
+      formGuard.markSaved();
       setModalOpen(false);
       toast.success("SEO metadata saved to Supabase.");
     } catch (cause) {
@@ -150,6 +162,9 @@ export default function SeoPage() {
 
   return (
     <div>
+      {loadError && (
+        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+      )}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">
@@ -281,9 +296,14 @@ export default function SeoPage() {
       {modalOpen ? (
         <div
           className="fixed inset-0 z-[80] overflow-y-auto bg-slate-950/40 p-4 sm:p-8"
-          onClick={() => setModalOpen(false)}
+          onClick={formGuard.close}
         >
           <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={editing ? t("Edit SEO page") : t("Add SEO page")}
+            tabIndex={-1}
             className="mx-auto w-full max-w-4xl rounded-2xl bg-white p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -297,7 +317,8 @@ export default function SeoPage() {
                 </div>
               </div>
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={formGuard.close}
+                disabled={saving}
                 className="grid size-8 place-items-center rounded-lg text-slate-400"
               >
                 <X className="size-4" />
@@ -305,6 +326,7 @@ export default function SeoPage() {
             </div>
             <div className="mb-4">
               <ContentAiAssist
+                disabled={saving}
                 entity="seo_page"
                 query={[draft.pageSlug, draft.titleEn || draft.title || "Space Call"]
                   .filter(Boolean)
@@ -322,7 +344,7 @@ export default function SeoPage() {
                 }
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <fieldset disabled={saving} className="min-w-0 grid gap-4 sm:grid-cols-2">
               <Field
                 label={t("Page slug")}
                 value={draft.pageSlug}
@@ -398,10 +420,11 @@ export default function SeoPage() {
                   className="w-full rounded-xl border border-slate-200 p-3 font-mono text-[11px] outline-none focus:border-indigo-400"
                 />
               </label>
-            </div>
+            </fieldset>
             <div className="mt-5 flex justify-end gap-2">
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={formGuard.close}
+                disabled={saving}
                 className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
               >
                 {t("Cancel")}

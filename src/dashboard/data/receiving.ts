@@ -1407,6 +1407,7 @@ export async function createReceivingSupplier(input: {
   phone?: string;
   email?: string;
   notes?: string;
+  isActive?: boolean;
 }) {
   await requireDashboardStaff();
   const name = input.name.trim();
@@ -1420,7 +1421,7 @@ export async function createReceivingSupplier(input: {
       phone: input.phone?.trim() || null,
       email: input.email?.trim() || null,
       notes: input.notes?.trim() || null,
-      is_active: true,
+      is_active: input.isActive ?? true,
     })
     .select("id,name,code,phone,email,notes,is_active")
     .single();

@@ -1,3 +1,4 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
 import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
@@ -209,7 +210,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
       await deleteDashboardCollection(collection.id);
       setDeleteOpen(false);
       toast.success("Collection deleted.");
-      navigate("/dashboard/collections");
+      navigate(dashboardListHref("/dashboard/collections"));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Delete failed.");
     } finally {
@@ -233,7 +234,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
   return (
     <div>
       <button
-        onClick={() => navigate("/dashboard/collections")}
+        onClick={() => navigate(dashboardListHref("/dashboard/collections"))}
         className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500 hover:text-[#5968ea]"
       >
         <ArrowLeft className="size-4" /> {t("Back to collections")}
@@ -253,6 +254,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <ContentAiAssist
+            disabled={savingProfile}
             entity="collection"
             query={form.title}
             values={form}

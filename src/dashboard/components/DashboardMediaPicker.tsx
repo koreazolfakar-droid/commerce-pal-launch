@@ -1,3 +1,4 @@
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 import { useLanguage } from "@/dashboard/i18n";
 import { Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -28,6 +29,10 @@ export function DashboardMediaPicker({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
+  const closeLibrary = () => {
+    if (!uploading) setOpen(false);
+  };
+  const mediaDialogRef = useDashboardModal(closeLibrary, open);
 
   useEffect(() => {
     if (!open) return;
@@ -84,6 +89,7 @@ export function DashboardMediaPicker({
           <button
             type="button"
             onClick={() => setOpen(true)}
+            disabled={uploading}
             className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-bold text-slate-600"
           >
             <ImageIcon className="size-3.5" /> {t("Select from library")}
@@ -159,6 +165,7 @@ export function DashboardMediaPicker({
               <button
                 type="button"
                 onClick={() => onChange("")}
+                disabled={uploading}
                 className="text-start text-[10px] font-semibold text-rose-500"
               >
                 {t("Remove image")}
@@ -200,9 +207,14 @@ export function DashboardMediaPicker({
       {open ? (
         <div
           className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4"
-          onClick={() => setOpen(false)}
+          onClick={closeLibrary}
         >
           <div
+            ref={mediaDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("CMS media library")}
+            tabIndex={-1}
             className="max-h-[82dvh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
@@ -215,7 +227,9 @@ export function DashboardMediaPicker({
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeLibrary}
+                disabled={uploading}
+                aria-label={t("Close")}
                 className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
               >
                 <X className="size-4" />
@@ -232,6 +246,7 @@ export function DashboardMediaPicker({
                     <button
                       type="button"
                       key={asset.id}
+                      disabled={uploading}
                       onClick={() => {
                         onChange(asset.url);
                         setOpen(false);

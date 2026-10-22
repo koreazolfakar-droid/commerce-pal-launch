@@ -1,3 +1,8 @@
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
+import { useDashboardFormGuard } from "@/dashboard/hooks/useDashboardFormGuard";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   Copy,
@@ -39,7 +44,9 @@ export default function MediaLibraryPage() {
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [query, setQuery] = useState("");
+  const [savingAlt, setSavingAlt] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [editing, setEditing] = useState<DashboardMediaAsset | null>(null);
   const [altText, setAltText] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -47,14 +54,21 @@ export default function MediaLibraryPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
 
+  const formGuard = useDashboardFormGuard(Boolean(editing), altText, savingAlt, () =>
+    setEditing(null),
+  );
+  const modalRef = useDashboardModal(formGuard.close, Boolean(editing));
+  useDashboardUnsavedChanges(Boolean(pendingFile));
+
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const workspace = await loadDashboardMediaWorkspace();
       setAssets(workspace.assets);
       setCanDelete(workspace.role === "admin");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Media load failed.");
+      setLoadError(cause instanceof Error ? cause.message : "Media load failed.");
     } finally {
       setLoading(false);
     }
@@ -93,14 +107,18 @@ export default function MediaLibraryPage() {
   };
 
   const saveAlt = async () => {
-    if (!editing) return;
+    if (!editing || savingAlt) return;
+    setSavingAlt(true);
     try {
       const saved = await updateDashboardMediaAltText(editing.id, altText);
       setAssets((current) => current.map((asset) => (asset.id === saved.id ? saved : asset)));
+      formGuard.markSaved();
       setEditing(null);
       toast.success("Alt text updated.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Alt text update failed.");
+    } finally {
+      setSavingAlt(false);
     }
   };
 
@@ -152,6 +170,9 @@ export default function MediaLibraryPage() {
 
   return (
     <div>
+      {loadError && (
+        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+      )}
       {imageEditor.dialog}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
@@ -349,16 +370,21 @@ export default function MediaLibraryPage() {
       {editing ? (
         <div
           className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4"
-          onClick={() => setEditing(null)}
+          onClick={formGuard.close}
         >
           <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("Image accessibility")}
+            tabIndex={-1}
             className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="text-lg font-bold text-slate-800">{t("Image accessibility")}</div>
               <button
-                onClick={() => setEditing(null)}
+                onClick={formGuard.close}
                 className="grid size-8 place-items-center rounded-lg text-slate-400"
               >
                 <X className="size-4" />
@@ -375,6 +401,7 @@ export default function MediaLibraryPage() {
               </span>
               <textarea
                 value={altText}
+                disabled={savingAlt}
                 onChange={(e) => setAltText(e.target.value)}
                 rows={3}
                 className="w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
@@ -383,6 +410,7 @@ export default function MediaLibraryPage() {
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => void saveAlt()}
+                disabled={savingAlt}
                 className="h-10 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
               >
                 {t("Save alt text")}

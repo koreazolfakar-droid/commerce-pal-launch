@@ -1,3 +1,4 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   ArrowLeft,
@@ -200,7 +201,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {error || t("Purchase order was not found.")}
         </div>
         <button
-          onClick={() => navigate("/dashboard/purchase-orders")}
+          onClick={() => navigate(dashboardListHref("/dashboard/purchase-orders"))}
           className="mt-4 rounded-xl bg-[#14203a] px-4 py-2 text-[11px] font-bold text-white"
         >
           {t("Back to Purchase Orders")}
@@ -220,7 +221,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <button
-            onClick={() => navigate("/dashboard/purchase-orders")}
+            onClick={() => navigate(dashboardListHref("/dashboard/purchase-orders"))}
             className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold text-slate-500 hover:text-slate-700"
           >
             <ArrowLeft className="size-3.5" />

@@ -45,6 +45,7 @@ export default function ContentAiAssist({
   onApply,
   entityId = "",
   pageSlug = "",
+  disabled = false,
 }: {
   entity: "collection" | "seo_page";
   query: string;
@@ -52,11 +53,13 @@ export default function ContentAiAssist({
   onApply: (patch: Record<string, string>) => void;
   entityId?: string;
   pageSlug?: string;
+  disabled?: boolean;
 }) {
   const fields = entity === "collection" ? collectionFields : seoFields;
   return (
     <AiAssistPanel
       entity={entity}
+      disabled={disabled}
       query={query}
       fields={fields}
       currentData={Object.fromEntries(

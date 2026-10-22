@@ -1,4 +1,40 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Search workspace": "البحث في مساحة العمل",
+  "Search sections, products, orders…": "ابحث في الأقسام والمنتجات والطلبات…",
+  "Workspace command center": "مركز البحث والانتقال",
+  "Find a record or move directly to your next task.":
+    "اعثر على سجل أو انتقل مباشرة إلى مهمتك التالية.",
+  "Close search": "إغلاق البحث",
+  "Search by name, order number, or section": "ابحث بالاسم أو رقم الطلب أو القسم",
+  Sections: "الأقسام",
+  "Recent sections": "الأقسام الأخيرة",
+  "No matches. Try a different name or number.": "لا توجد نتائج. جرّب اسمًا أو رقمًا آخر.",
+  "Searching workspace…": "جارٍ البحث في مساحة العمل…",
+  "Some results could not be loaded:": "تعذر تحميل بعض النتائج:",
+  "Use ↑ ↓ to navigate · Enter to open · Esc to close":
+    "استخدم ↑ ↓ للتنقل · Enter للفتح · Esc للإغلاق",
+  "Unable to refresh this section": "تعذر تحديث هذا القسم",
+  "Your existing data and unsaved edits are kept. Try again when the connection is available.":
+    "تم الاحتفاظ بالبيانات المعروضة وتعديلاتك غير المحفوظة. حاول مجددًا عند توفر الاتصال.",
+  "You are offline. Keep this page open to preserve your draft. Saving requires a connection.":
+    "أنت غير متصل. أبقِ الصفحة مفتوحة للحفاظ على المسودة؛ يتطلب الحفظ اتصالًا بالإنترنت.",
+  "List views": "عروض القائمة",
+  Views: "العروض",
+  "Save view": "حفظ العرض",
+  "View name": "اسم العرض",
+  "Remove view": "إزالة العرض",
+  "Needs confirmation": "بانتظار التأكيد",
+  "Ready for dispatch": "جاهز للإرسال",
+  "Blocked customers": "عملاء محظورون",
+  "Close supplier form": "إغلاق نموذج المورد",
+  "Close location form": "إغلاق نموذج الموقع",
+  "Product form overview": "مراجعة أقسام المنتج",
+  "No unsaved changes": "لا توجد تعديلات غير محفوظة",
+  "sections prepared": "أقسام مجهزة",
+  "Product sections": "أقسام المنتج",
+  "Jump to a section to review it. Optional content does not prevent saving a draft.":
+    "انتقل إلى أي قسم لمراجعته. لا يمنع المحتوى الاختياري حفظ المسودة.",
+
   "AI Assist": "مساعد الذكاء الاصطناعي",
   "Exact name or subject of the form": "الاسم الدقيق أو موضوع النموذج",
   "Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.":

@@ -17,7 +17,10 @@ const [
 ] = await Promise.all([
   readFile(new URL("../src/lib/productSpecifications.ts", import.meta.url), "utf8"),
   readFile(
-    new URL("../src/dashboard/components/categories/CategorySpecificationTemplateEditor.tsx", import.meta.url),
+    new URL(
+      "../src/dashboard/components/categories/CategorySpecificationTemplateEditor.tsx",
+      import.meta.url,
+    ),
     "utf8",
   ),
   readFile(
@@ -27,10 +30,7 @@ const [
   readFile(new URL("../src/routes/product.$handle.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/i18n.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
-  readFile(
-    new URL("../src/dashboard/hooks/useDashboardDialogFocus.ts", import.meta.url),
-    "utf8",
-  ),
+  readFile(new URL("../src/dashboard/hooks/useDashboardDialogFocus.ts", import.meta.url), "utf8"),
   readFile(
     new URL("../src/dashboard/components/DashboardConfirmDialog.tsx", import.meta.url),
     "utf8",
@@ -41,7 +41,10 @@ const [
   ),
   readFile(new URL("../src/dashboard/pages/SecurityPage.tsx", import.meta.url), "utf8"),
   readFile(
-    new URL("../supabase/migrations/20260928141000_bilingual_specification_source_of_truth.sql", import.meta.url),
+    new URL(
+      "../supabase/migrations/20260928141000_bilingual_specification_source_of_truth.sql",
+      import.meta.url,
+    ),
     "utf8",
   ),
 ]);
@@ -92,8 +95,7 @@ test("dashboard shell translates all current navigation and session controls", (
     assert.ok(dashboardI18n.includes(`${key}:`) || dashboardI18n.includes(`"${key}":`), key);
   }
   assert.match(dashboardApp, /t\("Sign out"\)/);
-  assert.match(dashboardApp, /t\("No brand"\)/);
-  assert.match(dashboardApp, /t\("Loading products…"\)/);
+  assert.match(dashboardApp, /DashboardCommandCenter/);
 });
 
 test("critical custom dashboard dialogs trap and restore keyboard focus", () => {
@@ -101,7 +103,8 @@ test("critical custom dashboard dialogs trap and restore keyboard focus", () => 
   assert.match(focusHook, /event\.key !== "Tab"/);
   assert.match(focusHook, /previous\?\.isConnected/);
   assert.match(focusHook, /event\.key === "Escape"/);
-  assert.match(confirmDialog, /useDashboardDialogFocus\(open, dialogRef/);
+  assert.match(confirmDialog, /useDashboardModal/);
+  assert.match(focusHook, /isTop/);
   assert.match(orderDrawer, /useDashboardDialogFocus\(Boolean\(orderId\), drawerRef, onClose\)/);
   assert.match(securityPage, /useDashboardDialogFocus\([\s\S]*passkeyDialogRef/);
 });

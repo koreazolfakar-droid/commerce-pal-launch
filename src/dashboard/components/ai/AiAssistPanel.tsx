@@ -120,6 +120,7 @@ export default function AiAssistPanel({
   compact = false,
   triggerLabel = "AI Assist",
   showSeoAction = true,
+  disabled = false,
 }: {
   entity: DashboardAiEntity;
   query: string;
@@ -130,6 +131,7 @@ export default function AiAssistPanel({
   compact?: boolean;
   triggerLabel?: string;
   showSeoAction?: boolean;
+  disabled?: boolean;
 }) {
   const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -188,50 +190,6 @@ export default function AiAssistPanel({
       trigger?.focus();
     };
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        setOpen(false);
-        return;
-      }
-      if (event.key !== "Tab") return;
-      event.stopImmediatePropagation();
-
-      const panel = panelRef.current;
-      if (!panel) return;
-      const focusable = Array.from(
-        panel.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
-      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
-
-      if (!focusable.length) {
-        event.preventDefault();
-        panel.focus();
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement;
-
-      if (event.shiftKey && (active === first || active === panel)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, [open, loadingAction, panelRef]);
 
   const fieldMap = useMemo(
     () => new Map(fields.map((field) => [field.key, field] as const)),
@@ -344,6 +302,7 @@ export default function AiAssistPanel({
       <button
         ref={triggerRef}
         type="button"
+        disabled={disabled}
         onClick={openPanel}
         className={
           compact
