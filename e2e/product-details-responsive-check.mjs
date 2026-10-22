@@ -51,12 +51,18 @@ try {
       assert.ok(purchase && nav && purchase.y + purchase.height <= nav.y + 1,
         "Sticky purchase bar overlaps navigation at " + item.width);
     }
+    const recommendationHandles = new Set();
     for (const id of ["similar-products", "more-from-brand"]) {
       const sectionElement = page.locator("#" + id).locator("..");
       if (!(await sectionElement.count())) continue;
-      const links = await sectionElement.locator('a[href^="/product/"]').evaluateAll((elements) =>
-        elements.map((element) => element.getAttribute("href")));
-      assert.equal(links.length, new Set(links).size, "Duplicate recommendations in " + id);
+      const handles = await sectionElement.locator('[data-testid="product-card"]').evaluateAll((cards) =>
+        cards.map((card) => card.querySelector('a[href^="/product/"]')?.getAttribute("href")).filter(Boolean));
+      assert.equal(handles.length, new Set(handles).size, "Duplicate cards in " + id);
+      for (const handle of handles) {
+        assert.ok(!recommendationHandles.has(handle), "Duplicate product across sections: " + handle);
+        assert.notEqual(handle, "/product/fixture-phone-1", "Current product appears in recommendations");
+        recommendationHandles.add(handle);
+      }
     }
     assert.equal(jsErrors.length, 0, jsErrors.join("\n"));
     await page.close();
