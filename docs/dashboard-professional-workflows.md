@@ -11,6 +11,7 @@ The dashboard now preserves the operator's place when moving between lists and d
 - Product section navigation, preparation indicators, and visible unsaved status. These indicators do not make optional content mandatory to save a draft.
 - Inline load failures and retry controls, an offline notice, denser mobile summary cards, and removal of the duplicate floating collection action.
 - Supplier creation respects the Active supplier checkbox. Receiving refreshes no longer overwrite entered quantities for the same deep-linked purchase order.
+- Restore tab-scoped production authentication storage with one-time legacy-session migration and an in-memory fallback when browser storage is blocked. Framed Lovable previews retain the current broker integration.
 - Five planned tools (promotions, marketing, coupons, reviews and messages) remain explanatory direct routes and are excluded from primary navigation and search. They are **not implemented business workflows**.
 
 ## Backend repairs already applied
@@ -28,9 +29,9 @@ No customer/order/catalog records were changed during the review. Existing secur
 
 - TypeScript (generated routes plus `tsc --noEmit`), ESLint, and production build.
 - `npm run test:dashboard:browser`: 28 navigation routes at mobile and Arabic dark tablet sizes; customer editing, dirty Back navigation, search races, keyboard behavior, list filtering/pagination/export, reporting period links, and five responsive widths.
-- `npm run test:dashboard:professional`: six unit tests and 15 browser workflow assertions covering URL recovery, local views, cross-record search, stale results, staff navigation, nested dialogs, protected drafts (including purchase orders), supplier state, retry, section focus, offline state, and Arabic mobile layout.
+- `npm run test:dashboard:professional`: seven unit tests and 15 browser workflow assertions covering session migration/blocked storage, URL recovery, local views, cross-record search, stale results, staff navigation, nested dialogs, protected drafts (including purchase orders), supplier state, retry, section focus, offline state, and Arabic mobile layout.
 - `npm run test:dashboard:ai`: 18 unit tests plus browser checks of all 46 specification slots across two batches, preservation of existing values, review before application, excluded operational fields, unknown facts, failed batches, cancelled requests, nested dialogs and bilingual collection/SEO assistance.
-- Full unit suite: **590 tests, 571 passed, 16 failed, 3 skipped**. The same 16 failures were reproduced on unmodified `main` (`5955c478`: 584 tests, 565 passed, 16 failed, 3 skipped); no additional failures. They include stale source-shape assertions in auth, dashboard and storefront tests and require separate reconciliation. The existing full CI remains enabled.
+- Full unit suite: **591 tests, 575 passed, 13 failed, 3 skipped**. Unmodified `main` (`5955c478`: 584 tests, 565 passed, 16 failed, 3 skipped) reproduces those 13 failures plus three authentication-storage failures fixed here. No additional failures were introduced. The remaining failures include source-shape assertions predating server RPCs in dashboard/storefront tests and require separate reconciliation. The existing full CI remains enabled.
 
 The new `Dashboard Workflows` action runs focused behavior checks, browser suites, type/lint checks and a production build. Run unit tests before starting Vite: the existing hero-scene test creates a Vite server and can invalidate a concurrently running development server's dependency cache.
 

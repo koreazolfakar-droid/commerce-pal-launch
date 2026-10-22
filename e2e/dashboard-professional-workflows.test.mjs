@@ -14,6 +14,68 @@ const { rememberDashboardList, dashboardListHref } = await load(
   "../src/dashboard/lib/listContext.ts",
 );
 const guards = await load("../src/dashboard/lib/unsavedChanges.ts");
+const { brokeredPreviewStorage } = await load("../src/integrations/supabase/previewAuthStorage.ts");
+test("production auth migrates legacy sessions once and tolerates blocked storage", () => {
+  const originalWindow = globalThis.window,
+    originalLocation = globalThis.location;
+  const key = "sb-rtwyankpxtffqqrasyzw-auth-token";
+  const storage = () => {
+    const values = new Map();
+    return {
+      getItem: (k) => values.get(k) ?? null,
+      setItem: (k, v) => values.set(k, v),
+      removeItem: (k) => values.delete(k),
+    };
+  };
+  try {
+    const local = storage(),
+      tab = storage();
+    local.setItem(key, "legacy-session");
+    globalThis.location = { hostname: "space-call.net" };
+    globalThis.window = { parent: null, localStorage: local, sessionStorage: tab };
+    assert.equal(brokeredPreviewStorage().getItem(key), "legacy-session");
+    assert.equal(local.getItem(key), null);
+    globalThis.window.sessionStorage = storage();
+    assert.equal(
+      brokeredPreviewStorage().getItem(key),
+      null,
+      "a new tab cannot resurrect the migrated token",
+    );
+    globalThis.window.sessionStorage = tab;
+    tab.setItem(key, "current-session");
+    local.setItem(key, "older-session");
+    assert.equal(brokeredPreviewStorage().getItem(key), "current-session");
+    assert.equal(local.getItem(key), null);
+    globalThis.location = {
+      hostname: "id-preview--00000000-0000-4000-8000-000000000001.lovableproject.com",
+      ancestorOrigins: ["https://lovable.dev"],
+    };
+    globalThis.window.parent = {};
+    local.setItem(key, "preview-session");
+    assert.notEqual(brokeredPreviewStorage(), tab, "framed editor previews retain their broker");
+    assert.equal(local.getItem(key), "preview-session");
+    globalThis.location = { hostname: "space-call.net" };
+    globalThis.window.parent = null;
+    local.setItem(key, "blocked-legacy");
+    Object.defineProperty(globalThis.window, "sessionStorage", {
+      get() {
+        throw new Error("Storage blocked");
+      },
+      configurable: true,
+    });
+    const memory = brokeredPreviewStorage();
+    memory.setItem(key, "in-memory");
+    assert.equal(memory.getItem(key), "in-memory");
+    assert.equal(local.getItem(key), null);
+    memory.removeItem(key);
+    assert.equal(memory.getItem(key), null);
+    globalThis.window = undefined;
+    assert.equal(brokeredPreviewStorage(), undefined);
+  } finally {
+    globalThis.window = originalWindow;
+    globalThis.location = originalLocation;
+  }
+});
 test("URL list state rejects invalid pages, values, limits and booleans", () => {
   for (const value of ["-1", "0", "Infinity", "NaN", "2.5", "2000000"])
     assert.equal(readQueryValue(new URLSearchParams({ page: value }), "page", 1), 1);
