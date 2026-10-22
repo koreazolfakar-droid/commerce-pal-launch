@@ -1,12 +1,14 @@
 # Space Call AI Admin Copilot
 
-## Phase 1 scope
+## Supported forms
 
-The first production-safe phase connects one reusable AI assistant to:
+One reusable AI assistant is connected to:
 
 - Products
 - Categories
 - Brands
+- Collections (create and edit)
+- SEO pages (English and Arabic metadata)
 
 The assistant supports:
 
@@ -26,6 +28,11 @@ The assistant supports:
 - source links with official-domain recognition and source quality scoring
 - preview and explicit Apply Selected before the normal form save
 - unchanged or non-meaningful suggestions blocked from application
+- optional reference text (up to 12,000 characters), with literal quotations shown separately from web evidence
+- complete-form filling that preserves populated fields by default, with an explicit mode to propose improvements
+- every category specification slot, processed in bounded batches of at most 40 fields and 60 KB of UTF-8 JSON instead of silently dropping fields after the first 40
+- progress, content-field completeness and reasons for fields that still need information
+- request cancellation when closing the panel and protection against overwriting edits made after research began
 
 Research and SEO actions never mutate the form by themselves. Apply Selected changes local draft fields only, and the AI never persists form changes directly.
 
@@ -52,7 +59,15 @@ Dashboard form
   -> existing form save flow
 ```
 
-The existing Product, Category and Brand save functions remain the only paths that persist catalog changes.
+The existing form save functions remain the only paths that persist changes. No AI result is saved automatically. If any batch fails, the request shows an error without applying earlier batches.
+
+For product specifications, select the category first so its specification template is available. Prices, stock and media remain in their normal form controls and are excluded from the assistant's completeness count.
+
+## Rollout and local checks
+
+Deploy `supabase/functions/dashboard-ai-assist` from the same commit before enabling the updated dashboard. The function now imports `formEvidence.ts` as well as `access.ts`. Preserve `verify_jwt = true` and the existing server-side provider secrets. No schema migration is required. The server remains compatible with older requests that omit reference text, fill mode and language.
+
+Run `npm run test:dashboard:ai` with the local Vite server on port 5173 (or set `SPACE_CALL_DASHBOARD_ORIGIN`). Browser checks use synthetic staff authentication and intercepted API responses, and never call a real model or persist catalog changes. A live provider smoke check requires an authorized staff session and is separate from these checks.
 
 ## Gemini configuration
 
@@ -78,7 +93,7 @@ As of September 2026, Gemini API Free Tier access depends on the selected model/
 - https://ai.google.dev/gemini-api/docs/google-search
 - https://ai.google.dev/gemini-api/docs/interactions-overview
 
-## Data sent to Gemini in Phase 1
+## Data sent to the model
 
 Only server-allowlisted catalog data can be included.
 
@@ -92,6 +107,7 @@ Only server-allowlisted catalog data can be included.
 - SEO title
 - SEO description
 - the names/slugs of available brands and categories
+- specification field definitions from the selected category template
 
 ### Category
 
@@ -114,11 +130,24 @@ Only server-allowlisted catalog data can be included.
 - SEO description
 - existing brand names/slugs
 
+### Collection
+
+- English and Arabic titles
+- URL handle (requires review and a read-only uniqueness check)
+- description, SEO title and meta description
+
+### SEO page
+
+- English and Arabic titles and meta descriptions
+- page slug as context only, not as an editable AI field
+
+For each supported entity, staff may optionally provide reference text. The prompt treats it as untrusted data, never as instructions. The response language follows the dashboard language; explicitly bilingual fields keep their own language.
+
 The Edge Function rejects fields outside these entity-specific allowlists even if a modified browser client sends them.
 
 ## Protected data
 
-Phase 1 intentionally blocks AI control of operational or sensitive fields, including:
+The assistant blocks AI control of operational or sensitive fields, including:
 
 - selling price
 - compare-at price
@@ -132,7 +161,7 @@ Phase 1 intentionally blocks AI control of operational or sensitive fields, incl
 - passwords
 - user IDs
 
-Orders, customers and other personal/customer data are not part of the Phase 1 AI entity allowlist.
+Orders, customers and other personal/customer data are not part of the AI entity allowlist.
 
 ## Research trust rules
 
@@ -152,6 +181,8 @@ The prompt, response normalizer and verification engine enforce these rules:
 12. Improve SEO is constrained server-side to SEO title/description fields, instead of trusting the model to respect the UI action.
 13. Suggestions that are identical or not meaningfully different from the current value are blocked.
 14. The Edge Function performs catalog validation reads only; it never writes AI results to Supabase.
+15. An ungrounded product specification may be offered for manual review only when the entity match is exact and its proposed value appears literally in a quotation from the staff-supplied reference text. It remains unverified and is never selected automatically. A substring such as “8 GB” inside “128 GB” is rejected as evidence.
+16. Missing or blocked facts remain empty with an explanation. Completeness measures existing values and selected eligible suggestions, not independent verification of every value.
 
 ## Failure behavior
 
@@ -169,7 +200,7 @@ Gemini is an enhancement, not a dependency.
 The catalog assistant now uses the Phase 2 verification engine. Future extensions should reuse the same risk/decision contract rather than creating separate AI paths:
 
 1. Optional staff feedback telemetry for accepted/rejected suggestions, with an explicit retention/privacy design before any adaptive learning is enabled.
-2. Media, Hero/Banners and CMS/SEO.
+2. Media, Hero/Banners and additional CMS forms.
 3. Inventory, Receiving and Purchase Orders — advisory/validation only for quantities.
 4. Orders, Customers and Sales — with stricter privacy rules and no Free Tier processing of personal customer data.
 5. Search aliases, internal linking, catalog-wide SEO audits, optional request caching, quotas and durable AI audit telemetry.

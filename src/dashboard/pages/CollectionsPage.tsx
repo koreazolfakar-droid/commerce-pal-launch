@@ -1,3 +1,4 @@
+import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import {
@@ -146,7 +147,11 @@ export default function CollectionsPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <PageTitle eyebrow="Catalog / Collections" title="Collections" description="Real storefront collections powered by Supabase." />
+          <PageTitle
+            eyebrow="Catalog / Collections"
+            title="Collections"
+            description="Real storefront collections powered by Supabase."
+          />
         </div>
         <div className="flex gap-2">
           <button
@@ -315,6 +320,14 @@ export default function CollectionsPage() {
               >
                 <X className="size-4" />
               </button>
+            </div>
+            <div className="border-b border-slate-100 px-6 py-3">
+              <ContentAiAssist
+                entity="collection"
+                query={draft.title}
+                values={draft}
+                onApply={(patch) => setDraft((current) => ({ ...current, ...patch }))}
+              />
             </div>
             <div className="grid gap-4 p-6 sm:grid-cols-2">
               <label>

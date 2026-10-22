@@ -1,4 +1,4 @@
-export type DashboardAiEntity = "product" | "category" | "brand";
+export type DashboardAiEntity = "product" | "category" | "brand" | "collection" | "seo_page";
 
 export type DashboardAiAction = "research_fill" | "seo" | "validate";
 
@@ -18,6 +18,9 @@ export type DashboardAiRequest = {
   entity: DashboardAiEntity;
   action: DashboardAiAction;
   query: string;
+  sourceText?: string;
+  language?: "en" | "ar";
+  fillMode?: "empty" | "all";
   currentData: Record<string, string>;
   fields: DashboardAiFieldDefinition[];
   context?: Record<string, unknown>;
@@ -33,6 +36,7 @@ export type DashboardAiSuggestion = {
   decision: DashboardAiDecision;
   checks: string[];
   sourceUrls: string[];
+  inputQuote?: string;
 };
 
 export type DashboardAiSource = {
@@ -58,4 +62,5 @@ export type DashboardAiResponse = {
   suggestions: DashboardAiSuggestion[];
   warnings: string[];
   sources: DashboardAiSource[];
+  missingFields?: { field: string; reason: string }[];
 };

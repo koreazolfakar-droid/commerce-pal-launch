@@ -1,3 +1,5 @@
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import { formCompletion, hasFieldChanged } from "@/dashboard/ai/formFill";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   AlertTriangle,
@@ -129,14 +131,21 @@ export default function AiAssistPanel({
   triggerLabel?: string;
   showSeoAction?: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
   const [researchQuery, setResearchQuery] = useState(query);
+  const [sourceText, setSourceText] = useState("");
+  const [fillMode, setFillMode] = useState<"empty" | "all">("empty");
+  const [requestError, setRequestError] = useState("");
+  const [progress, setProgress] = useState({ completed: 0, total: 0 });
+  const requestController = useRef<AbortController | null>(null);
+  const requestValues = useRef<Record<string, string> | null>(null);
+  const resultFillMode = useRef<"empty" | "all">("empty");
   const [loadingAction, setLoadingAction] = useState<DashboardAiAction | null>(null);
   const [result, setResult] = useState<DashboardAiResponse | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useDashboardModal(() => setOpen(false), open);
   const queryInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
   const dialogTitleId = useId();
@@ -144,11 +153,27 @@ export default function AiAssistPanel({
   const openPanel = () => {
     requestIdRef.current += 1;
     setResearchQuery(query);
+    setRequestError("");
+    requestValues.current = null;
     setLoadingAction(null);
     setResult(null);
     setSelected(new Set());
     setOpen(true);
   };
+
+  useEffect(
+    () => () => {
+      requestController.current?.abort();
+      requestIdRef.current += 1;
+    },
+    [],
+  );
+  useEffect(() => {
+    if (open) return;
+    requestController.current?.abort();
+    requestIdRef.current += 1;
+    setLoadingAction(null);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -169,10 +194,13 @@ export default function AiAssistPanel({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (!loadingAction) setOpen(false);
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setOpen(false);
         return;
       }
       if (event.key !== "Tab") return;
+      event.stopImmediatePropagation();
 
       const panel = panelRef.current;
       if (!panel) return;
@@ -201,28 +229,74 @@ export default function AiAssistPanel({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, loadingAction]);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [open, loadingAction, panelRef]);
 
   const fieldMap = useMemo(
     () => new Map(fields.map((field) => [field.key, field] as const)),
     [fields],
   );
 
+  const localIssue = (
+    suggestion: DashboardAiResponse["suggestions"][number],
+    definition: DashboardAiFieldDefinition,
+  ) => {
+    if (
+      requestValues.current &&
+      hasFieldChanged(suggestion.field, requestValues.current, currentData)
+    )
+      return "This field changed after research. Run the assistant again to avoid overwriting your edits.";
+    if (resultFillMode.current === "empty" && (currentData[suggestion.field] ?? "").trim())
+      return "Existing value is protected by fill-empty mode.";
+    return suggestionIssue({
+      field: suggestion.field,
+      value: suggestion.value,
+      currentData,
+      definition,
+      context,
+    });
+  };
+
+  const eligibleSuggestions = (result?.suggestions ?? []).filter((item) => {
+    const definition = fieldMap.get(item.field);
+    return definition && item.decision !== "block" && !localIssue(item, definition);
+  });
+  const completion = formCompletion(fields, currentData, eligibleSuggestions, selected);
+
   const run = async (action: DashboardAiAction) => {
     if (loadingAction) return;
     const requestId = ++requestIdRef.current;
+    requestController.current?.abort();
+    const controller = new AbortController();
+    requestController.current = controller;
+    requestValues.current = { ...currentData };
+    resultFillMode.current = action === "research_fill" ? fillMode : "all";
     setLoadingAction(action);
+    setRequestError("");
+    setResult(null);
+    setSelected(new Set());
+    setProgress({ completed: 0, total: 0 });
     try {
-      const response = await requestDashboardAiAssist({
-        entity,
-        action,
-        query: researchQuery,
-        currentData,
-        fields,
-        context,
-      });
+      const response = await requestDashboardAiAssist(
+        {
+          entity,
+          action,
+          query: researchQuery,
+          sourceText,
+          language: lang,
+          fillMode: action === "research_fill" ? fillMode : "all",
+          currentData,
+          fields,
+          context,
+        },
+        {
+          signal: controller.signal,
+          onProgress: (completed, total) => {
+            if (requestId === requestIdRef.current) setProgress({ completed, total });
+          },
+        },
+      );
       if (requestId !== requestIdRef.current) return;
       setResult(response);
       const safeSuggestions = response.suggestions.filter((suggestion) => {
@@ -230,19 +304,15 @@ export default function AiAssistPanel({
         return (
           definition &&
           suggestion.decision === "allow" &&
-          !suggestionIssue({
-            field: suggestion.field,
-            value: suggestion.value,
-            currentData,
-            definition,
-            context,
-          })
+          !definition.review &&
+          !localIssue(suggestion, definition)
         );
       });
       setSelected(new Set(safeSuggestions.map((suggestion) => suggestion.field)));
     } catch (cause) {
       if (requestId !== requestIdRef.current) return;
-      toast.error(cause instanceof Error ? cause.message : "AI assistant failed.");
+      if (!controller.signal.aborted)
+        setRequestError(cause instanceof Error ? cause.message : "AI assistant failed.");
     } finally {
       if (requestId === requestIdRef.current) setLoadingAction(null);
     }
@@ -255,23 +325,17 @@ export default function AiAssistPanel({
       if (!selected.has(suggestion.field)) continue;
       const definition = fieldMap.get(suggestion.field);
       if (!definition) continue;
-      const issue = suggestionIssue({
-        field: suggestion.field,
-        value: suggestion.value,
-        currentData,
-        definition,
-        context,
-      });
+      const issue = localIssue(suggestion, definition);
       if (!issue && suggestion.decision !== "block") {
         patch[suggestion.field] = suggestion.value;
       }
     }
     if (!Object.keys(patch).length) {
-      toast.info("Select at least one AI suggestion.");
+      toast.info(t("Select at least one AI suggestion."));
       return;
     }
     onApply(patch);
-    toast.success("AI suggestions applied to the form. Review them before saving.");
+    toast.success(t("AI suggestions applied to the form. Review them before saving."));
     setOpen(false);
   };
 
@@ -288,7 +352,7 @@ export default function AiAssistPanel({
         }
       >
         <Sparkles className="size-3.5" />
-        {triggerLabel}
+        {t(triggerLabel)}
       </button>
 
       {open && typeof document !== "undefined"
@@ -296,7 +360,7 @@ export default function AiAssistPanel({
             <div
               className="fixed inset-0 z-[120] flex items-end justify-end bg-slate-950/45 backdrop-blur-[2px]"
               onMouseDown={(event) => {
-                if (event.target === event.currentTarget && !loadingAction) setOpen(false);
+                if (event.target === event.currentTarget) setOpen(false);
               }}
             >
               <div
@@ -305,7 +369,8 @@ export default function AiAssistPanel({
                 aria-modal="true"
                 aria-labelledby={dialogTitleId}
                 tabIndex={-1}
-                className="flex max-h-[96vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:m-4 sm:max-w-xl sm:rounded-2xl"
+                dir={lang === "ar" ? "rtl" : "ltr"}
+                className="dashboard-theme-scope flex max-h-[96dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:m-4 sm:max-w-xl sm:rounded-2xl"
               >
                 <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
                   <div>
@@ -319,7 +384,7 @@ export default function AiAssistPanel({
                     >
                       {t("Research, fill and improve")}
                     </h2>
-                    <p className="mt-1 text-[10px] leading-4 text-slate-400">
+                    <p className="mt-1 text-xs leading-5 text-slate-400">
                       {t(
                         "Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.",
                       )}
@@ -328,7 +393,6 @@ export default function AiAssistPanel({
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    disabled={Boolean(loadingAction)}
                     aria-label={t("Close AI assistant")}
                     className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 disabled:opacity-50"
                   >
@@ -343,24 +407,128 @@ export default function AiAssistPanel({
                     </span>
                     <input
                       ref={queryInputRef}
+                      maxLength={500}
                       value={researchQuery}
                       onChange={(event) => {
                         requestIdRef.current += 1;
+                        requestController.current?.abort();
                         setResearchQuery(event.target.value);
                         setLoadingAction(null);
                         setResult(null);
                         setSelected(new Set());
                       }}
-                      placeholder={t("Exact product, category or brand name")}
+                      placeholder={t("Exact name or subject of the form")}
                       className="h-11 w-full rounded-xl border border-slate-200 px-3 text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </label>
+
+                  <label className="mt-4 block">
+                    <span className="mb-1.5 block text-xs font-bold text-foreground">
+                      {t("Source information and specifications")}
+                    </span>
+                    <textarea
+                      aria-label={t("Source information and specifications")}
+                      value={sourceText}
+                      maxLength={12000}
+                      disabled={Boolean(loadingAction)}
+                      onChange={(event) => {
+                        setSourceText(event.target.value);
+                        setResult(null);
+                        setSelected(new Set());
+                      }}
+                      placeholder={t(
+                        "Paste the product sheet, model details, specifications, or a brief describing what to fill.",
+                      )}
+                      className="min-h-32 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground"
+                    />
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {t("Optional reference text; web research can also be used.")}{" "}
+                      <bdi dir="ltr" className="whitespace-nowrap">
+                        {sourceText.length.toLocaleString(lang)} / 12,000
+                      </bdi>{" "}
+                      · {t("Supplied information is shown separately from verified web sources.")}
+                    </span>
+                  </label>
+                  <fieldset className="mt-4 rounded-xl border border-border p-3">
+                    <legend className="px-1 text-xs font-bold text-foreground">
+                      {t("Research & Fill behavior")}
+                    </legend>
+                    <div className="flex flex-wrap gap-4">
+                      {(["empty", "all"] as const).map((mode) => (
+                        <label
+                          key={mode}
+                          className="flex items-center gap-2 text-xs text-foreground"
+                        >
+                          <input
+                            type="radio"
+                            name={`${dialogTitleId}-fill-mode`}
+                            value={mode}
+                            checked={fillMode === mode}
+                            disabled={Boolean(loadingAction)}
+                            onChange={() => {
+                              setFillMode(mode);
+                              setResult(null);
+                              setSelected(new Set());
+                            }}
+                          />
+                          {t(
+                            mode === "empty"
+                              ? "Fill empty fields only"
+                              : "Also improve existing fields",
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <div
+                    className="mt-4 rounded-xl border border-border bg-card p-3"
+                    aria-label={t("Form completeness")}
+                  >
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <strong>{t("Form completeness")}</strong>
+                      <span role="status">
+                        <bdi dir="ltr">
+                          {completion.completed} / {completion.total}
+                        </bdi>{" "}
+                        {t("fields ready")}
+                      </span>
+                    </div>
+                    <progress
+                      max={Math.max(1, completion.total)}
+                      value={completion.completed}
+                      className="mt-2 h-2 w-full accent-indigo-500"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t(
+                        "Counts include current values and selected suggestions. Review factual values before saving.",
+                      )}{" "}
+                      {t("Tracks the content fields supported by this assistant.")}
+                    </p>
+                  </div>
+                  {requestError && (
+                    <div
+                      role="alert"
+                      className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                    >
+                      {t(requestError)}
+                    </div>
+                  )}
+                  {loadingAction && (
+                    <div
+                      role="status"
+                      className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
+                    >
+                      <Loader2 className="size-4 animate-spin" />
+                      {t("Completing all requested fields…")}{" "}
+                      {progress.total > 1 ? `${progress.completed} / ${progress.total}` : ""}
+                    </div>
+                  )}
 
                   <div
                     className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-3" : "grid-cols-2"}`}
                   >
                     <ActionButton
-                      label={t("Research & Fill")}
+                      label={t("Complete form")}
                       icon={<Search className="size-3.5" />}
                       active={loadingAction === "research_fill"}
                       disabled={Boolean(loadingAction)}
@@ -450,17 +618,72 @@ export default function AiAssistPanel({
                         </div>
                       ) : null}
 
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        <button
+                          type="button"
+                          className="dashboard-button"
+                          onClick={() =>
+                            setSelected(
+                              new Set(
+                                eligibleSuggestions
+                                  .filter(
+                                    (item) =>
+                                      item.decision === "allow" &&
+                                      !fieldMap.get(item.field)?.review,
+                                  )
+                                  .map((item) => item.field),
+                              ),
+                            )
+                          }
+                        >
+                          {t("Select safe suggestions")}
+                        </button>
+                        <button
+                          type="button"
+                          className="dashboard-button"
+                          onClick={() =>
+                            setSelected(new Set(eligibleSuggestions.map((item) => item.field)))
+                          }
+                        >
+                          {t("Select all for review")}
+                        </button>
+                        <button
+                          type="button"
+                          className="dashboard-button"
+                          onClick={() => setSelected(new Set())}
+                        >
+                          {t("Clear selection")}
+                        </button>
+                        <span className="text-muted-foreground">
+                          {selected.size} {t("selected")}
+                        </span>
+                      </div>
+                      {completion.missing.length > 0 && (
+                        <details className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                          <summary className="cursor-pointer text-xs font-bold text-amber-800">
+                            {t("Fields still needing information")} ({completion.missing.length})
+                          </summary>
+                          <ul className="mt-2 space-y-2 text-xs text-amber-800">
+                            {completion.missing.map((field) => (
+                              <li key={field.key}>
+                                <strong>{t(field.label)}</strong>
+                                <span className="block">
+                                  {t(
+                                    result.missingFields?.find((item) => item.field === field.key)
+                                      ?.reason ||
+                                      "Add a reliable source, select a suggestion for review, or enter this value manually.",
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
                       <div className="space-y-2">
                         {result.suggestions.map((suggestion) => {
                           const definition = fieldMap.get(suggestion.field);
                           if (!definition) return null;
-                          const issue = suggestionIssue({
-                            field: suggestion.field,
-                            value: suggestion.value,
-                            currentData,
-                            definition,
-                            context,
-                          });
+                          const issue = localIssue(suggestion, definition);
                           const noChange =
                             issue === "No change" ||
                             suggestion.checks.includes(
@@ -475,6 +698,7 @@ export default function AiAssistPanel({
                           return (
                             <label
                               key={suggestion.field}
+                              data-ai-field={suggestion.field}
                               className={
                                 "block rounded-xl border p-3 transition " +
                                 (blocked
@@ -487,6 +711,7 @@ export default function AiAssistPanel({
                               <div className="flex items-start gap-3">
                                 <input
                                   type="checkbox"
+                                  aria-label={t(definition.label)}
                                   checked={checked}
                                   disabled={blocked}
                                   onChange={() =>
@@ -502,7 +727,7 @@ export default function AiAssistPanel({
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-[11px] font-black text-slate-700">
-                                      {definition.label}
+                                      {t(definition.label)}
                                     </span>
                                     <span
                                       className={
@@ -551,6 +776,14 @@ export default function AiAssistPanel({
                                   <div className="mt-1.5 whitespace-pre-wrap break-words text-[11px] font-semibold leading-5 text-slate-700">
                                     {suggestion.value}
                                   </div>
+                                  {suggestion.inputQuote && (
+                                    <blockquote className="mt-2 border-s-2 border-indigo-300 ps-2 text-xs text-muted-foreground">
+                                      <strong>{t("From supplied information")}</strong>
+                                      <p className="mt-1 whitespace-pre-wrap break-words">
+                                        {suggestion.inputQuote}
+                                      </p>
+                                    </blockquote>
+                                  )}
                                   {suggestion.reason ? (
                                     <div className="mt-1 text-[9px] leading-4 text-slate-400">
                                       {suggestion.reason}
@@ -640,7 +873,7 @@ export default function AiAssistPanel({
                 </div>
 
                 <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-4">
-                  <div className="text-[9px] leading-4 text-slate-400">
+                  <div className="text-[11px] leading-5 text-slate-400">
                     {t(
                       "Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.",
                     )}
@@ -648,11 +881,16 @@ export default function AiAssistPanel({
                   <button
                     type="button"
                     onClick={applySelected}
-                    disabled={!result || !selected.size || Boolean(loadingAction)}
+                    disabled={
+                      !result ||
+                      !eligibleSuggestions.some((item) => selected.has(item.field)) ||
+                      Boolean(loadingAction)
+                    }
                     className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40"
                   >
                     <Check className="size-3.5" />
-                    {t("Apply selected")}
+                    {t("Apply selected")} (
+                    {eligibleSuggestions.filter((item) => selected.has(item.field)).length})
                   </button>
                 </div>
               </div>
@@ -683,7 +921,7 @@ function ActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 text-center text-[9px] font-black text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 disabled:opacity-50"
+      className="flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 text-center text-[11px] font-black text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 disabled:opacity-50"
     >
       {active ? <Loader2 className="size-3.5 animate-spin text-indigo-600" /> : icon}
       {t(label)}

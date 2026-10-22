@@ -1,3 +1,4 @@
+import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import {
@@ -250,7 +251,14 @@ export default function CollectionDetailPage({ id }: { id: string }) {
             {collection.isActive ? t("Active") : t("Draft")}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <ContentAiAssist
+            entity="collection"
+            query={form.title}
+            values={form}
+            entityId={id}
+            onApply={(patch) => setForm((current) => ({ ...current, ...patch }))}
+          />
           <button
             onClick={() =>
               document

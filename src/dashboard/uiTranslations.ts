@@ -1,4 +1,51 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "AI Assist": "مساعد الذكاء الاصطناعي",
+  "Exact name or subject of the form": "الاسم الدقيق أو موضوع النموذج",
+  "Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.":
+    "يجهّز المساعد مقترحات للمراجعة. طبّق المقترحات التي تختارها، ثم احفظ النموذج عندما تتأكد من المعلومات.",
+  "Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.":
+    "التطبيق يعبئ المسودة فقط. احفظ النموذج بعد المراجعة؛ يظل السعر والمخزون والصلاحيات وحالة الطلب خارج التعبئة.",
+  "Select at least one AI suggestion.": "حدد مقترحًا واحدًا على الأقل.",
+  "AI suggestions applied to the form. Review them before saving.":
+    "تمت تعبئة النموذج بالمقترحات المحددة. راجعها قبل الحفظ.",
+  "The form context is too large. Shorten the supplied information and try again.":
+    "معلومات النموذج كبيرة جدًا. اختصر النص المرجعي وحاول مجددًا.",
+  "Complete form": "إكمال النموذج",
+  "Source information and specifications": "المعلومات والمواصفات المرجعية",
+  "Optional reference text; web research can also be used.":
+    "نص مرجعي اختياري؛ يمكنك الاعتماد على البحث في الويب أيضًا.",
+  "Tracks the content fields supported by this assistant.":
+    "يتابع خانات المحتوى التي يدعمها المساعد في هذا النموذج.",
+  "Paste the product sheet, model details, specifications, or a brief describing what to fill.":
+    "الصق ورقة المنتج أو تفاصيل الموديل والمواصفات أو وصفًا للمعلومات المطلوب تعبئتها.",
+  "Supplied information is shown separately from verified web sources.":
+    "تظهر المعلومات التي أدخلتها بشكل منفصل عن المصادر التي تم التحقق منها على الويب.",
+  "Research & Fill behavior": "طريقة تعبئة المعلومات",
+  "Fill empty fields only": "تعبئة الخانات الفارغة فقط",
+  "Also improve existing fields": "تحسين الخانات المعبأة أيضًا",
+  "Form completeness": "اكتمال النموذج",
+  "fields ready": "خانات جاهزة",
+  "Counts include current values and selected suggestions. Review factual values before saving.":
+    "يشمل العدد القيم الحالية والمقترحات المحددة. راجع المعلومات قبل الحفظ.",
+  "Completing all requested fields…": "جارٍ استكمال جميع الخانات المطلوبة…",
+  "Select safe suggestions": "تحديد المقترحات الموثوقة",
+  "Select all for review": "تحديد الكل للمراجعة",
+  "Fields still needing information": "خانات ما زالت تحتاج معلومات",
+  "Add a reliable source, select a suggestion for review, or enter this value manually.":
+    "أضف مصدرًا موثوقًا أو حدد المقترح بعد مراجعته أو أدخل القيمة يدويًا.",
+  "From supplied information": "من المعلومات التي أدخلتها",
+  "Enter the name or subject of this form first.": "أدخل اسم المنتج أو موضوع النموذج أولًا.",
+  "No empty fields to complete. Choose improve existing fields to review changes.":
+    "لا توجد خانات فارغة لإكمالها. اختر تحسين الخانات المعبأة لمراجعة التعديلات.",
+  "This field changed after research. Run the assistant again to avoid overwriting your edits.":
+    "تغيّرت هذه الخانة بعد بدء البحث. أعد تشغيل المساعد للحفاظ على تعديلك.",
+  "Existing value is protected by fill-empty mode.":
+    "القيمة الحالية محفوظة في وضع تعبئة الخانات الفارغة.",
+  "Not enough reliable information. Add a source or enter this value manually.":
+    "لا تتوفر معلومات موثوقة كافية. أضف مصدرًا أو أدخل هذه القيمة يدويًا.",
+  "Source information must be 12,000 characters or fewer.":
+    "يجب ألا يتجاوز النص المرجعي ١٢٬٠٠٠ حرف.",
+
   "This section could not be opened.": "تعذر فتح هذا القسم.",
   "Reload this section or return to the dashboard to continue.":
     "أعد تحميل القسم أو ارجع إلى لوحة التحكم للمتابعة.",

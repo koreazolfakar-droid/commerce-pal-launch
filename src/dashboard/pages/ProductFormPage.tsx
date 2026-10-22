@@ -244,7 +244,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
       collections.filter(
         (collection) =>
           collectionIds.includes(collection.id) ||
-          collection.title.toLocaleLowerCase().includes(collectionSearch.trim().toLocaleLowerCase()),
+          collection.title
+            .toLocaleLowerCase()
+            .includes(collectionSearch.trim().toLocaleLowerCase()),
       ),
     [collections, collectionIds, collectionSearch],
   );
@@ -411,8 +413,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
       return;
     }
     const baseHandle =
-      title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") ||
-      `collection-${crypto.randomUUID().slice(0, 8)}`;
+      title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || `collection-${crypto.randomUUID().slice(0, 8)}`;
     const usedHandles = new Set(collections.map((collection) => collection.handle.toLowerCase()));
     let handle = baseHandle;
     let suffix = 2;
@@ -1042,13 +1046,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     value={form.brandId}
                     onChange={(value) => update("brandId", value)}
                   >
-                  <option value="">{t("No brand")}</option>
-                  {visibleBrands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                      {brand.active ? "" : t(" (Hidden)")}
-                    </option>
-                  ))}
+                    <option value="">{t("No brand")}</option>
+                    {visibleBrands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}
+                        {brand.active ? "" : t(" (Hidden)")}
+                      </option>
+                    ))}
                   </SelectField>
                   {role === "admin" ? (
                     <div className="space-y-2">
@@ -1092,17 +1096,17 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
                   />
                   <SelectField
-                  label={t("Category")}
-                  value={form.categoryId}
-                  onChange={changeCategory}
-                >
-                  <option value="">{t("No category")}</option>
-                  {visibleCategories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                      {category.active ? "" : t(" (Hidden)")}
-                    </option>
-                  ))}
+                    label={t("Category")}
+                    value={form.categoryId}
+                    onChange={changeCategory}
+                  >
+                    <option value="">{t("No category")}</option>
+                    {visibleCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                        {category.active ? "" : t(" (Hidden)")}
+                      </option>
+                    ))}
                   </SelectField>
                 </div>
                 <SelectField
@@ -1355,7 +1359,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     </div>
                     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                       {pendingImages.map((pending, index) => (
-                        <div key={pending.preview} className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <div
+                          key={pending.preview}
+                          className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white"
+                        >
                           <img
                             src={pending.preview}
                             alt={pending.file.name}
@@ -1432,7 +1439,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
       {!id ? (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-          <div className="mb-3 text-sm font-bold text-slate-700">{t("Save as Draft")} / {t("Publish Product")}</div>
+          <div className="mb-3 text-sm font-bold text-slate-700">
+            {t("Save as Draft")} / {t("Publish Product")}
+          </div>
           {renderCreateActions("footer")}
         </div>
       ) : null}
@@ -1532,6 +1541,7 @@ function SelectField({
     <label className="block">
       <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <select
+        aria-label={t(label)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"

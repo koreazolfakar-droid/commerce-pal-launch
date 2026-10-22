@@ -157,6 +157,7 @@ export default function ProductSpecificationEditor({
                         </span>
                       </span>
                       <input
+                        aria-label={field.label}
                         value={values[field.key] ?? ""}
                         onChange={(event) => onChange(field.key, event.target.value)}
                         placeholder={
