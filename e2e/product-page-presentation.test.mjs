@@ -15,16 +15,16 @@ const product = (handle, id, vendor = "ACEFAST") => ({ node: { id, handle, vendo
 test("recommendations never repeat the current item or a handle / ID across sections", () => {
   const current = product("charger", "id-current");
   const a = product("product-a", "id-a");
-  const b = product("product-b", "id-b");
+  const b = product("product-b", "id-b", "Other");
   const c = product("product-c", "id-c");
   const { similar, sameVendor } = buildProductSuggestions({
     current,
-    recommendations: [current, a, a, product("PRODUCT-A", "new-id"), b],
-    vendorProducts: [current, a, b, c, product("product-d", "id-c")],
+    recommendations: [current, a, a, product("PRODUCT-A", "new-id"), b, c],
+    vendorProducts: [current, a, c, product("product-d", "id-c")],
     limit: 3,
   });
-  assert.deepEqual(similar.map((p) => p.node.handle), ["product-a", "product-b", "product-c"]);
-  assert.deepEqual(sameVendor.map((p) => p.node.handle), []);
+  assert.deepEqual(similar.map((p) => p.node.handle), ["product-b"]);
+  assert.deepEqual(sameVendor.map((p) => p.node.handle), ["product-a", "product-c"]);
   assert.equal(new Set([...similar, ...sameVendor].map((p) => p.node.id)).size, 3);
 });
 
@@ -35,8 +35,8 @@ test("second brand rail shows only genuinely new products", () => {
     vendorProducts: [product("two", "2"), product("three", "3"), product("four", "4")],
     limit: 2,
   });
-  assert.deepEqual(similar.map((p) => p.node.handle), ["one", "two"]);
-  assert.deepEqual(sameVendor.map((p) => p.node.handle), ["three", "four"]);
+  assert.deepEqual(similar.map((p) => p.node.handle), ["one"]);
+  assert.deepEqual(sameVendor.map((p) => p.node.handle), ["two", "three"]);
 });
 
 test("no brand rail for blank or mismatched vendor; empty results stay hidden", () => {
