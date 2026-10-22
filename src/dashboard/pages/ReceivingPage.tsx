@@ -1,3 +1,5 @@
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   AlertTriangle,
@@ -14,7 +16,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -143,10 +145,10 @@ export default function ReceivingPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [panel, setPanel] = useState<Panel>(() => (purchaseOrderCreateMode ? "po" : null));
-  const [query, setQuery] = useState("");
-  const [poStatusFilter, setPoStatusFilter] = useState("all");
-  const [poSupplierFilter, setPoSupplierFilter] = useState("all");
-  const [poDeliveryFilter, setPoDeliveryFilter] = useState("all");
+  const [query, setQuery] = useDashboardQueryState<string>("search", "");
+  const [poStatusFilter, setPoStatusFilter] = useDashboardQueryState<string>("status", "all");
+  const [poSupplierFilter, setPoSupplierFilter] = useDashboardQueryState<string>("supplier", "all");
+  const [poDeliveryFilter, setPoDeliveryFilter] = useDashboardQueryState<string>("delivery", "all");
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
   const [supplierName, setSupplierName] = useState("");
@@ -165,10 +167,64 @@ export default function ReceivingPage({
   const [poLines, setPoLines] = useState<PoDraftLine[]>([]);
 
   const [receivingPoId, setReceivingPoId] = useState("");
+  const initializedReceivingPo = useRef("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [employeeLabel, setEmployeeLabel] = useState("");
   const [receivingNotes, setReceivingNotes] = useState("");
   const [receivingLines, setReceivingLines] = useState<Record<string, ReceivingDraftLine>>({});
+
+  const poDirty = Boolean(
+    poNumber ||
+    poExpectedAt ||
+    poNotes ||
+    poDiscount !== "0" ||
+    poTax !== "0" ||
+    poShipping !== "0" ||
+    poExchangeRate !== "1" ||
+    poCurrency !== "USD" ||
+    poLines.length > 1 ||
+    poLines.some(
+      (line) =>
+        line.expectedQuantity !== "1" ||
+        line.unitCost !== "0" ||
+        line.optionKey !== workspace?.productOptions[0]?.key,
+    ) ||
+    (poSupplierId && poSupplierId !== workspace?.suppliers.find((item) => item.isActive)?.id) ||
+    (poLocationId && poLocationId !== workspace?.locations.find((item) => item.isActive)?.id),
+  );
+  const receivingDirty = Boolean(
+    invoiceNumber ||
+    employeeLabel ||
+    receivingNotes ||
+    Object.entries(receivingLines).some(
+      ([id, line]) =>
+        line.received ||
+        line.damaged !== "0" ||
+        line.overageReason ||
+        line.overageConfirmed ||
+        line.unitCost !==
+          String(
+            workspace?.purchaseOrders
+              .find((po) => po.id === receivingPoId)
+              ?.items.find((item) => item.id === id)?.unitCost ?? 0,
+          ),
+    ),
+  );
+  const panelDirty =
+    panel === "po"
+      ? poDirty
+      : panel === "receive"
+        ? receivingDirty
+        : panel === "supplier"
+          ? Boolean(supplierName || supplierCode)
+          : false;
+  const markPanelSaved = useDashboardUnsavedChanges(panelDirty);
+  const closePanel = () => {
+    if (saving || (panelDirty && !window.confirm(t("Discard unsaved changes?")))) return;
+    markPanelSaved();
+    if (purchaseOrderCreateMode) navigate("/dashboard/purchase-orders");
+    else setPanel(null);
+  };
 
   const load = useCallback(
     async (manual = false) => {
@@ -303,18 +359,25 @@ export default function ReceivingPage({
   }, [poLines.length, poLocationId, poSupplierId, purchaseOrderCreateMode, workspace]);
 
   const openPanel = (next: Exclude<Panel, null>) => {
+    if (saving || (panelDirty && !window.confirm(t("Discard unsaved changes?")))) return;
+    markPanelSaved();
     setPanel(next);
     if (next === "po") resetPo();
     if (next === "receive") {
       const po = openPurchaseOrders[0];
-      selectReceivingPo(po?.id ?? "");
+      selectReceivingPo(po?.id ?? "", true);
       setInvoiceNumber("");
       setEmployeeLabel("");
       setReceivingNotes("");
     }
   };
 
-  const selectReceivingPo = (poId: string) => {
+  const selectReceivingPo = (poId: string, discardExisting = false) => {
+    if (
+      saving ||
+      (!discardExisting && receivingDirty && !window.confirm(t("Discard unsaved changes?")))
+    )
+      return;
     setReceivingPoId(poId);
     const po = purchaseOrders.find((item) => item.id === poId);
     const next: Record<string, ReceivingDraftLine> = {};
@@ -332,13 +395,20 @@ export default function ReceivingPage({
   };
 
   useEffect(() => {
-    if (!receivingMode || !purchaseOrderId || !workspace) return;
+    if (
+      !receivingMode ||
+      !purchaseOrderId ||
+      !workspace ||
+      initializedReceivingPo.current === purchaseOrderId
+    )
+      return;
     const po = workspace.purchaseOrders.find(
       (item) =>
         item.id === purchaseOrderId &&
         (item.status === "ordered" || item.status === "partially_received"),
     );
     if (!po) return;
+    initializedReceivingPo.current = purchaseOrderId;
 
     const next: Record<string, ReceivingDraftLine> = {};
     for (const item of po.items) {
@@ -358,6 +428,7 @@ export default function ReceivingPage({
   }, [purchaseOrderId, receivingMode, workspace]);
 
   const saveSupplier = async () => {
+    if (saving) return;
     if (!supplierName.trim()) return toast.error("Supplier name is required.");
     setSaving(true);
     try {
@@ -365,6 +436,7 @@ export default function ReceivingPage({
       toast.success("Supplier created.");
       setSupplierName("");
       setSupplierCode("");
+      markPanelSaved();
       setPanel(null);
       await load(false);
     } catch (cause) {
@@ -375,6 +447,7 @@ export default function ReceivingPage({
   };
 
   const savePo = async () => {
+    if (saving) return;
     if (!poSupplierId) return toast.error("Select a supplier.");
     if (!poNumber.trim()) return toast.error("PO number is required.");
     if (!poLocationId) return toast.error("Select a store / warehouse.");
@@ -418,6 +491,7 @@ export default function ReceivingPage({
         items,
       });
       toast.success("Purchase order draft created.");
+      markPanelSaved();
       if (purchaseOrderCreateMode) {
         navigate("/dashboard/purchase-orders");
         return;
@@ -451,6 +525,7 @@ export default function ReceivingPage({
   };
 
   const saveReceiving = async () => {
+    if (saving) return;
     if (!selectedReceivingPo) return toast.error("Select an open purchase order.");
     if (!invoiceNumber.trim()) return toast.error("Invoice number is required.");
 
@@ -501,6 +576,7 @@ export default function ReceivingPage({
         lines,
       });
       toast.success("Receiving draft created. Review serials, invoice matching, then approve.");
+      markPanelSaved();
       setPanel(null);
       setInvoiceNumber("");
       setEmployeeLabel("");
@@ -646,7 +722,7 @@ export default function ReceivingPage({
       </div>
 
       {!purchaseOrderCreateMode ? (
-        <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="dashboard-summary-grid mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {purchaseOrdersMode ? (
             <>
               <StatCard
@@ -732,9 +808,8 @@ export default function ReceivingPage({
               </div>
             </div>
             <button
-              onClick={() =>
-                purchaseOrderCreateMode ? navigate("/dashboard/purchase-orders") : setPanel(null)
-              }
+              onClick={closePanel}
+              disabled={saving}
               className="grid size-8 place-items-center rounded-lg hover:bg-slate-100"
               aria-label={purchaseOrderCreateMode ? t("Back to purchase orders") : t("Close panel")}
             >
@@ -742,541 +817,543 @@ export default function ReceivingPage({
             </button>
           </div>
 
-          {panel === "supplier" ? (
-            <div className="grid gap-3 sm:grid-cols-[1fr_220px_auto] sm:items-end">
-              <label>
-                <FieldLabel>{t("Supplier")}</FieldLabel>
-                <input
-                  value={supplierName}
-                  onChange={(event) => setSupplierName(event.target.value)}
-                  placeholder={t("Supplier name")}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <label>
-                <FieldLabel>{t("Code (optional)")}</FieldLabel>
-                <input
-                  value={supplierCode}
-                  onChange={(event) => setSupplierCode(event.target.value)}
-                  placeholder={t("SUP-001")}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                />
-              </label>
-              <button
-                onClick={() => void saveSupplier()}
-                disabled={saving}
-                className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
-              >
-                {t("Save supplier")}
-              </button>
-            </div>
-          ) : null}
-
-          {panel === "po" ? (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <fieldset disabled={saving} className="min-w-0">
+            {panel === "supplier" ? (
+              <div className="grid gap-3 sm:grid-cols-[1fr_220px_auto] sm:items-end">
                 <label>
                   <FieldLabel>{t("Supplier")}</FieldLabel>
-                  <select
-                    value={poSupplierId}
-                    onChange={(event) => setPoSupplierId(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  >
-                    <option value="">{t("Select supplier")}</option>
-                    {suppliers.map((supplier) => (
-                      <option key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <FieldLabel>{t("Store / Warehouse")}</FieldLabel>
-                  <select
-                    value={poLocationId}
-                    onChange={(event) => setPoLocationId(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  >
-                    <option value="">{t("Select destination")}</option>
-                    {locations.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.name} · {location.code}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <FieldLabel>{t("PO number")}</FieldLabel>
                   <input
-                    value={poNumber}
-                    onChange={(event) => setPoNumber(event.target.value)}
-                    placeholder={t("PO-2026-001")}
+                    value={supplierName}
+                    onChange={(event) => setSupplierName(event.target.value)}
+                    placeholder={t("Supplier name")}
                     className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
                   />
                 </label>
                 <label>
-                  <FieldLabel>{t("Expected delivery")}</FieldLabel>
+                  <FieldLabel>{t("Code (optional)")}</FieldLabel>
                   <input
-                    type="datetime-local"
-                    value={poExpectedAt}
-                    onChange={(event) => setPoExpectedAt(event.target.value)}
+                    value={supplierCode}
+                    onChange={(event) => setSupplierCode(event.target.value)}
+                    placeholder={t("SUP-001")}
                     className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
                   />
                 </label>
-                <label>
-                  <FieldLabel>{t("Currency")}</FieldLabel>
-                  <select
-                    value={poCurrency}
-                    onChange={(event) => setPoCurrency(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  >
-                    <option value="USD">{t("USD")}</option>
-                    <option value="LBP">{t("LBP")}</option>
-                    <option value="EUR">{t("EUR")}</option>
-                  </select>
-                </label>
-                <label>
-                  <FieldLabel>{t("Exchange rate")}</FieldLabel>
-                  <input
-                    type="number"
-                    min="0.000001"
-                    step="0.000001"
-                    value={poExchangeRate}
-                    onChange={(event) => setPoExchangeRate(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
-                  />
-                </label>
-                <label className="md:col-span-2">
-                  <FieldLabel>{t("Notes")}</FieldLabel>
-                  <input
-                    value={poNotes}
-                    onChange={(event) => setPoNotes(event.target.value)}
-                    placeholder={t("Optional notes")}
-                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-2">
-                {poLines.map((line, index) => (
-                  <div
-                    key={line.id}
-                    className="grid gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 md:grid-cols-[1fr_120px_140px_38px] md:items-end"
-                  >
-                    <label>
-                      <FieldLabel>{t("Product / Variant")}</FieldLabel>
-                      <select
-                        value={line.optionKey}
-                        onChange={(event) =>
-                          setPoLines((current) =>
-                            current.map((item) =>
-                              item.id === line.id
-                                ? { ...item, optionKey: event.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
-                      >
-                        {productOptions.map((option) => (
-                          <option key={option.key} value={option.key}>
-                            {option.title} {option.sku ? `· ${option.sku}` : ""} {t("· stock")}{" "}
-                            {option.currentStock}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      <FieldLabel>{t("Expected qty")}</FieldLabel>
-                      <input
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={line.expectedQuantity}
-                        onChange={(event) =>
-                          setPoLines((current) =>
-                            current.map((item) =>
-                              item.id === line.id
-                                ? { ...item, expectedQuantity: event.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                        className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
-                      />
-                    </label>
-                    <label>
-                      <FieldLabel>{t("Unit cost")}</FieldLabel>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={line.unitCost}
-                        onChange={(event) =>
-                          setPoLines((current) =>
-                            current.map((item) =>
-                              item.id === line.id
-                                ? { ...item, unitCost: event.target.value }
-                                : item,
-                            ),
-                          )
-                        }
-                        className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
-                      />
-                    </label>
-                    <button
-                      aria-label={`Remove PO line ${index + 1}`}
-                      onClick={() =>
-                        setPoLines((current) => current.filter((item) => item.id !== line.id))
-                      }
-                      className="grid size-9 place-items-center rounded-lg text-rose-500 hover:bg-rose-50"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2 lg:grid-cols-5">
-                <label>
-                  <FieldLabel>{t("Discount")}</FieldLabel>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={poDiscount}
-                    onChange={(event) => setPoDiscount(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  />
-                </label>
-                <label>
-                  <FieldLabel>{t("VAT / Tax")}</FieldLabel>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={poTax}
-                    onChange={(event) => setPoTax(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  />
-                </label>
-                <label>
-                  <FieldLabel>{t("Shipping")}</FieldLabel>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={poShipping}
-                    onChange={(event) => setPoShipping(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  />
-                </label>
-                <div className="rounded-xl bg-white p-3 sm:col-span-2">
-                  <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
-                    {t("Estimated total")}
-                  </div>
-                  <div className="mt-1 text-lg font-bold text-[#14203a]">
-                    {money(
-                      Math.max(
-                        0,
-                        poLines.reduce((sum, line) => {
-                          const qty = Number(line.expectedQuantity || 0);
-                          const cost = Number(line.unitCost || 0);
-                          return (
-                            sum +
-                            (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(cost) ? cost : 0)
-                          );
-                        }, 0) -
-                          Number(poDiscount || 0) +
-                          Number(poTax || 0) +
-                          Number(poShipping || 0),
-                      ),
-                      poCurrency,
-                    )}
-                  </div>
-                  <div className="mt-1 text-[9px] text-slate-400">
-                    {t("Subtotal − discount + tax + shipping")}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap justify-between gap-2">
                 <button
-                  onClick={() => {
-                    const option = productOptions[0];
-                    if (!option) return;
-                    setPoLines((current) => [
-                      ...current,
-                      {
-                        id: crypto.randomUUID(),
-                        optionKey: option.key,
-                        expectedQuantity: "1",
-                        unitCost: "0",
-                      },
-                    ]);
-                  }}
-                  className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] font-bold text-slate-600"
-                >
-                  <Plus className="size-3.5" /> {t("Add line")}
-                </button>
-                <button
-                  onClick={() => void savePo()}
+                  onClick={() => void saveSupplier()}
                   disabled={saving}
                   className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
                 >
-                  {t("Save PO draft")}
+                  {t("Save supplier")}
                 </button>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {panel === "receive" ? (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-3">
-                <label>
-                  <FieldLabel>{t("Purchase order")}</FieldLabel>
-                  <select
-                    value={receivingPoId}
-                    onChange={(event) => selectReceivingPo(event.target.value)}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
-                  >
-                    <option value="">{t("Select open PO")}</option>
-                    {openPurchaseOrders.map((po) => (
-                      <option key={po.id} value={po.id}>
-                        {po.poNumber} · {po.supplierName} · {po.remainingUnits} {t("remaining")}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <FieldLabel>{t("Invoice number")}</FieldLabel>
-                  <input
-                    value={invoiceNumber}
-                    onChange={(event) => setInvoiceNumber(event.target.value)}
-                    placeholder={t("INV-001")}
-                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
-                  />
-                </label>
-                <label>
-                  <FieldLabel>{t("Receiving employee")}</FieldLabel>
-                  <div className="relative">
-                    <UserRound className="absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+            {panel === "po" ? (
+              <div className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  <label>
+                    <FieldLabel>{t("Supplier")}</FieldLabel>
+                    <select
+                      value={poSupplierId}
+                      onChange={(event) => setPoSupplierId(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    >
+                      <option value="">{t("Select supplier")}</option>
+                      {suppliers.map((supplier) => (
+                        <option key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Store / Warehouse")}</FieldLabel>
+                    <select
+                      value={poLocationId}
+                      onChange={(event) => setPoLocationId(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    >
+                      <option value="">{t("Select destination")}</option>
+                      {locations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.name} · {location.code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <FieldLabel>{t("PO number")}</FieldLabel>
                     <input
-                      value={employeeLabel}
-                      onChange={(event) => setEmployeeLabel(event.target.value)}
-                      placeholder={t("Optional display name")}
-                      className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[12px]"
+                      value={poNumber}
+                      onChange={(event) => setPoNumber(event.target.value)}
+                      placeholder={t("PO-2026-001")}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
                     />
-                  </div>
-                </label>
-              </div>
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Expected delivery")}</FieldLabel>
+                    <input
+                      type="datetime-local"
+                      value={poExpectedAt}
+                      onChange={(event) => setPoExpectedAt(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                    />
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Currency")}</FieldLabel>
+                    <select
+                      value={poCurrency}
+                      onChange={(event) => setPoCurrency(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    >
+                      <option value="USD">{t("USD")}</option>
+                      <option value="LBP">{t("LBP")}</option>
+                      <option value="EUR">{t("EUR")}</option>
+                    </select>
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Exchange rate")}</FieldLabel>
+                    <input
+                      type="number"
+                      min="0.000001"
+                      step="0.000001"
+                      value={poExchangeRate}
+                      onChange={(event) => setPoExchangeRate(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                    />
+                  </label>
+                  <label className="md:col-span-2">
+                    <FieldLabel>{t("Notes")}</FieldLabel>
+                    <input
+                      value={poNotes}
+                      onChange={(event) => setPoNotes(event.target.value)}
+                      placeholder={t("Optional notes")}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                    />
+                  </label>
+                </div>
 
-              {selectedReceivingPo ? (
-                <div className="overflow-x-auto rounded-xl border border-slate-200">
-                  <table className="w-full min-w-[980px] text-start">
-                    <thead className="bg-slate-50 text-[9px] uppercase tracking-[.08em] text-slate-400">
-                      <tr>
-                        <th className="px-3 py-2.5">{t("Item")}</th>
-                        <th className="px-3 py-2.5">{t("Expected")}</th>
-                        <th className="px-3 py-2.5">{t("Remaining")}</th>
-                        <th className="px-3 py-2.5">{t("Received")}</th>
-                        <th className="px-3 py-2.5">{t("Damaged")}</th>
-                        <th className="px-3 py-2.5">{t("Cost")}</th>
-                        <th className="px-3 py-2.5">{t("Difference")}</th>
-                        <th className="px-3 py-2.5">{t("Missing")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedReceivingPo.items
-                        .filter((item) => item.remainingQuantity > 0)
-                        .map((item) => {
-                          const draft = receivingLines[item.id];
-                          if (!draft) return null;
-                          const received = integerOrZero(draft.received);
-                          const damaged = integerOrZero(draft.damaged);
-                          let preview: ReturnType<typeof previewReceivingLine> | null = null;
-                          if (
-                            Number.isInteger(received) &&
-                            Number.isInteger(damaged) &&
-                            received + damaged > 0
-                          ) {
-                            try {
-                              preview = previewReceivingLine({
-                                remainingQuantity: item.remainingQuantity,
-                                receivedQuantity: received,
-                                damagedQuantity: damaged,
-                                overageConfirmed: draft.overageConfirmed,
-                                overageReason: draft.overageReason,
-                              });
-                            } catch {
-                              preview = null;
-                            }
+                <div className="space-y-2">
+                  {poLines.map((line, index) => (
+                    <div
+                      key={line.id}
+                      className="grid gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3 md:grid-cols-[1fr_120px_140px_38px] md:items-end"
+                    >
+                      <label>
+                        <FieldLabel>{t("Product / Variant")}</FieldLabel>
+                        <select
+                          value={line.optionKey}
+                          onChange={(event) =>
+                            setPoLines((current) =>
+                              current.map((item) =>
+                                item.id === line.id
+                                  ? { ...item, optionKey: event.target.value }
+                                  : item,
+                              ),
+                            )
                           }
-                          const overage = Boolean(preview?.requiresOverageConfirmation);
-                          return (
-                            <tr key={item.id} className="border-t border-slate-100 align-top">
-                              <td className="px-3 py-3">
-                                <div className="text-[11px] font-bold text-slate-700">
-                                  {item.title}
-                                </div>
-                                <div className="mt-0.5 font-mono text-[9px] text-slate-400">
-                                  {item.sku || "—"}
-                                </div>
-                                {overage ? (
-                                  <div className="mt-2 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
-                                    <label className="flex items-center gap-2 text-[10px] font-bold text-amber-800">
+                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px]"
+                        >
+                          {productOptions.map((option) => (
+                            <option key={option.key} value={option.key}>
+                              {option.title} {option.sku ? `· ${option.sku}` : ""} {t("· stock")}{" "}
+                              {option.currentStock}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <FieldLabel>{t("Expected qty")}</FieldLabel>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={line.expectedQuantity}
+                          onChange={(event) =>
+                            setPoLines((current) =>
+                              current.map((item) =>
+                                item.id === line.id
+                                  ? { ...item, expectedQuantity: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                          className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                        />
+                      </label>
+                      <label>
+                        <FieldLabel>{t("Unit cost")}</FieldLabel>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={line.unitCost}
+                          onChange={(event) =>
+                            setPoLines((current) =>
+                              current.map((item) =>
+                                item.id === line.id
+                                  ? { ...item, unitCost: event.target.value }
+                                  : item,
+                              ),
+                            )
+                          }
+                          className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                        />
+                      </label>
+                      <button
+                        aria-label={`Remove PO line ${index + 1}`}
+                        onClick={() =>
+                          setPoLines((current) => current.filter((item) => item.id !== line.id))
+                        }
+                        className="grid size-9 place-items-center rounded-lg text-rose-500 hover:bg-rose-50"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2 lg:grid-cols-5">
+                  <label>
+                    <FieldLabel>{t("Discount")}</FieldLabel>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={poDiscount}
+                      onChange={(event) => setPoDiscount(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    />
+                  </label>
+                  <label>
+                    <FieldLabel>{t("VAT / Tax")}</FieldLabel>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={poTax}
+                      onChange={(event) => setPoTax(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    />
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Shipping")}</FieldLabel>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={poShipping}
+                      onChange={(event) => setPoShipping(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    />
+                  </label>
+                  <div className="rounded-xl bg-white p-3 sm:col-span-2">
+                    <div className="text-[9px] font-bold uppercase tracking-[.08em] text-slate-400">
+                      {t("Estimated total")}
+                    </div>
+                    <div className="mt-1 text-lg font-bold text-[#14203a]">
+                      {money(
+                        Math.max(
+                          0,
+                          poLines.reduce((sum, line) => {
+                            const qty = Number(line.expectedQuantity || 0);
+                            const cost = Number(line.unitCost || 0);
+                            return (
+                              sum +
+                              (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(cost) ? cost : 0)
+                            );
+                          }, 0) -
+                            Number(poDiscount || 0) +
+                            Number(poTax || 0) +
+                            Number(poShipping || 0),
+                        ),
+                        poCurrency,
+                      )}
+                    </div>
+                    <div className="mt-1 text-[9px] text-slate-400">
+                      {t("Subtotal − discount + tax + shipping")}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-between gap-2">
+                  <button
+                    onClick={() => {
+                      const option = productOptions[0];
+                      if (!option) return;
+                      setPoLines((current) => [
+                        ...current,
+                        {
+                          id: crypto.randomUUID(),
+                          optionKey: option.key,
+                          expectedQuantity: "1",
+                          unitCost: "0",
+                        },
+                      ]);
+                    }}
+                    className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] font-bold text-slate-600"
+                  >
+                    <Plus className="size-3.5" /> {t("Add line")}
+                  </button>
+                  <button
+                    onClick={() => void savePo()}
+                    disabled={saving}
+                    className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
+                  >
+                    {t("Save PO draft")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {panel === "receive" ? (
+              <div className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label>
+                    <FieldLabel>{t("Purchase order")}</FieldLabel>
+                    <select
+                      value={receivingPoId}
+                      onChange={(event) => selectReceivingPo(event.target.value)}
+                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
+                    >
+                      <option value="">{t("Select open PO")}</option>
+                      {openPurchaseOrders.map((po) => (
+                        <option key={po.id} value={po.id}>
+                          {po.poNumber} · {po.supplierName} · {po.remainingUnits} {t("remaining")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Invoice number")}</FieldLabel>
+                    <input
+                      value={invoiceNumber}
+                      onChange={(event) => setInvoiceNumber(event.target.value)}
+                      placeholder={t("INV-001")}
+                      className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                    />
+                  </label>
+                  <label>
+                    <FieldLabel>{t("Receiving employee")}</FieldLabel>
+                    <div className="relative">
+                      <UserRound className="absolute start-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        value={employeeLabel}
+                        onChange={(event) => setEmployeeLabel(event.target.value)}
+                        placeholder={t("Optional display name")}
+                        className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[12px]"
+                      />
+                    </div>
+                  </label>
+                </div>
+
+                {selectedReceivingPo ? (
+                  <div className="overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="w-full min-w-[980px] text-start">
+                      <thead className="bg-slate-50 text-[9px] uppercase tracking-[.08em] text-slate-400">
+                        <tr>
+                          <th className="px-3 py-2.5">{t("Item")}</th>
+                          <th className="px-3 py-2.5">{t("Expected")}</th>
+                          <th className="px-3 py-2.5">{t("Remaining")}</th>
+                          <th className="px-3 py-2.5">{t("Received")}</th>
+                          <th className="px-3 py-2.5">{t("Damaged")}</th>
+                          <th className="px-3 py-2.5">{t("Cost")}</th>
+                          <th className="px-3 py-2.5">{t("Difference")}</th>
+                          <th className="px-3 py-2.5">{t("Missing")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedReceivingPo.items
+                          .filter((item) => item.remainingQuantity > 0)
+                          .map((item) => {
+                            const draft = receivingLines[item.id];
+                            if (!draft) return null;
+                            const received = integerOrZero(draft.received);
+                            const damaged = integerOrZero(draft.damaged);
+                            let preview: ReturnType<typeof previewReceivingLine> | null = null;
+                            if (
+                              Number.isInteger(received) &&
+                              Number.isInteger(damaged) &&
+                              received + damaged > 0
+                            ) {
+                              try {
+                                preview = previewReceivingLine({
+                                  remainingQuantity: item.remainingQuantity,
+                                  receivedQuantity: received,
+                                  damagedQuantity: damaged,
+                                  overageConfirmed: draft.overageConfirmed,
+                                  overageReason: draft.overageReason,
+                                });
+                              } catch {
+                                preview = null;
+                              }
+                            }
+                            const overage = Boolean(preview?.requiresOverageConfirmation);
+                            return (
+                              <tr key={item.id} className="border-t border-slate-100 align-top">
+                                <td className="px-3 py-3">
+                                  <div className="text-[11px] font-bold text-slate-700">
+                                    {item.title}
+                                  </div>
+                                  <div className="mt-0.5 font-mono text-[9px] text-slate-400">
+                                    {item.sku || "—"}
+                                  </div>
+                                  {overage ? (
+                                    <div className="mt-2 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
+                                      <label className="flex items-center gap-2 text-[10px] font-bold text-amber-800">
+                                        <input
+                                          type="checkbox"
+                                          checked={draft.overageConfirmed}
+                                          onChange={(event) =>
+                                            setReceivingLines((current) => ({
+                                              ...current,
+                                              [item.id]: {
+                                                ...draft,
+                                                overageConfirmed: event.target.checked,
+                                              },
+                                            }))
+                                          }
+                                        />
+                                        {t("Confirm excess delivery")}
+                                      </label>
                                       <input
-                                        type="checkbox"
-                                        checked={draft.overageConfirmed}
+                                        value={draft.overageReason}
+                                        maxLength={500}
                                         onChange={(event) =>
                                           setReceivingLines((current) => ({
                                             ...current,
                                             [item.id]: {
                                               ...draft,
-                                              overageConfirmed: event.target.checked,
+                                              overageReason: event.target.value,
                                             },
                                           }))
                                         }
+                                        placeholder={t("Reason required")}
+                                        className="h-8 w-full rounded-lg border border-amber-200 bg-white px-2 text-[10px]"
                                       />
-                                      {t("Confirm excess delivery")}
-                                    </label>
-                                    <input
-                                      value={draft.overageReason}
-                                      maxLength={500}
-                                      onChange={(event) =>
-                                        setReceivingLines((current) => ({
-                                          ...current,
-                                          [item.id]: {
-                                            ...draft,
-                                            overageReason: event.target.value,
-                                          },
-                                        }))
-                                      }
-                                      placeholder={t("Reason required")}
-                                      className="h-8 w-full rounded-lg border border-amber-200 bg-white px-2 text-[10px]"
-                                    />
+                                    </div>
+                                  ) : null}
+                                </td>
+                                <td className="px-3 py-3 text-[11px] font-bold text-slate-600">
+                                  {item.expectedQuantity}
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-[11px] font-bold text-indigo-600">
+                                    {item.remainingQuantity}
                                   </div>
-                                ) : null}
-                              </td>
-                              <td className="px-3 py-3 text-[11px] font-bold text-slate-600">
-                                {item.expectedQuantity}
-                              </td>
-                              <td className="px-3 py-3">
-                                <div className="text-[11px] font-bold text-indigo-600">
-                                  {item.remainingQuantity}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setReceivingLines((current) => ({
-                                      ...current,
-                                      [item.id]: {
-                                        ...draft,
-                                        received: String(item.remainingQuantity),
-                                        damaged: "0",
-                                        overageConfirmed: false,
-                                        overageReason: "",
-                                      },
-                                    }))
-                                  }
-                                  className="mt-1 text-[9px] font-bold text-indigo-500 hover:text-indigo-700 hover:underline"
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setReceivingLines((current) => ({
+                                        ...current,
+                                        [item.id]: {
+                                          ...draft,
+                                          received: String(item.remainingQuantity),
+                                          damaged: "0",
+                                          overageConfirmed: false,
+                                          overageReason: "",
+                                        },
+                                      }))
+                                    }
+                                    className="mt-1 text-[9px] font-bold text-indigo-500 hover:text-indigo-700 hover:underline"
+                                  >
+                                    {t("Fill remaining")}
+                                  </button>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={1}
+                                    value={draft.received}
+                                    onChange={(event) =>
+                                      setReceivingLines((current) => ({
+                                        ...current,
+                                        [item.id]: { ...draft, received: event.target.value },
+                                      }))
+                                    }
+                                    className="h-9 w-20 rounded-lg border border-slate-200 px-2 text-[11px]"
+                                  />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={1}
+                                    value={draft.damaged}
+                                    onChange={(event) =>
+                                      setReceivingLines((current) => ({
+                                        ...current,
+                                        [item.id]: { ...draft, damaged: event.target.value },
+                                      }))
+                                    }
+                                    className="h-9 w-20 rounded-lg border border-slate-200 px-2 text-[11px]"
+                                  />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={draft.unitCost}
+                                    onChange={(event) =>
+                                      setReceivingLines((current) => ({
+                                        ...current,
+                                        [item.id]: { ...draft, unitCost: event.target.value },
+                                      }))
+                                    }
+                                    className="h-9 w-24 rounded-lg border border-slate-200 px-2 text-[11px]"
+                                  />
+                                </td>
+                                <td
+                                  className={`px-3 py-3 text-[11px] font-bold ${(preview?.difference ?? 0) > 0 ? "text-amber-600" : "text-slate-600"}`}
                                 >
-                                  {t("Fill remaining")}
-                                </button>
-                              </td>
-                              <td className="px-3 py-3">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  step={1}
-                                  value={draft.received}
-                                  onChange={(event) =>
-                                    setReceivingLines((current) => ({
-                                      ...current,
-                                      [item.id]: { ...draft, received: event.target.value },
-                                    }))
-                                  }
-                                  className="h-9 w-20 rounded-lg border border-slate-200 px-2 text-[11px]"
-                                />
-                              </td>
-                              <td className="px-3 py-3">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  step={1}
-                                  value={draft.damaged}
-                                  onChange={(event) =>
-                                    setReceivingLines((current) => ({
-                                      ...current,
-                                      [item.id]: { ...draft, damaged: event.target.value },
-                                    }))
-                                  }
-                                  className="h-9 w-20 rounded-lg border border-slate-200 px-2 text-[11px]"
-                                />
-                              </td>
-                              <td className="px-3 py-3">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  step="0.01"
-                                  value={draft.unitCost}
-                                  onChange={(event) =>
-                                    setReceivingLines((current) => ({
-                                      ...current,
-                                      [item.id]: { ...draft, unitCost: event.target.value },
-                                    }))
-                                  }
-                                  className="h-9 w-24 rounded-lg border border-slate-200 px-2 text-[11px]"
-                                />
-                              </td>
-                              <td
-                                className={`px-3 py-3 text-[11px] font-bold ${(preview?.difference ?? 0) > 0 ? "text-amber-600" : "text-slate-600"}`}
-                              >
-                                {preview?.difference ?? "—"}
-                              </td>
-                              <td className="px-3 py-3 text-[11px] font-bold text-rose-600">
-                                {preview?.missingQuantity ?? "—"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-[11px] text-slate-400">
-                  {t("Select an open PO to load expected and remaining quantities.")}
-                </div>
-              )}
-
-              <label>
-                <FieldLabel>{t("Receiving notes")}</FieldLabel>
-                <input
-                  value={receivingNotes}
-                  onChange={(event) => setReceivingNotes(event.target.value)}
-                  placeholder={t("Optional notes")}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
-                />
-              </label>
-
-              <div className="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 p-3 text-[10px] leading-4 text-blue-700">
-                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-                {t(
-                  "Received quantity means usable units only. Damaged units are recorded separately and do not increase stock. Any physical overdelivery requires the checkbox and a reason, and the server validates it again during approval.",
+                                  {preview?.difference ?? "—"}
+                                </td>
+                                <td className="px-3 py-3 text-[11px] font-bold text-rose-600">
+                                  {preview?.missingQuantity ?? "—"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-[11px] text-slate-400">
+                    {t("Select an open PO to load expected and remaining quantities.")}
+                  </div>
                 )}
-              </div>
 
-              <div className="flex justify-end">
-                <button
-                  onClick={() => void saveReceiving()}
-                  disabled={saving || !selectedReceivingPo}
-                  className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
-                >
-                  {t("Create receiving draft")}
-                </button>
+                <label>
+                  <FieldLabel>{t("Receiving notes")}</FieldLabel>
+                  <input
+                    value={receivingNotes}
+                    onChange={(event) => setReceivingNotes(event.target.value)}
+                    placeholder={t("Optional notes")}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
+                  />
+                </label>
+
+                <div className="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 p-3 text-[10px] leading-4 text-blue-700">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                  {t(
+                    "Received quantity means usable units only. Damaged units are recorded separately and do not increase stock. Any physical overdelivery requires the checkbox and a reason, and the server validates it again during approval.",
+                  )}
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => void saveReceiving()}
+                    disabled={saving || !selectedReceivingPo}
+                    className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
+                  >
+                    {t("Create receiving draft")}
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </fieldset>
         </div>
       ) : null}
 

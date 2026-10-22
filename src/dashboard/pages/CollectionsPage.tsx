@@ -1,3 +1,7 @@
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
+import { useDashboardFormGuard } from "@/dashboard/hooks/useDashboardFormGuard";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
@@ -49,21 +53,30 @@ export default function CollectionsPage() {
   const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [collections, setCollections] = useState<DashboardCollectionListItem[]>([]);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "draft" | "featured">("all");
+  const [search, setSearch] = useDashboardQueryState<string>("search", "");
+  const [filter, setFilter] = useDashboardQueryState<"all" | "active" | "draft" | "featured">(
+    "filter",
+    "all",
+    ["all", "active", "draft", "featured"],
+  );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DashboardCollectionListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
 
+  const formGuard = useDashboardFormGuard(showCreate, draft, saving, () => setShowCreate(false));
+  const modalRef = useDashboardModal(formGuard.close, showCreate);
+
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       setCollections(await listDashboardCollections());
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load collections.");
+      setLoadError(cause instanceof Error ? cause.message : "Unable to load collections.");
     } finally {
       setLoading(false);
     }
@@ -117,6 +130,7 @@ export default function CollectionsPage() {
         handle: draft.handle || slugify(draft.title),
       });
       toast.success("Collection created.");
+      formGuard.markSaved();
       setShowCreate(false);
       setDraft(emptyDraft);
       navigate(`/dashboard/collections/${created.id}`);
@@ -145,6 +159,9 @@ export default function CollectionsPage() {
 
   return (
     <div>
+      {loadError && (
+        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+      )}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <PageTitle
@@ -169,16 +186,7 @@ export default function CollectionsPage() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowCreate(true)}
-        aria-label={t("New collection")}
-        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-40 flex h-12 items-center gap-2 rounded-full bg-[#5968ea] px-5 text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(89,104,234,.35)] transition active:scale-95 lg:hidden"
-      >
-        <FolderPlus className="size-4" /> {t("New collection")}
-      </button>
-
-      <div className="mb-4 grid gap-4 sm:grid-cols-4">
+      <div className="dashboard-summary-grid mb-4 grid gap-4 sm:grid-cols-4">
         {[
           ["Total", collections.length],
           ["Active", collections.filter((item) => item.isActive).length],
@@ -304,7 +312,14 @@ export default function CollectionsPage() {
 
       {showCreate ? (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("Create collection")}
+            tabIndex={-1}
+            className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-[.16em] text-indigo-500">
@@ -315,7 +330,8 @@ export default function CollectionsPage() {
                 </div>
               </div>
               <button
-                onClick={() => setShowCreate(false)}
+                onClick={formGuard.close}
+                disabled={saving}
                 className="grid size-9 place-items-center rounded-xl bg-slate-100 text-slate-500"
               >
                 <X className="size-4" />
@@ -323,13 +339,14 @@ export default function CollectionsPage() {
             </div>
             <div className="border-b border-slate-100 px-6 py-3">
               <ContentAiAssist
+                disabled={saving}
                 entity="collection"
                 query={draft.title}
                 values={draft}
                 onApply={(patch) => setDraft((current) => ({ ...current, ...patch }))}
               />
             </div>
-            <div className="grid gap-4 p-6 sm:grid-cols-2">
+            <fieldset disabled={saving} className="min-w-0 grid gap-4 p-6 sm:grid-cols-2">
               <label>
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                   {t("Title")}
@@ -412,10 +429,11 @@ export default function CollectionsPage() {
                 />{" "}
                 {t("Featured")}
               </label>
-            </div>
+            </fieldset>
             <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
               <button
-                onClick={() => setShowCreate(false)}
+                onClick={formGuard.close}
+                disabled={saving}
                 className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
               >
                 {t("Cancel")}

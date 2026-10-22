@@ -62,7 +62,8 @@ export function installDashboardNavigationGuard() {
       return;
     }
     const targetIndex = event.state?.[indexKey];
-    if (!confirmDashboardDiscard()) {
+    const changesPage = new URL(currentUrl).pathname !== window.location.pathname;
+    if (changesPage && !confirmDashboardDiscard()) {
       event.stopImmediatePropagation();
       if (typeof targetIndex === "number" && targetIndex !== index) {
         restoring = true;
@@ -70,7 +71,7 @@ export function installDashboardNavigationGuard() {
       } else replace.call(history, currentState, "", currentUrl);
       return;
     }
-    drafts.clear();
+    if (changesPage) drafts.clear();
     index = typeof targetIndex === "number" ? targetIndex : index;
     currentUrl = window.location.href;
     currentState = history.state;

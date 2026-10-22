@@ -1,3 +1,4 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { ArrowLeft, Check, Loader2, Package, Save, ShieldAlert, Star, User } from "lucide-react";
@@ -143,7 +144,7 @@ export default function CustomerDetailPage({ id }: { id: string }) {
     return (
       <div>
         <button
-          onClick={() => navigate("/dashboard/customers")}
+          onClick={() => navigate(dashboardListHref("/dashboard/customers"))}
           className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500"
         >
           <ArrowLeft className="size-4" /> {t("Back to customers")}
@@ -161,7 +162,7 @@ export default function CustomerDetailPage({ id }: { id: string }) {
   return (
     <div>
       <button
-        onClick={() => navigate("/dashboard/customers")}
+        onClick={() => navigate(dashboardListHref("/dashboard/customers"))}
         className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500 hover:text-[#5968ea]"
       >
         <ArrowLeft className="size-4" /> {t("Back to customers")}

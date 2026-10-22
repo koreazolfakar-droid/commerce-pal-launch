@@ -1,7 +1,7 @@
 import { useLanguage } from "@/dashboard/i18n";
 import { Loader2, X } from "lucide-react";
-import { useRef } from "react";
-import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
+import { useId } from "react";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 
 type DashboardConfirmDialogProps = {
   open: boolean;
@@ -27,8 +27,11 @@ export default function DashboardConfirmDialog({
   onConfirm,
 }: DashboardConfirmDialogProps) {
   const { t } = useLanguage();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useDashboardDialogFocus(open, dialogRef, pending ? undefined : onClose);
+  const dialogRef = useDashboardModal(() => {
+    if (!pending) onClose();
+  }, open);
+  const titleId = useId();
+  const descriptionId = useId();
 
   if (!open) return null;
 
@@ -45,22 +48,16 @@ export default function DashboardConfirmDialog({
         role="dialog"
         tabIndex={-1}
         aria-modal="true"
-        aria-labelledby="dashboard-confirm-title"
-        aria-describedby="dashboard-confirm-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2
-              id="dashboard-confirm-title"
-              className="text-[18px] font-black tracking-[-.03em] text-[#14203a]"
-            >
+            <h2 id={titleId} className="text-[18px] font-black tracking-[-.03em] text-[#14203a]">
               {t(title)}
             </h2>
-            <p
-              id="dashboard-confirm-description"
-              className="mt-2 text-[11px] leading-5 text-slate-500"
-            >
+            <p id={descriptionId} className="mt-2 text-[11px] leading-5 text-slate-500">
               {t(description)}
             </p>
           </div>
@@ -95,7 +92,7 @@ export default function DashboardConfirmDialog({
             }
           >
             {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {pending ? pendingLabel : confirmLabel}
+            {t(pending ? pendingLabel : confirmLabel)}
           </button>
         </div>
       </div>

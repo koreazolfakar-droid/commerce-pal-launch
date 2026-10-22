@@ -1,3 +1,4 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   ArrowLeft,
@@ -300,7 +301,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
         <div className="text-sm font-bold text-rose-700">{t("Receiving could not be opened.")}</div>
         <div className="mt-1 text-xs text-rose-600">{error}</div>
         <button
-          onClick={() => navigate("/dashboard/receiving")}
+          onClick={() => navigate(dashboardListHref("/dashboard/receiving"))}
           className="mt-4 rounded-xl bg-[#14203a] px-4 py-2 text-[11px] font-bold text-white"
         >
           {t("Back to Receiving")}
@@ -317,7 +318,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <button
-            onClick={() => navigate("/dashboard/receiving")}
+            onClick={() => navigate(dashboardListHref("/dashboard/receiving"))}
             className="mb-3 inline-flex items-center gap-2 text-[11px] font-bold text-slate-500"
           >
             <ArrowLeft className="size-3.5" /> {t("Receiving")}

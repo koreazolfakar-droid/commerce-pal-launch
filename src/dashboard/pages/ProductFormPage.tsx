@@ -1,3 +1,5 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
+import ProductFormMap from "@/dashboard/components/products/ProductFormMap";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { Archive, Check, Copy, Loader2, Save, Trash2, UploadCloud } from "lucide-react";
@@ -743,7 +745,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       await deleteDashboardProductSafe(id);
       setConfirmAction(null);
       toast.success("Product permanently deleted.");
-      navigate("/dashboard/products");
+      navigate(dashboardListHref("/dashboard/products"));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product delete failed.");
     } finally {
@@ -813,7 +815,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   return (
     <div className={id ? undefined : "pb-24 lg:pb-0"}>
       <button
-        onClick={() => navigate("/dashboard/products")}
+        onClick={() => navigate(dashboardListHref("/dashboard/products"))}
         className="mb-5 text-[11px] font-bold text-slate-500 hover:text-indigo-600"
       >
         {t("← Back to products")}
@@ -893,6 +895,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </>
           ) : null}
           <AiAssistPanel
+            disabled={saving || pendingAction !== null}
             entity="product"
             query={form.title}
             currentData={{
@@ -1011,9 +1014,48 @@ export default function ProductFormPage({ id }: { id?: string }) {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
+      <ProductFormMap
+        dirty={dirty}
+        sections={[
+          {
+            id: "product-information",
+            label: "Product information",
+            complete: Boolean(form.title.trim()),
+          },
+          {
+            id: "product-specifications",
+            label: "Specifications",
+            complete: Object.keys(specifications).length > 0,
+          },
+          { id: "product-collections", label: "Collections", complete: collectionIds.length > 0 },
+          {
+            id: "product-pricing",
+            label: "Pricing & inventory",
+            complete: variantLocked || validateProductDraft(form).valid,
+          },
+          {
+            id: "product-media",
+            label: "Media",
+            complete: Boolean(form.imageUrl || pendingImages.length || existing?.image),
+          },
+          {
+            id: "product-seo",
+            label: "SEO",
+            complete: Boolean(form.seoTitle.trim() && form.seoDescription.trim()),
+          },
+        ]}
+      />
+
+      <fieldset
+        disabled={saving || pendingAction !== null}
+        className="min-w-0 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]"
+      >
         <div className="space-y-4">
-          <Panel title={t("Product information")} subtitle={t("Live catalog fields")}>
+          <Panel
+            id="product-information"
+            title={t("Product information")}
+            subtitle={t("Live catalog fields")}
+          >
             <div className="space-y-4 p-5">
               <Field
                 label={t("Title")}
@@ -1123,6 +1165,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           </Panel>
 
           <Panel
+            id="product-specifications"
             title={t("Specifications")}
             subtitle={
               selectedCategory ? `${selectedCategory.name} template` : t("Select a category")
@@ -1148,7 +1191,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </div>
           </Panel>
 
-          <Panel title={t("Collections")} subtitle={collectionSummary}>
+          <Panel id="product-collections" title={t("Collections")} subtitle={collectionSummary}>
             <div className="p-5">
               <div className="mb-3 text-[10px] leading-4 text-slate-400">
                 {t(
@@ -1226,6 +1269,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           </Panel>
 
           <Panel
+            id="product-pricing"
             title={t("Pricing & inventory")}
             subtitle={variantLocked ? t("Managed per variant") : t("Default / single variant")}
           >
@@ -1305,6 +1349,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             />
           ) : null}
           <Panel
+            id="product-media"
             title={t("Media")}
             subtitle={id ? t("Live Supabase product gallery") : t("Images upload after save")}
           >
@@ -1391,7 +1436,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             )}
           </Panel>
 
-          <Panel title={t("SEO")} subtitle={t("Product search metadata")}>
+          <Panel id="product-seo" title={t("SEO")} subtitle={t("Product search metadata")}>
             <div className="space-y-4 p-5">
               <Field
                 label={t("SEO title")}
@@ -1435,7 +1480,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </Panel>
           ) : null}
         </div>
-      </div>
+      </fieldset>
 
       {!id ? (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
@@ -1477,17 +1522,24 @@ export default function ProductFormPage({ id }: { id?: string }) {
 }
 
 function Panel({
+  id,
   title,
   subtitle,
   children,
 }: {
+  id?: string;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
 }) {
   const { t } = useLanguage();
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+    <section
+      id={id}
+      data-product-section={id}
+      tabIndex={-1}
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"
+    >
       <div className="border-b border-slate-100 px-5 py-4">
         <div className="text-[12px] font-bold text-[#14203a]">{t(title)}</div>
         {subtitle ? <div className="mt-0.5 text-[10px] text-slate-400">{t(subtitle)}</div> : null}

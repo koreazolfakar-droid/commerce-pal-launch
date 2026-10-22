@@ -1,3 +1,6 @@
+import DashboardCommandCenter from "@/dashboard/components/layout/DashboardCommandCenter";
+import { unavailableDashboardRoutes } from "@/dashboard/config/capabilities";
+import DashboardConnectivity from "@/dashboard/components/layout/DashboardConnectivity";
 import DashboardErrorBoundary from "@/dashboard/components/ErrorBoundary";
 import DashboardSectionLinks from "@/dashboard/components/layout/DashboardSectionLinks";
 import "@/dashboard/workspace.css";
@@ -13,9 +16,7 @@ import { navSections } from "@/dashboard/config/navigation";
 import {
   DASHBOARD_AUTH_REQUIRED_EVENT,
   getDashboardMfaStatus,
-  searchDashboardProducts,
   signOutDashboard,
-  type DashboardProductSearchItem,
 } from "@/dashboard/data/catalog";
 import { LanguageContext, useLanguage, translations } from "@/dashboard/i18n";
 import { useTheme } from "@/dashboard/contexts/ThemeContext";
@@ -31,7 +32,6 @@ import {
   Boxes,
   ChevronDown,
   ClipboardList,
-  Command,
   ExternalLink,
   FileText,
   FolderOpen,
@@ -50,7 +50,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PanelsTopLeft,
-  Search,
   SearchCheck,
   Settings2,
   ShoppingBag,
@@ -242,6 +241,7 @@ function Sidebar({
               )}
               <div className="space-y-1">
                 {section.items
+                  .filter((item) => !unavailableDashboardRoutes.has(item.href))
                   .filter((item) =>
                     collapsed && !mobileOpen
                       ? true
@@ -334,17 +334,13 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const { lang, setLang, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { enabled: auth0Enabled, logoutAuth0 } = useDashboardAuth0();
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [, navigate] = useLocation();
-  const [headerProducts, setHeaderProducts] = useState<DashboardProductSearchItem[]>([]);
-  const [searchIndexLoading, setSearchIndexLoading] = useState(false);
-  const [searchError, setSearchError] = useState(false);
-  const headerMounted = useRef(true);
+  const identity = useDashboardIdentity();
+  const profileRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!profileOpen) return;
+    profileRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
     const close = (event: MouseEvent) => {
       if (!profileRef.current?.contains(event.target as Node)) setProfileOpen(false);
     };
@@ -361,47 +357,6 @@ function Header({ onMenu }: { onMenu: () => void }) {
       document.removeEventListener("keydown", escape);
     };
   }, [profileOpen]);
-  const identity = useDashboardIdentity();
-  const profileRef = useRef<HTMLDivElement>(null);
-  const mobileSearchTrigger = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const closeSearch = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) || event.target.closest(".dashboard-search-region"))
-        return;
-      setOpen(false);
-    };
-    document.addEventListener("pointerdown", closeSearch);
-    return () => document.removeEventListener("pointerdown", closeSearch);
-  }, []);
-  useEffect(() => {
-    if (profileOpen)
-      profileRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
-  }, [profileOpen]);
-  const searchKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      if (mobileSearchOpen) {
-        setMobileSearchOpen(false);
-        mobileSearchTrigger.current?.focus();
-      } else event.currentTarget.querySelector<HTMLInputElement>("input")?.focus();
-      setOpen(false);
-      return;
-    }
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    const buttons = [
-      ...event.currentTarget.querySelectorAll<HTMLButtonElement>("[data-search-result]"),
-    ];
-    if (!buttons.length) return;
-    event.preventDefault();
-    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
-    buttons[
-      index < 0
-        ? event.key === "ArrowDown"
-          ? 0
-          : buttons.length - 1
-        : (index + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length
-    ]?.focus();
-  };
   const profileKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
@@ -415,187 +370,19 @@ function Header({ onMenu }: { onMenu: () => void }) {
           : (index + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length;
     items[next]?.focus();
   };
-
-  useEffect(() => {
-    const listener = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        if (window.matchMedia("(max-width: 639px)").matches) setMobileSearchOpen(true);
-        else document.getElementById("global-search")?.focus();
-      }
-    };
-    window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
-  }, []);
-
-  useEffect(() => {
-    headerMounted.current = true;
-    return () => {
-      headerMounted.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const normalizedQuery = query.trim();
-    if (normalizedQuery.length < 2) {
-      setSearchError(false);
-      setHeaderProducts([]);
-      setSearchIndexLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setHeaderProducts([]);
-    setSearchError(false);
-    setSearchIndexLoading(true);
-    const timer = window.setTimeout(() => {
-      void searchDashboardProducts(normalizedQuery, 5)
-        .then((rows) => {
-          if (!cancelled && headerMounted.current) setHeaderProducts(rows);
-        })
-        .catch(() => {
-          if (!cancelled && headerMounted.current) {
-            setHeaderProducts([]);
-            setSearchError(true);
-          }
-        })
-        .finally(() => {
-          if (!cancelled && headerMounted.current) setSearchIndexLoading(false);
-        });
-    }, 180);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [query]);
-
-  const results: DashboardProductSearchItem[] = query.trim().length >= 2 ? headerProducts : [];
-  const sectionResults = query.trim()
-    ? navSections
-        .flatMap((section) => section.items)
-        .filter(
-          (item) =>
-            (item.href !== "/dashboard/users" || identity.role === "admin") &&
-            `${item.label} ${t(item.label)}`
-              .toLocaleLowerCase()
-              .includes(query.trim().toLocaleLowerCase()),
-        )
-        .slice(0, 4)
-    : [];
-  const sectionSearchResults = sectionResults.map((item) => (
-    <button
-      key={item.href}
-      data-search-result
-      onClick={() => {
-        setOpen(false);
-        setMobileSearchOpen(false);
-        setQuery("");
-        navigate(item.href);
-      }}
-      className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm hover:bg-muted"
-    >
-      <LayoutDashboard className="size-4 text-primary" />
-      <span>{t(item.label)}</span>
-      <span className="ms-auto text-xs text-muted-foreground">{t("Section")}</span>
-    </button>
-  ));
-
   return (
-    <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
+    <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:px-6 sm:py-0 lg:px-10">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
+          type="button"
           onClick={onMenu}
-          className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
+          className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground lg:hidden"
           aria-label={t("Open dashboard menu")}
         >
           <Menu className="size-5" />
         </button>
-        <button
-          type="button"
-          ref={mobileSearchTrigger}
-          onClick={() => setMobileSearchOpen((current) => !current)}
-          className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
-          aria-label={t("Search products...")}
-          aria-expanded={mobileSearchOpen}
-        >
-          {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
-        </button>
-        <div
-          className="dashboard-search-region relative hidden max-w-[480px] flex-1 sm:block"
-          onKeyDown={searchKeyboard}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
-          }}
-        >
-          <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            id="global-search"
-            type="search"
-            aria-label={t("Search products...")}
-            aria-controls={open && query ? "dashboard-search-results" : undefined}
-            aria-expanded={Boolean(open && query)}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            placeholder={t("Search products...")}
-            className="h-11 w-full rounded-lg border border-input bg-card ps-10 pe-14 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
-          />
-          <div className="absolute end-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-            <Command className="size-3" />K
-          </div>
-          {open && query && (
-            <div
-              id="dashboard-search-results"
-              role="region"
-              aria-label={t("Search results")}
-              className="absolute inset-x-0 top-[calc(100%+8px)] max-h-[60dvh] overflow-y-auto rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card"
-            >
-              {sectionSearchResults}
-              {results.length ? (
-                results.map((item) => (
-                  <button
-                    key={item.id}
-                    data-search-result
-                    onClick={() => {
-                      setOpen(false);
-                      setQuery("");
-                      navigate(`/dashboard/products/${item.id}`);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start hover:bg-muted"
-                  >
-                    <div className="grid size-8 place-items-center rounded-lg bg-accent text-primary">
-                      <Package className="size-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="truncate text-[12px] font-semibold text-foreground">
-                        {item.name}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {`${item.brand || t("No brand")} · ${item.category || t("Uncategorized")}`}
-                      </div>
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div role="status" className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {query.trim().length < 2
-                    ? t("Type at least 2 characters")
-                    : searchIndexLoading
-                      ? t("Loading products…")
-                      : searchError
-                        ? t("Product search failed. Try again.")
-                        : t("No matching Supabase products")}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <DashboardCommandCenter />
       </div>
-
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <button
           onClick={() => navigate("/dashboard/activity")}
@@ -706,76 +493,6 @@ function Header({ onMenu }: { onMenu: () => void }) {
           )}
         </div>
       </div>
-
-      {mobileSearchOpen && (
-        <div
-          className="dashboard-search-region order-last w-full pt-2 sm:hidden"
-          onKeyDown={searchKeyboard}
-        >
-          <div className="relative">
-            <Search className="pointer-events-none absolute start-3.5 top-[22px] size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              id="mobile-global-search"
-              type="search"
-              aria-label={t("Search products...")}
-              autoFocus
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("Search products...")}
-              className="h-11 w-full rounded-lg border border-input bg-card pe-10 ps-10 text-[13px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute end-2 top-[22px] grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground active:bg-muted"
-                aria-label={t("Clear search")}
-              >
-                <X className="size-4" />
-              </button>
-            ) : null}
-          </div>
-          {query ? (
-            <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
-              {sectionSearchResults}
-              {results.length ? (
-                results.map((item) => (
-                  <button
-                    key={item.id}
-                    data-search-result
-                    onClick={() => {
-                      setMobileSearchOpen(false);
-                      setQuery("");
-                      navigate(`/dashboard/products/${item.id}`);
-                    }}
-                    className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start active:bg-muted"
-                  >
-                    <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-primary">
-                      <Package className="size-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] font-semibold text-foreground">
-                        {item.name}
-                      </div>
-                      <div className="truncate text-[11px] text-muted-foreground">{`${item.brand || t("No brand")} · ${item.sku || t("No SKU")}`}</div>
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <div role="status" className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {query.trim().length < 2
-                    ? t("Type at least 2 characters")
-                    : searchIndexLoading
-                      ? t("Loading products…")
-                      : searchError
-                        ? t("Product search failed. Try again.")
-                        : t("No matching products")}
-                </div>
-              )}
-            </div>
-          ) : null}
-        </div>
-      )}
     </header>
   );
 }
@@ -1003,6 +720,7 @@ function DashboardLayout() {
         className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[82px]" : "lg:pl-[82px]") : lang === "ar" ? "lg:pr-[260px]" : "lg:pl-[260px]"}`}
       >
         <Header onMenu={() => setMobileOpen(true)} />
+        <DashboardConnectivity />
         <main
           id="dashboard-main"
           tabIndex={-1}

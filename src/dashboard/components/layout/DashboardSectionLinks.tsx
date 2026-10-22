@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { dashboardListHref } from "@/dashboard/lib/listContext";
+import { unavailableDashboardRoutes } from "@/dashboard/config/capabilities";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
@@ -40,6 +42,7 @@ export default function DashboardSectionLinks() {
     .filter(
       (item) =>
         item &&
+        !unavailableDashboardRoutes.has(item.href) &&
         item.href !== current?.href &&
         (item.href !== "/dashboard/users" || role === "admin"),
     );
@@ -55,7 +58,7 @@ export default function DashboardSectionLinks() {
         <ChevronRight className="dashboard-directional size-3.5" aria-hidden="true" />
         {detail ? (
           <>
-            <Link href={current.href}>{t(current.label)}</Link>
+            <Link href={dashboardListHref(current.href)}>{t(current.label)}</Link>
             <ChevronRight className="dashboard-directional size-3.5" aria-hidden="true" />
             <span aria-current="page">{t("Details")}</span>
           </>
@@ -64,7 +67,7 @@ export default function DashboardSectionLinks() {
         )}
       </nav>
       {detail ? (
-        <Link href={current.href} className="dashboard-back-link">
+        <Link href={dashboardListHref(current.href)} className="dashboard-back-link">
           <ArrowLeft className="dashboard-directional size-3.5" />
           {t("Back to list")}
         </Link>

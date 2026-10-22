@@ -1,3 +1,5 @@
+import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardResponsiveTable from "@/dashboard/components/DashboardResponsiveTable";
@@ -16,7 +18,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useLocation, useSearch } from "wouter";
+import { useLocation } from "wouter";
 import {
   createDashboardCustomer,
   listDashboardCustomers,
@@ -41,14 +43,13 @@ function StatCard({ label, value, detail }: { label: string; value: string; deta
 export default function CustomersPage() {
   const { t } = useLanguage();
   const [, navigate] = useLocation();
-  const urlSearch = useSearch();
-  const [search, setSearch] = useState(() => new URLSearchParams(urlSearch).get("search") ?? "");
-  useEffect(() => {
-    setSearch(new URLSearchParams(urlSearch).get("search") ?? "");
-    setPage(1);
-  }, [urlSearch]);
-  const [filter, setFilter] = useState<DashboardCustomerFilter>("all");
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useDashboardQueryState<string>("search", "");
+  const [filter, setFilter] = useDashboardQueryState<DashboardCustomerFilter>("filter", "all", [
+    "all",
+    "vip",
+    "blocked",
+  ]);
+  const [page, setPage] = useDashboardQueryState<number>("page", 1);
   const [result, setResult] = useState<DashboardCustomerListResult | null>(null);
   const requestVersion = useRef(0);
   const [loading, setLoading] = useState(true);
@@ -197,7 +198,16 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <DashboardListViews
+        scope="customers"
+        keys={["filter"]}
+        presets={[
+          { name: "VIP customers", query: "filter=vip" },
+          { name: "Blocked customers", query: "filter=blocked" },
+        ]}
+      />
+
+      <div className="dashboard-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("Total customers")}
           value={(stats?.total ?? 0).toLocaleString()}

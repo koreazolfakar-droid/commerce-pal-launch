@@ -69,7 +69,6 @@ test("category mutations patch local dashboard state and guard duplicate deletes
   assert.match(page, /deleting \? t\("Deleting\.\.\."\) : t\("Delete Category"\)/);
 });
 
-
 test("product save is one atomic editor mutation and avoids redundant catalog reads", async () => {
   const [catalog, form] = await Promise.all([
     read("src/dashboard/data/catalog.ts"),
@@ -123,9 +122,8 @@ test("product destructive actions use dashboard confirmation and scoped pending 
   assert.match(dialog, /role="dialog"/);
   assert.match(dialog, /aria-modal="true"/);
   assert.match(dialog, /aria-busy=\{pending\}/);
-  assert.match(dialog, /useDashboardDialogFocus/);
+  assert.match(dialog, /useDashboardModal/);
 });
-
 
 test("product media mutations return targeted results without success-path list reloads", async () => {
   const [catalog, media, variants] = await Promise.all([
@@ -156,7 +154,6 @@ test("product media mutations return targeted results without success-path list 
   assert.match(variants, /<DashboardConfirmDialog/);
 });
 
-
 test("collection mutations avoid heavy detail reloads and use scoped pending state", async () => {
   const [data, listPage, detailPage] = await Promise.all([
     read("src/dashboard/data/collections.ts"),
@@ -173,7 +170,10 @@ test("collection mutations avoid heavy detail reloads and use scoped pending sta
   assert.match(profileMutations, /return mapCollection\(updated\)/);
 
   const membershipStart = data.indexOf("export async function saveDashboardCollectionProducts");
-  const reorderStart = data.indexOf("export async function reorderDashboardCollections", membershipStart);
+  const reorderStart = data.indexOf(
+    "export async function reorderDashboardCollections",
+    membershipStart,
+  );
   assert.ok(membershipStart >= 0 && reorderStart > membershipStart);
   const membershipMutation = data.slice(membershipStart, reorderStart);
   assert.doesNotMatch(membershipMutation, /getDashboardCollection\(/);

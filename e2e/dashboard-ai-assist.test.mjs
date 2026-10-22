@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+const focus = await readFile(
+  new URL("../src/dashboard/hooks/useDashboardDialogFocus.ts", import.meta.url),
+  "utf8",
+);
+
 const [edge, client, panel, product, category, brand, env] = await Promise.all([
   readFile(new URL("../supabase/functions/dashboard-ai-assist/index.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/ai/client.ts", import.meta.url), "utf8"),
@@ -20,7 +25,8 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
   assert.match(edge, /admin\.auth\.getUser\(token\)/);
   assert.match(edge, /user_roles/);
   assert.match(edge, /row\.role === "admin" \|\| row\.role === "editor"/);
-  const accessGuard = 'if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);';
+  const accessGuard =
+    'if (!allowed) return json(req, { error: "dashboard_access_required" }, 403);';
   assert.ok(edge.includes(accessGuard));
   assert.match(edge, /Deno\.env\.get\("LOVABLE_API_KEY"\)/);
   assert.match(edge, /callLovable/);
@@ -69,8 +75,9 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /role="dialog"/);
   assert.match(panel, /aria-modal="true"/);
   assert.match(panel, /queryInputRef\.current\?\.focus\(\)/);
-  assert.match(panel, /event\.key === "Escape"/);
-  assert.match(panel, /querySelectorAll<HTMLElement>/);
+  assert.match(panel, /useDashboardModal/);
+  assert.match(focus, /event\.key === "Escape"/);
+  assert.match(focus, /querySelectorAll<HTMLElement>/);
   assert.match(panel, /trigger\?\.focus\(\)/);
   assert.match(panel, /requestIdRef/);
   assert.match(panel, /requestId !== requestIdRef\.current/);

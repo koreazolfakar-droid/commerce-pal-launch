@@ -1,3 +1,5 @@
+import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   CheckCircle2,
@@ -184,11 +186,24 @@ function OrderMobileCard({ order, onOpen }: { order: DashboardOrderListItem; onO
 export default function OrdersPage() {
   const { t } = useLanguage();
   const [, navigate] = useLocation();
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"all" | DashboardOrderStatus>("all");
-  const [paymentStatus, setPaymentStatus] = useState<"all" | DashboardPaymentStatus>("all");
-  const [sort, setSort] = useState<DashboardOrdersSort>("newest");
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useDashboardQueryState<string>("search", "");
+  const [status, setStatus] = useDashboardQueryState<"all" | DashboardOrderStatus>(
+    "status",
+    "all",
+    STATUS_TABS,
+  );
+  const [paymentStatus, setPaymentStatus] = useDashboardQueryState<"all" | DashboardPaymentStatus>(
+    "payment",
+    "all",
+    ["all", "unpaid", "paid", "partially_refunded", "refunded"],
+  );
+  const [sort, setSort] = useDashboardQueryState<DashboardOrdersSort>("sort", "newest", [
+    "newest",
+    "oldest",
+    "total_high",
+    "total_low",
+  ]);
+  const [page, setPage] = useDashboardQueryState<number>("page", 1);
   const [result, setResult] = useState<DashboardOrdersResult | null>(null);
   const [quickOrderId, setQuickOrderId] = useState<string | null>(null);
   const requestVersion = useRef(0);
@@ -320,6 +335,16 @@ export default function OrdersPage() {
           {refreshing ? t("Refreshing…") : t("Refresh")}
         </button>
       </div>
+
+      <DashboardListViews
+        scope="orders"
+        keys={["status", "payment", "sort"]}
+        presets={[
+          { name: "Needs confirmation", query: "status=new" },
+          { name: "Ready for dispatch", query: "status=ready" },
+          { name: "Unpaid", query: "payment=unpaid" },
+        ]}
+      />
 
       <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard label={t("New")} value={stats?.new ?? 0} detail="Needs review" icon={Clock3} />

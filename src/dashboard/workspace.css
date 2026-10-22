@@ -1,4 +1,203 @@
 /* Dashboard-only layout and controls. Storefront and image-editor geometry stay independent. */
+.dashboard-command-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(100%, 32rem);
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.dashboard-command-trigger:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 8%, transparent);
+}
+.dashboard-command-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 115;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1rem, 8dvh, 6rem) 1rem 1rem;
+  background: rgb(8 15 30 / 0.55);
+  backdrop-filter: blur(4px);
+}
+.dashboard-command-dialog {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: min(100%, 44rem);
+  max-height: 80dvh;
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+  background: var(--color-card);
+  color: var(--color-foreground);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.24);
+}
+.dashboard-command-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+}
+.dashboard-command-result.is-active {
+  background: color-mix(in oklab, var(--color-primary) 9%, var(--color-card));
+  border-color: color-mix(in oklab, var(--color-primary) 25%, transparent);
+}
+.dashboard-load-error {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  border: 1px solid color-mix(in oklab, #e11d48 25%, var(--color-border));
+  border-radius: 1rem;
+  background: color-mix(in oklab, #e11d48 5%, var(--color-card));
+  color: var(--color-foreground);
+  padding: 1rem;
+  margin-block-end: 1rem;
+  font-size: 0.8125rem;
+}
+.dashboard-load-error p {
+  margin-block-start: 0.25rem;
+  color: var(--color-muted-foreground);
+}
+.dashboard-connectivity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  background: color-mix(in oklab, #d97706 10%, var(--color-card));
+  border-block-end: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+}
+.dashboard-form-map {
+  padding: 1rem 1.25rem;
+  margin-block-end: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-card);
+}
+.dashboard-form-map nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.875rem;
+}
+.dashboard-form-map :where(a, button) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+}
+.dashboard-form-map :where(a, button)[data-complete="true"] {
+  color: var(--color-primary);
+  border-color: color-mix(in oklab, var(--color-primary) 25%, var(--color-border));
+  background: color-mix(in oklab, var(--color-primary) 5%, var(--color-card));
+}
+.dashboard-main [data-product-section] {
+  scroll-margin-top: 7rem;
+}
+.dashboard-list-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.25rem 1.25rem;
+}
+.dashboard-view {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  background: var(--color-card);
+}
+.dashboard-view > button {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.7rem;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.dashboard-view > button + button {
+  border-inline-start: 1px solid var(--color-border);
+  padding-inline: 0.5rem;
+}
+.dashboard-view.is-active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--color-card));
+}
+.dashboard-save-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-start: auto;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+}
+.dashboard-save-view:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dashboard-view-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-basis: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-card);
+  padding: 0.875rem;
+}
+@media (max-width: 639px) {
+  .dashboard-command-trigger {
+    width: 2.75rem;
+    padding-inline: 0.8rem;
+  }
+  .dashboard-command-overlay {
+    padding: 0.5rem;
+    align-items: center;
+  }
+  .dashboard-command-dialog {
+    max-height: 94dvh;
+    border-radius: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid > div {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid .text-2xl {
+    font-size: 1.5rem;
+  }
+}
 .dashboard-theme-scope {
   --dashboard-control-height: 2.75rem;
   --dashboard-accent: oklch(0.55 0.2 275);

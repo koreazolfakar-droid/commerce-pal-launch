@@ -1,3 +1,7 @@
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
+import { useDashboardFormGuard } from "@/dashboard/hooks/useDashboardFormGuard";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardResponsiveTable from "@/dashboard/components/DashboardResponsiveTable";
 import { Eye, EyeOff, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
@@ -35,21 +39,26 @@ export default function NavigationPage() {
   const [items, setItems] = useState<DashboardNavigationItem[]>([]);
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
-  const [area, setArea] = useState<"all" | NavigationArea>("all");
+  const [query, setQuery] = useDashboardQueryState<string>("search", "");
+  const [area, setArea] = useDashboardQueryState<"all" | NavigationArea>("area", "all");
   const [editing, setEditing] = useState<DashboardNavigationItem | null>(null);
   const [draft, setDraft] = useState<DashboardNavigationInput>(EMPTY);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const formGuard = useDashboardFormGuard(modalOpen, draft, saving, () => setModalOpen(false));
+  const modalRef = useDashboardModal(formGuard.close, modalOpen);
+
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const workspace = await loadDashboardNavigationWorkspace();
       setItems(workspace.items);
       setCanDelete(workspace.role === "admin");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Navigation load failed.");
+      setLoadError(cause instanceof Error ? cause.message : "Navigation load failed.");
     } finally {
       setLoading(false);
     }
@@ -107,6 +116,7 @@ export default function NavigationPage() {
           (a, b) => a.area.localeCompare(b.area) || a.sortOrder - b.sortOrder,
         ),
       );
+      formGuard.markSaved();
       setModalOpen(false);
       toast.success(editing ? "Navigation item updated." : "Navigation item created.");
     } catch (cause) {
@@ -150,6 +160,9 @@ export default function NavigationPage() {
 
   return (
     <div>
+      {loadError && (
+        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+      )}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">
@@ -314,9 +327,14 @@ export default function NavigationPage() {
       {modalOpen ? (
         <div
           className="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/40 p-4"
-          onClick={() => setModalOpen(false)}
+          onClick={formGuard.close}
         >
           <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={editing ? t("Edit navigation item") : t("Add navigation item")}
+            tabIndex={-1}
             className="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
@@ -330,13 +348,14 @@ export default function NavigationPage() {
                 </div>
               </div>
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={formGuard.close}
+                disabled={saving}
                 className="grid size-8 place-items-center rounded-lg text-slate-400"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <fieldset disabled={saving} className="min-w-0 grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                   {t("Area")}
@@ -422,10 +441,11 @@ export default function NavigationPage() {
                 />{" "}
                 {t("Visible on storefront")}
               </label>
-            </div>
+            </fieldset>
             <div className="mt-5 flex justify-end gap-2">
               <button
-                onClick={() => setModalOpen(false)}
+                onClick={formGuard.close}
+                disabled={saving}
                 className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
               >
                 {t("Cancel")}

@@ -79,8 +79,10 @@ test("shared RTL primitives use logical spacing and semantic dark-mode text", as
   assert.doesNotMatch(dashboard, /absolute left-3\.5 top-1\/2/);
   assert.doesNotMatch(dashboard, /bg-card pl-10 pr-14/);
   assert.doesNotMatch(dashboard, /text-slate-800/);
-  assert.match(dashboard, /absolute start-3\.5 top-1\/2/);
-  assert.match(dashboard, /bg-card ps-10 pe-14/);
+  const commands = await source("src/dashboard/components/layout/DashboardCommandCenter.tsx");
+  assert.match(commands, /absolute start-3\.5 top-4/);
+  assert.match(commands, /pe-10 ps-10/);
+  assert.doesNotMatch(commands, /absolute left-/);
 
   assert.match(select, /min-h-9 w-full/);
   assert.match(select, /py-1\.5 ps-2\.5 pe-8/);
@@ -119,8 +121,14 @@ test("product actions stay aligned without overlapping compact card content", as
   assert.match(consistency, /height: 2\.25rem;/);
   assert.match(consistency, /\.market-product-card \.market-product-action svg\.lucide/);
   assert.match(consistency, /grid-template-rows: 1rem 2\.2rem 1rem 1\.1rem 2\.375rem/);
-  assert.match(consistency, /\.homepage-product-card \.product-card-title \{[\s\S]*?min-height: 2\.15rem/);
-  assert.match(consistency, /\.market-product-card \.market-product-action \{[\s\S]*?width: 2\.375rem/);
+  assert.match(
+    consistency,
+    /\.homepage-product-card \.product-card-title \{[\s\S]*?min-height: 2\.15rem/,
+  );
+  assert.match(
+    consistency,
+    /\.market-product-card \.market-product-action \{[\s\S]*?width: 2\.375rem/,
+  );
   assert.match(consistency, /\.market-product-quantity button \{[\s\S]*?min-width: 2rem/);
 });
 

@@ -1,3 +1,4 @@
+import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { useLanguage } from "@/dashboard/i18n";
 import { ArrowLeft, Check, Loader2, Package, RefreshCw, Send, User, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -172,7 +173,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     return (
       <div>
         <button
-          onClick={() => navigate("/dashboard/orders")}
+          onClick={() => navigate(dashboardListHref("/dashboard/orders"))}
           className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500"
         >
           <ArrowLeft className="size-4" /> {t("Back to orders")}
@@ -191,7 +192,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     return (
       <div>
         <button
-          onClick={() => navigate("/dashboard/orders")}
+          onClick={() => navigate(dashboardListHref("/dashboard/orders"))}
           className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500"
         >
           <ArrowLeft className="size-4" /> {t("Back to orders")}
@@ -219,7 +220,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
   return (
     <div>
       <button
-        onClick={() => navigate("/dashboard/orders")}
+        onClick={() => navigate(dashboardListHref("/dashboard/orders"))}
         className="mb-6 flex items-center gap-2 text-[12px] font-semibold text-slate-500 hover:text-[#5968ea]"
       >
         <ArrowLeft className="size-4" /> {t("Back to orders")}

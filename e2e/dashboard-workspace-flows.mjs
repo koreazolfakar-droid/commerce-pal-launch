@@ -124,25 +124,22 @@ try {
   const attention = page.waitForURL(/attention=out/);
   await page.getByRole("button", { name: "Out of stock", exact: false }).click();
   await attention;
-  const search = page.locator("#global-search");
+  await page.getByRole("button", { name: "Search workspace", exact: true }).click();
+  const command = page.getByRole("dialog", { name: "Workspace command center", exact: true });
+  const search = command.getByRole("combobox", { name: "Search workspace", exact: true });
   await search.fill("Products");
-  await page
-    .getByRole("region", { name: "Search results" })
-    .getByRole("button", { name: "Products Section", exact: false })
-    .waitFor();
-  await page.keyboard.press("ArrowDown");
-  assert.equal(
-    await page.evaluate(() => document.activeElement.hasAttribute("data-search-result")),
-    true,
-  );
-  await page.keyboard.press("Escape");
-  assert.equal(await page.getByRole("region", { name: "Search results" }).count(), 0);
+  await command.getByRole("option", { name: "Products", exact: true }).waitFor();
+  await search.press("ArrowDown");
+  assert.ok(await search.getAttribute("aria-activedescendant"));
+  await search.press("Escape");
+  assert.equal(await command.count(), 0);
   await page.goto(`${origin}/dashboard/products`);
   await page.getByRole("button", { name: "Phone 00", exact: false }).first().waitFor();
-  await page.screenshot({
-    path: "/workspace/scratch/dashboard-products-desktop.png",
-    fullPage: true,
-  });
+  if (process.env.SPACE_CALL_AUDIT_SCREENSHOT_DIR)
+    await page.screenshot({
+      path: process.env.SPACE_CALL_AUDIT_SCREENSHOT_DIR + "/products-desktop.png",
+      fullPage: true,
+    });
   await page.getByRole("button", { name: "Switch to dark mode", exact: true }).click();
   await page.getByRole("button", { name: "AR", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -151,11 +148,12 @@ try {
     () => document.querySelector("aside[inert]")?.getBoundingClientRect().left >= innerWidth - 1,
   );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-  await page.screenshot({
-    path: "/workspace/scratch/dashboard-products-mobile-ar-dark.png",
-    fullPage: false,
-    animations: "disabled",
-  });
+  if (process.env.SPACE_CALL_AUDIT_SCREENSHOT_DIR)
+    await page.screenshot({
+      path: process.env.SPACE_CALL_AUDIT_SCREENSHOT_DIR + "/products-mobile-ar-dark.png",
+      fullPage: false,
+      animations: "disabled",
+    });
   assert.deepEqual(errors, []);
   await context.route("**/src/dashboard/pages/ProductsPage.tsx*", (route) =>
     route.fulfill({

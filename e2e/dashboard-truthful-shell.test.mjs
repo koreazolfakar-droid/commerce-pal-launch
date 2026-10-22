@@ -11,7 +11,7 @@ const settings = await readFile(
 test("dashboard shell exposes only truthful live actions", () => {
   assert.match(app, /import \{ SITE_URL \} from "@\/lib\/storeConfig"/);
   assert.match(app, /window\.open\(SITE_URL, "_blank", "noopener,noreferrer"\)/);
-  assert.match(app, /placeholder=\{t\("Search products\.\.\."\)\}/);
+  assert.match(app, /DashboardCommandCenter/);
   assert.doesNotMatch(app, /Search orders, products, customers/);
   assert.doesNotMatch(app, /Store preview link is available in the next integration phase/);
   assert.doesNotMatch(app, /You are all caught up/);

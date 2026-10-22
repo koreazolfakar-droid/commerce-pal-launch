@@ -1,3 +1,5 @@
+import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
@@ -64,15 +66,32 @@ export default function ProductsPage() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("All");
-  const [brandId, setBrandId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [stock, setStock] = useState<StockFilter>("all");
-  const [sort, setSort] = useState<SortMode>("updated");
+  const [search, setSearch] = useDashboardQueryState<string>("search", "");
+  const [status, setStatus] = useDashboardQueryState<StatusFilter>("status", "All", [
+    "All",
+    "Active",
+    "Draft",
+    "Archived",
+  ]);
+  const [brandId, setBrandId] = useDashboardQueryState<string>("brand", "");
+  const [categoryId, setCategoryId] = useDashboardQueryState<string>("category", "");
+  const [stock, setStock] = useDashboardQueryState<StockFilter>("stock", "all", [
+    "all",
+    "low",
+    "out",
+    "available",
+  ]);
+  const [sort, setSort] = useDashboardQueryState<SortMode>("sort", "updated", [
+    "updated",
+    "name",
+    "price-asc",
+    "price-desc",
+    "stock-asc",
+    "stock-desc",
+  ]);
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useDashboardQueryState<number>("page", 1);
+  const [pageSize, setPageSize] = useDashboardQueryState<number>("pageSize", 20, [20, 50, 100]);
   const requestId = useRef(0);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
@@ -137,9 +156,6 @@ export default function ProductsPage() {
     });
   }, [brandId, catalog, categoryId, search, sort, status, stock]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, status, brandId, categoryId, stock, sort, pageSize]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -264,6 +280,16 @@ export default function ProductsPage() {
       >
         <Plus className="size-4" /> {t("Add product")}
       </button>
+
+      <DashboardListViews
+        scope="products"
+        keys={["status", "brand", "category", "stock", "sort", "pageSize"]}
+        presets={[
+          { name: "Drafts", query: "status=Draft" },
+          { name: "Low stock", query: "stock=low" },
+          { name: "Out of stock", query: "stock=out" },
+        ]}
+      />
 
       <div className="dashboard-catalog-metrics mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         {[
