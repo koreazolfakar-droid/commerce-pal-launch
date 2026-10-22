@@ -16,7 +16,7 @@ export function PageTitle({
   const { t } = useLanguage();
   return (
     <>
-      <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
+      <div className="dashboard-page-eyebrow mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
         <span className="size-1.5 rounded-full bg-[#6a70e7]" />
         {t(eyebrow)}
       </div>
@@ -27,7 +27,9 @@ export function PageTitle({
         {badge}
       </div>
       {description ? (
-        <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-500">{t(description)}</p>
+        <p className="dashboard-page-description mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-500">
+          {t(description)}
+        </p>
       ) : null}
     </>
   );

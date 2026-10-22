@@ -1,3 +1,6 @@
+import DashboardErrorBoundary from "@/dashboard/components/ErrorBoundary";
+import DashboardSectionLinks from "@/dashboard/components/layout/DashboardSectionLinks";
+import "@/dashboard/workspace.css";
 import {
   DashboardIdentityProvider,
   useDashboardIdentity,
@@ -60,7 +63,15 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Suspense, useCallback, useEffect, useInsertionEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useInsertionEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { Toaster, toast } from "sonner";
 import { Route, Switch, useLocation } from "wouter";
 
@@ -104,7 +115,7 @@ function Logo({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <div className="min-w-0">
           <div className="text-[15px] font-bold tracking-[-.03em] text-white">Space Call</div>
-          <div className="mt-0.5 whitespace-nowrap text-[9px] font-medium uppercase tracking-[.18em] text-slate-400">
+          <div className="mt-0.5 max-w-[170px] truncate text-[9px] font-medium uppercase tracking-[.18em] text-slate-400">
             Tech for a better tomorrow
           </div>
         </div>
@@ -158,13 +169,15 @@ function Sidebar({
     return () => media.removeEventListener("change", update);
   }, [setMobileOpen]);
   const items = navSections.flatMap((section) => section.items);
-  const activeHref = items
-    .filter(
-      (item) =>
-        location === item.href ||
-        (item.href !== "/dashboard" && location.startsWith(item.href + "/")),
-    )
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const activeHref = location.startsWith("/dashboard/receivings/")
+    ? "/dashboard/receiving"
+    : items
+        .filter(
+          (item) =>
+            location === item.href ||
+            (item.href !== "/dashboard" && location.startsWith(item.href + "/")),
+        )
+        .sort((a, b) => b.href.length - a.href.length)[0]?.href;
   const isActive = (href: string) => href === activeHref;
 
   useEffect(() => {
@@ -201,7 +214,7 @@ function Sidebar({
         aria-modal={mobileOpen ? true : undefined}
         aria-label={t("Navigation")}
         tabIndex={-1}
-        className={`fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
+        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
         <div
           className={`flex h-[76px] items-center border-b border-white/[.07] px-5 lg:h-[92px] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
@@ -216,7 +229,7 @@ function Sidebar({
                   type="button"
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={!closedSections.includes(section.label)}
-                  className="mb-2 flex w-full items-center justify-between rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500 hover:text-slate-300"
+                  className="dashboard-sidebar-section mb-2 flex w-full items-center justify-between rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500 hover:text-slate-300"
                 >
                   <span>{t(section.label)}</span>
                   <span
@@ -229,11 +242,10 @@ function Sidebar({
               )}
               <div className="space-y-1">
                 {section.items
-                  .filter(
-                    (item) =>
-                      collapsed && !mobileOpen
-                        ? true
-                        : !closedSections.includes(section.label) || item.href === activeHref,
+                  .filter((item) =>
+                    collapsed && !mobileOpen
+                      ? true
+                      : !closedSections.includes(section.label) || item.href === activeHref,
                   )
                   .filter((item) => item.href !== "/dashboard/users" || identity.role === "admin")
                   .map((item) => {
@@ -351,6 +363,58 @@ function Header({ onMenu }: { onMenu: () => void }) {
   }, [profileOpen]);
   const identity = useDashboardIdentity();
   const profileRef = useRef<HTMLDivElement>(null);
+  const mobileSearchTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const closeSearch = (event: PointerEvent) => {
+      if (!(event.target instanceof Element) || event.target.closest(".dashboard-search-region"))
+        return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeSearch);
+    return () => document.removeEventListener("pointerdown", closeSearch);
+  }, []);
+  useEffect(() => {
+    if (profileOpen)
+      profileRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+  }, [profileOpen]);
+  const searchKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      if (mobileSearchOpen) {
+        setMobileSearchOpen(false);
+        mobileSearchTrigger.current?.focus();
+      } else event.currentTarget.querySelector<HTMLInputElement>("input")?.focus();
+      setOpen(false);
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const buttons = [
+      ...event.currentTarget.querySelectorAll<HTMLButtonElement>("[data-search-result]"),
+    ];
+    if (!buttons.length) return;
+    event.preventDefault();
+    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    buttons[
+      index < 0
+        ? event.key === "ArrowDown"
+          ? 0
+          : buttons.length - 1
+        : (index + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length
+    ]?.focus();
+  };
+  const profileKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const items = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+    const index = items.indexOf(document.activeElement as HTMLButtonElement);
+    const next =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? items.length - 1
+          : (index + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length;
+    items[next]?.focus();
+  };
 
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
@@ -374,6 +438,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
   useEffect(() => {
     const normalizedQuery = query.trim();
     if (normalizedQuery.length < 2) {
+      setSearchError(false);
       setHeaderProducts([]);
       setSearchIndexLoading(false);
       return;
@@ -406,6 +471,35 @@ function Header({ onMenu }: { onMenu: () => void }) {
   }, [query]);
 
   const results: DashboardProductSearchItem[] = query.trim().length >= 2 ? headerProducts : [];
+  const sectionResults = query.trim()
+    ? navSections
+        .flatMap((section) => section.items)
+        .filter(
+          (item) =>
+            (item.href !== "/dashboard/users" || identity.role === "admin") &&
+            `${item.label} ${t(item.label)}`
+              .toLocaleLowerCase()
+              .includes(query.trim().toLocaleLowerCase()),
+        )
+        .slice(0, 4)
+    : [];
+  const sectionSearchResults = sectionResults.map((item) => (
+    <button
+      key={item.href}
+      data-search-result
+      onClick={() => {
+        setOpen(false);
+        setMobileSearchOpen(false);
+        setQuery("");
+        navigate(item.href);
+      }}
+      className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm hover:bg-muted"
+    >
+      <LayoutDashboard className="size-4 text-primary" />
+      <span>{t(item.label)}</span>
+      <span className="ms-auto text-xs text-muted-foreground">{t("Section")}</span>
+    </button>
+  ));
 
   return (
     <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] flex-wrap items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:flex-nowrap sm:px-6 sm:py-0 lg:px-10">
@@ -413,12 +507,13 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           onClick={onMenu}
           className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 lg:hidden"
-          aria-label="Open dashboard menu"
+          aria-label={t("Open dashboard menu")}
         >
           <Menu className="size-5" />
         </button>
         <button
           type="button"
+          ref={mobileSearchTrigger}
           onClick={() => setMobileSearchOpen((current) => !current)}
           className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground shadow-sm transition hover:text-foreground active:scale-95 sm:hidden"
           aria-label={t("Search products...")}
@@ -426,10 +521,20 @@ function Header({ onMenu }: { onMenu: () => void }) {
         >
           {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
         </button>
-        <div className="relative hidden max-w-[480px] flex-1 sm:block">
+        <div
+          className="dashboard-search-region relative hidden max-w-[480px] flex-1 sm:block"
+          onKeyDown={searchKeyboard}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+          }}
+        >
           <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             id="global-search"
+            type="search"
+            aria-label={t("Search products...")}
+            aria-controls={open && query ? "dashboard-search-results" : undefined}
+            aria-expanded={Boolean(open && query)}
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -443,13 +548,21 @@ function Header({ onMenu }: { onMenu: () => void }) {
             <Command className="size-3" />K
           </div>
           {open && query && (
-            <div className="absolute inset-x-0 top-[calc(100%+8px)] overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
+            <div
+              id="dashboard-search-results"
+              role="region"
+              aria-label={t("Search results")}
+              className="absolute inset-x-0 top-[calc(100%+8px)] max-h-[60dvh] overflow-y-auto rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card"
+            >
+              {sectionSearchResults}
               {results.length ? (
                 results.map((item) => (
                   <button
                     key={item.id}
+                    data-search-result
                     onClick={() => {
                       setOpen(false);
+                      setQuery("");
                       navigate(`/dashboard/products/${item.id}`);
                     }}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start hover:bg-muted"
@@ -468,12 +581,14 @@ function Header({ onMenu }: { onMenu: () => void }) {
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {searchIndexLoading
-                    ? t("Loading products…")
-                    : searchError
-                      ? t("Product search failed. Try again.")
-                      : t("No matching Supabase products")}
+                <div role="status" className="px-3 py-4 text-center text-xs text-muted-foreground">
+                  {query.trim().length < 2
+                    ? t("Type at least 2 characters")
+                    : searchIndexLoading
+                      ? t("Loading products…")
+                      : searchError
+                        ? t("Product search failed. Try again.")
+                        : t("No matching Supabase products")}
                 </div>
               )}
             </div>
@@ -509,10 +624,23 @@ function Header({ onMenu }: { onMenu: () => void }) {
           {lang === "en" ? t("AR") : t("EN")}
         </button>
 
-        <div className="relative" ref={profileRef}>
+        <div
+          className="relative"
+          ref={profileRef}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setProfileOpen(false);
+          }}
+        >
           <button
             onClick={() => setProfileOpen((current) => !current)}
             className="flex items-center gap-2.5 rounded-lg p-1.5 pe-2 transition hover:bg-card"
+            aria-label={t("Account menu")}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setProfileOpen(true);
+              }
+            }}
             aria-haspopup="menu"
             aria-expanded={profileOpen}
           >
@@ -536,6 +664,8 @@ function Header({ onMenu }: { onMenu: () => void }) {
             <div
               className="absolute end-0 top-[calc(100%+8px)] w-48 rounded-xl border border-border bg-popover p-2 text-start text-popover-foreground shadow-card"
               role="menu"
+              aria-label={t("Account menu")}
+              onKeyDown={profileKeyboard}
             >
               <button
                 onClick={() => {
@@ -578,11 +708,16 @@ function Header({ onMenu }: { onMenu: () => void }) {
       </div>
 
       {mobileSearchOpen && (
-        <div className="order-last w-full pt-2 sm:hidden">
+        <div
+          className="dashboard-search-region order-last w-full pt-2 sm:hidden"
+          onKeyDown={searchKeyboard}
+        >
           <div className="relative">
             <Search className="pointer-events-none absolute start-3.5 top-[22px] size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               id="mobile-global-search"
+              type="search"
+              aria-label={t("Search products...")}
               autoFocus
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -602,10 +737,12 @@ function Header({ onMenu }: { onMenu: () => void }) {
           </div>
           {query ? (
             <div className="mt-2 max-h-[42dvh] overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-card">
+              {sectionSearchResults}
               {results.length ? (
                 results.map((item) => (
                   <button
                     key={item.id}
+                    data-search-result
                     onClick={() => {
                       setMobileSearchOpen(false);
                       setQuery("");
@@ -625,12 +762,14 @@ function Header({ onMenu }: { onMenu: () => void }) {
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {searchIndexLoading
-                    ? t("Loading products…")
-                    : searchError
-                      ? t("Product search failed. Try again.")
-                      : t("No matching products")}
+                <div role="status" className="px-3 py-4 text-center text-xs text-muted-foreground">
+                  {query.trim().length < 2
+                    ? t("Type at least 2 characters")
+                    : searchIndexLoading
+                      ? t("Loading products…")
+                      : searchError
+                        ? t("Product search failed. Try again.")
+                        : t("No matching products")}
                 </div>
               )}
             </div>
@@ -838,7 +977,7 @@ function DashboardGate() {
 
 function DashboardLayout() {
   const [location] = useLocation();
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const [collapsed, setCollapsed] = useState(
     () => readPreference("spacecall-sidebar") === "collapsed",
   );
@@ -850,6 +989,9 @@ function DashboardLayout() {
   const content = resolveDashboardRoute(route);
   return (
     <div className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
+      <a href="#dashboard-main" className="dashboard-skip-link">
+        {t("Skip to content")}
+      </a>
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
@@ -861,8 +1003,15 @@ function DashboardLayout() {
         className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[82px]" : "lg:pl-[82px]") : lang === "ar" ? "lg:pr-[260px]" : "lg:pl-[260px]"}`}
       >
         <Header onMenu={() => setMobileOpen(true)} />
-        <main className="dashboard-main mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9">
-          <Suspense fallback={<DashboardRouteFallback />}>{content}</Suspense>
+        <main
+          id="dashboard-main"
+          tabIndex={-1}
+          className="dashboard-main mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9"
+        >
+          <DashboardSectionLinks />
+          <DashboardErrorBoundary key={route}>
+            <Suspense fallback={<DashboardRouteFallback />}>{content}</Suspense>
+          </DashboardErrorBoundary>
         </main>
         <MobileBottomNav onMore={() => setMobileOpen(true)} />
       </div>
@@ -881,7 +1030,7 @@ export default function App() {
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     writePreference("spacecall-language", lang);
   }, [lang]);
-  const t = (key: string) => translations[lang][key] || key;
+  const t = useCallback((key: string) => translations[lang][key] || key, [lang]);
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>
       <>

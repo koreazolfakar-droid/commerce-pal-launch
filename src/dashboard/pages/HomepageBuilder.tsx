@@ -810,8 +810,8 @@ function Editor({
                 onChange={(e) => setSetting("imagePosition", e.target.value)}
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
               >
-                <option>{t("left")}</option>
-                <option>{t("right")}</option>
+                <option value="left">{t("left")}</option>
+                <option value="right">{t("right")}</option>
               </select>
             </label>
           </div>

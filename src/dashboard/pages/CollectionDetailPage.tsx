@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import {
   deleteDashboardCollection,
@@ -376,7 +376,12 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                     </div>
                     <div className="min-w-0">
                       <div className="truncate text-[12px] font-bold text-slate-700">
-                        {product.title}
+                        <Link
+                          href={`/dashboard/products/${product.id}`}
+                          className="hover:text-indigo-600 hover:underline"
+                        >
+                          {product.title}
+                        </Link>
                       </div>
                       <div className="mt-1 text-[10px] text-slate-400">
                         {product.status} {t("· Stock")} {product.stockQuantity} · #{index + 1}
@@ -450,7 +455,12 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[11px] font-bold text-slate-700">
-                        {product.title}
+                        <Link
+                          href={`/dashboard/products/${product.id}`}
+                          className="hover:text-indigo-600 hover:underline"
+                        >
+                          {product.title}
+                        </Link>
                       </div>
                       <div className="mt-0.5 text-[9px] text-slate-400">
                         {product.status} · {product.stockQuantity} {t("stock")}
