@@ -5,7 +5,6 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ChevronDown,
   ChevronRight,
   Heart,
   Loader2,
@@ -20,7 +19,6 @@ import { toast } from "sonner";
 
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
-import { OfficialProductResearch } from "@/components/product/OfficialProductResearch";
 import { ProseSections } from "@/components/product/ProseSection";
 import { SpecSheet } from "@/components/product/SpecSheet";
 import { VariantPicker } from "@/components/product/VariantPicker";
@@ -29,6 +27,7 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
+import { buildProductHighlights, buildProductSuggestions } from "@/lib/productPresentation";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
@@ -213,9 +212,6 @@ function ProductPage() {
   const currency = selectedVariant?.price.currencyCode ?? "USD";
   const inStock = Boolean(selectedVariant?.availableForSale);
   const brand = resolveBrand(product);
-  const sameVendorProducts = (vendorProducts ?? [])
-    .filter((item) => item.node.handle !== node.handle && item.node.vendor === node.vendor)
-    .slice(0, 8);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
   const isPhone = category?.slug === "smartphone" || category?.slug === "smartphones";
@@ -272,21 +268,22 @@ function ProductPage() {
     language,
   ]);
 
-  const similar = useMemo(() => {
-    const fromRecommendations = (recommended ?? []).filter(
-      (candidate) => candidate.node.handle !== node.handle,
-    );
-    if (fromRecommendations.length >= 4) return fromRecommendations.slice(0, 8);
-    const seen = new Set([node.handle, ...fromRecommendations.map((item) => item.node.handle)]);
-    const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
-    return [...fromRecommendations, ...fallback].slice(0, 8);
-  }, [recommended, vendorProducts, node.handle]);
+  const { similar, sameVendor } = useMemo(
+    () => buildProductSuggestions({ current: product, recommendations: recommended, vendorProducts }),
+    [product, recommended, vendorProducts],
+  );
+  const highlights = useMemo(
+    () => buildProductHighlights(specGroups, node.title),
+    [specGroups, node.title],
+  );
 
-  const hasOverview = content.overview.length > 0;
+  // A lone fragment such as "30W" is a useful fact, not a full description card.
+  const hasOverview = content.overview.some(
+    (section) => section.bullets.length > 0 || section.paragraphs.some((text) => text.length >= 32),
+  );
   const hasBox = content.box.length > 0;
   const hasShipping = content.shipping.length > 0;
   const hasSpecs = specGroups.length > 0;
-  const needsSeoOverview = (node.description ?? "").replace(/\s+/g, " ").trim().length < 180;
   const defaultTab = hasOverview ? "overview" : "specifications";
   const selectedOptionSummary = (selectedVariant?.selectedOptions ?? [])
     .filter((option) => option.value !== "Default Title")
@@ -360,7 +357,7 @@ function ProductPage() {
                   {brand.label}
                 </Link>
               )}
-              <h1 className="mt-1.5 text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]">
+              <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
                 {node.title}
               </h1>
               {selectedOptionSummary && (
@@ -517,6 +514,25 @@ function ProductPage() {
                 </li>
               ))}
             </ul>
+            {highlights.length > 0 && (
+              <section aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}>
+                <h2 className="mb-2.5 text-sm font-semibold text-foreground">
+                  {language === "ar" ? "أبرز المواصفات" : "Key features"}
+                </h2>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+                  {highlights.map((highlight) => (
+                    <div key={highlight.key} className="min-w-0 rounded-xl border border-primary/10 bg-primary/[0.045] px-3 py-3">
+                      <span className="block truncate text-[11px] font-medium text-muted-foreground">
+                        {language === "ar" ? highlight.labelAr : highlight.label}
+                      </span>
+                      <strong className="mt-1 block break-words text-sm font-semibold leading-snug text-foreground">
+                        {highlight.value}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
 
@@ -529,7 +545,7 @@ function ProductPage() {
                     value="overview"
                     className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
                   >
-                    Description
+                    {language === "ar" ? "الوصف" : "Description"}
                   </TabsTrigger>
                 )}
                 {hasSpecs && (
@@ -537,7 +553,7 @@ function ProductPage() {
                     value="specifications"
                     className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
                   >
-                    Specifications
+                    {language === "ar" ? "المواصفات" : "Specifications"}
                   </TabsTrigger>
                 )}
               </TabsList>
@@ -555,103 +571,35 @@ function ProductPage() {
           </section>
         )}
 
-        <details className="group mt-8 border-y border-border/60">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 [&::-webkit-details-marker]:hidden">
-            <span>{language === "ar" ? "معلومات إضافية عن المنتج" : "More product information"}</span>
-            <ChevronDown
-              aria-hidden
-              className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-            />
-          </summary>
-          <div className="space-y-7 border-t border-border/60 py-6">
+        {(hasBox || hasShipping) && (
+          <section className="mt-8 grid gap-5 sm:grid-cols-2" aria-label={language === "ar" ? "محتويات المنتج والتوصيل" : "Product contents and delivery"}>
             {hasBox && (
-              <section aria-labelledby="product-box-heading">
-                <h2 id="product-box-heading" className="mb-3 text-base font-semibold">
-                  In the box
+              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
+                <h2 className="mb-3 text-base font-semibold">
+                  {language === "ar" ? "محتويات العلبة" : "What's in the box"}
                 </h2>
                 <ProseSections sections={content.box} />
-              </section>
+              </div>
             )}
-
             {hasShipping && (
-              <section className={cn(hasBox && "border-t border-border/60 pt-6")} aria-labelledby="product-shipping-heading">
-                <h2 id="product-shipping-heading" className="mb-3 text-base font-semibold">
-                  Shipping &amp; returns
+              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
+                <h2 className="mb-3 text-base font-semibold">
+                  {language === "ar" ? "الشحن والإرجاع" : "Shipping & returns"}
                 </h2>
                 <ProseSections sections={content.shipping} />
-              </section>
+              </div>
             )}
+          </section>
+        )}
 
-            {needsSeoOverview && (
-              <section
-                className={cn((hasBox || hasShipping) && "border-t border-border/60 pt-6")}
-                aria-labelledby="product-buying-guide"
-              >
-                <h2 id="product-buying-guide" className="text-base font-semibold tracking-tight">
-                  {language === "ar" ? `معلومات عن ${node.title}` : `About ${node.title}`}
-                </h2>
-                <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground">
-                  {language === "ar"
-                    ? `${node.title}${brand?.label ? ` من ${brand.label}` : ""} متوفر عبر ${STORE_NAME}. راجع السعر الحالي والتوفر والخيارات والمواصفات في هذه الصفحة قبل إتمام الطلب.`
-                    : `${node.title}${brand?.label ? ` by ${brand.label}` : ""} is available through ${STORE_NAME}. Review the current price, availability, options and specifications on this page before ordering.`}
-                </p>
-                <div className="mt-5 grid gap-5 md:grid-cols-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {language === "ar" ? "المواصفات والخيارات" : "Specifications & options"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {language === "ar"
-                        ? `يمكنك مراجعة ${category?.label ?? node.productType ?? "فئة المنتج"} وخيارات النسخة المتاحة مثل السعة أو اللون عندما تكون مدرجة.`
-                        : `Review the ${category?.label ?? node.productType ?? "product category"} details and available variant options such as storage or colour when listed.`}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {language === "ar" ? "السعر والتوفر" : "Price & availability"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {language === "ar"
-                        ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
-                        : `The store shows the current price and live stock status. Current status: ${inStock ? "in stock" : "out of stock"}.`}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {language === "ar"
-                        ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
-                        : "Check the shipping, warranty and returns pages, or contact support before ordering if you need additional details."}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-4 text-sm font-medium">
-                  <Link to="/shipping" className="text-primary hover:underline">
-                    {t("shippingTitle")}
-                  </Link>
-                  <Link to="/warranty" className="text-primary hover:underline">
-                    {t("warrantyTitle")}
-                  </Link>
-                  <Link to="/returns" className="text-primary hover:underline">
-                    {t("returnsTitle")}
-                  </Link>
-                </div>
-              </section>
-            )}
-
-            <section
-              className={cn((hasBox || hasShipping || needsSeoOverview) && "border-t border-border/60 pt-6")}
-              aria-label="Official manufacturer information"
-            >
-              <OfficialProductResearch
-                title={node.title}
-                {...(node.vendor ? { vendor: node.vendor } : {})}
-              />
-            </section>
-          </div>
-        </details>
+        <nav
+          aria-label={language === "ar" ? "سياسات المتجر" : "Store policies"}
+          className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 pt-5 text-sm font-medium"
+        >
+          <Link to="/shipping" className="text-primary hover:underline">{t("shippingTitle")}</Link>
+          <Link to="/warranty" className="text-primary hover:underline">{t("warrantyTitle")}</Link>
+          <Link to="/returns" className="text-primary hover:underline">{t("returnsTitle")}</Link>
+        </nav>
 
         {similar.length > 0 && (
           <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="similar-products">
@@ -678,7 +626,7 @@ function ProductPage() {
           </section>
         )}
 
-        {sameVendorProducts.length > 0 && (
+        {sameVendor.length > 0 && (
           <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="more-from-brand">
             <div className="home-section-header">
               <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
@@ -694,7 +642,7 @@ function ProductPage() {
                 </Link>
               )}
             </div>
-            <ProductRail products={sameVendorProducts} storageKey={`more-from-${node.vendor}`} />
+            <ProductRail products={sameVendor} storageKey={`more-from-${node.vendor}`} />
           </section>
         )}
       </div>
