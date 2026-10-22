@@ -101,6 +101,6 @@ export function buildProductHighlights(groups: SpecGroup[], title: string, limit
   addFromTitle("technology", /\bGaN\b/i, "GaN");
   addFromTitle("port", /\bUSB[ -]?C\b/i, "USB-C");
   addFromTitle("display", /\bLED\s+display\b/i, "LED display");
-  addFromTitle("cable", /\bwith\s+(?:(?:a|an)\s+)?(?:USB[ -]?C\s+)?cable\b/i, "Cable");
+  addFromTitle("cable", /(?:\bwith\s+(?:(?:a|an)\s+)?(?:USB[ -]?C\s+)?|&\s*(?:USB[ -]?C\s+)?)cable\b/i, "Cable");
   return [...values.values()].slice(0, max);
 }
