@@ -26,7 +26,13 @@ try {
     const section = page.getByTestId("product-information");
     await section.waitFor({ state: "visible", timeout: 15000 });
     const expectedTitle = item.language === "ar" ? "معلومات المنتج" : "Product information";
-    assert.ok((await section.locator("h2").first().innerText()).includes(expectedTitle));
+    // SSR uses English, then the LanguageProvider restores the stored locale after hydration.
+    await page.waitForFunction((lang) =>
+      document.body.dataset.language === lang && document.documentElement.lang === lang,
+      item.language,
+    );
+    await section.locator("h2").first().getByText(expectedTitle, { exact: true })
+      .waitFor({ state: "visible", timeout: 10000 });
     const tabs = section.getByRole("tab");
     assert.ok(await tabs.count() >= 2, "Expected both product information tabs");
     assert.ok(await section.getByRole("tabpanel").first().isVisible(), "Description should be visible first");
