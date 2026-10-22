@@ -87,3 +87,15 @@ test("product route renders the new product information hierarchy", async () => 
   assert.match(route, /data-testid="product-purchase-bar"/);
   assert.doesNotMatch(route, /<OfficialProductResearch/);
 });
+
+test("arabic specifications prefer merchant data and localize only title-derived labels", () => {
+  const groups = buildDisplaySpecificationGroups(
+    [{ title: "General", rows: [{ label: "Brand", value: "ACEFAST" }, { label: "Charging power", value: "30W" }] }],
+    title,
+    "ar",
+  );
+  assert.equal(groups[0].title, "معلومات مؤكدة من اسم المنتج");
+  assert.ok(groups[0].rows.some((row) => row.label === "التقنية" && row.value === "GaN"));
+  assert.ok(groups[0].rows.every((row) => row.label !== "القدرة"));
+  assert.ok(groups[1].rows.some((row) => row.value === "30W"));
+});
