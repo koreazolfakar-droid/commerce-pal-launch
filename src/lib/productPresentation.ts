@@ -31,21 +31,18 @@ export function buildProductSuggestions({
     return true;
   };
 
-  for (const candidate of recommendations) {
-    if (similar.length >= max) break;
-    add(candidate, similar);
-  }
-  // Top up the primary selection from the same brand, without duplicating cards.
-  for (const candidate of vendorProducts) {
-    if (similar.length >= max) break;
-    if (vendor && normalize(candidate?.node?.vendor) === vendor) add(candidate, similar);
-  }
-  // Only show the secondary rail when there are additional, distinct brand items.
+  // Reserve real brand matches for the branded rail before composing recommendations.
+  // This prevents the recommended algorithm (which often boosts same-brand items)
+  // from consuming the one brand card that the separate section should display.
   if (vendor) {
     for (const candidate of vendorProducts) {
       if (sameVendor.length >= max) break;
       if (normalize(candidate?.node?.vendor) === vendor) add(candidate, sameVendor);
     }
+  }
+  for (const candidate of recommendations) {
+    if (similar.length >= max) break;
+    add(candidate, similar);
   }
   return { similar, sameVendor };
 }
