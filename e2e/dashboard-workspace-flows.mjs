@@ -155,7 +155,9 @@ try {
       animations: "disabled",
     });
   assert.deepEqual(errors, []);
-  await context.route("**/src/dashboard/pages/ProductsPage.tsx*", (route) =>
+  const failedProductChunk =
+    /\/(?:src\/dashboard\/pages\/ProductsPage\.tsx|assets\/ProductsPage-[^/?]+\.js)(?:\?|$)/;
+  await context.route(failedProductChunk, (route) =>
     route.fulfill({
       contentType: "application/javascript",
       body: 'throw new Error("Synthetic route failure");',
@@ -169,7 +171,7 @@ try {
   await failurePage.locator("main h1").first().waitFor();
   assert.ok(!failurePage.url().includes("/products"));
   await failurePage.close();
-  await context.unroute("**/src/dashboard/pages/ProductsPage.tsx*");
+  await context.unroute(failedProductChunk);
 
   console.log(
     JSON.stringify({

@@ -1,3 +1,4 @@
+import { createStorefrontPage } from "./helpers/storefront-fixture-fetch.mjs";
 import assert from "node:assert/strict";
 import { chromium, firefox, webkit } from "@playwright/test";
 
@@ -86,8 +87,9 @@ async function assertViewportHealth(page, label, requireProductCard = false) {
   }
 
   const card = page
-    .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+    .locator('[data-testid="product-card"]:visible, .product-list-card:visible')
     .first();
+  if (requireProductCard) await card.waitFor({ state: "visible", timeout: 10000 });
   if (!(await card.count())) {
     assert.ok(!requireProductCard, `${label}: expected a visible product card`);
     return;
@@ -112,7 +114,11 @@ async function assertViewportHealth(page, label, requireProductCard = false) {
     );
   }
 
-  const primary = card.locator(".product-card-primary-action:visible").first();
+  const primary = card
+    .locator(
+      ".product-card-primary-action:visible, button[aria-label^='Add '][aria-label$=' to bag']:visible",
+    )
+    .first();
   if (await primary.count()) {
     const buttonBox = await primary.boundingBox();
     assert.ok(buttonBox, `${label}: primary product action has no layout box`);
@@ -144,7 +150,7 @@ async function runResponsive(browser) {
   const cases = engineName === "chromium" ? responsiveCases : supplementalCases;
 
   for (const testCase of cases) {
-    const page = await browser.newPage({
+    const page = await createStorefrontPage(browser, {
       viewport: { width: testCase.width, height: testCase.height },
     });
     await configure(page, testCase.lang, testCase.theme);
@@ -156,9 +162,7 @@ async function runResponsive(browser) {
       await assertDocumentMode(page, testCase, route);
       if (route === "/shop") {
         await page
-          .locator(
-            ".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible",
-          )
+          .locator('[data-testid="product-card"]:visible, .product-list-card:visible')
           .first()
           .waitFor({ state: "visible", timeout: engineName === "webkit" ? 10000 : 5000 });
       }
@@ -176,7 +180,7 @@ async function runResponsive(browser) {
 }
 
 async function runProbe(browser) {
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const page = await createStorefrontPage(browser, { viewport: { width: 390, height: 844 } });
   await configure(page, "en", "light");
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -254,7 +258,7 @@ async function runProbe(browser) {
 
 async function runShopProbe(browser) {
   for (const testCase of supplementalCases) {
-    const page = await browser.newPage({
+    const page = await createStorefrontPage(browser, {
       viewport: { width: testCase.width, height: testCase.height },
     });
     await configure(page, testCase.lang, testCase.theme);
@@ -264,7 +268,7 @@ async function runShopProbe(browser) {
     await assertDocumentMode(page, testCase, "/shop");
 
     const card = page
-      .locator(".sc-product-card:visible, .market-product-card:visible, .product-list-card:visible")
+      .locator('[data-testid="product-card"]:visible, .product-list-card:visible')
       .first();
     await card.waitFor({ state: "visible", timeout: 10000 });
     await assertViewportHealth(
@@ -279,17 +283,16 @@ async function runShopProbe(browser) {
 }
 
 async function runModeProbe(browser) {
-  const cases =
-    routeGroup.startsWith("overflow-mobile-en")
-      ? [supplementalCases[0]]
-      : routeGroup === "overflow-mobile-ar"
-        ? [supplementalCases[1]]
-        : routeGroup === "overflow-desktop-en"
-          ? [supplementalCases[2]]
-          : supplementalCases;
+  const cases = routeGroup.startsWith("overflow-mobile-en")
+    ? [supplementalCases[0]]
+    : routeGroup === "overflow-mobile-ar"
+      ? [supplementalCases[1]]
+      : routeGroup === "overflow-desktop-en"
+        ? [supplementalCases[2]]
+        : supplementalCases;
 
   for (const testCase of cases) {
-    const page = await browser.newPage({
+    const page = await createStorefrontPage(browser, {
       viewport: { width: testCase.width, height: testCase.height },
     });
     await configure(page, testCase.lang, testCase.theme);
@@ -317,15 +320,11 @@ async function runModeProbe(browser) {
       "overflow-mobile-en-no-hero-dots":
         '[data-testid="home-hero-dots"] { display: none !important; }',
       "overflow-mobile-en-static-hero-parts":
-        '.hero-scene[data-free] .hero-scene-part { position: static !important; inset: auto !important; transform: none !important; }',
-      "overflow-mobile-en-no-hero-buttons":
-        '.hero-scene-buttons-row { display: none !important; }',
-      "overflow-mobile-en-no-hero-container":
-        '.hero-scene { container-type: normal !important; }',
-      "overflow-mobile-en-contain-hero":
-        '.hero-scene { contain: layout paint !important; }',
-      "overflow-mobile-en-hide-hero-scene":
-        '.hero-scene { display: none !important; }',
+        ".hero-scene[data-free] .hero-scene-part { position: static !important; inset: auto !important; transform: none !important; }",
+      "overflow-mobile-en-no-hero-buttons": ".hero-scene-buttons-row { display: none !important; }",
+      "overflow-mobile-en-no-hero-container": ".hero-scene { container-type: normal !important; }",
+      "overflow-mobile-en-contain-hero": ".hero-scene { contain: layout paint !important; }",
+      "overflow-mobile-en-hide-hero-scene": ".hero-scene { display: none !important; }",
     };
 
     const isolationStyle = isolationStyles[routeGroup];
@@ -357,7 +356,7 @@ async function runModeProbe(browser) {
 
 async function runRoutes(browser) {
   const routes = routeGroups[routeGroup] ?? routeGroups.all;
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const page = await createStorefrontPage(browser, { viewport: { width: 390, height: 844 } });
   await configure(page, "en", "light");
   for (const route of routes) {
     const response = await page.goto(`${baseURL}${route}`, { waitUntil: "load" });

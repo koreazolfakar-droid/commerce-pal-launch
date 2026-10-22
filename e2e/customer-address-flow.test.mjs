@@ -76,7 +76,7 @@ test("saved address selector is available in desktop chrome and as a compact mob
   assert.match(mobile, /data-testid="mobile-header-location"/);
   assert.match(mobile, /<MapPin/);
   assert.match(mobile, /mobile-header-action/);
-  assert.match(mobile, /grid-cols-\[2\.75rem_minmax\(0,1fr\)_5\.75rem\]/);
+  assert.match(mobile, /grid-cols-\[5\.75rem_minmax\(0,1fr\)_5\.75rem\]/);
   assert.match(mobile, /CustomerAccountButton[\s\S]*variant="icon"/);
   assert.match(mobile, /ThemeToggle className="mobile-header-action h-11 w-11/);
   assert.match(mobile, /data-testid="mobile-header-location"[\s\S]*Deliver to/);

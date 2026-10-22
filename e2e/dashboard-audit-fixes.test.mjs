@@ -146,51 +146,47 @@ test("preferences still work within the tab when browser storage is blocked", as
   }
 });
 
-test(
-  "customer history pages preserve phone matching and staff authorization in PostgreSQL",
-  { skip: !process.env.SPACE_CALL_PGLITE_MODULE },
-  async () => {
-    const { PGlite } = await import(process.env.SPACE_CALL_PGLITE_MODULE);
-    const db = new PGlite();
-    try {
-      await db.exec(
-        "create schema private; create role anon; create role authenticated; create function private.is_dashboard_staff() returns boolean language sql as $$select true$$; create table store_customers(id uuid, phone_normalized text); create table store_orders(id uuid, customer_phone text, created_at timestamptz);",
-      );
-      await db.exec(
-        await readFile(
-          new URL(
-            "../supabase/migrations/20261005003000_customer_order_history_pages.sql",
-            import.meta.url,
-          ),
-          "utf8",
+test("customer history pages preserve phone matching and staff authorization in PostgreSQL", async () => {
+  const { PGlite } = await import(process.env.SPACE_CALL_PGLITE_MODULE || "@electric-sql/pglite");
+  const db = new PGlite();
+  try {
+    await db.exec(
+      "create schema private; create role anon; create role authenticated; create function private.is_dashboard_staff() returns boolean language sql as $$select true$$; create table store_customers(id uuid, phone_normalized text); create table store_orders(id uuid, customer_phone text, created_at timestamptz);",
+    );
+    await db.exec(
+      await readFile(
+        new URL(
+          "../supabase/migrations/20261005003000_customer_order_history_pages.sql",
+          import.meta.url,
         ),
-      );
-      const customer = "00000000-0000-4000-8000-000000000001";
-      await db.query("insert into store_customers values ($1,'12345');", [customer]);
-      await db.exec(
-        "insert into store_orders select gen_random_uuid(), '+12 345', now() from generate_series(1,151); insert into store_orders values(gen_random_uuid(),'67890',now());",
-      );
-      const first = (
-        await db.query("select * from get_store_customer_orders_page($1,100,0)", [customer])
-      ).rows;
-      const rest = (
-        await db.query("select * from get_store_customer_orders_page($1,100,100)", [customer])
-      ).rows;
-      assert.equal(first.length, 100);
-      assert.equal(rest.length, 51);
-      assert.equal(new Set([...first, ...rest].map((row) => row.id)).size, 151);
-      await db.exec(
-        "create or replace function private.is_dashboard_staff() returns boolean language sql as $$select false$$;",
-      );
-      assert.deepEqual(
-        (await db.query("select * from get_store_customer_orders_page($1,100,0)", [customer])).rows,
-        [],
-      );
-    } finally {
-      await db.close();
-    }
-  },
-);
+        "utf8",
+      ),
+    );
+    const customer = "00000000-0000-4000-8000-000000000001";
+    await db.query("insert into store_customers values ($1,'12345');", [customer]);
+    await db.exec(
+      "insert into store_orders select gen_random_uuid(), '+12 345', now() from generate_series(1,151); insert into store_orders values(gen_random_uuid(),'67890',now());",
+    );
+    const first = (
+      await db.query("select * from get_store_customer_orders_page($1,100,0)", [customer])
+    ).rows;
+    const rest = (
+      await db.query("select * from get_store_customer_orders_page($1,100,100)", [customer])
+    ).rows;
+    assert.equal(first.length, 100);
+    assert.equal(rest.length, 51);
+    assert.equal(new Set([...first, ...rest].map((row) => row.id)).size, 151);
+    await db.exec(
+      "create or replace function private.is_dashboard_staff() returns boolean language sql as $$select false$$;",
+    );
+    assert.deepEqual(
+      (await db.query("select * from get_store_customer_orders_page($1,100,0)", [customer])).rows,
+      [],
+    );
+  } finally {
+    await db.close();
+  }
+});
 
 test("all-row loader continues below the API cap and propagates later-page failures", async () => {
   const rows = Array.from({ length: 251 }, (_, id) => ({ id }));
@@ -371,63 +367,59 @@ test("verified AI sessions consume a per-user quota and return 429 when exhauste
   assert.equal((await aiAccess.checkDashboardAiAccess(staff, admin, "staff-id")).status, 429);
 });
 
-test(
-  "media deletion is blocked for nested and URL-encoded references in PostgreSQL",
-  { skip: !process.env.SPACE_CALL_PGLITE_MODULE },
-  async () => {
-    const { PGlite } = await import(process.env.SPACE_CALL_PGLITE_MODULE);
-    const db = new PGlite();
-    try {
-      await db.exec(
-        await readFile(
-          new URL("./fixtures/product-editor-stock-schema.sql", import.meta.url),
-          "utf8",
+test("media deletion is blocked for nested and URL-encoded references in PostgreSQL", async () => {
+  const { PGlite } = await import(process.env.SPACE_CALL_PGLITE_MODULE || "@electric-sql/pglite");
+  const db = new PGlite();
+  try {
+    await db.exec(
+      await readFile(
+        new URL("./fixtures/product-editor-stock-schema.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await db.exec(
+      "create table cms_media_assets(id uuid primary key, bucket_id text, object_path text); create table cms_sections(id uuid primary key, settings jsonb);",
+    );
+    await db.exec(
+      await readFile(
+        new URL(
+          "../supabase/migrations/20261005002000_guard_referenced_dashboard_media.sql",
+          import.meta.url,
         ),
-      );
-      await db.exec(
-        "create table cms_media_assets(id uuid primary key, bucket_id text, object_path text); create table cms_sections(id uuid primary key, settings jsonb);",
-      );
-      await db.exec(
-        await readFile(
-          new URL(
-            "../supabase/migrations/20261005002000_guard_referenced_dashboard_media.sql",
-            import.meta.url,
-          ),
-          "utf8",
-        ),
-      );
-      const id = "00000000-0000-4000-8000-000000000001";
-      await db.query(
-        "insert into cms_media_assets values ($1,'cms-media','folder/image space.webp')",
-        [id],
-      );
-      await db.query("insert into cms_sections values ($1,$2::jsonb)", [
-        id,
-        JSON.stringify({
-          nested: {
-            image:
-              "https://example.com/storage/v1/object/public/cms-media/folder/image%20space.webp?v=1",
-          },
-        }),
-      ]);
-      assert.deepEqual((await db.query("select * from get_dashboard_media_usage($1)", [id])).rows, [
-        { source: "cms_sections", record_id: id },
-      ]);
-      await assert.rejects(
-        db.query("delete from cms_media_assets where id=$1", [id]),
-        /media_asset_in_use/,
-      );
-      await db.query("delete from cms_sections where id=$1", [id]);
-      await db.query("delete from cms_media_assets where id=$1", [id]);
-      assert.equal(
-        (await db.query("select count(*)::integer as count from cms_media_assets")).rows[0].count,
-        0,
-      );
-    } finally {
-      await db.close();
-    }
-  },
-);
+        "utf8",
+      ),
+    );
+    const id = "00000000-0000-4000-8000-000000000001";
+    await db.query(
+      "insert into cms_media_assets values ($1,'cms-media','folder/image space.webp')",
+      [id],
+    );
+    await db.query("insert into cms_sections values ($1,$2::jsonb)", [
+      id,
+      JSON.stringify({
+        nested: {
+          image:
+            "https://example.com/storage/v1/object/public/cms-media/folder/image%20space.webp?v=1",
+        },
+      }),
+    ]);
+    assert.deepEqual((await db.query("select * from get_dashboard_media_usage($1)", [id])).rows, [
+      { source: "cms_sections", record_id: id },
+    ]);
+    await assert.rejects(
+      db.query("delete from cms_media_assets where id=$1", [id]),
+      /media_asset_in_use/,
+    );
+    await db.query("delete from cms_sections where id=$1", [id]);
+    await db.query("delete from cms_media_assets where id=$1", [id]);
+    assert.equal(
+      (await db.query("select count(*)::integer as count from cms_media_assets")).rows[0].count,
+      0,
+    );
+  } finally {
+    await db.close();
+  }
+});
 
 test("saved empty settings remain empty while missing settings keep their defaults", async () => {
   const settings = await moduleFrom("../src/dashboard/data/settings.ts", {

@@ -57,9 +57,12 @@ jobs:
       - name: Install Chromium for responsive UI checks
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
+      - name: Production build
+        run: bun run build
+
       - name: Responsive UI, RTL, theme and route checks
         run: |
-          bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
+          SPACE_CALL_VISUAL_FIXTURES=1 node --import ./e2e/helpers/storefront-fixture-fetch.mjs e2e/helpers/production-preview.mjs > /tmp/ui-polish-preview.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
           for _ in {1..60}; do
@@ -72,8 +75,5 @@ jobs:
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/hero-responsive-check.mjs
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/bottom-nav-responsive-check.mjs
 
-      - name: Production build
-        run: bun run build
-
       - name: SSR smoke test
-        run: bun run test:ssr
+        run: SPACE_CALL_VISUAL_FIXTURES=1 NODE_OPTIONS="--import ./e2e/helpers/storefront-fixture-fetch.mjs" bun run test:ssr

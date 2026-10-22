@@ -6,18 +6,27 @@ const catalog = await readFile(
   new URL("../src/dashboard/data/catalog.ts", import.meta.url),
   "utf8",
 );
-const nativeStore = await readFile(
-  new URL("../src/lib/nativeStore.ts", import.meta.url),
-  "utf8",
-);
+const nativeStore = await readFile(new URL("../src/lib/nativeStore.ts", import.meta.url), "utf8");
 const productRoute = await readFile(
   new URL("../src/routes/product.$handle.tsx", import.meta.url),
   "utf8",
 );
+const productMutation = await readFile(
+  new URL("../supabase/migrations/20260928050000_atomic_product_editor_save.sql", import.meta.url),
+  "utf8",
+);
 
 test("product edits preserve the existing public handle", () => {
-  assert.match(catalog, /select\("id,handle,published_at"\)/);
-  assert.match(catalog, /existingProduct\?\.handle \?\? \(await uniqueHandle\(input\.title\)\)/);
+  assert.match(catalog, /save_store_product_editor/);
+  assert.match(productMutation, /if p_product_id is not null then/);
+  const update = productMutation.slice(
+    productMutation.indexOf("update public.store_products"),
+    productMutation.indexOf("else\n    v_product_id := gen_random_uuid()"),
+  );
+  assert.match(update, /title = btrim\(p_title\)/);
+  assert.match(update, /where id = v_product_id/);
+  assert.doesNotMatch(update, /\bhandle\s*=/);
+  assert.match(productMutation, /returning \* into v_product/);
   assert.doesNotMatch(catalog, /uniqueHandle\(input\.title, input\.id\)/);
 });
 

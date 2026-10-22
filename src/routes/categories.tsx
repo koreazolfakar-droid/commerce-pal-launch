@@ -40,12 +40,14 @@ async function fetchManagedStoreCategories(): Promise<ManagedStoreCategory[] | n
 
 export const Route = createFileRoute("/categories")({
   loader: async ({ context }) => {
-    const [catalog, managedCategories] = await Promise.all([
+    const [, managedCategories] = await Promise.all([
       context.queryClient.ensureQueryData(catalogQueryOptions()),
       fetchManagedStoreCategories(),
     ]);
 
-    return { catalog, managedCategories };
+    // CatalogIndex includes Lucide components; keep it in the query cache rather
+    // than serializing it into loader data sent to the browser.
+    return { managedCategories };
   },
   head: () => ({
     meta: [

@@ -80,6 +80,7 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <article
+      data-testid="product-card"
       className={cn(
         "sc-product-card card-lift group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30",
         className,
