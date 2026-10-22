@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +18,8 @@ const cli = (args) =>
   });
 
 if (process.argv.includes("--stop")) {
-  cli(["stop", "--no-backup"]);
+  if (existsSync(join(stackDir, "supabase/config.toml"))) cli(["stop", "--no-backup"]);
+  else console.log("No local test stack was initialized; nothing to stop.");
 } else {
   mkdirSync(stackDir, { recursive: true, mode: 0o700 });
   cli(["init", "--force"]);
