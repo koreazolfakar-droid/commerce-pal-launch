@@ -1,6 +1,6 @@
 import { useLanguage } from "@/dashboard/i18n";
 import { ChevronLeft, ChevronRight, Loader2, RefreshCw, Search, ShoppingBag } from "lucide-react";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { listDashboardSales, type DashboardSalesResult } from "@/dashboard/data/sales";
@@ -34,21 +34,27 @@ export default function SalesPage() {
   const [result, setResult] = useState<DashboardSalesResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const requestVersion = useRef(0);
 
   const load = useCallback(
     async (manual = false) => {
-      if (!manual) setLoading(true);
+      const request = ++requestVersion.current;
+      setLoading(true);
+      // A new search/page must never show rows from the previous query.
+      if (!manual) setResult(null);
+      setError("");
       try {
         const next = await listDashboardSales({ search, page, pageSize: 10 });
+        if (request !== requestVersion.current) return;
         setResult(next);
-        setError("");
         if (manual) toast.success("Sales refreshed.");
       } catch (cause) {
+        if (request !== requestVersion.current) return;
         const message = cause instanceof Error ? cause.message : "Unable to load sales.";
         setError(message);
         if (manual) toast.error(message);
       } finally {
-        setLoading(false);
+        if (request === requestVersion.current) setLoading(false);
       }
     },
     [page, search],
@@ -56,6 +62,10 @@ export default function SalesPage() {
 
   useEffect(() => {
     void load(false);
+    return () => {
+      // Discard responses after filters change or this page unmounts.
+      requestVersion.current += 1;
+    };
   }, [load]);
 
   const totalPages = Math.max(1, Math.ceil((result?.total ?? 0) / (result?.pageSize ?? 10)));
