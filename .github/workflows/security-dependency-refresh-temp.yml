@@ -26,7 +26,7 @@ jobs:
       - name: Install current lock
         run: bun install --frozen-lockfile
       - name: Refresh vulnerable dependencies within existing ranges
-        run: bun update seroval zod
+        run: bun update seroval zod@4.6.7
       - name: Verify frozen lock and package manifest match
         run: bun install --frozen-lockfile
       - name: Verify focused regression tests
