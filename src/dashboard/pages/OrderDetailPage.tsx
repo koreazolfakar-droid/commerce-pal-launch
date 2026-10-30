@@ -2,7 +2,7 @@ import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { OrderDeliveryLocation } from "@/dashboard/components/orders/OrderDeliveryLocation";
 import { useLanguage } from "@/dashboard/i18n";
 import { ArrowLeft, Check, Loader2, Package, RefreshCw, Send, User, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 import {
@@ -86,35 +86,52 @@ export default function OrderDetailPage({ id }: { id: string }) {
   const [deliveryType, setDeliveryType] =
     useState<Exclude<DashboardDeliveryType, "pending">>("free");
   const [deliveryFee, setDeliveryFee] = useState("0");
+  const requestVersion = useRef(0);
+  const currentOrderId = useRef(id);
+  currentOrderId.current = id;
 
   const load = useCallback(async () => {
+    const request = ++requestVersion.current;
     setLoading(true);
+    setOrder((current) => (current?.id === id ? current : null));
+    setError("");
     try {
       const next = await getDashboardOrder(id);
+      if (request !== requestVersion.current || currentOrderId.current !== id) return;
       setOrder(next);
       if (next) {
         setDeliveryType(next.deliveryType === "paid" ? "paid" : "free");
         setDeliveryFee(String(next.shippingTotal));
       }
-      setError("");
     } catch (cause) {
+      if (request !== requestVersion.current || currentOrderId.current !== id) return;
       setError(cause instanceof Error ? cause.message : "Unable to load order.");
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && currentOrderId.current === id) {
+        setLoading(false);
+      }
     }
   }, [id]);
 
   useEffect(() => {
     void load();
+    return () => {
+      // Ignore an older order response when navigating or unmounting.
+      requestVersion.current += 1;
+    };
   }, [load]);
 
-  const nextStatus = useMemo(() => (order ? nextOrderStatus(order.status) : null), [order]);
+  const nextStatus = useMemo(
+    () => (order?.id === id ? nextOrderStatus(order.status) : null),
+    [order, id],
+  );
 
   const changeStatus = async (status: DashboardOrderStatus) => {
     if (!order || saving) return;
     setSaving(true);
     try {
       const next = await updateDashboardOrderStatus(order.id, status, order.version);
+      if (currentOrderId.current !== order.id) return;
       setOrder(next);
       toast.success(`Order #${order.publicOrderNumber} marked ${orderStatusLabel(status)}.`);
     } catch (cause) {
@@ -129,6 +146,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     setSaving(true);
     try {
       const next = await updateDashboardOrderPaymentStatus(order.id, status, order.version);
+      if (currentOrderId.current !== order.id) return;
       setOrder(next);
       toast.success(`Payment status changed to ${paymentStatusLabel(status)}.`);
     } catch (cause) {
@@ -149,6 +167,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     setSaving(true);
     try {
       const next = await updateDashboardOrderDelivery(order.id, deliveryType, fee, order.version);
+      if (currentOrderId.current !== order.id) return;
       setOrder(next);
       if (next) {
         setDeliveryType(next.deliveryType === "paid" ? "paid" : "free");
@@ -162,7 +181,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     }
   };
 
-  if (loading && !order) {
+  if (loading && (!order || order.id !== id)) {
     return (
       <div className="grid min-h-[420px] place-items-center">
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
@@ -170,7 +189,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     );
   }
 
-  if (error && !order) {
+  if (error && (!order || order.id !== id)) {
     return (
       <div>
         <button
@@ -189,7 +208,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
     );
   }
 
-  if (!order) {
+  if (!order || order.id !== id) {
     return (
       <div>
         <button
