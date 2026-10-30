@@ -105,11 +105,12 @@ function buildInput(draft: VariantDraft): DashboardProductVariantInput {
   const price = Number(draft.price);
   const compareAt = draft.compareAt.trim() ? Number(draft.compareAt) : null;
   const stock = Number(draft.stock);
-  if (!Number.isFinite(price) || price < 0) throw new Error("Enter a valid variant price.");
+  if (!draft.price.trim() || !Number.isFinite(price) || price < 0)
+    throw new Error("Enter a valid variant price.");
   if (compareAt != null && (!Number.isFinite(compareAt) || compareAt < 0)) {
     throw new Error("Enter a valid compare-at price.");
   }
-  if (!Number.isInteger(stock) || stock < 0) {
+  if (!draft.stock.trim() || !Number.isSafeInteger(stock) || stock < 0) {
     throw new Error("Stock must be a non-negative whole number.");
   }
 
@@ -220,7 +221,7 @@ export default function ProductVariantManager({
     setSaving(true);
     try {
       const saved = editing
-        ? await updateDashboardProductVariant(editing.id, input)
+        ? await updateDashboardProductVariant(editing.id, input, editing.stock)
         : await createDashboardProductVariant(productId, input);
       const next = [...variants.filter((variant) => variant.id !== saved.id), saved].sort(
         (a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt),

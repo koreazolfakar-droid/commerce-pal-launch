@@ -60,7 +60,7 @@ test("product editor core persists in one PostgreSQL transaction", () => {
 
 test("variant manager uses atomic RPCs and inventory-aware stock updates", () => {
   assert.match(data, /rpc\(\s*"create_store_product_variant"/);
-  assert.match(data, /rpc\(\s*"update_store_product_variant"/);
+  assert.match(data, /rpc\(\s*"update_store_product_variant_guarded"/);
   assert.match(data, /rpc\(\s*"reorder_store_product_variants"/);
   assert.match(data, /rpc\(\s*"delete_store_product_variant_safe"/);
   assert.match(variants, /Color/);

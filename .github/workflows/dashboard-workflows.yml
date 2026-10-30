@@ -66,3 +66,4 @@ jobs:
           bun run test:dashboard:browser
           bun run test:dashboard:professional
           node e2e/dashboard-ai-form-fill-browser.mjs
+          node e2e/dashboard-data-entry-browser.mjs

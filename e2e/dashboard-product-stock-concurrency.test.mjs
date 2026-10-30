@@ -169,7 +169,8 @@ test("variant-manager snapshots update the expected-stock baseline", () => {
       useCallback: (fn) => fn,
       setStockBaseline: (value) => baseline.push(value),
       setExisting: () => {},
-      setForm: () => {},
+      existing: { price: 100, compareAt: null, sku: "SKU", barcode: "", stock: 10 },
+      setForm: (fn) => fn({ price: "100", compareAt: "", sku: "SKU", barcode: "", stock: "10" }),
     },
     "handleSingleVariantChange",
   );

@@ -545,3 +545,17 @@ export async function setInventoryStock(
   broadcastStorefrontRefresh();
   return result.new_stock;
 }
+
+/** Fetch outside current page/filter so conflict recovery never loses its target. */
+export async function loadInventoryVariantStock(variantId: string) {
+  await requireDashboardStaff();
+  const { data, error } = await supabase
+    .from("store_product_variants")
+    .select("stock_quantity")
+    .eq("id", variantId)
+    .single();
+  throwIfError(error, "Refreshing variant stock failed");
+  if (!data || !Number.isSafeInteger(data.stock_quantity) || data.stock_quantity < 0)
+    throw new Error("Invalid inventory quantity.");
+  return data.stock_quantity;
+}

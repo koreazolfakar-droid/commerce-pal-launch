@@ -1,4 +1,12 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Review latest stock": "مراجعة الكمية الأحدث",
+  "Review stock adjustment": "مراجعة تعديل المخزون",
+  "Adjustment reason": "سبب تعديل المخزون",
+  "Enter a reason for the stock adjustment.": "أدخل سبب تعديل المخزون.",
+  "Change category?": "تغيير التصنيف؟",
+  "Changing category will remove specifications outside the new template. Continue?":
+    "تغيير التصنيف سيحذف المواصفات التي لا يدعمها القالب الجديد. هل تريد المتابعة؟",
+
   "Search workspace": "البحث في مساحة العمل",
   "Search sections, products, orders…": "ابحث في الأقسام والمنتجات والطلبات…",
   "Workspace command center": "مركز البحث والانتقال",
