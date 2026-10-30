@@ -1460,3 +1460,8 @@
   .dashboard-responsive-table td[colspan], .dashboard-responsive-table tbody td:first-child { grid-column: 1 / -1; }
   .dashboard-responsive-table td[colspan]::before { content: none; }
 }
+
+/* Hide only the Lovable-hosted Edit badge; do not affect storefront or dashboard controls. */
+#lovable-badge {
+  display: none !important;
+}
