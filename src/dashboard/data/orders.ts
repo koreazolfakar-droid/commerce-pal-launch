@@ -7,7 +7,6 @@ import { getDashboardRole } from "@/dashboard/data/catalog";
 type OrderRow = Tables<"store_orders"> & {
   public_order_number: string;
   delivery_type: string | null;
-  delivery_location: string | null;
   version: number;
   completed_at: string | null;
 };

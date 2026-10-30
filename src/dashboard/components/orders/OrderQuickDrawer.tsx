@@ -1,4 +1,5 @@
 import { useLanguage } from "@/dashboard/i18n";
+import { OrderDeliveryLocation } from "@/dashboard/components/orders/OrderDeliveryLocation";
 import { ArrowRight, Copy, Loader2, Package, Phone, RefreshCw, User, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
@@ -232,6 +233,9 @@ export default function OrderQuickDrawer({
                     {[order.deliveryAddress, order.city].filter(Boolean).join(", ") ||
                       t("No delivery address provided.")}
                   </div>
+                </div>
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <OrderDeliveryLocation value={order.deliveryLocation} compact />
                 </div>
               </section>
 
