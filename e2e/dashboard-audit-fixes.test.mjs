@@ -494,3 +494,31 @@ test("navigation guard cancels programmatic departure, permits consent, and rest
     globalThis.document = previousDocument;
   }
 });
+
+// A cleared field must never be interpreted as an instruction to erase stock.
+test("blank inventory draft never writes zero stock", async () => {
+  const writes = [],
+    errors = [];
+  const row = { variantId: "v", stock: 12, trackInventory: true, productName: "Phone" };
+  const commit = await productionCallback(
+    "../src/dashboard/pages/InventoryManagerPage.tsx",
+    "commitAbsolute",
+    {
+      savingId: null,
+      draftStocks: { v: "" },
+      draftSnapshots: { current: new Map([["v", row]]) },
+      setSavingId() {},
+      setDraftStocks() {},
+      setInventoryStock: async (_, n) => {
+        writes.push(n);
+        return n;
+      },
+      replaceRowStock() {},
+      load() {},
+      toast: { success() {}, error: (m) => errors.push(m) },
+    },
+  );
+  await commit(row);
+  assert.deepEqual(writes, []);
+  assert.equal(errors.length, 1);
+});

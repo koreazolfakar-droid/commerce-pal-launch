@@ -148,6 +148,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
     if (removed) URL.revokeObjectURL(removed.preview);
     setPendingImages((current) => current.filter((_, position) => position !== index));
   };
+  const [categoryLossFields, setCategoryLossFields] = useState<string[]>([]);
+  const [categoryConfirmation, setCategoryConfirmation] = useState(false);
+  const categoryChangeRef = useRef<(() => void) | null>(null);
   const [stockBaseline, setStockBaseline] = useState(0);
   const [specifications, setSpecifications] = useState<ProductSpecificationValues>({});
   const [aiSpecificationKeys, setAiSpecificationKeys] = useState<Set<string>>(new Set());
@@ -266,11 +269,21 @@ export default function ProductFormPage({ id }: { id?: string }) {
     [specificationTemplate],
   );
 
-  const changeCategory = (categoryId: string) => {
-    setSaved(false);
-    setForm((current) => ({ ...current, categoryId }));
+  const changeCategory = (categoryId: string, confirmed = false) => {
     const nextCategory = categories.find((category) => category.id === categoryId);
     const nextTemplate = nextCategory?.specTemplate ?? { sections: [] };
+    const nextAllowed = new Set(specificationKeys(nextTemplate));
+    const removed = Object.keys(specifications).filter(
+      (key) => specifications[key]?.trim() && !nextAllowed.has(key),
+    );
+    if (removed.length && !confirmed) {
+      setCategoryLossFields(removed);
+      categoryChangeRef.current = () => changeCategory(categoryId, true);
+      setCategoryConfirmation(true);
+      return;
+    }
+    setSaved(false);
+    setForm((current) => ({ ...current, categoryId }));
     setSpecifications((current) => normalizeProductSpecifications(current, nextTemplate));
     const nextKeys = new Set(specificationKeys(nextTemplate));
     setAiSpecificationKeys((current) => new Set([...current].filter((key) => nextKeys.has(key))));
@@ -289,7 +302,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const applyAiPatch = useCallback(
-    (values: Record<string, string>) => {
+    (values: Record<string, string>, confirmed = false): void => {
       const brandName = values.brandName?.trim();
       const categoryName = values.categoryName?.trim();
       const normalizedBrand = brandName?.toLocaleLowerCase();
@@ -304,6 +317,25 @@ export default function ProductFormPage({ id }: { id?: string }) {
         : undefined;
 
       const specPatch = extractSpecificationAiPatch(values);
+      const categoryWouldLoseValues =
+        categoryMatch &&
+        Object.keys(specifications).some(
+          (key) =>
+            specifications[key]?.trim() &&
+            !new Set(specificationKeys(categoryMatch.specTemplate)).has(key),
+        );
+      if (categoryWouldLoseValues && !confirmed) {
+        setCategoryLossFields(
+          Object.keys(specifications).filter(
+            (key) =>
+              specifications[key]?.trim() &&
+              !new Set(specificationKeys(categoryMatch!.specTemplate)).has(key),
+          ),
+        );
+        categoryChangeRef.current = () => applyAiPatch(values, true);
+        setCategoryConfirmation(true);
+        return;
+      }
       const effectiveTemplate = categoryMatch?.specTemplate ?? specificationTemplate;
       const normalizedSpecPatch = normalizeProductSpecifications(specPatch, effectiveTemplate);
       const effectiveKeys = new Set(specificationKeys(effectiveTemplate));
@@ -338,7 +370,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         );
       }
     },
-    [brands, categories, specificationTemplate, variantCount],
+    [brands, categories, specificationTemplate, specifications, variantCount],
   );
 
   const createBrandInline = async () => {
@@ -483,43 +515,60 @@ export default function ProductFormPage({ id }: { id?: string }) {
       pendingImages.length > 0;
   const markDraftSaved = useDashboardUnsavedChanges(!loading && dirty);
 
-  const handleSingleVariantChange = useCallback((variant: DashboardProductVariant | null) => {
-    if (!variant) return;
-    setStockBaseline(variant.stock);
-    setExisting((current) =>
-      current
-        ? {
-            ...current,
-            price: variant.price,
-            compareAt: variant.compareAt,
-            sku: variant.sku,
-            barcode: variant.barcode,
-            stock: variant.stock,
-          }
-        : current,
-    );
-    setForm((current) => {
-      const next = {
-        price: String(variant.price),
-        compareAt: variant.compareAt == null ? "" : String(variant.compareAt),
-        sku: variant.sku,
-        barcode: variant.barcode,
-        stock: String(variant.stock),
-      };
+  const handleSingleVariantChange = useCallback(
+    (variant: DashboardProductVariant | null) => {
+      if (!variant) return;
 
-      if (
-        current.price === next.price &&
-        current.compareAt === next.compareAt &&
-        current.sku === next.sku &&
-        current.barcode === next.barcode &&
-        current.stock === next.stock
-      ) {
-        return current;
-      }
+      setExisting((current) =>
+        current
+          ? {
+              ...current,
+              price: variant.price,
+              compareAt: variant.compareAt,
+              sku: variant.sku,
+              barcode: variant.barcode,
+              stock: variant.stock,
+            }
+          : current,
+      );
+      setForm((current) => {
+        const next = {
+          price: String(variant.price),
+          compareAt: variant.compareAt == null ? "" : String(variant.compareAt),
+          sku: variant.sku,
+          barcode: variant.barcode,
+          stock: String(variant.stock),
+        };
 
-      return { ...current, ...next };
-    });
-  }, []);
+        if (
+          current.price === next.price &&
+          current.compareAt === next.compareAt &&
+          current.sku === next.sku &&
+          current.barcode === next.barcode &&
+          current.stock === next.stock
+        ) {
+          setStockBaseline(variant.stock);
+          return current;
+        }
+
+        const previous = existing;
+        const merged = { ...current };
+        for (const key of ["price", "compareAt", "sku", "barcode", "stock"] as const) {
+          const old = previous
+            ? key === "compareAt"
+              ? previous.compareAt == null
+                ? ""
+                : String(previous.compareAt)
+              : String(previous[key])
+            : current[key];
+          if (current[key] === old) merged[key] = next[key];
+        }
+        if (!previous || current.stock === String(previous.stock)) setStockBaseline(variant.stock);
+        return merged;
+      });
+    },
+    [existing],
+  );
 
   const saveLockRef = useRef(false);
   const submitProduct = (statusOverride?: ProductStatus) => {
@@ -1459,6 +1508,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
           {existing ? (
             <Panel title={t("Product record")}>
+              <a
+                href={`/dashboard/inventory?search=${encodeURIComponent(existing.name)}`}
+                className="dashboard-button m-4 text-xs"
+              >
+                {t("Inventory control")}
+              </a>
               <div className="space-y-2 p-5 text-[10px] text-slate-500">
                 <div className="flex justify-between gap-4">
                   <span>{t("Handle")}</span>
@@ -1491,6 +1546,22 @@ export default function ProductFormPage({ id }: { id?: string }) {
         </div>
       ) : null}
 
+      <DashboardConfirmDialog
+        open={categoryConfirmation}
+        title="Change category?"
+        description={`${t("Changing category will remove specifications outside the new template. Continue?")} ${categoryLossFields.join(", ")}`}
+        confirmLabel="Continue"
+        onClose={() => {
+          setCategoryConfirmation(false);
+          categoryChangeRef.current = null;
+        }}
+        onConfirm={() => {
+          const change = categoryChangeRef.current;
+          categoryChangeRef.current = null;
+          setCategoryConfirmation(false);
+          change?.();
+        }}
+      />
       <DashboardConfirmDialog
         open={confirmAction === "archive"}
         title={t("Archive this product?")}

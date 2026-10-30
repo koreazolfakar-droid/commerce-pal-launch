@@ -1,3 +1,4 @@
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
@@ -153,13 +154,16 @@ export async function createDashboardProductVariant(
 export async function updateDashboardProductVariant(
   variantId: string,
   input: DashboardProductVariantInput,
+  originalStock: number,
 ): Promise<DashboardProductVariant> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc(
-    "update_store_product_variant",
+  const { data, error } = await looseSupabase.rpc(
+    "update_store_product_variant_guarded",
     rpcArgs({
       p_variant_id: variantId,
       ...variantRpcPayload(input),
+      p_stock: input.stock === originalStock ? null : input.stock,
+      p_expected_stock: originalStock,
     }),
   );
   throwIfError(error, "Updating variant failed");

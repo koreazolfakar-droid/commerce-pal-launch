@@ -1,3 +1,4 @@
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
 import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
@@ -24,10 +25,10 @@ import { toast } from "sonner";
 import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import {
-  adjustInventoryDelta,
   loadInventoryCategoryOptions,
   loadInventoryLatestMovements,
   loadInventoryPage,
+  loadInventoryVariantStock,
   loadInventorySummary,
   setInventoryStock,
   type InventoryCategoryOptions,
@@ -148,6 +149,9 @@ export default function InventoryManagerPage() {
       ),
   );
   useDashboardUnsavedChanges(inventoryDirty);
+  const [adjustmentRow, setAdjustmentRow] = useState<InventoryRow | null>(null);
+  const [reviewingStock, setReviewingStock] = useState(false);
+  const [adjustmentReason, setAdjustmentReason] = useState("");
   const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
   const [page, setPage] = useDashboardQueryState<number>("page", 1);
   const [pageSize, setPageSize] = useDashboardQueryState<number>("pageSize", 20, [20, 50, 100]);
@@ -302,35 +306,29 @@ export default function InventoryManagerPage() {
     });
   };
 
+  const reviewStock = (row: InventoryRow) => {
+    setAdjustmentReason("");
+    setAdjustmentRow(row);
+  };
   const changeBy = async (row: InventoryRow, delta: number) => {
-    if (!row.trackInventory || savingId) return;
+    if (!row.trackInventory || savingId || row.variantId in draftStocks) return;
     if (row.stock + delta < 0) return;
-    setSavingId(row.variantId);
-    try {
-      const newStock = await adjustInventoryDelta(
-        row,
-        delta,
-        `Inventory dashboard ${delta > 0 ? "increase" : "decrease"}`,
-      );
-      replaceRowStock(row.variantId, newStock, delta);
-      toast.success(`${row.productName} stock updated to ${newStock}.`);
-      void load(false);
-    } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Inventory adjustment failed.");
-    } finally {
-      setSavingId(null);
-    }
+    draftSnapshots.current.set(row.variantId, row);
+    setDraftStocks((current) => ({ ...current, [row.variantId]: String(row.stock + delta) }));
+    reviewStock(row);
   };
 
-  const commitAbsolute = async (row: InventoryRow) => {
+  const commitAbsolute = async (
+    row: InventoryRow,
+    reason = "Inventory dashboard manual stock set",
+  ) => {
     if (!row.trackInventory || savingId) return;
     const raw = draftStocks[row.variantId];
     if (raw == null) return;
 
     const nextStock = Number(raw);
-    if (!Number.isInteger(nextStock) || nextStock < 0) {
+    if (!raw.trim() || !Number.isSafeInteger(nextStock) || nextStock < 0) {
       toast.error("Stock must be a non-negative whole number.");
-      setDraftStocks((current) => ({ ...current, [row.variantId]: String(row.stock) }));
       return;
     }
 
@@ -340,22 +338,20 @@ export default function InventoryManagerPage() {
         delete next[row.variantId];
         return next;
       });
-      return;
+      return true;
     }
 
     setSavingId(row.variantId);
     try {
       const snapshot = draftSnapshots.current.get(row.variantId) ?? row;
-      const newStock = await setInventoryStock(
-        snapshot,
-        nextStock,
-        "Inventory dashboard manual stock set",
-      );
+      const newStock = await setInventoryStock(snapshot, nextStock, reason);
       replaceRowStock(row.variantId, newStock, newStock - row.stock);
       toast.success(`${row.productName} stock updated to ${newStock}.`);
       void load(false);
+      return true;
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Inventory update failed.");
+      void load(false);
     } finally {
       setSavingId(null);
     }
@@ -380,6 +376,69 @@ export default function InventoryManagerPage() {
 
   return (
     <div>
+      <DashboardConfirmDialog
+        open={adjustmentRow !== null}
+        title="Review stock adjustment"
+        description={
+          adjustmentRow
+            ? `${adjustmentRow.productName} · ${adjustmentRow.variantTitle} · ${adjustmentRow.stock} → ${draftStocks[adjustmentRow.variantId] ?? adjustmentRow.stock}`
+            : ""
+        }
+        confirmLabel="Save"
+        pending={savingId !== null || reviewingStock}
+        onClose={() => {
+          if (!savingId && !reviewingStock) {
+            if (adjustmentRow)
+              setDraftStocks((current) => {
+                const next = { ...current };
+                delete next[adjustmentRow.variantId];
+                return next;
+              });
+            setAdjustmentRow(null);
+          }
+        }}
+        onConfirm={() => {
+          if (reviewingStock) return;
+          if (!adjustmentRow || !adjustmentReason.trim()) {
+            toast.error(t("Enter a reason for the stock adjustment."));
+            return;
+          }
+          void commitAbsolute(adjustmentRow, adjustmentReason.trim()).then((saved) => {
+            if (saved) setAdjustmentRow(null);
+          });
+        }}
+      >
+        <button
+          type="button"
+          disabled={savingId !== null}
+          className="dashboard-button mt-3 text-xs"
+          onClick={async () => {
+            if (!adjustmentRow || reviewingStock) return;
+            setReviewingStock(true);
+            try {
+              const stock = await loadInventoryVariantStock(adjustmentRow.variantId);
+              const latest = { ...adjustmentRow, stock };
+              draftSnapshots.current.set(latest.variantId, latest);
+              setAdjustmentRow(latest);
+            } catch (cause) {
+              toast.error(cause instanceof Error ? cause.message : "Unable to refresh stock.");
+            } finally {
+              setReviewingStock(false);
+            }
+          }}
+        >
+          {t("Review latest stock")}
+        </button>
+        <label className="mt-4 block text-xs font-semibold">
+          {t("Adjustment reason")}
+          <input
+            value={adjustmentReason}
+            onChange={(event) => setAdjustmentReason(event.target.value)}
+            maxLength={500}
+            className="mt-2 h-11 w-full rounded-xl border px-3"
+          />
+        </label>
+      </DashboardConfirmDialog>
       {error && (
         <DashboardLoadError message={error} busy={refreshing} onRetry={() => void load(true)} />
       )}
@@ -571,7 +630,7 @@ export default function InventoryManagerPage() {
                 <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
                   <button
                     onClick={() => void changeBy(row, -1)}
-                    disabled={saving || !row.trackInventory || row.stock <= 0}
+                    disabled={savingId !== null || !row.trackInventory || row.stock <= 0}
                     className="grid size-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
                     aria-label={`Decrease stock for ${row.productName}`}
                   >
@@ -585,11 +644,14 @@ export default function InventoryManagerPage() {
                         [row.variantId]: event.target.value,
                       }))
                     }
-                    onBlur={() => void commitAbsolute(row)}
+
                     onKeyDown={(event) => {
-                      if (event.key === "Enter") event.currentTarget.blur();
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        reviewStock(row);
+                      }
                     }}
-                    disabled={saving || !row.trackInventory}
+                    disabled={savingId !== null || !row.trackInventory}
                     className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-center text-[14px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
                     type="number"
                     min={0}
@@ -598,8 +660,16 @@ export default function InventoryManagerPage() {
                     aria-label={`Set stock for ${row.productName}`}
                   />
                   <button
+                    type="button"
+                    disabled={savingId !== null || !(row.variantId in draftStocks)}
+                    onClick={() => reviewStock(row)}
+                    className="dashboard-button text-xs"
+                  >
+                    {t("Save")}
+                  </button>
+                  <button
                     onClick={() => void changeBy(row, 1)}
-                    disabled={saving || !row.trackInventory}
+                    disabled={savingId !== null || !row.trackInventory}
                     className="grid size-10 shrink-0 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
                     aria-label={`Increase stock for ${row.productName}`}
                   >
@@ -699,7 +769,7 @@ export default function InventoryManagerPage() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => void changeBy(row, -1)}
-                          disabled={saving || !row.trackInventory || row.stock <= 0}
+                          disabled={savingId !== null || !row.trackInventory || row.stock <= 0}
                           className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
                           aria-label={`Decrease stock for ${row.productName}`}
                         >
@@ -713,19 +783,30 @@ export default function InventoryManagerPage() {
                               [row.variantId]: event.target.value,
                             }))
                           }
-                          onBlur={() => void commitAbsolute(row)}
+
                           onKeyDown={(event) => {
-                            if (event.key === "Enter") event.currentTarget.blur();
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              reviewStock(row);
+                            }
                           }}
-                          disabled={saving || !row.trackInventory}
+                          disabled={savingId !== null || !row.trackInventory}
                           className="h-9 w-[72px] rounded-xl border border-slate-200 text-center text-[13px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
                           type="number"
                           min={0}
                           step={1}
                         />
                         <button
+                          type="button"
+                          disabled={savingId !== null || !(row.variantId in draftStocks)}
+                          onClick={() => reviewStock(row)}
+                          className="dashboard-button text-xs"
+                        >
+                          {t("Save")}
+                        </button>
+                        <button
                           onClick={() => void changeBy(row, 1)}
-                          disabled={saving || !row.trackInventory}
+                          disabled={savingId !== null || !row.trackInventory}
                           className="grid size-9 place-items-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-35"
                           aria-label={`Increase stock for ${row.productName}`}
                         >

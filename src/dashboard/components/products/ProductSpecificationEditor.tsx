@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
@@ -44,6 +45,9 @@ export default function ProductSpecificationEditor({
 }) {
   const { lang } = useLanguage();
   const ar = lang === "ar";
+  const [search, setSearch] = useState("");
+  const [onlyMissing, setOnlyMissing] = useState(false);
+  const [activeField, setActiveField] = useState<string | null>(null);
   const fields = template.sections.flatMap((section) => section.fields);
   if (!fields.length) {
     return (
@@ -55,6 +59,12 @@ export default function ProductSpecificationEditor({
     );
   }
 
+  const completed = fields.filter((field) => (values[field.key] ?? "").trim()).length;
+  const visible = (field: ProductSpecificationField) =>
+    (!onlyMissing || field.key === activeField || !(values[field.key] ?? "").trim()) &&
+    [field.label, field.labelAr, field.key].some((text) =>
+      (text ?? "").toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
+    );
   const currentData = Object.fromEntries(
     fields.map((field) => [aiSpecificationFieldKey(field.key), values[field.key] ?? ""]),
   );
@@ -89,96 +99,129 @@ export default function ProductSpecificationEditor({
         />
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 p-3">
+        <span role="status" className="text-xs font-semibold">
+          {ar ? "المعبأ" : "Completed"}: {completed} / {fields.length}
+        </span>
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          aria-label={ar ? "بحث في المواصفات" : "Search specifications"}
+          placeholder={ar ? "بحث في المواصفات" : "Search specifications"}
+          className="h-10 min-w-0 flex-1 rounded-lg border px-3 text-xs"
+        />
+        <label className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={onlyMissing}
+            onChange={(event) => setOnlyMissing(event.target.checked)}
+          />
+          {ar ? "الخانات الناقصة فقط" : "Missing fields only"}
+        </label>
+      </div>
+      {!fields.some(visible) && (
+        <p role="status" className="p-3 text-sm">
+          {ar
+            ? "لا توجد خانات مطابقة. غيّر البحث أو الفلتر."
+            : "No matching fields. Change the search or filter."}
+        </p>
+      )}
       <div className="space-y-4">
-        {template.sections.map((section) => {
-          const sectionCurrentData = Object.fromEntries(
-            section.fields.map((field) => [
-              aiSpecificationFieldKey(field.key),
-              values[field.key] ?? "",
-            ]),
-          );
+        {template.sections
+          .filter((section) => section.fields.some(visible))
+          .map((section) => {
+            const sectionCurrentData = Object.fromEntries(
+              section.fields.map((field) => [
+                aiSpecificationFieldKey(field.key),
+                values[field.key] ?? "",
+              ]),
+            );
 
-          return (
-            <section
-              key={section.title}
-              className="overflow-hidden rounded-xl border border-slate-200"
-            >
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3">
-                <div className="text-[10px] font-black uppercase tracking-[.1em] text-slate-500">
-                  {ar ? section.titleAr || section.title : section.title}
+            return (
+              <section
+                key={section.title}
+                className="overflow-hidden rounded-xl border border-slate-200"
+              >
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3">
+                  <div className="text-[10px] font-black uppercase tracking-[.1em] text-slate-500">
+                    {ar ? section.titleAr || section.title : section.title}
+                  </div>
+                  <AiAssistPanel
+                    entity="product"
+                    query={query}
+                    currentData={sectionCurrentData}
+                    fields={section.fields.map(aiField)}
+                    context={{
+                      ...aiContext,
+                      specKeys: section.fields.map((field) => field.key),
+                    }}
+                    onApply={onAiApply}
+                    triggerLabel={ar ? "AI للقسم" : "AI Section"}
+                    showSeoAction={false}
+                    compact
+                  />
                 </div>
-                <AiAssistPanel
-                  entity="product"
-                  query={query}
-                  currentData={sectionCurrentData}
-                  fields={section.fields.map(aiField)}
-                  context={{
-                    ...aiContext,
-                    specKeys: section.fields.map((field) => field.key),
-                  }}
-                  onApply={onAiApply}
-                  triggerLabel={ar ? "AI للقسم" : "AI Section"}
-                  showSeoAction={false}
-                  compact
-                />
-              </div>
 
-              <div className="grid gap-3 p-3.5 sm:grid-cols-2">
-                {section.fields.map((field) => {
-                  const aiKey = aiSpecificationFieldKey(field.key);
-                  const generated = aiGeneratedKeys.has(field.key);
-                  return (
-                    <label key={field.key} className="block min-w-0">
-                      <span className="mb-1.5 flex min-h-5 items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold text-slate-600">
-                          {ar ? field.labelAr || field.label : field.label}
-                          {field.unit ? (
-                            <span className="ms-1 font-medium text-slate-400">({field.unit})</span>
-                          ) : null}
+                <div className="grid gap-3 p-3.5 sm:grid-cols-2">
+                  {section.fields.filter(visible).map((field) => {
+                    const aiKey = aiSpecificationFieldKey(field.key);
+                    const generated = aiGeneratedKeys.has(field.key);
+                    return (
+                      <label key={field.key} className="block min-w-0">
+                        <span className="mb-1.5 flex min-h-5 items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold text-slate-600">
+                            {ar ? field.labelAr || field.label : field.label}
+                            {field.unit ? (
+                              <span className="ms-1 font-medium text-slate-400">
+                                ({field.unit})
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            {generated ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[8px] font-black text-amber-700">
+                                <Sparkles className="size-2.5" />
+                                {ar ? "AI · مراجعة" : "AI · review"}
+                              </span>
+                            ) : null}
+                            <AiAssistPanel
+                              entity="product"
+                              query={query}
+                              currentData={{ [aiKey]: values[field.key] ?? "" }}
+                              fields={[aiField(field)]}
+                              context={{ ...aiContext, specKeys: [field.key] }}
+                              onApply={onAiApply}
+                              triggerLabel="AI"
+                              showSeoAction={false}
+                              compact
+                            />
+                          </span>
                         </span>
-                        <span className="flex items-center gap-1.5">
-                          {generated ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[8px] font-black text-amber-700">
-                              <Sparkles className="size-2.5" />
-                              {ar ? "AI · مراجعة" : "AI · review"}
-                            </span>
-                          ) : null}
-                          <AiAssistPanel
-                            entity="product"
-                            query={query}
-                            currentData={{ [aiKey]: values[field.key] ?? "" }}
-                            fields={[aiField(field)]}
-                            context={{ ...aiContext, specKeys: [field.key] }}
-                            onApply={onAiApply}
-                            triggerLabel="AI"
-                            showSeoAction={false}
-                            compact
-                          />
-                        </span>
-                      </span>
-                      <input
-                        aria-label={field.label}
-                        value={values[field.key] ?? ""}
-                        onChange={(event) => onChange(field.key, event.target.value)}
-                        placeholder={
-                          field.unit
-                            ? `${ar ? "مثال" : "e.g."} ${field.unit}`
-                            : ar
-                              ? "أدخل قيمة مؤكدة"
-                              : "Enter verified value"
-                        }
-                        className={
-                          "h-10 w-full rounded-xl border bg-white px-3 text-[11px] text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
-                          (generated ? "border-amber-200" : "border-slate-200")
-                        }
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+                        <input
+                          aria-label={field.label}
+                          onFocus={() => setActiveField(field.key)}
+                          onBlur={() => setActiveField(null)}
+                          value={values[field.key] ?? ""}
+                          onChange={(event) => onChange(field.key, event.target.value)}
+                          placeholder={
+                            field.unit
+                              ? `${ar ? "مثال" : "e.g."} ${field.unit}`
+                              : ar
+                                ? "أدخل قيمة مؤكدة"
+                                : "Enter verified value"
+                          }
+                          className={
+                            "h-10 w-full rounded-xl border bg-white px-3 text-[11px] text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
+                            (generated ? "border-amber-200" : "border-slate-200")
+                          }
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useLanguage } from "@/dashboard/i18n";
 import { Loader2, X } from "lucide-react";
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 
 type DashboardConfirmDialogProps = {
@@ -13,6 +13,7 @@ type DashboardConfirmDialogProps = {
   destructive?: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  children?: ReactNode;
 };
 
 export default function DashboardConfirmDialog({
@@ -25,6 +26,7 @@ export default function DashboardConfirmDialog({
   destructive = false,
   onClose,
   onConfirm,
+  children,
 }: DashboardConfirmDialogProps) {
   const { t } = useLanguage();
   const dialogRef = useDashboardModal(() => {
@@ -72,6 +74,7 @@ export default function DashboardConfirmDialog({
           </button>
         </div>
 
+        {children}
         <div className="mt-6 flex justify-end gap-2">
           <button
             type="button"
