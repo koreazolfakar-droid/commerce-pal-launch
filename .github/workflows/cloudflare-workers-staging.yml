@@ -35,3 +35,12 @@ jobs:
           bun audit --audit-level=high
       - name: Build Cloudflare SSR Worker without deploying
         run: bun run build:cloudflare
+      - name: Start Cloudflare workerd preview and run read-only smoke tests
+        run: |
+          ./node_modules/.bin/vite preview --config vite.cloudflare.config.ts --host 127.0.0.1 --port 4173 > /tmp/space-call-cloudflare-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          node --test e2e/cloudflare-worker-runtime-smoke.test.mjs || {
+            cat /tmp/space-call-cloudflare-preview.log
+            exit 1
+          }

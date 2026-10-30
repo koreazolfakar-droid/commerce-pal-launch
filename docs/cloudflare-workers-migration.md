@@ -50,3 +50,9 @@ Official references:
 - https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/
 - https://developers.cloudflare.com/workers/vite-plugin/reference/api/
 - https://developers.cloudflare.com/workers/configuration/secrets/
+
+## Runtime smoke
+
+The staging-only CI also launches the bundled Worker in Cloudflare's local workerd runtime,
+checks a real SSR 404 route for security headers, and requests the public logo asset.
+This uses **read-only requests** and never deploys or modifies Supabase records.
