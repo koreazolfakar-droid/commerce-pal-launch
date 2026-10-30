@@ -28,6 +28,6 @@ test("audit-vulnerable Seroval cannot regress below patched 1.6.8", () => {
 });
 
 test("Zod root dependency and lock are on patched >=4.6.6", () => {
-  assert.match(manifest.dependencies.zod, /^\\^?4\\./);
+  assert.match(manifest.dependencies.zod, /^\^?4\./);
   assert.ok(isAtLeast(lockedVersion("zod"), [4, 6, 6]));
 });
