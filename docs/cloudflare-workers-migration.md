@@ -56,3 +56,6 @@ Official references:
 The staging-only CI also launches the bundled Worker in Cloudflare's local workerd runtime,
 checks a real SSR 404 route for security headers, and requests the public logo asset.
 This uses **read-only requests** and never deploys or modifies Supabase records.
+
+Runtime smoke is intentionally named `*.smoke.mjs` (not `*.test.mjs`), so the generic
+unit suite never starts a network-dependent test without a local Worker preview.
