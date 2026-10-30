@@ -1,0 +1,46 @@
+name: Cloudflare Workers Staging Build
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "vite.cloudflare.config.ts"
+      - "wrangler.jsonc"
+      - "e2e/cloudflare-workers-migration.test.mjs"
+      - ".github/workflows/cloudflare-workers-staging.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+      - name: Reproducible dependencies
+        run: bun install --frozen-lockfile
+      - name: Migration safety regression
+        run: node --test e2e/cloudflare-workers-migration.test.mjs
+      - name: TypeScript and security gate
+        run: |
+          bun run typecheck
+          node scripts/security-gate.mjs
+          bun audit --audit-level=high
+      - name: Build Cloudflare SSR Worker without deploying
+        run: bun run build:cloudflare
+      - name: Start Cloudflare workerd preview and run read-only smoke tests
+        run: |
+          ./node_modules/.bin/vite preview --config vite.cloudflare.config.ts --host 127.0.0.1 --port 4173 > /tmp/space-call-cloudflare-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          node --test e2e/cloudflare-worker-runtime.smoke.mjs || {
+            cat /tmp/space-call-cloudflare-preview.log
+            exit 1
+          }
