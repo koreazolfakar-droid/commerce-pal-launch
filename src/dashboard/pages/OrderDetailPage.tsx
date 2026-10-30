@@ -1,4 +1,5 @@
 import { dashboardListHref } from "@/dashboard/lib/listContext";
+import { OrderDeliveryLocation } from "@/dashboard/components/orders/OrderDeliveryLocation";
 import { useLanguage } from "@/dashboard/i18n";
 import { ArrowLeft, Check, Loader2, Package, RefreshCw, Send, User, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -450,6 +451,8 @@ export default function OrderDetailPage({ id }: { id: string }) {
                 <div>{order.deliveryAddress || t("No delivery address provided.")}</div>
                 {order.city ? <div className="mt-1">{order.city}</div> : null}
               </div>
+
+              <OrderDeliveryLocation value={order.deliveryLocation} />
 
               <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
                 <label>

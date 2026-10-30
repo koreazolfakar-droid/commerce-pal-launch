@@ -1622,4 +1622,12 @@ export const dashboardUiArabic: Record<string, string> = {
   " (Hidden)": " (Hidden)",
   LayoutGrid: "LayoutGrid",
   WEBP: "WEBP",
+  "Customer did not share a map location.": "لم يشارك العميل موقعًا على الخريطة.",
+  "Delivery pin": "موقع التوصيل على الخريطة",
+  "Location accuracy": "دقة الموقع",
+  "Get directions": "الاتجاهات على خرائط Google",
+  "Copy coordinates": "نسخ الإحداثيات",
+  "Coordinates copied.": "تم نسخ الإحداثيات.",
+  "Could not copy coordinates.": "تعذّر نسخ الإحداثيات.",
+  "Delivery map": "خريطة موقع التوصيل",
 };
