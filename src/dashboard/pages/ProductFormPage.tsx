@@ -829,7 +829,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         onClick={() => submitProduct("Draft")}
         disabled={saving || pendingAction !== null}
         aria-busy={saving}
-        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[12px] font-bold text-slate-700 disabled:cursor-wait disabled:opacity-60 sm:flex-none"
+        className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:cursor-wait disabled:opacity-60 sm:flex-none"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
         {t("Save as Draft")}
@@ -839,7 +839,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         onClick={() => submitProduct("Active")}
         disabled={saving || pendingAction !== null}
         aria-busy={saving}
-        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2 text-[12px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-wait disabled:opacity-60 sm:flex-none"
+        className="dashboard-button dashboard-button-primary inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-wait disabled:opacity-60 sm:flex-none"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
         {t("Publish Product")}
@@ -864,7 +864,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   }
 
   return (
-    <div className={id ? undefined : "pb-24 lg:pb-0"}>
+    <div className={`dashboard-product-editor ${id ? "" : "pb-24 lg:pb-0"}`}>
       <button
         onClick={() => navigate(dashboardListHref("/dashboard/products"))}
         className="mb-5 text-[11px] font-bold text-slate-500 hover:text-indigo-600"
@@ -872,15 +872,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
         {t("← Back to products")}
       </button>
 
-      <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
+      <div className="dashboard-editor-header mb-7 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
         <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-indigo-500">
+          <div className="dashboard-page-eyebrow mb-2">
             {t("Catalog /")} {id ? t("Edit product") : t("New product")}
           </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
+          <h1 className="dashboard-page-title break-words text-foreground">
             {id ? form.title || t("Edit product") : t("Add a product")}
           </h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
+          <p className="dashboard-page-description mt-2 max-w-2xl">
             {t(
               "Product details, multi-collection membership, gallery and variants are connected to the live Supabase catalog.",
             )}
@@ -1050,7 +1050,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
               type="button"
               onClick={() => submitProduct()}
               disabled={saving || pendingAction !== null}
-              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:opacity-60"
+              className="dashboard-button dashboard-button-primary flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold disabled:opacity-60"
             >
               {saving ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -1099,7 +1099,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
       <fieldset
         disabled={saving || pendingAction !== null}
-        className="min-w-0 grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]"
+        className="dashboard-editor-grid grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]"
       >
         <div className="space-y-4">
           <Panel
@@ -1479,7 +1479,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 <button
                   type="button"
                   onClick={() => pendingImageInputRef.current?.click()}
-                  className="grid min-h-36 w-full place-items-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center hover:border-indigo-300"
+                  className="dashboard-editor-upload grid min-h-36 w-full place-items-center rounded-xl border-2 border-dashed border-border bg-muted/35 text-center transition-colors hover:border-primary"
                 >
                   <span>
                     <UploadCloud className="mx-auto size-5 text-indigo-400" />
@@ -1647,11 +1647,11 @@ function Panel({
       id={id}
       data-product-section={id}
       tabIndex={-1}
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"
+      className="dashboard-editor-panel min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
     >
-      <div className="border-b border-slate-100 px-5 py-4">
-        <div className="text-[12px] font-bold text-[#14203a]">{t(title)}</div>
-        {subtitle ? <div className="mt-0.5 text-[10px] text-slate-400">{t(subtitle)}</div> : null}
+      <div className="dashboard-editor-panel-heading border-b border-border px-5 py-4">
+        <div className="text-sm font-semibold text-foreground">{t(title)}</div>
+        {subtitle ? <div className="mt-1 text-xs text-muted-foreground">{t(subtitle)}</div> : null}
       </div>
       {children}
     </section>
@@ -1677,10 +1677,10 @@ function OptionalPanel({
       id={id}
       data-product-section={id}
       tabIndex={-1}
-      className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"
+      className="dashboard-editor-panel group min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
       open={defaultOpen}
     >
-      <summary className="cursor-pointer border-b border-slate-100 px-5 py-4 text-[13px] font-bold text-[#14203a] focus-visible:outline-2 focus-visible:outline-indigo-500">
+      <summary className="dashboard-editor-panel-heading cursor-pointer border-b border-border px-5 py-4 text-sm font-semibold text-foreground focus-visible:outline-2 focus-visible:outline-primary">
         {t(title)}
         {subtitle ? (
           <span className="ms-2 text-xs font-normal text-slate-500">{t(subtitle)}</span>
@@ -1723,7 +1723,7 @@ function Field({
         min={type === "number" ? 0 : undefined}
         step={type === "number" ? (fieldKey === "stock" ? 1 : "any") : undefined}
         onChange={(event) => onChange(event.target.value)}
-        className={`h-11 w-full rounded-xl border bg-white px-3 text-base outline-none focus:border-indigo-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 ${error ? "border-rose-500" : "border-slate-200"}`}
+        className={`h-11 w-full rounded-lg border bg-card px-3 text-base text-foreground outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground ${error ? "border-rose-500" : "border-border"}`}
       />
       {error && fieldKey ? (
         <span
@@ -1756,7 +1756,7 @@ function SelectField({
         aria-label={t(label)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-base outline-none focus:border-indigo-400"
+        className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus:border-primary"
       >
         {children}
       </select>
