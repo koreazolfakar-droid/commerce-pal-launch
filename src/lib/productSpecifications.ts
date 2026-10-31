@@ -160,7 +160,7 @@ export function specificationGroups(
   if (template.sections.length === 0) {
     const savedValues = normalizeProductSpecifications(specificationValue);
     const rows = Object.entries(savedValues).map(([key, value]) => ({
-      label: key.replace(/_/g, " ").replace(/\\b\\w/g, (letter) => letter.toUpperCase()),
+      label: key.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
       value,
     }));
     return rows.length ? [{ title: "Specifications", rows }] : [];
