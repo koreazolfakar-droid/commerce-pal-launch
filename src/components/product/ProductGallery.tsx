@@ -77,10 +77,10 @@ export function ProductGallery({
       )}
     >
       <div
-        className=cn(
+        className={cn(
           "group relative aspect-[1/0.82] touch-pan-y overflow-hidden rounded-xl bg-image-stage/60 sm:aspect-square sm:rounded-2xl sm:bg-image-stage lg:order-2",
           !compact && "max-sm:aspect-[4/3]",
-        )
+        )}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
