@@ -69,6 +69,18 @@ assert.equal((shop.body.match(/<h1\b/g) ?? []).length, 1);
 const categories = await request("/categories");
 assert.equal((categories.body.match(/<h1\b/g) ?? []).length, 1);
 
+const brand = await request("/brand/samsung");
+assert.equal(
+  (brand.body.match(/<h1\b/g) ?? []).length,
+  1,
+  "Brand pages must survive SSR serialization",
+);
+assert.match(brand.body, /Samsung/);
+assert.match(
+  brand.body,
+  /rel="canonical"[^>]*href="https:\/\/spacecallapp\.store\/brand\/samsung"/,
+);
+
 const sitemap = await request("/sitemap.xml");
 assert.match(sitemap.body, /https:\/\/spacecallapp\.store\//);
 assert.equal(sitemap.response.headers.get("x-frame-options"), "SAMEORIGIN");
@@ -81,7 +93,7 @@ console.log(
   JSON.stringify({
     passed: true,
     source: process.env.SPACE_CALL_VISUAL_FIXTURES === "1" ? "supabase-fixture" : "supabase-native",
-    paths: ["/", "/help", "/privacy", "/shop", "/categories", "/sitemap.xml"],
+    paths: ["/", "/help", "/privacy", "/shop", "/categories", "/brand/samsung", "/sitemap.xml"],
   }),
 );
 process.exit(0);

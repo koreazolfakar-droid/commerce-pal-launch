@@ -1,4 +1,5 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import { CatalogView } from "@/components/CatalogView";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
@@ -47,14 +48,14 @@ export const Route = createFileRoute("/brand/$slug")({
     for (const product of [...indexedProducts, ...vendorProducts]) {
       uniqueProducts.set(product.node.id, product);
     }
-    const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
-
     return {
       label: managedBrand?.name?.trim() || brand.label,
       description: managedBrand?.description?.trim() || null,
       seoTitle: managedBrand?.seo_title?.trim() || null,
       seoDescription: managedBrand?.seo_description?.trim() || null,
-      catalog: brandCatalog,
+      // Catalog facets contain React icon components. Only plain product data
+      // may cross the loader serialization boundary; rebuild facets in the page.
+      products: [...uniqueProducts.values()],
     };
   },
   head: ({ params, loaderData }) => {
@@ -89,7 +90,7 @@ export const Route = createFileRoute("/brand/$slug")({
             { name: label, path },
           ]),
         ),
-        jsonLd(itemListJsonLd(`${label} products`, loaderData.catalog.products)),
+        jsonLd(itemListJsonLd(`${label} products`, loaderData.products)),
       ],
     };
   },
@@ -99,8 +100,8 @@ export const Route = createFileRoute("/brand/$slug")({
 function BrandPage() {
   const { language } = useLanguage();
   const { slug } = Route.useParams();
-  const { label: brandLabel, catalog: loaderCatalog } = Route.useLoaderData();
-  const catalog = loaderCatalog as CatalogIndex;
+  const { label: brandLabel, products: brandProducts } = Route.useLoaderData();
+  const catalog = useMemo(() => buildCatalogIndex(brandProducts), [brandProducts]);
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -154,8 +155,12 @@ function BrandPage() {
   return (
     <StoreLayout>
       <CatalogView
-        title={`${brandLabel} products`}
-        description={`${inBrand.length} product${inBrand.length === 1 ? "" : "s"} from ${brandLabel} available in the live catalogue.`}
+        title={language === "ar" ? `منتجات ${brandLabel}` : `${brandLabel} products`}
+        description={
+          language === "ar"
+            ? `${inBrand.length} منتج متوفّر من ${brandLabel}.`
+            : `${inBrand.length} product${inBrand.length === 1 ? "" : "s"} from ${brandLabel} available in the catalogue.`
+        }
         products={products}
         total={inBrand.length}
         filters={filters}
