@@ -213,7 +213,7 @@ function Sidebar({
         aria-modal={mobileOpen ? true : undefined}
         aria-label={t("Navigation")}
         tabIndex={-1}
-        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(86vw,320px)] flex-col overscroll-contain bg-[#101b32] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
+        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(88vw,320px)] flex-col overscroll-contain bg-[#111827] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
         <div
           className={`flex h-[76px] items-center border-b border-white/[.07] px-5 lg:h-[92px] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
@@ -228,7 +228,7 @@ function Sidebar({
                   type="button"
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={!closedSections.includes(section.label)}
-                  className="dashboard-sidebar-section mb-2 flex w-full items-center justify-between rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-slate-500 hover:text-slate-300"
+                  className="dashboard-sidebar-section mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold tracking-wide text-slate-400 hover:text-white"
                 >
                   <span>{t(section.label)}</span>
                   <span
@@ -264,7 +264,7 @@ function Sidebar({
                           navigate(item.href);
                           setMobileOpen(false);
                         }}
-                        className={`dashboard-sidebar-action group flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-[13px] font-medium transition active:scale-[.99] lg:py-2.5 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-[#5361ef] text-white shadow-[0_4px_14px_rgba(83,97,239,.22)]" : "text-slate-400 hover:bg-white/[.07] hover:text-white"}`}
+                        className={`dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium transition-colors duration-150 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-white/[.11] text-white" : "text-slate-300 hover:bg-white/[.07] hover:text-white"}`}
                       >
                         <Icon
                           className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
@@ -371,7 +371,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
     items[next]?.focus();
   };
   return (
-    <header className="dashboard-header sticky top-0 z-30 flex min-h-[64px] items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[78px] sm:px-6 sm:py-0 lg:px-10">
+    <header className="dashboard-header sticky top-0 z-30 flex min-h-[68px] items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[74px] sm:px-6 sm:py-0 lg:px-9">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
@@ -509,7 +509,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 
   return (
     <nav
-      className="dashboard-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(15,23,42,.07)] backdrop-blur-md lg:hidden"
+      className="dashboard-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_rgba(15,23,42,.08)] backdrop-blur-lg lg:hidden"
       aria-label="Dashboard mobile navigation"
     >
       <div className="grid min-h-[64px] grid-cols-5">
@@ -559,12 +559,24 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 function DashboardRouteFallback() {
   return (
     <div
-      className="grid min-h-[360px] place-items-center rounded-2xl border border-border/60 bg-card/40"
+      className="dashboard-route-skeleton min-h-[360px] space-y-6 rounded-2xl border border-border bg-card/70 p-5 sm:p-7"
       role="status"
       aria-live="polite"
       aria-label="Loading dashboard page"
     >
-      <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <Loader2 className="size-5 animate-spin text-primary" />
+        <span>Loading dashboard page…</span>
+      </div>
+      <div aria-hidden="true" className="animate-pulse space-y-6">
+        <div className="h-8 w-44 max-w-full rounded-lg bg-muted" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="h-24 rounded-xl border border-border bg-muted/70" />
+          ))}
+        </div>
+        <div className="h-52 rounded-xl border border-border bg-muted/70" />
+      </div>
     </div>
   );
 }
@@ -724,7 +736,7 @@ function DashboardLayout() {
         <main
           id="dashboard-main"
           tabIndex={-1}
-          className="dashboard-main mx-auto min-w-0 max-w-[1600px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9"
+          className="dashboard-main mx-auto min-w-0 max-w-[1520px] p-3 pb-24 sm:p-6 sm:pb-24 lg:p-9"
         >
           <DashboardSectionLinks />
           <DashboardErrorBoundary key={route}>

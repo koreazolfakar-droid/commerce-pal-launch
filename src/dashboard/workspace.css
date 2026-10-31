@@ -685,3 +685,326 @@
     grid-column: 1 / -1;
   }
 }
+
+/* Space Call dashboard refinement — shared across existing sections, scoped away from storefront. */
+.dashboard-theme-scope {
+  --dashboard-space-1: 0.25rem;
+  --dashboard-space-2: 0.5rem;
+  --dashboard-space-3: 0.75rem;
+  --dashboard-space-4: 1rem;
+  --dashboard-space-6: 1.5rem;
+  --dashboard-radius-control: 0.5rem;
+  --dashboard-radius-panel: 0.75rem;
+  --dashboard-focus-ring: var(--color-ring);
+}
+.dashboard-theme-scope .dashboard-main {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.dashboard-theme-scope .dashboard-main :where(input, textarea, select) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-main :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--dashboard-focus-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-main :where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.dashboard-theme-scope .dashboard-main :where(img, video, canvas) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-main :where(table) {
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-theme-scope .dashboard-main :where(th, td) {
+  vertical-align: middle;
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-main {
+    padding-inline: 0.875rem;
+  }
+  .dashboard-theme-scope .dashboard-main :where(dialog, [role="dialog"]) {
+    max-width: calc(100vw - 1rem);
+  }
+  .dashboard-theme-scope .dashboard-main :where(input, textarea, select) {
+    font-size: max(1rem, 16px);
+  }
+}
+
+
+/*
+ * 2026 dashboard visual refresh.
+ * Scoped exclusively to the authenticated admin UI; no storefront selectors.
+ * Neutral surfaces + one existing Space Call accent; works in light/dark and RTL.
+ */
+.dashboard-theme-scope {
+  --dashboard-accent: var(--color-primary);
+  --dashboard-canvas: color-mix(in oklab, var(--color-muted) 57%, var(--color-background));
+  --dashboard-surface: var(--color-card);
+  --dashboard-stroke: var(--color-border);
+  --dashboard-heading: var(--color-foreground);
+  --dashboard-muted: var(--color-muted-foreground);
+  --dashboard-panel-radius: 1rem;
+  --dashboard-control-radius: 0.625rem;
+  background: var(--dashboard-canvas);
+  text-rendering: optimizeLegibility;
+}
+.dark .dashboard-theme-scope {
+  --dashboard-accent: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-sidebar {
+  background: linear-gradient(155deg, #182235 0%, #111a2a 55%, #101724 100%);
+  box-shadow: 10px 0 40px rgb(8 18 33 / 0.12);
+}
+.dashboard-theme-scope .dashboard-sidebar-section {
+  letter-spacing: 0.045em;
+  color: #9baac2;
+  font-weight: 650;
+}
+.dashboard-theme-scope .dashboard-sidebar-action {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  line-height: 1.4;
+  color: #c3cddd;
+}
+.dashboard-theme-scope .dashboard-sidebar-action:is(:hover, :focus-visible) {
+  border-color: rgb(255 255 255 / 0.09);
+  background: rgb(255 255 255 / 0.075);
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  background: rgb(255 255 255 / 0.115);
+  border-color: rgb(255 255 255 / 0.12);
+  color: #fff;
+  box-shadow: inset 3px 0 0 #90b1ff;
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  box-shadow: inset -3px 0 0 #90b1ff;
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] svg {
+  color: #d8e4ff;
+}
+.dashboard-theme-scope .dashboard-header {
+  min-width: 0;
+  border-color: var(--dashboard-stroke);
+  background: color-mix(in oklab, var(--dashboard-surface) 95%, transparent);
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--color-foreground) 3%, transparent);
+}
+.dashboard-theme-scope .dashboard-header .dashboard-icon-button,
+.dashboard-theme-scope .dashboard-header .dashboard-compact-control {
+  border-radius: var(--dashboard-control-radius);
+}
+.dashboard-theme-scope .dashboard-page-heading {
+  max-width: 72ch;
+}
+.dashboard-theme-scope .dashboard-page-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  letter-spacing: 0.055em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--dashboard-muted);
+}
+.dashboard-theme-scope .dashboard-heading-marker {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--dashboard-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--dashboard-accent) 12%, transparent);
+}
+.dashboard-theme-scope .dashboard-page-title {
+  font-size: clamp(1.625rem, 2vw, 2.125rem);
+  font-weight: 720;
+  letter-spacing: -0.04em;
+  line-height: 1.22;
+  color: var(--dashboard-heading);
+}
+.dashboard-theme-scope .dashboard-page-description {
+  font-size: 0.875rem;
+  max-width: 66ch;
+  line-height: 1.65;
+  color: var(--dashboard-muted);
+}
+.dashboard-theme-scope .dashboard-section-links {
+  margin-block-end: clamp(1.25rem, 2vw, 1.875rem);
+  padding-block-end: 0.875rem;
+}
+.dashboard-theme-scope .dashboard-related-links a {
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 150ms, border-color 150ms;
+}
+.dashboard-theme-scope .dashboard-related-links a:hover {
+  background: color-mix(in oklab, var(--dashboard-accent) 7%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-panel,
+.dashboard-theme-scope .dashboard-editor-panel,
+.dashboard-theme-scope .dashboard-filter-panel,
+.dashboard-theme-scope .dashboard-catalog-panel,
+.dashboard-theme-scope .dashboard-metric-card {
+  border: 1px solid var(--dashboard-stroke);
+  border-radius: var(--dashboard-panel-radius);
+  background: var(--dashboard-surface);
+  box-shadow: 0 2px 9px rgb(16 27 50 / 0.035);
+}
+.dashboard-theme-scope .dashboard-panel-heading,
+.dashboard-theme-scope .dashboard-editor-panel-heading {
+  border-color: var(--dashboard-stroke);
+  padding: 1.125rem 1.25rem;
+  background: color-mix(in oklab, var(--dashboard-surface) 92%, var(--color-muted));
+}
+.dashboard-theme-scope .dashboard-panel-heading h2 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.dashboard-theme-scope .dashboard-metric-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 1.125rem;
+}
+.dashboard-theme-scope .dashboard-metric-card > :first-child {
+  color: var(--dashboard-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+}
+.dashboard-theme-scope .dashboard-metric-card > :nth-child(2) {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.dashboard-theme-scope .dashboard-kpi {
+  border-radius: var(--dashboard-panel-radius);
+}
+.dashboard-theme-scope .dashboard-kpi-icon {
+  border-radius: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-kpi-value {
+  letter-spacing: -0.035em;
+}
+.dashboard-theme-scope .dashboard-button {
+  border-radius: var(--dashboard-control-radius);
+  font-weight: 650;
+  transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+.dashboard-theme-scope .dashboard-button:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--dashboard-accent) 18%, transparent);
+}
+.dashboard-theme-scope .dashboard-button-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+.dashboard-theme-scope .dashboard-button-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-primary) 87%, var(--color-foreground));
+  border-color: transparent;
+}
+.dashboard-theme-scope .dashboard-filter-panel {
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+.dashboard-theme-scope .dashboard-filter-field {
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-catalog-panel thead {
+  background: color-mix(in oklab, var(--color-muted) 60%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-catalog-panel th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--dashboard-muted);
+  border-color: var(--dashboard-stroke);
+}
+.dashboard-theme-scope .dashboard-catalog-panel td {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.dashboard-theme-scope .dashboard-catalog-panel tbody tr:hover {
+  background: color-mix(in oklab, var(--color-muted) 54%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-catalog-panel :where(button, input):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-form-map {
+  border-radius: var(--dashboard-panel-radius);
+  padding: clamp(1rem, 2vw, 1.375rem);
+  border-color: var(--dashboard-stroke);
+  box-shadow: 0 2px 9px rgb(16 27 50 / 0.025);
+}
+.dashboard-theme-scope .dashboard-form-map nav {
+  gap: 0.5rem;
+}
+.dashboard-theme-scope .dashboard-form-map nav button {
+  border-radius: 0.625rem;
+  min-height: 2.75rem;
+}
+.dashboard-theme-scope .dashboard-editor-panel :where(input, textarea, select) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-editor-panel :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select):focus-visible {
+  border-color: var(--dashboard-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--dashboard-accent) 12%, transparent);
+}
+.dashboard-theme-scope .dashboard-editor-upload {
+  transition: border-color 150ms, background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-editor-upload:hover {
+  background: color-mix(in oklab, var(--dashboard-accent) 5%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-modal-surface {
+  box-shadow: 0 24px 64px rgb(7 14 28 / 0.22);
+}
+.dashboard-theme-scope .dashboard-mobile-nav {
+  background: color-mix(in oklab, var(--dashboard-surface) 96%, transparent);
+}
+.dashboard-theme-scope .dashboard-mobile-nav [aria-current="page"] {
+  color: var(--dashboard-accent);
+}
+@media (min-width: 1280px) {
+  .dashboard-theme-scope .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-page-title {
+    font-size: 1.625rem;
+  }
+  .dashboard-theme-scope .dashboard-page-header,
+  .dashboard-theme-scope .dashboard-editor-header {
+    gap: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-metric-card {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-catalog-panel tbody > :where(tr, div) {
+    scroll-margin-top: 5rem;
+  }
+  .dashboard-theme-scope .dashboard-modal-surface {
+    max-width: 100%;
+    border-radius: 1rem 1rem 0 0;
+  }
+  .dashboard-theme-scope .dashboard-mobile-nav button {
+    min-height: 3.75rem;
+  }
+}
+@media (prefers-contrast: more) {
+  .dashboard-theme-scope .dashboard-panel,
+  .dashboard-theme-scope .dashboard-editor-panel,
+  .dashboard-theme-scope .dashboard-filter-panel {
+    border-color: var(--color-foreground);
+  }
+}

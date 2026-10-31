@@ -1,3 +1,4 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
@@ -81,18 +82,18 @@ function StatCard({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-[0_5px_18px_rgba(33,47,82,.035)] sm:p-4">
+    <div className="dashboard-metric-card rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[9px] font-bold uppercase tracking-[.11em] text-slate-400">
+          <div className="text-xs font-semibold text-muted-foreground">
             {t(label)}
           </div>
-          <div className="mt-1.5 text-[22px] font-black tracking-[-.04em] text-[#14203a]">
+          <div className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-foreground">
             {value.toLocaleString()}
           </div>
-          <div className="mt-0.5 truncate text-[9px] text-slate-400">{t(detail)}</div>
+          <div className="mt-1 text-xs text-muted-foreground">{t(detail)}</div>
         </div>
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-500">
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
           <Icon className="size-4" />
         </span>
       </div>
@@ -308,28 +309,23 @@ export default function OrdersPage() {
     <div className="pb-4 sm:pb-8">
       <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            {t("Commerce / Orders")}
-          </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <h1 className="text-[28px] font-black tracking-[-.05em] text-[#14203a] sm:text-[30px]">
-              {t("Orders")}
-            </h1>
-            <span className="mb-1 rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-bold text-slate-500">
-              {stats?.all ?? 0} {t("total")}
-            </span>
-          </div>
-          <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-500">
-            {t("Operational order queue from Supabase with server-side filtering and pagination.")}
-          </p>
+          <PageTitle
+            eyebrow="Commerce / Orders"
+            title="Orders"
+            description="Operational order queue from Supabase with server-side filtering and pagination."
+            badge={
+              <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+                {stats?.all ?? 0} {t("total")}
+              </span>
+            }
+          />
         </div>
 
         <button
           type="button"
           onClick={() => void load(true)}
           disabled={refreshing}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white transition active:scale-[.98] disabled:opacity-60 sm:w-auto"
+          className="dashboard-button flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold disabled:opacity-60 sm:w-auto"
         >
           <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
           {refreshing ? t("Refreshing…") : t("Refresh")}
@@ -374,7 +370,7 @@ export default function OrdersPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+      <div className="dashboard-catalog-panel overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-slate-100">
           <div className="overflow-x-auto px-3 pt-3 sm:px-4">
             <div className="flex min-w-max gap-1.5 pb-3">
