@@ -35,7 +35,7 @@ test("homepage categories never flash legacy artwork before dashboard-managed im
     /const categories = managedCategoriesFailed \? fallbackItems : managedItems/,
   );
   assert.match(homeCategories, /managedCategoriesPending\s*\? <HomeCategorySkeletonItems \/>/);
-  assert.match(skeletons, /function HomeCategorySkeletonItems\(\)[\s\S]*?Array\.from\(\{ length: 5 \}\)/);
+  assert.match(skeletons, /function HomeCategorySkeletonItems\(\)[\s\S]*?Array\.from\(\{ length: 5 \},/);
   assert.match(homeCategories, /managed: true/);
   assert.match(homeCategories, /managed: false/);
   assert.match(
