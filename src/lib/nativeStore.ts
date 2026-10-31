@@ -17,7 +17,9 @@ type StorefrontProductRow = Pick<
   ProductRow,
   | "id"
   | "title"
+  | "title_ar"
   | "description"
+  | "description_ar"
   | "description_html"
   | "handle"
   | "brand_id"
@@ -126,7 +128,7 @@ type RustCatalogCardRow = {
 };
 
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,title_ar,description,description_ar,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT =
@@ -370,7 +372,9 @@ function buildProduct(
     node: {
       id: row.id,
       title: row.title,
+      titleAr: row.title_ar?.trim() || undefined,
       description: row.description,
+      descriptionAr: row.description_ar?.trim() || undefined,
       descriptionHtml: row.description_html ?? undefined,
       handle: row.handle,
       vendor: brand?.name,
