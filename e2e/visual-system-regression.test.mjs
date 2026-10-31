@@ -138,7 +138,7 @@ test("dashboard shared chrome stays compact without changing navigation structur
   assert.match(dashboard, /backdrop-blur-md/);
   assert.match(dashboard, /grid min-h-\[64px\] grid-cols-5/);
   assert.match(dashboard, /rounded-lg \$\{active \? "bg-accent" : ""\}/);
-  assert.match(dashboard, /shadow-\[0_-4px_18px_rgba\(15,23,42,\.07\)\]/);
+  assert.match(dashboard, /shadow-\[0_-8px_28px_rgba\(15,23,42,\.08\)\]/);
   assert.match(dashboard, /<MobileBottomNav onMore=/);
 });
 
