@@ -33,6 +33,8 @@ import { ProseSections } from "@/components/product/ProseSection";
 import { SpecSheet } from "@/components/product/SpecSheet";
 import { VariantPicker } from "@/components/product/VariantPicker";
 import { ProductGrid } from "@/components/ProductGrid";
+import { ProductViewToggle } from "@/components/ProductViewToggle";
+import { useProductViewMode } from "@/hooks/useProductViewMode";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -163,6 +165,7 @@ function ProductPage() {
     ),
   );
   const [activeImage, setActiveImage] = useState(0);
+  const [recommendationViewMode, setRecommendationViewMode] = useProductViewMode();
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState<"cart" | "buy" | null>(null);
 
@@ -345,7 +348,7 @@ function ProductPage() {
 
   return (
     <StoreLayout>
-      <div className="mx-auto max-w-7xl px-4 py-4 pb-[calc(var(--mobile-nav-height)+5.75rem)] sm:px-5 sm:pb-16 lg:px-6 lg:py-10 lg:pb-14">
+      <div className="mx-auto max-w-7xl px-4 py-4 pb-6 sm:px-5 sm:pb-16 lg:px-6 lg:py-10 lg:pb-14">
         <nav
           aria-label="Breadcrumb"
           className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex"
@@ -681,8 +684,8 @@ function ProductPage() {
         </nav>
 
         {similar.length > 0 && (
-          <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="similar-products">
-            <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+          <section className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8" aria-labelledby="similar-products">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 sm:mb-5">
               <div className="min-w-0">
                 <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
                   {language === "ar" ? "منتجات قد تعجبك" : "You may also like"}
@@ -691,22 +694,25 @@ function ProductPage() {
                   {language === "ar" ? "اكتشف منتجات مشابهة" : "Discover similar products"}
                 </p>
               </div>
-              {category && (
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: category.slug }}
-                  className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                >
-                  {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
-                </Link>
-              )}
+              <div className="flex shrink-0 items-center gap-3">
+                {category && (
+                  <Link
+                    to="/category/$slug"
+                    params={{ slug: category.slug }}
+                    className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  >
+                    {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
+                  </Link>
+                )}
+                <ProductViewToggle mode={recommendationViewMode} onChange={setRecommendationViewMode} />
+              </div>
             </div>
-            <ProductGrid products={similar} />
+            <ProductGrid products={similar} viewMode={recommendationViewMode} onViewModeChange={setRecommendationViewMode} showViewToggle={false} />
           </section>
         )}
 
         {sameVendor.length > 0 && (
-          <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="more-from-brand">
+          <section className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8" aria-labelledby="more-from-brand">
             <div className="home-section-header">
               <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
                 {t("moreFromBrand")} {brand?.label}
