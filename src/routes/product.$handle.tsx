@@ -695,16 +695,16 @@ function ProductPage() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
-              {category && (
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: category.slug }}
-                  className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                >
-                  {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
-                </Link>
-              )}
-              <ProductViewToggle mode={recommendationViewMode} onChange={setRecommendationViewMode} />
+                {category && (
+                  <Link
+                    to="/category/$slug"
+                    params={{ slug: category.slug }}
+                    className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  >
+                    {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
+                  </Link>
+                )}
+                <ProductViewToggle mode={recommendationViewMode} onChange={setRecommendationViewMode} />
               </div>
             </div>
             <ProductGrid products={similar} viewMode={recommendationViewMode} onViewModeChange={setRecommendationViewMode} showViewToggle={false} />
