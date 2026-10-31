@@ -33,6 +33,9 @@ export default function ProductFormMap({
             data-complete={section.complete}
             onClick={() => {
               const target = document.getElementById(section.id);
+              if (target instanceof HTMLDetailsElement) target.open = true;
+              const parentDetails = target?.closest("details");
+              if (parentDetails) parentDetails.open = true;
               target?.scrollIntoView({
                 block: "start",
                 behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches

@@ -5,6 +5,7 @@ import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsave
 import { Archive, Check, Copy, Loader2, Save, Trash2, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ProductCreatePreview from "@/dashboard/components/products/ProductCreatePreview";
+import ProductColorPicker from "@/dashboard/components/products/ProductColorPicker";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -29,7 +30,9 @@ import {
   deleteDashboardProductSafe,
   duplicateDashboardProduct,
   loadDashboardProductCollectionIds,
+  loadDashboardProductVariants,
   setDashboardProductsStatus,
+  updateDashboardProductVariant,
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
 import { validateProductDraft } from "@/dashboard/lib/validation";
@@ -110,8 +113,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null);
   const [saved, setSaved] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<ReturnType<typeof validateProductDraft>["errors"]>(
+    {},
+  );
+  const [publishError, setPublishError] = useState("");
   const [form, setForm] = useState<ProductDraft>(EMPTY);
+  const [newVariantColor, setNewVariantColor] = useState("");
+  const [newVariantStorage, setNewVariantStorage] = useState("");
   const [pendingImages, setPendingImages] = useState<PendingProductImage[]>([]);
+  const [uploadedImageCount, setUploadedImageCount] = useState(0);
   const queuedPreviewUrlsRef = useRef<string[]>([]);
   const pendingImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,6 +149,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
     });
     if (staged.length) {
       setSaved(false);
+      setPublishError("");
       setPendingImages((current) => [...current, ...staged]);
     }
   };
@@ -203,6 +214,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
             });
           } else {
             setForm(EMPTY);
+            setNewVariantColor("");
+            setNewVariantStorage("");
           }
         },
       )
@@ -220,6 +233,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
   const update = (key: keyof ProductDraft, value: string) => {
     setSaved(false);
+    if (key in fieldErrors) setFieldErrors((current) => ({ ...current, [key]: undefined }));
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -478,6 +492,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       JSON.stringify([...collectionIds].sort()) !==
         JSON.stringify([...persistedCollectionIds].sort())
     : JSON.stringify(form) !== JSON.stringify(EMPTY) ||
+      Boolean(newVariantColor.trim() || newVariantStorage.trim()) ||
       Object.keys(specifications).length > 0 ||
       collectionIds.length > 0 ||
       pendingImages.length > 0;
@@ -531,10 +546,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
   const handleSave = async (statusOverride?: ProductStatus) => {
     const status = statusOverride ?? form.status;
-    if (!id && status === "Active" && pendingImages.length === 0) {
-      toast.error(t("Add at least one image before publishing."));
-      return;
-    }
     const validation = validateProductDraft({
       title: form.title,
       price: form.price,
@@ -542,10 +553,20 @@ export default function ProductFormPage({ id }: { id?: string }) {
       sku: form.sku,
       stock: form.stock,
     });
+    setFieldErrors(validation.errors);
     if (!validation.valid) {
-      toast.error(Object.values(validation.errors)[0]);
+      const firstField = Object.keys(validation.errors)[0];
+      requestAnimationFrame(() => {
+        document.querySelector<HTMLInputElement>(`[data-product-field="${firstField}"]`)?.focus();
+      });
       return;
     }
+    if (!id && status === "Active" && pendingImages.length === 0) {
+      setPublishError(t("Add at least one image before publishing."));
+      document.getElementById("product-media")?.scrollIntoView({ block: "center" });
+      return;
+    }
+    setPublishError("");
 
     for (const section of specificationTemplate.sections) {
       for (const field of section.fields) {
@@ -586,7 +607,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
     );
 
     const createWithImages = !id && pendingImages.length > 0;
+    const createWithVariantOptions =
+      !id && Boolean(newVariantColor.trim() || newVariantStorage.trim());
+    const createAsDraft = createWithImages || createWithVariantOptions;
     let createdDraftId: string | null = null;
+    setUploadedImageCount(0);
     setSaving(true);
     try {
       const productInput = {
@@ -595,7 +620,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         description: form.description,
         brandId: form.brandId || null,
         categoryId: form.categoryId || null,
-        status: createWithImages ? ("Draft" as const) : status,
+        status: createAsDraft ? ("Draft" as const) : status,
         price: nextPrice,
         compareAt: nextCompareAt,
         sku: form.sku,
@@ -609,9 +634,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
         collectionIds: nextCollectionIds,
       };
       const savedProduct = await saveDashboardProduct(productInput);
+      if (createAsDraft) createdDraftId = savedProduct.id;
+      let firstImageUrl = "";
       if (createWithImages) {
-        createdDraftId = savedProduct.id;
-        let firstImageUrl = "";
         for (const [position, pending] of pendingImages.entries()) {
           const uploaded = await uploadDashboardProductImage(
             savedProduct.id,
@@ -622,17 +647,43 @@ export default function ProductFormPage({ id }: { id?: string }) {
             position === 0,
           );
           if (position === 0) firstImageUrl = uploaded.image.url;
+          setUploadedImageCount(position + 1);
         }
-        // Never make a new product public before all queued images are persisted.
-        if (status === "Active") {
-          await saveDashboardProduct({
-            ...productInput,
-            id: savedProduct.id,
-            status: "Active",
-            imageUrl: firstImageUrl,
-            expectedStock: null,
-          });
+      }
+      if (createWithVariantOptions) {
+        const { variants } = await loadDashboardProductVariants(savedProduct.id);
+        const defaultVariant = variants[0];
+        if (!defaultVariant || variants.length !== 1) {
+          throw new Error(t("Default variant could not be prepared. Product remains a draft."));
         }
+        await updateDashboardProductVariant(defaultVariant.id, {
+          title: defaultVariant.title,
+          sku: defaultVariant.sku,
+          barcode: defaultVariant.barcode,
+          price: defaultVariant.price,
+          compareAt: defaultVariant.compareAt,
+          stock: defaultVariant.stock,
+          trackInventory: defaultVariant.trackInventory,
+          allowBackorder: defaultVariant.allowBackorder,
+          options: {
+            ...defaultVariant.options,
+            ...(newVariantColor.trim() ? { color: newVariantColor.trim() } : {}),
+            ...(newVariantStorage.trim() ? { storage: newVariantStorage.trim() } : {}),
+          },
+          imageUrl: defaultVariant.imageUrl,
+          sortOrder: defaultVariant.sortOrder,
+          isActive: defaultVariant.isActive,
+        });
+      }
+      // Publish only after images and variant options are fully saved.
+      if (createAsDraft && status === "Active") {
+        await saveDashboardProduct({
+          ...productInput,
+          id: savedProduct.id,
+          status: "Active",
+          imageUrl: firstImageUrl || form.imageUrl,
+          expectedStock: null,
+        });
       }
       setPersistedCollectionIds(nextCollectionIds);
       if (!savedProduct.variantManagedSeparately) {
@@ -697,7 +748,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Product save failed.";
       if (createdDraftId) {
-        toast.error(`${t("Product saved as draft because image upload failed.")} ${message}`);
+        toast.error(`${t("Product remains a draft because setup did not finish.")} ${message}`);
         markDraftSaved();
         navigate(`/dashboard/products/${createdDraftId}`);
       } else {
@@ -1061,6 +1112,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 label={t("Title")}
                 value={form.title}
                 onChange={(value) => update("title", value)}
+                fieldKey="title"
+                error={fieldErrors.title}
               />
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
@@ -1151,25 +1204,28 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     ))}
                   </SelectField>
                 </div>
-                <SelectField
-                  label={t("Status")}
-                  value={form.status}
-                  onChange={(value) => update("status", value as ProductStatus)}
-                >
-                  <option value="Active">{t("Active")}</option>
-                  <option value="Draft">{t("Draft")}</option>
-                  <option value="Archived">{t("Archived")}</option>
-                </SelectField>
+                {id ? (
+                  <SelectField
+                    label={t("Status")}
+                    value={form.status}
+                    onChange={(value) => update("status", value as ProductStatus)}
+                  >
+                    <option value="Active">{t("Active")}</option>
+                    <option value="Draft">{t("Draft")}</option>
+                    <option value="Archived">{t("Archived")}</option>
+                  </SelectField>
+                ) : null}
               </div>
             </div>
           </Panel>
 
-          <Panel
+          <OptionalPanel
             id="product-specifications"
             title={t("Specifications")}
             subtitle={
               selectedCategory ? `${selectedCategory.name} template` : t("Select a category")
             }
+            defaultOpen={Boolean(id)}
           >
             <div className="p-5">
               <ProductSpecificationEditor
@@ -1189,9 +1245,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 onAiApply={applyAiPatch}
               />
             </div>
-          </Panel>
+          </OptionalPanel>
 
-          <Panel id="product-collections" title={t("Collections")} subtitle={collectionSummary}>
+          <OptionalPanel
+            id="product-collections"
+            title={t("Collections")}
+            subtitle={collectionSummary}
+            defaultOpen={Boolean(id)}
+          >
             <div className="p-5">
               <div className="mb-3 text-[10px] leading-4 text-slate-400">
                 {t(
@@ -1266,7 +1327,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 </div>
               ) : null}
             </div>
-          </Panel>
+          </OptionalPanel>
 
           <Panel
             id="product-pricing"
@@ -1280,6 +1341,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 value={form.price}
                 onChange={(value) => update("price", value)}
                 disabled={variantLocked}
+                fieldKey="price"
+                error={fieldErrors.price}
               />
               <Field
                 label={t("Compare-at price")}
@@ -1287,6 +1350,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 value={form.compareAt}
                 onChange={(value) => update("compareAt", value)}
                 disabled={variantLocked}
+                fieldKey="compareAt"
+                error={fieldErrors.compareAt}
               />
               <Field
                 label={t("SKU")}
@@ -1306,7 +1371,34 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 value={form.stock}
                 onChange={(value) => update("stock", value)}
                 disabled={variantLocked}
+                fieldKey="stock"
+                error={fieldErrors.stock}
               />
+              {!id ? (
+                <div className="space-y-4 border-t border-slate-100 pt-4 sm:col-span-2">
+                  <div>
+                    <div className="text-sm font-bold text-slate-700">{t("Variant options")}</div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {t("Optional. Color and storage are saved on the product variant.")}
+                    </p>
+                  </div>
+                  <ProductColorPicker
+                    value={newVariantColor}
+                    onChange={(value) => {
+                      setSaved(false);
+                      setNewVariantColor(value);
+                    }}
+                  />
+                  <Field
+                    label={t("Storage / capacity")}
+                    value={newVariantStorage}
+                    onChange={(value) => {
+                      setSaved(false);
+                      setNewVariantStorage(value);
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
             {variantLocked ? (
               <div className="mx-5 mb-5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-[10px] leading-5 text-indigo-700">
@@ -1346,6 +1438,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
               compareAt={form.compareAt}
               stock={form.stock}
               imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
+              color={newVariantColor}
+              storage={newVariantStorage}
             />
           ) : null}
           <Panel
@@ -1432,11 +1526,26 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     </div>
                   </>
                 ) : null}
+                {saving && pendingImages.length ? (
+                  <p role="status" className="text-xs font-semibold text-indigo-700">
+                    {t("Uploading images")} {uploadedImageCount}/{pendingImages.length}
+                  </p>
+                ) : null}
+                {publishError ? (
+                  <p role="alert" className="text-xs text-rose-700">
+                    {publishError}
+                  </p>
+                ) : null}
               </div>
             )}
           </Panel>
 
-          <Panel id="product-seo" title={t("SEO")} subtitle={t("Product search metadata")}>
+          <OptionalPanel
+            id="product-seo"
+            title={t("SEO")}
+            subtitle={t("Product search metadata")}
+            defaultOpen={Boolean(id)}
+          >
             <div className="space-y-4 p-5">
               <Field
                 label={t("SEO title")}
@@ -1455,7 +1564,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 />
               </label>
             </div>
-          </Panel>
+          </OptionalPanel>
 
           {existing ? (
             <Panel title={t("Product record")}>
@@ -1549,30 +1658,81 @@ function Panel({
   );
 }
 
+function OptionalPanel({
+  id,
+  title,
+  subtitle,
+  children,
+  defaultOpen,
+}: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  defaultOpen: boolean;
+}) {
+  const { t } = useLanguage();
+  return (
+    <details
+      id={id}
+      data-product-section={id}
+      tabIndex={-1}
+      className="group min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]"
+      open={defaultOpen}
+    >
+      <summary className="cursor-pointer border-b border-slate-100 px-5 py-4 text-[13px] font-bold text-[#14203a] focus-visible:outline-2 focus-visible:outline-indigo-500">
+        {t(title)}
+        {subtitle ? (
+          <span className="ms-2 text-xs font-normal text-slate-500">{t(subtitle)}</span>
+        ) : null}
+      </summary>
+      {children}
+    </details>
+  );
+}
+
 function Field({
   label,
   value,
   onChange,
   type = "text",
   disabled = false,
+  fieldKey,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   disabled?: boolean;
+  fieldKey?: string;
+  error?: string;
 }) {
   const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
+      <span className="mb-1.5 block text-[13px] font-bold text-slate-600">{t(label)}</span>
       <input
         value={value}
         type={type}
         disabled={disabled}
+        data-product-field={fieldKey}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error && fieldKey ? `product-${fieldKey}-error` : undefined}
+        inputMode={type === "number" ? (fieldKey === "stock" ? "numeric" : "decimal") : undefined}
+        min={type === "number" ? 0 : undefined}
+        step={type === "number" ? (fieldKey === "stock" ? 1 : "any") : undefined}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        className={`h-11 w-full rounded-xl border bg-white px-3 text-base outline-none focus:border-indigo-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 ${error ? "border-rose-500" : "border-slate-200"}`}
       />
+      {error && fieldKey ? (
+        <span
+          id={`product-${fieldKey}-error`}
+          className="mt-1 block text-xs font-semibold text-rose-700"
+        >
+          {t(error)}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -1591,12 +1751,12 @@ function SelectField({
   const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
+      <span className="mb-1.5 block text-[13px] font-bold text-slate-600">{t(label)}</span>
       <select
         aria-label={t(label)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-base outline-none focus:border-indigo-400"
       >
         {children}
       </select>

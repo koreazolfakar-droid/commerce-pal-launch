@@ -59,6 +59,9 @@ function editor({
   savedStock = 9,
   currentStock = stock,
   error,
+  color = "",
+  storage = "",
+  images = [],
 } = {}) {
   const calls = {
     payload: [],
@@ -68,6 +71,8 @@ function editor({
     success: [],
     saving: [],
     navigation: [],
+    variants: [],
+    sequence: [],
   };
   const dependencies = {
     id,
@@ -76,7 +81,9 @@ function editor({
     variantLocked: variantCount > 1,
     stockBaseline: baseline,
     form: { ...draft, stock, ...(id ? {} : { status: "Draft" }) },
-    pendingImages: [],
+    pendingImages: images,
+    newVariantColor: color,
+    newVariantStorage: storage,
     specificationTemplate: { sections: [] },
     specifications: {},
     collectionIds: [],
@@ -88,9 +95,39 @@ function editor({
     normalizeProductSpecifications: (value) => value,
     saveDashboardProduct: async (input) => {
       calls.payload.push(input);
+      calls.sequence.push(`save:${input.status}`);
       if (error) throw error;
       return { id: "product-id", stock: savedStock, variantManagedSeparately: variantCount > 1 };
     },
+    loadDashboardProductVariants: async () => ({
+      variants: [
+        {
+          id: "variant-id",
+          title: "Default",
+          sku: "SKU",
+          barcode: "",
+          price: 100,
+          compareAt: null,
+          stock: savedStock,
+          trackInventory: true,
+          allowBackorder: false,
+          options: {},
+          imageUrl: "",
+          sortOrder: 0,
+          isActive: true,
+        },
+      ],
+    }),
+    updateDashboardProductVariant: async (_id, input) => {
+      calls.variants.push(input);
+      calls.sequence.push("variant");
+    },
+    uploadDashboardProductImage: async () => {
+      calls.sequence.push("image");
+      return { image: { url: "https://example.test/product.webp" } };
+    },
+    getProductImageResolution: () => "standard",
+    t: (value) => value,
     setStockBaseline: (value) => calls.baseline.push(value),
     setForm: (updater) => calls.formStock.push(updater({ ...draft, stock: currentStock }).stock),
     setExisting: () => {},
@@ -99,6 +136,9 @@ function editor({
     setSpecifications: () => {},
     setAiSpecificationKeys: () => {},
     setSaved: () => {},
+    setFieldErrors: () => {},
+    setPublishError: () => {},
+    setUploadedImageCount: () => {},
     setVariantRevision: () => {},
     setSaving: (value) => calls.saving.push(value),
     toast: {
@@ -141,6 +181,19 @@ test("new products retain their initial stock without an existing-stock expectat
   assert.equal(create.calls.payload[0].expectedStock, null);
   assert.equal(create.calls.payload[0].stock, 15);
   assert.deepEqual(create.calls.navigation, ["/dashboard/products/product-id"]);
+});
+
+test("new color and storage are persisted before a product with an image is published", async () => {
+  const create = editor({
+    id: null,
+    color: "Graphite",
+    storage: "256GB",
+    images: [{ file: { name: "photo.jpg" } }],
+  });
+  await create.save("Active");
+  assert.deepEqual(create.calls.sequence, ["save:Draft", "image", "variant", "save:Active"]);
+  assert.deepEqual(create.calls.variants[0].options, { color: "Graphite", storage: "256GB" });
+  assert.equal(create.calls.payload[1].imageUrl, "https://example.test/product.webp");
 });
 
 test("multi-variant saves keep inventory outside the compact editor", async () => {
