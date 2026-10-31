@@ -6,7 +6,7 @@ import { ArrowRight, Timer } from "lucide-react";
 
 import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
-import { BrandRailSkeleton, ProductRailSkeleton } from "@/components/LoadingSkeletons";
+import { BrandRailSkeleton, HomeCategorySkeleton, ProductRailSkeleton } from "@/components/LoadingSkeletons";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
@@ -643,7 +643,7 @@ function Index() {
       node: navigationReady ? (
         <HomeCategorySection categories={navigationCategories} collections={collections} />
       ) : (
-        <BrandRailSkeleton />
+        <HomeCategorySkeleton />
       ),
     },
     {
