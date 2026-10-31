@@ -7,6 +7,8 @@ type Props = {
   compareAt: string;
   stock: string;
   imageUrl: string;
+  color?: string;
+  storage?: string;
 };
 
 function money(value: number) {
@@ -21,6 +23,8 @@ export default function ProductCreatePreview({
   compareAt,
   stock,
   imageUrl,
+  color,
+  storage,
 }: Props) {
   const { t } = useLanguage();
   const priceValue = Number(price);
@@ -46,7 +50,11 @@ export default function ProductCreatePreview({
         <div className="mx-auto max-w-[220px] overflow-hidden rounded-xl border border-slate-100">
           <div className="relative grid aspect-square place-items-center bg-slate-50">
             {safeImage ? (
-              <img src={safeImage} alt={title || t("Product image")} className="size-full object-contain" />
+              <img
+                src={safeImage}
+                alt={title || t("Product image")}
+                className="size-full object-contain"
+              />
             ) : (
               <span className="text-[11px] text-slate-400">{t("No image yet")}</span>
             )}
@@ -58,20 +66,31 @@ export default function ProductCreatePreview({
           </div>
           <div className="space-y-1 p-3">
             {brand ? (
-              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{brand}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                {brand}
+              </div>
             ) : null}
             <div className="line-clamp-2 min-h-[2.5em] text-[12px] font-semibold text-[#14203a]">
               {title.trim() || t("Product name")}
             </div>
+            {color || storage ? (
+              <div className="text-xs text-slate-500">
+                {[color, storage].filter(Boolean).join(" · ")}
+              </div>
+            ) : null}
             <div className="flex items-baseline gap-2">
               <span className="text-[13px] font-bold text-[#14203a]">
                 {hasPrice ? money(priceValue) : "—"}
               </span>
               {hasDiscount ? (
-                <span className="text-[11px] text-slate-400 line-through">{money(compareValue)}</span>
+                <span className="text-[11px] text-slate-400 line-through">
+                  {money(compareValue)}
+                </span>
               ) : null}
             </div>
-            <div className={`text-[10px] font-bold ${inStock ? "text-emerald-600" : "text-slate-400"}`}>
+            <div
+              className={`text-[10px] font-bold ${inStock ? "text-emerald-600" : "text-slate-400"}`}
+            >
               {inStock ? t("In stock") : t("Out of stock")}
             </div>
           </div>

@@ -218,6 +218,21 @@ try {
   await go("products/new");
   await page.getByRole("button", { name: "Pricing & inventory", exact: true }).click();
   assert.equal(await page.evaluate(() => document.activeElement?.id), "product-pricing");
+  await page.getByRole("button", { name: "Color: Graphite" }).click();
+  assert.equal(
+    await page.getByRole("button", { name: "Color: Graphite" }).getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByLabel("Custom color name").fill("Midnight Blue");
+  assert.equal(
+    await page.getByRole("button", { name: "Color: Graphite" }).getAttribute("aria-pressed"),
+    "false",
+  );
+  await page.getByRole("button", { name: "Specifications", exact: true }).click();
+  assert.equal(await page.locator("#product-specifications").getAttribute("open"), "");
+  await page.getByRole("button", { name: "Save as Draft", exact: true }).first().click();
+  await page.getByText("Product title is required", { exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => document.activeElement?.dataset.productField), "title");
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   // navigator.onLine is the browser source of truth; emulate it explicitly for this local fixture.
   await page.evaluate(() => {

@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
+import ProductColorPicker from "@/dashboard/components/products/ProductColorPicker";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
 import { useSmartImageEditor } from "@/dashboard/components/SmartImageEditor";
 import {
@@ -509,12 +510,12 @@ export default function ProductVariantManager({
                 value={draft.title}
                 onChange={(value) => setDraft((current) => ({ ...current, title: value }))}
               />
-              <Field
-                label={t("Color")}
-                value={draft.color}
-                onChange={(value) => setDraft((current) => ({ ...current, color: value }))}
-                placeholder={t("e.g. Black")}
-              />
+              <div className="sm:col-span-2">
+                <ProductColorPicker
+                  value={draft.color}
+                  onChange={(value) => setDraft((current) => ({ ...current, color: value }))}
+                />
+              </div>
               <Field
                 label={t("Storage / capacity")}
                 value={draft.storage}
@@ -546,6 +547,7 @@ export default function ProductVariantManager({
               <Field
                 label={t("Stock")}
                 type="number"
+                integer
                 value={draft.stock}
                 onChange={(value) => setDraft((current) => ({ ...current, stock: value }))}
               />
@@ -738,12 +740,14 @@ function Field({
   onChange,
   type = "text",
   placeholder,
+  integer = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
+  integer?: boolean;
 }) {
   const { t } = useLanguage();
   return (
@@ -754,7 +758,10 @@ function Field({
         type={type}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+        inputMode={type === "number" ? (integer ? "numeric" : "decimal") : undefined}
+        min={type === "number" ? 0 : undefined}
+        step={type === "number" ? (integer ? 1 : "any") : undefined}
+        className="h-11 w-full rounded-xl border border-slate-200 px-3 text-base outline-none focus:border-indigo-400"
       />
     </label>
   );
