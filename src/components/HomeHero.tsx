@@ -94,6 +94,7 @@ export function HomeHero({
           <div
             data-testid="home-hero-dots"
             className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center sm:bottom-3"
+            role="group"
             aria-label={language === "ar" ? "شرائح الهيرو" : "Hero slides"}
           >
             <div className="pointer-events-auto flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-slate-950/45 px-1.5 py-1 shadow-sm backdrop-blur-md">
@@ -134,7 +135,7 @@ export function HomeHero({
               </div>
               <button
                 type="button"
-                className="grid size-9 place-items-center rounded-full text-lg text-white/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="grid size-11 shrink-0 place-items-center rounded-full text-lg text-white/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"}
                 onClick={() =>
                   setActiveIndex((index) => (index + 1) % slideCount)

@@ -12,6 +12,7 @@ import type { StoreProduct } from "@/lib/storeTypes";
 export function ProductRail({
   products,
   compactGrid = false,
+  eagerCount = 0,
 }: {
   products: StoreProduct[];
   storageKey: string;
@@ -19,6 +20,8 @@ export function ProductRail({
   onViewModeChange?: (mode: ProductViewMode) => void;
   showViewToggle?: boolean;
   compactGrid?: boolean;
+  /** Explicitly prioritize only cards actually visible above the fold. */
+  eagerCount?: number;
 }) {
   const visible = products.slice(0, compactGrid ? 6 : 10);
 
@@ -41,7 +44,7 @@ export function ProductRail({
             key={product.node.id}
             product={product}
             listItem
-            eager={index < 3}
+            eager={index < eagerCount}
             market
             className="homepage-product-card snap-start"
           />

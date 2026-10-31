@@ -25,7 +25,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`store-layout flex min-h-screen min-w-0 flex-col bg-background ${onProductPage ? "max-sm:pb-[calc(var(--mobile-nav-height)+4.75rem)]" : ""}`}
+      className={`store-layout flex min-h-[100dvh] min-w-0 flex-col bg-background ${onProductPage ? "max-sm:pb-[calc(var(--mobile-nav-height)+4.75rem)]" : ""}`}
       data-product-page={onProductPage}
       data-cart-page={onCartPage}
       style={mobileNavStyle}
