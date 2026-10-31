@@ -429,6 +429,24 @@ async function runRoutes(browser) {
 
 const browser = await launcher.launch({ headless: true });
 try {
+  if (suite === "all") {
+    const loadingPage = await createStorefrontPage(browser, { viewport: { width: 390, height: 844 } });
+    await loadingPage.goto(`${baseURL}/`, { waitUntil: "load" });
+    await loadingPage.locator(".store-layout").evaluate((layout) => {
+      const placeholder = document.createElement("div");
+      placeholder.className = "shimmer";
+      placeholder.dataset.testid = "motion-check";
+      layout.appendChild(placeholder);
+    });
+    const animation = () => loadingPage.locator('[data-testid="motion-check"]').evaluate(
+      (element) => getComputedStyle(element, "::after").animationName,
+    );
+    await loadingPage.emulateMedia({ reducedMotion: "no-preference" });
+    assert.equal(await animation(), "shimmer", "loading shimmer should animate normally");
+    await loadingPage.emulateMedia({ reducedMotion: "reduce" });
+    assert.equal(await animation(), "none", "loading shimmer must respect reduced motion");
+    await loadingPage.close();
+  }
   if (suite === "responsive" || suite === "all") await runResponsive(browser);
   if (suite === "probe") await runProbe(browser);
   if (suite === "shop") await runShopProbe(browser);

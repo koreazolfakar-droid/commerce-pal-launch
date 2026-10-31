@@ -6,6 +6,7 @@ import {
 } from "@/lib/queries";
 import type { ShowcaseCollection } from "@/lib/merchandising";
 import { ProductRail } from "@/components/ProductRail";
+import { ProductRailSkeleton } from "@/components/LoadingSkeletons";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -314,7 +315,7 @@ function BrandFacetSection({
   if (loading) {
     return (
       <div ref={ref} data-home-brand-shell={slug} aria-busy="true">
-        <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" />
+        <ProductRailSkeleton />
       </div>
     );
   }
@@ -368,7 +369,7 @@ function FacetSection({
       </div>
       <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
         {loading && products.length === 0 ? (
-          <div className="shimmer min-h-96 rounded-2xl bg-surface" aria-hidden="true" />
+          <ProductRailSkeleton />
         ) : (
           <ProductRail products={products.slice(0, 6)} storageKey={storageKey} compactGrid />
         )}
@@ -401,7 +402,7 @@ function StoreShowcase({ collection }: { collection: ShowcaseCollection }) {
         {data?.products.length ? (
           <ProductRail products={data.products} storageKey={storageKey} compactGrid />
         ) : isPending ? (
-          <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" />
+          <ProductRailSkeleton />
         ) : (
           <p className="text-sm text-muted-foreground">{t("noProducts")}</p>
         )}

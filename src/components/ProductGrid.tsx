@@ -10,16 +10,16 @@ import { useLanguage } from "@/lib/i18n";
 const DENSE = "grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-4 md:grid-cols-4 xl:grid-cols-5";
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-5 sm:gap-y-6 md:grid-cols-3 xl:grid-cols-4";
 
-export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
+export function ProductGridSkeleton({ count = 8, viewMode = "grid" }: { count?: number; viewMode?: ProductViewMode }) {
   return (
-    <div className={DENSE} aria-hidden>
+    <div className={viewMode === "dense" ? DENSE : GRID} aria-hidden>
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="min-w-0">
           <div className="shimmer aspect-square w-full rounded-xl bg-surface" />
           <div className="mt-3 space-y-2">
-            <div className="h-4 w-1/2 rounded-full bg-surface" />
-            <div className="h-3 w-full rounded-full bg-surface" />
-            <div className="h-3 w-3/4 rounded-full bg-surface" />
+            <div className="shimmer h-4 w-1/2 rounded-full bg-surface" />
+            <div className="shimmer h-3 w-full rounded-full bg-surface" />
+            <div className="shimmer h-3 w-3/4 rounded-full bg-surface" />
           </div>
         </div>
       ))}

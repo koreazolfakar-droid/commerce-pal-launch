@@ -6,6 +6,7 @@ import { ArrowRight, Timer } from "lucide-react";
 
 import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
+import { BrandRailSkeleton, ProductRailSkeleton } from "@/components/LoadingSkeletons";
 import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
@@ -211,8 +212,8 @@ function SectionHeader({
   );
 }
 
-function SectionFallback({ className = "h-52" }: { className?: string }) {
-  return <div className={`${className} rounded-lg bg-surface`} aria-hidden="true" />;
+function SectionFallback() {
+  return <ProductRailSkeleton />;
 }
 
 function DealsCountdown() {
@@ -527,7 +528,7 @@ function Index() {
   );
   const featuredProductConfig = cmsFeaturedProductConfig(featuredMerchSection);
   const { data: navigationCatalog } = useQuery(navigationCatalogQueryOptions());
-  const { data: catalog } = useQuery({
+  const { data: catalog, isError: catalogFailed, refetch: retryCatalog } = useQuery({
     ...homepageCatalogQueryOptions(),
     enabled: deferredWorkReady,
   });
@@ -545,7 +546,7 @@ function Index() {
   });
   const catalogReady =
     Boolean(catalog) && (heroCollectionFetched || heroCollectionFailed);
-  const secondaryQueriesReady = catalogReady && deferredWorkReady;
+  const secondaryQueriesReady = deferredWorkReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
     enabled: secondaryQueriesReady,
@@ -653,7 +654,7 @@ function Index() {
       node: navigationReady ? (
         <HomeCategorySection categories={navigationCategories} collections={collections} />
       ) : (
-        <div className="h-28 rounded-lg bg-surface" aria-hidden="true" />
+        <BrandRailSkeleton />
       ),
     },
     {
@@ -664,7 +665,7 @@ function Index() {
       node: navigationReady ? (
         <DeferredTopBrands brands={brands} />
       ) : (
-        <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
+        <BrandRailSkeleton />
       ),
     },
     {
@@ -690,7 +691,7 @@ function Index() {
                 subtitle={t("dealsDescription")}
                 action={<DealsCountdown />}
               />
-              <Suspense fallback={<SectionFallback className="h-72" />}>
+              <Suspense fallback={<SectionFallback />}>
                 {deals.length <= 2 ? (
                   <LazyDealSpotlight products={deals} />
                 ) : (
@@ -731,7 +732,7 @@ function Index() {
           ) : null}
 
           {deferredWorkReady ? (
-            <Suspense fallback={<SectionFallback className="h-64" />}>
+            <Suspense fallback={<SectionFallback />}>
               <LazyBundleSection collections={collections} />
               {homepageCatalog ? (
                 <LazyBrandShowcase
@@ -744,8 +745,15 @@ function Index() {
             </Suspense>
           ) : null}
         </>
+      ) : catalogFailed ? (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm" role="alert">
+          <p>{language === "ar" ? "تعذّر تحميل المنتجات حاليًا." : "Products could not be loaded right now."}</p>
+          <button type="button" onClick={() => void retryCatalog()} className="mt-2 min-h-11 font-semibold text-primary hover:underline">
+            {language === "ar" ? "حاول مجددًا" : "Try again"}
+          </button>
+        </div>
       ) : (
-        <div className="h-52 rounded-lg bg-surface" aria-hidden="true" />
+        <ProductRailSkeleton />
       ),
     },
     {

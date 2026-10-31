@@ -459,6 +459,12 @@
     scroll-behavior: auto !important;
   }
 
+  @media (prefers-reduced-motion: no-preference) {
+    .store-layout .shimmer::after {
+      animation: var(--animate-shimmer) !important;
+    }
+  }
+
   .home-page {
     display: flex;
     flex-direction: column;
@@ -472,6 +478,9 @@
     width: 100%;
     min-inline-size: 0;
     max-inline-size: 100%;
+  }
+  .home-page > :empty {
+    display: none;
   }
 
   .site-section {

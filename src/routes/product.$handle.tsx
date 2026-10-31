@@ -113,7 +113,29 @@ export const Route = createFileRoute("/product/$handle")({
     };
   },
   component: ProductPage,
+  pendingComponent: ProductPending,
+  pendingMs: 200,
+  pendingMinMs: 0,
 });
+
+function ProductPending() {
+  const { language } = useLanguage();
+  return (
+    <StoreLayout>
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-4 sm:px-5 lg:grid-cols-2 lg:gap-12 lg:px-6 lg:py-10" role="status" aria-live="polite">
+        <span className="sr-only">{language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}</span>
+        <div className="shimmer aspect-[1/0.82] rounded-xl bg-surface sm:aspect-square" aria-hidden="true" />
+        <div className="space-y-4" aria-hidden="true">
+          <div className="shimmer h-3 w-20 rounded bg-surface" />
+          <div className="shimmer h-7 w-4/5 rounded bg-surface" />
+          <div className="shimmer h-5 w-2/3 rounded bg-surface" />
+          <div className="shimmer h-5 w-24 rounded bg-surface" />
+          <div className="shimmer h-11 w-full rounded-xl bg-surface" />
+        </div>
+      </div>
+    </StoreLayout>
+  );
+}
 
 const FEATURE_ICONS = {
   power: Zap, technology: Cpu, port: Plug, display: Monitor, cable: Cable,

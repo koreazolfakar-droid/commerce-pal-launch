@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 import type { StoreBrand } from "@/lib/brandDirectory";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
+import { BrandRailSkeleton } from "@/components/LoadingSkeletons";
 
 const LazyTopBrands = lazy(() =>
   importWithChunkRecovery("top-brands", () =>
@@ -28,7 +29,7 @@ export function DeferredTopBrands({ brands }: { brands: StoreBrand[] }) {
         setEnabled(true);
         observer.disconnect();
       },
-      { rootMargin: "180px 0px" },
+      { rootMargin: "600px 0px" },
     );
 
     observer.observe(marker);
@@ -38,11 +39,11 @@ export function DeferredTopBrands({ brands }: { brands: StoreBrand[] }) {
   return (
     <div ref={markerRef} data-deferred-top-brands>
       {enabled ? (
-        <Suspense fallback={<div className="h-24" aria-hidden="true" />}>
+        <Suspense fallback={<BrandRailSkeleton />}>
           <LazyTopBrands brands={brands} />
         </Suspense>
       ) : (
-        <div className="h-24" aria-hidden="true" />
+        <BrandRailSkeleton />
       )}
     </div>
   );
