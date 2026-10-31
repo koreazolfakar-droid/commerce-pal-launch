@@ -1,5 +1,4 @@
 export const dashboardUiArabic: Record<string, string> = {
-  Overview: "نظرة عامة",
   Commerce: "المبيعات والعمليات",
   Administration: "الإدارة والإعدادات",
   "Open store": "فتح المتجر",
