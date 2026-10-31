@@ -1,4 +1,12 @@
 export const dashboardUiArabic: Record<string, string> = {
+  Overview: "نظرة عامة",
+  Commerce: "المبيعات والعمليات",
+  Administration: "الإدارة والإعدادات",
+  "Open store": "فتح المتجر",
+  "Navigation groups": "مجموعات التنقل",
+  "Close navigation": "إغلاق القائمة",
+  "Quick product": "منتج جديد",
+  "Workspace navigation": "التنقل في مساحة العمل",
   "Search workspace": "البحث في مساحة العمل",
   "Search sections, products, orders…": "ابحث في الأقسام والمنتجات والطلبات…",
   "Workspace command center": "مركز البحث والانتقال",
