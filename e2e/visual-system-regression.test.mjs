@@ -192,3 +192,33 @@ test("semantic product and dashboard hooks replace fragile visual selectors", as
   assert.match(styles, /bg-\[#f5f6ff\]/);
   assert.match(styles, /border-\[#dfe2ff\]/);
 });
+
+
+test("dashboard design refresh stays scoped, theme-aware and responsive", async () => {
+  const [workspace, app, pageTitle, modal, editor, products] = await Promise.all([
+    source("src/dashboard/workspace.css"),
+    source("src/dashboard/App.tsx"),
+    source("src/dashboard/components/layout/PageTitle.tsx"),
+    source("src/dashboard/components/DashboardModal.tsx"),
+    source("src/dashboard/pages/ProductFormPage.tsx"),
+    source("src/dashboard/pages/ProductsPage.tsx"),
+  ]);
+
+  assert.match(workspace, /2026 dashboard visual refresh/);
+  assert.match(workspace, /\.dashboard-theme-scope \.dashboard-sidebar-action\[aria-current="page"\]/);
+  assert.match(workspace, /\[dir="rtl"\] \.dashboard-theme-scope \.dashboard-sidebar-action/);
+  assert.match(workspace, /\.dark \.dashboard-theme-scope \{/);
+  assert.match(workspace, /@media \(max-width: 767px\)/);
+  assert.match(workspace, /@media \(prefers-contrast: more\)/);
+  assert.match(app, /dashboard-mobile-nav/);
+  assert.match(pageTitle, /dashboard-page-title/);
+  assert.match(pageTitle, /text-foreground/);
+  assert.match(modal, /aria-modal="true"/);
+  assert.match(modal, /bg-card/);
+  assert.match(editor, /dashboard-editor-grid/);
+  assert.match(editor, /dashboard-editor-panel/);
+  assert.match(editor, /renderCreateActions\("header"\)/);
+  assert.match(products, /dashboard-metric-card/);
+  assert.match(products, /dashboard-catalog-panel/);
+  assert.match(products, /dashboard-filter-panel/);
+});
