@@ -89,6 +89,8 @@ const ARABIC_COLORS: Record<string, string> = {
 };
 
 function swatchColor(value: string) {
+  const arabic = Object.entries(ARABIC_COLORS).find(([name]) => value.includes(name));
+  if (arabic) return arabic[1];
   const normalized = value.toLowerCase().replace(/[^a-z]/g, "");
   if (COLOR_WORDS[normalized]) return COLOR_WORDS[normalized];
   const words = value
