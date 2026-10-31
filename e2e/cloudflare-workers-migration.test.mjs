@@ -23,6 +23,7 @@ test("staging Worker cannot implicitly publish on a workers.dev hostname", async
   assert.equal(config.name, "space-call-staging");
   assert.equal(config.main, "src/server.ts");
   assert.equal(config.workers_dev, false);
+  assert.equal(config.preview_urls, false);
   assert.ok(config.compatibility_flags.includes("nodejs_compat"));
   assert.ok(!("routes" in config));
   assert.ok(!("vars" in config));
