@@ -1,104 +1,86 @@
-# Space Call — Cloudflare Workers staging migration
+# Space Call — Cloudflare Workers migration
 
-## Scope and safety
+## Production hosting (2026-10-31)
 
-This is an **isolated alternative build**, not a production cutover.
-The existing `vite.config.ts`, Lovable deployment, `main` branch, DNS, Supabase schema/data,
-and public store origins stay unchanged. Nothing in CI publishes a Worker or writes production data.
+The owner explicitly authorized the production cutover, conditional on the website continuing
+to work. Cloudflare zone `spacecallapp.store` is active. All three existing hostnames are attached
+to the `space-call-staging` Worker as enabled Custom Domains, with preview routing disabled:
 
-- Canonical site: `https://www.spacecallapp.store`
-- Android TWA origin: `https://app.spacecallapp.store`
-- Supabase remains the data source; no database migration is required for this build-only step.
-- `workers_dev` is intentionally **false**. Do not expose a public staging endpoint connected
-  to production customer/order data.
-- Keep `src/server.ts` as the Worker entrypoint: it enforces mutation limits, trusted origins,
-  security headers, dashboard no-store, SSR error handling, and Android app-host redirects.
-  Do not switch to the default TanStack entrypoint without equivalent protections.
+- `spacecallapp.store`
+- `www.spacecallapp.store`
+- `app.spacecallapp.store`
 
-## Build without changing the current website
+The Worker name is retained to preserve the existing Git build integration; it now serves
+production. `wrangler.jsonc` records the approved domains so subsequent main deployments
+retain the routing configuration. Both `workers_dev` and `preview_urls` remain false.
+The default Lovable Vite build remains available for rollback; use `bun run build:cloudflare`
+for Cloudflare. Cloudflare Builds deploys `main` with `npx wrangler deploy`.
 
-1. Install from the committed lockfile: `bun install --frozen-lockfile`.
-2. Run `bun run typecheck` and `bun run test:unit`.
-3. Build Cloudflare's alternative artifact with `bun run build:cloudflare`.
-4. Run `bun run preview:cloudflare` locally and verify routes, CSP nonce, HTML cache policy,
-   mobile RTL, storefront and dashboard in a read-only fixture environment.
-5. Check the generated Worker bundle and security gate (`bun audit --audit-level=high`).
-6. **Do not deploy or map a custom domain** until isolated staging Auth/DB, Cloudflare Access
-   protection, and real navigation/commerce acceptance tests are ready.
+Domain registration remains with the existing Lovable-managed registrar. Nameservers are
+`alberto.ns.cloudflare.com` and `mona.ns.cloudflare.com`. Moving registration is unnecessary.
+Existing Lovable and Google verification TXT records were preserved. No payment method or
+paid plan was added. Supabase remains the existing database and authentication backend;
+no production schema, records, Auth redirects or users were modified by the migration.
 
-## Required production-cutover validation (not completed by this step)
+## Runtime configuration
 
-- Verify static assets, SSR status/SEO/canonicals, per-response CSP nonces and no-store headers.
-- Verify same-origin mutation guard and shared-rate-limit RPC in Workers; fail closed on outage.
-- Verify staff AAL2/MFA, customer logins, password recovery, OAuth redirects, passkeys.
-  Passkey RP ID `spacecallapp.store` cannot authenticate on an unrelated `workers.dev` hostname.
-- Verify payments and order transitions, stock reservation and receiving without test writes
-  to live production records; use isolated staging data.
-- Verify Supabase redirect URLs, Edge Function CORS allowlists, Turnstile domains and CSP.
-- Verify the Android TWA `assetlinks.json`, signed certificate, canonical, app-host dashboard
-  redirect, robots rules, caching and exact two custom domains before DNS cutover.
-- Prepare a rollback with old hosting intact, TTL planning and a low-traffic cutover window.
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are installed as Cloudflare Worker secrets.
+Never expose the privileged key in a `VITE_*` variable, source, logs or build artifacts.
 
-## Cloudflare account setup (later)
+Keep `src/server.ts` as the entrypoint. It enforces mutation limits, trusted origins,
+security headers, dashboard no-store, SSR error handling and the app-host dashboard redirect.
+The shared limiter fails closed when its Supabase connection is unavailable; do not bypass it.
 
-Cloudflare API access is connected. The `space-call-staging` Worker has a successful deployment
-from `main`, with both public Workers Dev and Preview URLs disabled. The public store still runs
-on Lovable; this is not a production cutover. Keep API tokens and Supabase secrets out of
-GitHub source and `VITE_*` variables. Cloudflare Workers settings → Variables and Secrets stores
-server-only values. Connect the Worker to a nonpublic, Access-protected staging hostname only
-after test data isolation. No automated `wrangler deploy` command is in the CI configuration.
+## Validation and its limits
+
+PR #447 passed Cloudflare staging/workerd, Storefront CI and Dashboard Commerce Acceptance.
+The commerce suite uses an isolated local Supabase stack, not live production business writes.
+The deployed main merge was `ae1b430495f0acb081ee8c3e47e747c921718486`.
+
+A temporary private Workflow called the deployed Worker through a service binding. GET-only
+checks covered home, shop, a product discovered from the catalog, anonymous dashboard shells,
+app-host redirect and real JS/CSS assets. No public preview hostname was enabled.
+Cloudflare Access was not used because its onboarding requested payment details.
+This private API-triggered test is an alternative to exposing a public staging deployment.
+
+After Custom Domain attachment, cloud-browser checks covered HTTPS, homepage hydration,
+product image/details, product quantity interaction, and app-host dashboard sign-in redirect.
+A transitional request mixed old Lovable HTML with new asset routing and failed a dynamic
+import. A fresh request after routing settled loaded the Cloudflare bundle and product
+interaction succeeded. Do not treat DNS activation or an SSR 200 alone as proof of hydration.
+
+Authenticated customer/staff login, MFA, recovery, OAuth, passkeys, real order submission,
+payment processing and Android APK verification have not been exercised against production.
+They must not be reported as passing. Keep exact hostnames and the passkey RP ID
+`spacecallapp.store`; no authentication-domain changes were needed.
+
+## Local checks
+
+1. `bun install --frozen-lockfile`
+2. `bun run typecheck` and `bun run test:unit`
+3. `bun run build:cloudflare`
+4. `bun run preview:cloudflare`
+5. Run `node --test e2e/cloudflare-worker-runtime.smoke.mjs` against its local loopback URL.
+
+The runtime smoke refuses non-loopback targets and external redirects. It checks home,
+shop, a linked product, dashboard shells, actual JS/CSS, an SSR 404, security headers,
+per-request CSP nonces, no-store HTML and immutable assets. Catalog reads use the existing
+public catalog, so this is not fixture isolation. Never point mutation/commerce tests at
+the live database.
+
+## Rollback
+
+Keep the Lovable deployment and verification TXT records available.
+To roll back, remove the three Worker Custom Domains, then restore DNS-only A records
+for `@`, `www` and `app` to `185.158.133.1`, TTL 300. This is the exact pre-cutover origin.
+DNS and open browser connections can retain either destination temporarily; validate fresh
+navigation and asset loading after propagation. Do not delete the Worker, registrar account,
+Lovable project or Supabase data as part of rollback.
+
+Before deploying a rollback from source, remove the three production Custom Domains from
+Wrangler configuration as well, otherwise the next Cloudflare deploy will recreate them.
 
 Official references:
-- https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/
-- https://developers.cloudflare.com/workers/vite-plugin/reference/api/
+- https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
 - https://developers.cloudflare.com/workers/configuration/secrets/
-
-## Runtime smoke
-
-The staging-only CI also launches the bundled Worker in Cloudflare's local workerd runtime,
-checks the homepage, shop, one product discovered from the SSR catalog, dashboard entry and
-nested dashboard route, real JS/CSS assets, a real SSR 404, security headers, CSP nonce
-uniqueness, no-store HTML and immutable asset caching.
-This uses **GET requests only**, refuses non-loopback targets and external redirects, and never
-deploys or modifies Supabase records. Catalog checks read the existing public catalog; they
-are not fixture-isolated. An unavailable or empty catalog fails the product check rather than
-silently passing a fallback. Dashboard checks verify only anonymous HTML shells, not login
-or authenticated business operations.
-
-Runtime smoke is intentionally named `*.smoke.mjs` (not `*.test.mjs`), so the generic
-unit suite never starts a network-dependent test without a local Worker preview.
-
-## Runtime configuration blocker
-
-The inspected Worker has no runtime bindings. The public storefront has its own public
-Supabase fallback, but private server operations and the shared mutation limiter require:
-
-- `SUPABASE_URL`: server-side URL of the intended Supabase project.
-- `SUPABASE_SERVICE_ROLE_KEY`: server-only privileged credential, stored as a Worker secret.
-  Never set this as a `VITE_*` variable, put it in Wrangler source, print it in logs or include
-  it in a build artifact.
-
-The mutation limiter fails closed when its Supabase connection is unavailable. Uploading a
-successful Worker bundle does not prove that POST/save/order operations work. Do not remove
-or bypass the limiter to make the migration appear ready.
-
-The connected Supabase tools expose publishable keys only; they cannot retrieve this
-privileged credential. Provision it through Cloudflare Variables and Secrets in an
-authorized secure session before production cutover. Do not connect a publicly accessible
-staging endpoint or run write tests against the live database.
-
-## Remaining cutover gates
-
-- Configure and verify required runtime secrets without revealing their values.
-- Verify authenticated staff/customer flows and business writes using an isolated test stack.
-- Review existing Supabase Auth redirects, passkey RP ID, Turnstile and any Auth0 settings.
-  Keeping the exact production hostnames avoids changing the passkey RP domain.
-- Review the domains and TLS configuration; change production routes/DNS only after explicit
-  user approval. Keep Lovable available for rollback.
-- A Cloudflare Access preview is not configured. Zero Trust onboarding currently asks for
-  payment details even on its Free plan, so it is not an accepted no-payment path here.
-  Use local workerd/CI validation until a protected remote preview is explicitly arranged.
-
-The connected Cloudflare account currently returns no DNS Zone named
-`spacecallapp.store`. DNS onboarding/ownership and the existing record inventory must be
-verified before a domain cutover; do not add or change DNS as part of this validation PR.
+- https://developers.cloudflare.com/workflows/reference/pricing/
