@@ -20,7 +20,10 @@ test("old static density grids and their toggle are removed from the rail", () =
 test("purchase cards keep the market presentation", () => {
   assert.match(rail, /CompactProductCard/);
   assert.match(rail, /market/);
-  assert.match(rail, /eager=\{index < 3\}/);
+  // Above-the-fold rails can opt in, while deferred rails avoid competing
+  // with the hero image by default.
+  assert.match(rail, /eagerCount = 0/);
+  assert.match(rail, /eager=\{index < eagerCount\}/);
 });
 
 test("compact sections remain bounded without reverting to a grid", () => {
