@@ -112,7 +112,7 @@ await context.route("**/functions/v1/dashboard-ai-assist", async (route) => {
       summary: "Prepared all requested fields.",
       suggestions,
       sources: [],
-      warnings: [],
+      warnings: ["Live web verification is unavailable. Suggestions require manual review."],
       missingFields: [{ field: "barcode", reason: "Exact barcode is unavailable." }],
     },
   });
@@ -238,6 +238,11 @@ try {
     overflow: node.scrollWidth > node.clientWidth,
     background: getComputedStyle(node).backgroundColor,
   }));
+  const warnings = arabicDialog.locator("details").filter({ hasText: "راجع التنبيهات" });
+  assert.equal(await warnings.count(), 1);
+  assert.equal(await warnings.getAttribute("open"), null);
+  const applyBounds = await arabicDialog.getByRole("button", { name: /تطبيق المحدد/ }).boundingBox();
+  assert.ok(applyBounds && applyBounds.y >= 0 && applyBounds.y + applyBounds.height <= 844);
   assert.ok(layout.width <= 390);
   assert.equal(layout.overflow, false);
   assert.notEqual(layout.background, "rgb(255, 255, 255)");

@@ -1511,6 +1511,10 @@ export const dashboardUiArabic: Record<string, string> = {
   "Enable Featured to include it in homepage category sections.":
     "فعّل التمييز لإظهاره ضمن تصنيفات الصفحة الرئيسية.",
   "Entity uncertain": "هوية العنصر غير مؤكدة",
+  "Identity not web-verified": "لم يتم توثيق هوية المنتج عبر الويب",
+  "Review details": "عرض التفاصيل",
+  "Live web verification is unavailable. Suggestions require manual review.":
+    "التحقق المباشر من مصادر الويب غير متاح حالياً. راجع المقترحات يدوياً قبل اعتمادها.",
   "Exact entity verified": "تم التحقق من مطابقة العنصر",
   "Explore products from this Space Call brand.": "اكتشف منتجات هذه العلامة في Space Call.",
   "Explore section": "استكشف القسم",

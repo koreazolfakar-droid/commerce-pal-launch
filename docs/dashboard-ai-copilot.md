@@ -85,9 +85,9 @@ GEMINI_MODEL=gemini-3.5-flash-lite
 
 Never expose the Gemini key through a `VITE_*` variable or browser code.
 
-The Edge Function uses the Gemini Interactions API with structured JSON output and defaults to Gemini 3.5 Flash-Lite. It attempts Google Search grounding first. If Search grounding is unavailable for the current API project/tier or quota, it retries without Search and forces the result into an unverified/manual-review state.
+The Edge Function uses the Gemini Interactions API with structured JSON output and defaults to Gemini 3.5 Flash-Lite. It attempts Google Search grounding first. If a 400 response indicates a structured-output schema or tool conflict, it retries Search without constrained decoding while retaining server-side verification. For 400/403 Search failures it falls back to ungrounded, manual-review-only suggestions. A 429 is treated as rate limiting (not silently relabeled a Search tier issue).
 
-As of September 2026, Gemini API Free Tier access depends on the selected model/project. Search grounding also has separate tier/quota rules, so the implementation never assumes Search is available: a 400/403/429 Search failure falls back to ungrounded manual-review output. Verify current model and grounding limits before enabling billing:
+As of September 2026, Gemini API Free Tier access depends on the selected model/project. Search grounding also has separate tier/quota rules, so the implementation never assumes Search is available: a 400/403 Search failure may fall back to ungrounded manual-review output, and 429 fails explicitly instead of making unsupported claims about account access. Verify current model and grounding limits before enabling billing:
 
 - https://ai.google.dev/gemini-api/docs/pricing
 - https://ai.google.dev/gemini-api/docs/google-search

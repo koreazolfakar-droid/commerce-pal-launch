@@ -67,9 +67,12 @@ test("dashboard AI secret stays server-side and requests are authenticated", () 
 
 test("dashboard AI grounds research and validates structured output", () => {
   assert.match(edge, /type: "google_search"/);
-  assert.match(edge, /Google Search grounding was unavailable/);
+  assert.match(edge, /Live web verification is unavailable/);
+  assert.match(edge, /searchSchemaRejected/);
+  assert.match(edge, /gemini\.status === 400 \|\| gemini\.status === 403/);
+  assert.doesNotMatch(edge, /gemini\.status === 429\)\) \{/);
   assert.match(edge, /response_format/);
-  assert.match(edge, /response_format:\s*\[/);
+  assert.match(edge, /payload\.response_format\s*=\s*\[/);
   assert.match(edge, /\/v1\/interactions/);
   assert.match(edge, /allowedFieldKeys/);
   assert.match(edge, /forbiddenFields/);
@@ -91,13 +94,16 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.equal(
     (edge.match(/systemInstruction: geminiRequest\.systemInstruction/g) || [])
       .length,
-    1,
+    2,
   );
   assert.match(edge, /Live web grounding is unavailable for this retry/);
-  assert.equal((edge.match(/input: geminiRequest\.input/g) || []).length, 2);
+  assert.equal((edge.match(/input: geminiRequest\.input/g) || []).length, 3);
   assert.match(panel, /Nothing changes until Apply selected/);
   assert.match(panel, /Apply selected/);
   assert.match(panel, /Web research grounded/);
+  assert.match(panel, /Identity not web-verified/);
+  assert.match(panel, /<details className="rounded-xl border border-amber-100/);
+  assert.match(panel, /overscroll-contain/);
   assert.match(panel, /suggestion\.decision/);
   assert.doesNotMatch(
     panel,
