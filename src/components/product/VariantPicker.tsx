@@ -81,6 +81,13 @@ const COLOR_WORDS: Record<string, string> = {
   glacier: "#d8e5ee",
 };
 
+const ARABIC_COLORS: Record<string, string> = {
+  "أسود": "#111214", "اسود": "#111214", "أبيض": "#f7f7f8", "ابيض": "#f7f7f8",
+  "فضي": "#d8dade", "ذهبي": "#e2c48d", "أزرق": "#2f6fed", "ازرق": "#2f6fed",
+  "أحمر": "#e0303a", "احمر": "#e0303a", "أخضر": "#2e9e5b", "اخضر": "#2e9e5b",
+  "وردي": "#f0a7c0", "بنفسجي": "#a78bfa", "رمادي": "#8e8e93", "بيج": "#e4d8c6",
+};
+
 function swatchColor(value: string) {
   const normalized = value.toLowerCase().replace(/[^a-z]/g, "");
   if (COLOR_WORDS[normalized]) return COLOR_WORDS[normalized];
