@@ -21,7 +21,7 @@ export default defineConfig(({ command }) => ({
         behavior: "error",
         client: { files: ["**/server/**"], specifiers: ["server-only"] },
       },
-      router: { autoCodeSplitting: true },
+      // Start enables automatic route splitting; its schema deliberately omits that option.
       server: { entry: "server" },
     }),
     ...(command === "build"
