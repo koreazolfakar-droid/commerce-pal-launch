@@ -539,7 +539,8 @@ export default function AiAssistPanel({
                           "rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
                           (result.entityMatch.status === "exact" && result.grounded
                             ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                            : result.entityMatch.status === "partial"
+                            : result.entityMatch.status === "partial" ||
+                                (result.entityMatch.status === "exact" && !result.grounded)
                               ? "border-amber-100 bg-amber-50 text-amber-800"
                               : "border-rose-100 bg-rose-50 text-rose-700")
                         }
