@@ -32,9 +32,9 @@ const money = (value: number) =>
 function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+    <div className="dashboard-metric-card rounded-2xl border border-border bg-card p-5">
       <div className="text-[11px] text-slate-400">{t(label)}</div>
-      <div className="mt-2 text-2xl font-bold tracking-[-.04em] text-[#14203a]">{value}</div>
+      <div className="mt-2 text-2xl font-bold tracking-tight tabular-nums text-foreground">{value}</div>
       <div className="mt-1 text-[10px] text-slate-400">{t(detail)}</div>
     </div>
   );
@@ -172,7 +172,7 @@ export default function CustomersPage() {
 
   return (
     <div>
-      <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <div className="dashboard-page-header mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <PageTitle
             eyebrow="Commerce / Customers"
@@ -184,14 +184,14 @@ export default function CustomersPage() {
           <button
             onClick={() => void load(true)}
             disabled={refreshing}
-            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+            className="dashboard-button flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold"
           >
             <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
             {t("Refresh")}
           </button>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
+            className="dashboard-button dashboard-button-primary flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold"
           >
             <Plus className="size-4" /> {t("Add customer")}
           </button>
@@ -230,7 +230,7 @@ export default function CustomersPage() {
         />
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="dashboard-catalog-panel mt-4 overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
