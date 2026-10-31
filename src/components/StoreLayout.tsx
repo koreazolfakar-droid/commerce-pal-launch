@@ -40,7 +40,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <DeferredDesktopHeader />
       <MobileTopBar
         showSearch={!onOrdersPage}
-        showCategoryRail={!onHomePage && !onCartPage && !onShopPage && !onOrdersPage}
+        showCategoryRail={!onHomePage && !onCartPage && !onShopPage && !onOrdersPage && !onProductPage}
       />
       <CmsNavigationStrip area="header" className="hidden lg:block" />
       <CmsNavigationStrip area="mobile_menu" className="lg:hidden" />
