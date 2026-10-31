@@ -77,7 +77,7 @@ export function ProductGallery({
       )}
     >
       <div
-        className="group relative aspect-[1/0.92] touch-pan-y overflow-hidden rounded-xl bg-image-stage/60 sm:aspect-square sm:rounded-2xl sm:bg-image-stage lg:order-2"
+        className="group relative aspect-[1/0.82] touch-pan-y overflow-hidden rounded-xl bg-image-stage/60 sm:aspect-square sm:rounded-2xl sm:bg-image-stage lg:order-2"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -166,7 +166,7 @@ export function ProductGallery({
               onClick={() => onSelect(thumbIndex)}
               data-gallery-index={thumbIndex}
               className={cn(
-                "press h-12 w-12 shrink-0 snap-center overflow-hidden rounded-lg border bg-image-stage transition-[border-color,box-shadow,opacity] sm:h-16 sm:w-16 lg:h-[4.75rem] lg:w-[4.75rem]",
+                "press h-14 w-14 shrink-0 snap-center overflow-hidden rounded-lg border bg-image-stage transition-[border-color,box-shadow,opacity] sm:h-16 sm:w-16 lg:h-[4.75rem] lg:w-[4.75rem]",
                 thumbIndex === index
                   ? "border-primary ring-1 ring-primary/20 opacity-100"
                   : "border-border/60 opacity-70 hover:border-primary/40 hover:opacity-100",

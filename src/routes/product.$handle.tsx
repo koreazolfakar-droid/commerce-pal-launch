@@ -423,13 +423,13 @@ function ProductPage() {
                   )}
                 </div>
                 {discount !== null && (
-                  <p className="mt-1 text-[11px] font-medium text-primary">Save {discount}%</p>
+                  <p className="mt-1 text-[11px] font-medium text-primary">{language === "ar" ? "وفّر" : "Save"} {discount}%</p>
                 )}
               </div>
 
               <div
                 className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
-                aria-label="Quantity"
+                aria-label={language === "ar" ? "الكمية" : "Quantity"}
               >
                 <Button
                   variant="ghost"
@@ -483,9 +483,41 @@ function ProductPage() {
                 ) : (
                   <Zap className="h-4 w-4" />
                 )}
-                Buy now
+                {language === "ar" ? "اشترِ الآن" : "Buy now"}
               </Button>
             </div>
+
+            {highlights.length > 0 && (
+              <section
+                data-testid="product-key-features"
+                aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
+                className="min-w-0"
+              >
+                <h2 className="mb-3 text-base font-semibold tracking-tight text-foreground">
+                  {language === "ar" ? "أبرز المميزات" : "Key features"}
+                </h2>
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                  {highlights.map((highlight) => {
+                    const HighlightIcon = FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
+                    return (
+                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 rounded-2xl border border-primary/10 bg-primary/[0.05] p-3.5">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <HighlightIcon aria-hidden className="h-[18px] w-[18px]" />
+                        </span>
+                        <div className="min-w-0">
+                          <strong className="block break-words text-sm font-semibold leading-snug text-foreground">
+                            {highlight.value}
+                          </strong>
+                          <span className="mt-1 block break-words text-[11px] leading-snug text-muted-foreground">
+                            {language === "ar" ? highlight.labelAr : highlight.label}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             <div
               className="grid grid-cols-3 border-y border-border/60 py-1"
@@ -537,37 +569,7 @@ function ProductPage() {
                 </li>
               ))}
             </ul>
-            {highlights.length > 0 && (
-              <section
-                data-testid="product-key-features"
-                aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
-                className="min-w-0"
-              >
-                <h2 className="mb-3 text-base font-semibold tracking-tight text-foreground">
-                  {language === "ar" ? "أبرز المميزات" : "Key features"}
-                </h2>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
-                  {highlights.map((highlight) => {
-                    const HighlightIcon = FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
-                    return (
-                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 rounded-2xl border border-primary/10 bg-primary/[0.05] p-3.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                          <HighlightIcon aria-hidden className="h-[18px] w-[18px]" />
-                        </span>
-                        <div className="min-w-0">
-                          <strong className="block break-words text-sm font-semibold leading-snug text-foreground">
-                            {highlight.value}
-                          </strong>
-                          <span className="mt-1 block break-words text-[11px] leading-snug text-muted-foreground">
-                            {language === "ar" ? highlight.labelAr : highlight.label}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+
           </div>
         </div>
 
@@ -648,6 +650,9 @@ function ProductPage() {
           aria-label={language === "ar" ? "سياسات المتجر" : "Store policies"}
           className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 pt-5 text-sm font-medium"
         >
+          <p className="w-full text-xs font-normal text-muted-foreground">
+            {language === "ar" ? "اطّلع على تفاصيل التوصيل والضمان والإرجاع في سياسات المتجر." : "Review our delivery, warranty and returns policies for details."}
+          </p>
           <Link to="/shipping" className="text-primary hover:underline">{t("shippingTitle")}</Link>
           <Link to="/warranty" className="text-primary hover:underline">{t("warrantyTitle")}</Link>
           <Link to="/returns" className="text-primary hover:underline">{t("returnsTitle")}</Link>
@@ -658,10 +663,10 @@ function ProductPage() {
             <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
               <div className="min-w-0">
                 <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
-                  You may also like
+                  {language === "ar" ? "منتجات قد تعجبك" : "You may also like"}
                 </h2>
                 <p className="mt-1 truncate text-sm text-muted-foreground">
-                  Recommended from the live {STORE_NAME} catalogue
+                  {language === "ar" ? "اكتشف منتجات مشابهة" : "Discover similar products"}
                 </p>
               </div>
               {category && (
@@ -670,7 +675,7 @@ function ProductPage() {
                   params={{ slug: category.slug }}
                   className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
                 >
-                  View all <ChevronRight aria-hidden className="h-4 w-4" />
+                  {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
                 </Link>
               )}
             </div>

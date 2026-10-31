@@ -46,7 +46,7 @@ const PRODUCT_STOREFRONT_PREVIEWS: Array<{
   {
     id: "mobile",
     label: "Product Page · Mobile",
-    aspectRatio: "1 / 0.92",
+    aspectRatio: "1 / 0.82",
     padding: "8px",
     note: "Exact mobile gallery: 1/0.92 · object-contain · 8px padding",
     borderRadius: "1.6rem",
