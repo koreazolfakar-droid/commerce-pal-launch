@@ -24,8 +24,21 @@ export default defineConfig(({ command }) => ({
       // Start enables automatic route splitting; its schema deliberately omits that option.
       server: { entry: "server" },
     }),
+    // Lovable deploys `dist/`, so the build must write its server bundle and
+    // static assets there (dist/server + dist/client) instead of Nitro's
+    // default `.output/` directory.
     ...(command === "build"
-      ? [nitro({ defaultPreset: "cloudflare-module" })]
+      ? [
+          nitro({
+            preset: "cloudflare-module",
+            output: {
+              dir: "dist",
+              serverDir: "dist/server",
+              publicDir: "dist/client",
+            },
+            cloudflare: { nodeCompat: true, deployConfig: true },
+          }),
+        ]
       : []),
     react(),
   ],
