@@ -18,14 +18,18 @@ test("Cloudflare builds remain separate from the current Lovable production buil
   assert.match(cloudflareVite, /server: \{ entry: "server" \}/);
 });
 
-test("staging Worker cannot implicitly publish on a workers.dev hostname", async () => {
+test("production Worker exposes only the approved domains and keeps public previews disabled", async () => {
   const config = JSON.parse(await read("wrangler.jsonc"));
   assert.equal(config.name, "space-call-staging");
   assert.equal(config.main, "src/server.ts");
   assert.equal(config.workers_dev, false);
   assert.equal(config.preview_urls, false);
   assert.ok(config.compatibility_flags.includes("nodejs_compat"));
-  assert.ok(!("routes" in config));
+  assert.deepEqual(config.routes, [
+    { pattern: "spacecallapp.store", custom_domain: true },
+    { pattern: "www.spacecallapp.store", custom_domain: true },
+    { pattern: "app.spacecallapp.store", custom_domain: true },
+  ]);
   assert.ok(!("vars" in config));
   const server = await read("src/server.ts");
   assert.match(server, /guardIncomingRequest\(request, env\)/);
