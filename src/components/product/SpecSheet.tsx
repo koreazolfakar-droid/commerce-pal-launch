@@ -1,6 +1,7 @@
 import type { SpecGroup } from "@/lib/productContent";
 
 const GROUP_TRANSLATIONS: Record<string, string> = {
+  "Specifications": "المواصفات",
   "Display": "الشاشة",
   "Performance": "الأداء",
   "Memory & Storage": "الذاكرة والتخزين",
