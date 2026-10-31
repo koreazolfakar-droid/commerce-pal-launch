@@ -1008,3 +1008,301 @@
     border-color: var(--color-foreground);
   }
 }
+
+
+/* Space Call Command — navigation system / desktop, mobile, RTL and theme. */
+.dashboard-theme-scope {
+  --sc-command-canvas: #f8f9fb;
+  --sc-command-ink: #182337;
+  --sc-command-secondary: #667389;
+  --sc-command-line: #e6eaf0;
+  --sc-command-hover: #edf2f8;
+  --sc-command-selected: #e7eefc;
+  --sc-command-active: #254e96;
+  --sc-command-mark: #234a8e;
+  --sc-command-mark-ink: #ffffff;
+}
+.dark .dashboard-theme-scope {
+  --sc-command-canvas: #131c2a;
+  --sc-command-ink: #f2f6fb;
+  --sc-command-secondary: #96a6bc;
+  --sc-command-line: #263448;
+  --sc-command-hover: #1d293a;
+  --sc-command-selected: #233951;
+  --sc-command-active: #b1cdfb;
+  --sc-command-mark: #d7e5ff;
+  --sc-command-mark-ink: #152c51;
+}
+.dashboard-theme-scope .dashboard-sidebar {
+  background: var(--sc-command-canvas);
+  color: var(--sc-command-ink);
+  border-inline-end: 1px solid var(--sc-command-line);
+  box-shadow: 5px 0 22px rgb(19 31 51 / 0.035);
+  transition:
+    transform 180ms cubic-bezier(.22,.8,.25,1),
+    background-color 160ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-brand {
+  border-block-end: 1px solid var(--sc-command-line);
+}
+.dashboard-theme-scope .dashboard-brand-mark {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--sc-command-mark) 60%, transparent);
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+.dashboard-theme-scope .dashboard-brand-mark > span {
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.07em;
+}
+.dashboard-theme-scope .dashboard-brand-mark::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 5px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 100%;
+  opacity: .55;
+}
+.dashboard-theme-scope .dashboard-brand-name {
+  font-size: 1.06rem;
+  font-weight: 750;
+  letter-spacing: -.045em;
+  line-height: 1.3;
+  color: var(--sc-command-ink);
+}
+.dashboard-theme-scope .dashboard-brand-dot {
+  color: var(--sc-command-active);
+}
+.dashboard-theme-scope .dashboard-brand-caption {
+  margin-block-start: .35rem;
+  font-size: .595rem;
+  font-weight: 650;
+  letter-spacing: .16em;
+  color: var(--sc-command-secondary);
+}
+.dashboard-theme-scope .dashboard-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sc-command-secondary) 25%, transparent) transparent;
+}
+.dashboard-theme-scope .dashboard-sidebar-group {
+  position: relative;
+  padding: 0;
+}
+.dashboard-theme-scope .dashboard-sidebar-group + .dashboard-sidebar-group {
+  padding-block-start: .625rem;
+  border-block-start: 1px solid var(--sc-command-line);
+}
+.dashboard-theme-scope .dashboard-sidebar-section {
+  color: var(--sc-command-secondary);
+  font-size: .65rem;
+  font-weight: 750;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  transition: color 150ms, background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-section:hover,
+.dashboard-theme-scope .dashboard-sidebar-section:focus-visible {
+  color: var(--sc-command-ink);
+  background: var(--sc-command-hover);
+}
+.dashboard-theme-scope .dashboard-sidebar-section svg {
+  opacity: .7;
+}
+.dashboard-theme-scope .dashboard-sidebar-action {
+  position: relative;
+  color: var(--sc-command-ink);
+  border: 1px solid transparent;
+  border-radius: .625rem;
+  font-weight: 560;
+  transition:
+    background-color 150ms cubic-bezier(.2,.7,.2,1),
+    color 150ms,
+    border-color 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-action .dashboard-sidebar-item-icon {
+  color: var(--sc-command-secondary);
+  transition: color 150ms, transform 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover,:focus-visible) {
+  background: var(--sc-command-hover);
+  border-color: transparent;
+  color: var(--sc-command-ink);
+}
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover,:focus-visible) .dashboard-sidebar-item-icon {
+  color: var(--sc-command-active);
+  transform: translateX(1px);
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  background: var(--sc-command-selected);
+  border-color: color-mix(in srgb, var(--sc-command-active) 13%, transparent);
+  box-shadow: none;
+  color: var(--sc-command-active);
+  font-weight: 720;
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 23%;
+  bottom: 23%;
+  width: 3px;
+  border-radius: 8px;
+  background: var(--sc-command-active);
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] .dashboard-sidebar-item-icon {
+  color: var(--sc-command-active);
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  box-shadow: none;
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover,:focus-visible) .dashboard-sidebar-item-icon {
+  transform: translateX(-1px);
+}
+.dashboard-theme-scope .dashboard-sidebar-footer {
+  border-block-start: 1px solid var(--sc-command-line);
+  background: var(--sc-command-canvas);
+}
+.dashboard-theme-scope .dashboard-sidebar-new-product {
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+  transition: filter 150ms, transform 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-new-product:hover {
+  filter: brightness(1.12);
+}
+.dashboard-theme-scope .dashboard-sidebar-new-product:active {
+  transform: scale(.985);
+}
+.dashboard-theme-scope .dashboard-sidebar-store,
+.dashboard-theme-scope .dashboard-sidebar-collapse,
+.dashboard-theme-scope .dashboard-sidebar-close {
+  color: var(--sc-command-secondary);
+  transition: color 150ms, background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-store:is(:hover,:focus-visible),
+.dashboard-theme-scope .dashboard-sidebar-collapse:is(:hover,:focus-visible),
+.dashboard-theme-scope .dashboard-sidebar-close:is(:hover,:focus-visible) {
+  color: var(--sc-command-ink);
+  background: var(--sc-command-hover);
+}
+.dashboard-theme-scope .dashboard-commandbar {
+  background: color-mix(in srgb, var(--color-background) 94%, transparent);
+  border-block-end-color: var(--sc-command-line);
+  box-shadow: none;
+}
+.dashboard-theme-scope .dashboard-header-location-brand {
+  color: var(--color-muted-foreground);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+.dashboard-theme-scope .dashboard-header-separator {
+  display: block;
+  height: 1.25rem;
+  width: 1px;
+  background: var(--color-border);
+}
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger {
+  width: min(100%, 30rem);
+  min-height: 2.625rem;
+  border-radius: .625rem;
+  background: color-mix(in srgb, var(--color-muted) 46%, var(--color-background));
+  box-shadow: none;
+}
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger:hover {
+  background: var(--color-card);
+  border-color: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-account-trigger {
+  border: 1px solid transparent;
+}
+.dashboard-theme-scope .dashboard-account-trigger:hover {
+  border-color: var(--color-border);
+}
+.dashboard-theme-scope .dashboard-account-avatar {
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+}
+.dashboard-theme-scope .dashboard-mobile-nav {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-card) 96%, transparent);
+  box-shadow: 0 -8px 28px rgb(15 23 42 / .06);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-grid {
+  padding-inline: max(.25rem, env(safe-area-inset-left)) max(.25rem, env(safe-area-inset-right));
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item {
+  position: relative;
+  border-radius: .5rem;
+  min-height: 4.25rem;
+  transition: color 150ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item::before {
+  position: absolute;
+  content: "";
+  inset-block-start: 2px;
+  inset-inline: 30%;
+  height: 2px;
+  border-radius: 4px;
+  background: transparent;
+  transition: background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item.is-active::before {
+  background: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-icon {
+  transition: background-color 150ms, transform 150ms;
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item.is-active .dashboard-mobile-nav-icon {
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  color: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item:active .dashboard-mobile-nav-icon {
+  transform: scale(.94);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-create .dashboard-mobile-nav-icon {
+  color: var(--sc-command-mark-ink);
+  background: var(--sc-command-mark);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-create.is-active .dashboard-mobile-nav-icon {
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+}
+.dashboard-theme-scope :is(.dashboard-sidebar-action,.dashboard-sidebar-section,.dashboard-sidebar-collapse,.dashboard-sidebar-new-product,.dashboard-sidebar-store,.dashboard-mobile-nav-item):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+@media (min-width: 1024px) {
+  .dashboard-theme-scope .dashboard-sidebar {
+    box-shadow: none;
+  }
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-commandbar {
+    gap: .5rem;
+  }
+  .dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger {
+    width: 100%;
+    padding-inline: .75rem;
+  }
+  .dashboard-theme-scope .dashboard-header-actions {
+    gap: .125rem;
+  }
+  .dashboard-theme-scope .dashboard-lang-switch {
+    padding-inline: .375rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-theme-scope :is(.dashboard-sidebar,.dashboard-sidebar-action,.dashboard-sidebar-item-icon,.dashboard-mobile-nav-item,.dashboard-mobile-nav-icon) {
+    transition-duration: 0.01ms !important;
+  }
+}
