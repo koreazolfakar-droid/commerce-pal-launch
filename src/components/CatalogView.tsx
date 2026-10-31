@@ -285,9 +285,14 @@ export function CatalogView({
 
         <div>
           <div className="-mx-3 mb-3.5 flex items-center gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[390px]:-mx-4 min-[390px]:px-4 sm:mx-0 sm:mb-4 sm:px-0 lg:hidden">
-            <span className="shrink-0 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground">
+            <button
+              type="button"
+              onClick={() => onChange({ category: undefined })}
+              aria-pressed={!filters.category?.length}
+              className="shrink-0 rounded-full border bg-card px-3.5 py-2 text-xs font-semibold text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            >
               {t("all")}
-            </span>
+            </button>
             {(facets.categories ?? []).slice(0, 6).map((category) => {
               const pressed = filters.category?.includes(category.slug) ?? false;
               return (

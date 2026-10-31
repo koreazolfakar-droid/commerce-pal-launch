@@ -137,8 +137,7 @@ export function SiteHeader() {
           <ul className="flex items-center gap-5 font-medium">
             <li>
               <Link
-                to="/help"
-                hash="track-order"
+                to="/my-orders"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <MapPin className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("trackOrder")}
@@ -149,8 +148,7 @@ export function SiteHeader() {
             </li>
             <li>
               <Link
-                to="/help"
-                hash="account-orders"
+                to="/my-orders"
                 className="flex items-center gap-1.5 whitespace-nowrap hover:text-primary"
               >
                 <User className="h-3.5 w-3.5" strokeWidth={1.7} /> {t("account")}
@@ -227,9 +225,9 @@ export function SiteHeader() {
         </div>
 
         <nav className="store-primary-nav border-t" aria-label="Primary">
-          <div className="mx-auto flex max-w-7xl min-w-0 items-center gap-0.5 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto flex max-w-7xl min-w-0 flex-wrap items-center gap-0.5 px-4 py-1">
             <Link
-              to="/"
+              to="/shop"
               activeOptions={{ exact: true }}
               activeProps={{ className: "bg-accent text-accent-foreground" }}
               className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3.5 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"

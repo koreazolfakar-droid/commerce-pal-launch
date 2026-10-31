@@ -95,6 +95,7 @@ export const ProductCard = memo(function ProductCard({
         >
           <ProductImage
             url={image?.thumbnailUrl ?? image?.url}
+            fallbackUrl={image?.url}
             alt={image?.altText ?? node.title}
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
@@ -190,10 +191,7 @@ export const ProductCard = memo(function ProductCard({
         >
           <span
             aria-hidden
-            className={cn(
-              "h-1.5 w-1.5 rounded-full",
-              inStock ? "bg-success" : "bg-destructive",
-            )}
+            className={cn("h-1.5 w-1.5 rounded-full", inStock ? "bg-success" : "bg-destructive")}
           />
           {t(inStock ? "inStock" : "outOfStock")}
         </p>

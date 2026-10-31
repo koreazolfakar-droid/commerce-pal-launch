@@ -309,6 +309,16 @@ function BrandFacetSection({
 
   if (resolvedEmpty) return null;
 
+  // Keep an observer target for lazy backfill, without displaying a heading
+  // and a large empty shelf before there are actual products to show.
+  if (loading) {
+    return (
+      <div ref={ref} data-home-brand-shell={slug} aria-busy="true">
+        <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" />
+      </div>
+    );
+  }
+
   return (
     <div ref={ref} data-home-brand-shell={slug}>
       <FacetSection
@@ -354,23 +364,13 @@ function FacetSection({
       className="overflow-hidden rounded-[1.35rem] border border-border/75 bg-card shadow-card max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:shadow-none"
     >
       <div className="px-1 pt-2 sm:px-5 sm:pt-5">
-        <Header
-          id={id}
-          title={title}
-          subtitle={description || undefined}
-          href={href}
-          compact
-        />
+        <Header id={id} title={title} subtitle={description || undefined} href={href} compact />
       </div>
       <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
         {loading && products.length === 0 ? (
           <div className="shimmer min-h-96 rounded-2xl bg-surface" aria-hidden="true" />
         ) : (
-          <ProductRail
-            products={products.slice(0, 6)}
-            storageKey={storageKey}
-            compactGrid
-          />
+          <ProductRail products={products.slice(0, 6)} storageKey={storageKey} compactGrid />
         )}
       </div>
     </section>
@@ -399,11 +399,7 @@ function StoreShowcase({ collection }: { collection: ShowcaseCollection }) {
       </div>
       <div className="px-1 pb-2 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
         {data?.products.length ? (
-          <ProductRail
-            products={data.products}
-            storageKey={storageKey}
-            compactGrid
-          />
+          <ProductRail products={data.products} storageKey={storageKey} compactGrid />
         ) : isPending ? (
           <div className="shimmer h-48 rounded-2xl bg-surface" aria-hidden="true" />
         ) : (

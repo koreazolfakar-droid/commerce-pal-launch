@@ -42,10 +42,22 @@ export function SiteFooter() {
     return typeof value === "string" && value.trim() ? value.trim() : fallback;
   };
   const socials = [
-    { label: "Instagram", Icon: Instagram, href: socialSetting("instagram_url", STORE_CONFIG.socialInstagram) },
-    { label: "Facebook", Icon: Facebook, href: socialSetting("facebook_url", STORE_CONFIG.socialFacebook) },
+    {
+      label: "Instagram",
+      Icon: Instagram,
+      href: socialSetting("instagram_url", STORE_CONFIG.socialInstagram),
+    },
+    {
+      label: "Facebook",
+      Icon: Facebook,
+      href: socialSetting("facebook_url", STORE_CONFIG.socialFacebook),
+    },
     { label: "X", Icon: Twitter, href: socialSetting("x_url", STORE_CONFIG.socialX) },
-    { label: "YouTube", Icon: Youtube, href: socialSetting("youtube_url", STORE_CONFIG.socialYoutube) },
+    {
+      label: "YouTube",
+      Icon: Youtube,
+      href: socialSetting("youtube_url", STORE_CONFIG.socialYoutube),
+    },
   ];
 
   const support = [
@@ -82,7 +94,7 @@ export function SiteFooter() {
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
               {isAr
                 ? "هواتف وأجهزة تقنية أصلية مع تجربة شراء آمنة ودعم مباشر."
-                : `Phones and technology from the connected ${storeName} catalogue, with secure checkout and direct support.`}
+                : `Shop phones, tablets and accessories at ${storeName}, with clear pricing and direct support.`}
             </p>
             <a
               href={whatsappUrl}
@@ -94,18 +106,20 @@ export function SiteFooter() {
               {isAr ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
             </a>
             <div className="mt-5 flex gap-3 text-muted-foreground">
-              {socials.filter((social) => social.href).map(({ Icon, label, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={label}
-                  className="grid h-9 w-9 place-items-center rounded-md border bg-background hover:text-primary"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
+              {socials
+                .filter((social) => social.href)
+                .map(({ Icon, label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={label}
+                    className="grid h-9 w-9 place-items-center rounded-md border bg-background hover:text-primary"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
             </div>
           </div>
 
@@ -200,7 +214,9 @@ export function SiteFooter() {
         <div className="mt-10 border-t pt-6 text-center text-sm text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {storeName}.{" "}
-            {isAr ? "تسوّق آمن ودعم مباشر من Space Call." : "Secure shopping and direct support from Space Call."}
+            {isAr
+              ? "تسوّق آمن ودعم مباشر من Space Call."
+              : "Secure shopping and direct support from Space Call."}
           </p>
         </div>
       </div>

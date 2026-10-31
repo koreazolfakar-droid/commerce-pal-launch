@@ -492,6 +492,13 @@ export function InfoPage({ page }: { page: InfoPageName }) {
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 {t("accountDescription")}
               </p>
+              <Link
+                to="/my-orders"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+              >
+                <PackageCheck className="h-4 w-4" aria-hidden="true" />
+                {t("myOrders")}
+              </Link>
               <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm leading-6 text-muted-foreground">
                 {language === "ar"
                   ? "للمساعدة في طلب حالي أو متابعة حالة التوصيل، تواصل مباشرة مع Space Call عبر واتساب مع رقم الطلب."

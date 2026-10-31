@@ -24,8 +24,8 @@ const REASONS = [
       ar: "مخزون وأسعار مباشرة",
     },
     detail: {
-      en: "Availability and current store prices come from the connected Space Call catalogue.",
-      ar: "يتم عرض التوفر والأسعار الحالية من كتالوج Space Call المتصل.",
+      en: "Check current prices and availability before adding a product to your bag.",
+      ar: "تحقّق من الأسعار والتوفّر قبل إضافة المنتج إلى حقيبتك.",
     },
   },
   {
@@ -80,7 +80,9 @@ export function WhyShop() {
     (item) => item.page_slug === "home" && item.section_key === "trust",
   );
   const localized = section ? localizeSection(section, language) : undefined;
-  const title = localized?.title?.trim() || `Why shop with ${STORE_NAME}`;
+  const title =
+    localized?.title?.trim() ||
+    (language === "ar" ? `لماذا تتسوّق من ${STORE_NAME}؟` : `Why shop with ${STORE_NAME}`);
   const subtitle =
     localized?.subtitle?.trim() ||
     (language === "ar"
@@ -97,15 +99,10 @@ export function WhyShop() {
   return (
     <section aria-labelledby="why-shop" data-testid="why-shop">
       <div className="max-w-2xl">
-        <h2
-          id="why-shop"
-          className="text-lg font-semibold tracking-[-0.02em] sm:text-xl"
-        >
+        <h2 id="why-shop" className="text-lg font-semibold tracking-[-0.02em] sm:text-xl">
           {title}
         </h2>
-        <p className="mt-1 text-[13px] leading-6 text-muted-foreground sm:text-sm">
-          {subtitle}
-        </p>
+        <p className="mt-1 text-[13px] leading-6 text-muted-foreground sm:text-sm">{subtitle}</p>
       </div>
 
       <div className="mt-3 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
@@ -157,7 +154,12 @@ export function WhyShop() {
           );
 
           return action.to ? (
-            <Link key={action.title} to={action.to} className={className}>
+            <Link
+              key={action.title}
+              to={action.to}
+              search={action.title === "serviceDeals" ? { availability: "on-sale" } : undefined}
+              className={className}
+            >
               {content}
             </Link>
           ) : (

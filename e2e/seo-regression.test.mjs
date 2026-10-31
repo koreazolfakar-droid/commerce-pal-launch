@@ -44,8 +44,8 @@ test("header account and tracking links stay first-party", async () => {
     source("src/components/SiteHeader.tsx"),
     source("src/components/InfoPage.tsx"),
   ]);
-  assert.match(header, /to="\/help"[\s\S]*?hash="track-order"/);
-  assert.match(header, /to="\/help"[\s\S]*?hash="account-orders"/);
+  assert.equal((header.match(/to="\/my-orders"/g) ?? []).length, 2);
+  assert.match(infoPage, /to="\/my-orders"/);
   assert.doesNotMatch(header, /myshopify\.com|SHOPIFY_ACCOUNT_URL/);
   assert.match(infoPage, /id="track-order"/);
   assert.match(infoPage, /id="account-orders"/);

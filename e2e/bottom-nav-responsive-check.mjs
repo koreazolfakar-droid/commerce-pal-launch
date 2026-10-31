@@ -150,6 +150,19 @@ try {
     "bottom Search should focus the search input immediately",
   );
   await routingPage.getByRole("button", { name: "Close search" }).click();
+  await routingPage.waitForFunction(
+    () => document.activeElement?.matches('[data-testid="bottom-nav"] [data-nav-id="search"]'),
+    undefined,
+    { timeout: 3000 },
+  );
+
+  await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="search"]').click();
+  await searchInput.fill("Samsung");
+  await searchInput.press("Enter");
+  await routingPage.waitForURL(
+    (url) => url.pathname === "/search" && url.searchParams.get("q") === "Samsung",
+  );
+  await routingPage.getByRole("heading", { name: "Results for “Samsung”", exact: true }).waitFor();
 
   await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="home"]').click();
   await routingPage.waitForURL(`${baseURL}/`);

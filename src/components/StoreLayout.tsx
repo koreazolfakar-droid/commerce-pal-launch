@@ -2,10 +2,7 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
-import {
-  CmsAnnouncementBar,
-  CmsNavigationStrip,
-} from "@/components/CmsStoreControls";
+import { CmsAnnouncementBar, CmsNavigationStrip } from "@/components/CmsStoreControls";
 import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
 import { MobileTopBar } from "@/components/MobileTopBar";
@@ -28,7 +25,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
+      className={`store-layout flex min-h-screen min-w-0 flex-col bg-background ${onProductPage ? "max-sm:pb-[calc(var(--mobile-nav-height)+4.75rem)]" : ""}`}
       data-product-page={onProductPage}
       data-cart-page={onCartPage}
       style={mobileNavStyle}
@@ -50,7 +47,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <main id="main-content" tabIndex={-1} className={onCartPage ? "min-w-0" : "min-w-0 flex-1"}>
         {children}
       </main>
-      {onHomePage ? <DeferredSiteFooter /> : null}
+      <DeferredSiteFooter />
       <BottomNav />
       <DeferredCartDrawer />
     </div>

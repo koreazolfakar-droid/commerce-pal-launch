@@ -68,74 +68,117 @@ function assertNoStore(response) {
   assert.equal(response.headers.get("cdn-cache-control"), "no-store");
 }
 
-test("unknown routes remain real SSR 404s through the hardened Worker", { timeout: 60000 }, async () => {
-  const result = await request(notFoundPath);
-  assertDocument(result, 404);
-  assert.match(result.body, /404/);
-});
+test(
+  "unknown routes remain real SSR 404s through the hardened Worker",
+  { timeout: 60000 },
+  async () => {
+    const result = await request(notFoundPath);
+    assertDocument(result, 404);
+    assert.match(result.body, /404/);
+  },
+);
 
-test("homepage renders content with unique CSP nonces and uncached HTML", { timeout: 120000 }, async () => {
-  const first = await request("/");
-  assertDocument(first);
-  assertNoStore(first.response);
-  assert.match(first.body, /data-testid="home-hero"/);
-  assert.equal((first.body.match(/<h1\b/g) ?? []).length, 1);
-  const nonce = (first.response.headers.get("content-security-policy") ?? "")
-    .match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
-  assert.ok(nonce, "SSR must generate a CSP nonce");
-  assertInlineScriptNonces(first.body, nonce);
-  const second = await request("/");
-  assertDocument(second);
-  const secondNonce = (second.response.headers.get("content-security-policy") ?? "")
-    .match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
-  assert.ok(secondNonce);
-  assertInlineScriptNonces(second.body, secondNonce);
-  assert.notEqual(nonce, secondNonce, "CSP nonces must change between requests");
-});
+test(
+  "homepage renders content with unique CSP nonces and uncached HTML",
+  { timeout: 120000 },
+  async () => {
+    const first = await request("/");
+    assertDocument(first);
+    assertNoStore(first.response);
+    assert.match(first.body, /data-testid="home-hero"/);
+    assert.equal((first.body.match(/<h1\b/g) ?? []).length, 1);
+    const nonce = (first.response.headers.get("content-security-policy") ?? "").match(
+      /script-src[^;]*'nonce-([a-f0-9]{32})'/,
+    )?.[1];
+    assert.ok(nonce, "SSR must generate a CSP nonce");
+    assertInlineScriptNonces(first.body, nonce);
+    const second = await request("/");
+    assertDocument(second);
+    const secondNonce = (second.response.headers.get("content-security-policy") ?? "").match(
+      /script-src[^;]*'nonce-([a-f0-9]{32})'/,
+    )?.[1];
+    assert.ok(secondNonce);
+    assertInlineScriptNonces(second.body, secondNonce);
+    assert.notEqual(nonce, secondNonce, "CSP nonces must change between requests");
+  },
+);
 
-test("shop renders the catalog and a linked product with Product SEO data", { timeout: 120000 }, async () => {
-  const shop = await request("/shop");
-  assertDocument(shop);
-  assertNoStore(shop.response);
-  assert.match(shop.body, /Shop all products/);
-  const productPath = shop.body.match(/href="(\/product\/[^"?#]+)"/)?.[1];
-  assert.ok(productPath, "The SSR catalog must contain a product link; an empty fallback is not success");
-  const product = await request(productPath);
-  assertDocument(product);
-  assertNoStore(product.response);
-  assert.match(product.body, /data-testid="product-detail-canvas"/);
-  assert.match(product.body, /"@type"\s*:\s*"Product"/);
-  assert.equal((product.body.match(/<h1\b/g) ?? []).length, 1);
-});
+test(
+  "shop renders the catalog and a linked product with Product SEO data",
+  { timeout: 120000 },
+  async () => {
+    const shop = await request("/shop");
+    assertDocument(shop);
+    assertNoStore(shop.response);
+    assert.match(shop.body, /Shop all products/);
+    const productPath = shop.body.match(/href="(\/product\/[^"?#]+)"/)?.[1];
+    assert.ok(
+      productPath,
+      "The SSR catalog must contain a product link; an empty fallback is not success",
+    );
+    const product = await request(productPath);
+    assertDocument(product);
+    assertNoStore(product.response);
+    assert.match(product.body, /data-testid="product-detail-canvas"/);
+    assert.match(product.body, /"@type"\s*:\s*"Product"/);
+    assert.equal((product.body.match(/<h1\b/g) ?? []).length, 1);
+  },
+);
 
-test("Dashboard entry and a direct nested route render uncached noindex shells", { timeout: 120000 }, async () => {
-  // This verifies routing and the anonymous shell, not an authenticated session.
-  for (const path of ["/dashboard", "/dashboard/products"]) {
-    const result = await request(path);
-    assertDocument(result);
-    assertNoStore(result.response);
-    assert.match(result.body, /Space Call.*Admin Dashboard/);
-    assert.match(result.body, /noindex, nofollow/);
-  }
-});
+test(
+  "brand pages serialize product data and retain their SEO through workerd",
+  { timeout: 120000 },
+  async () => {
+    const brand = await request("/brand/samsung");
+    assertDocument(brand);
+    assertNoStore(brand.response);
+    assert.equal((brand.body.match(/<h1\b/g) ?? []).length, 1);
+    assert.match(brand.body, /Samsung/);
+    assert.match(
+      brand.body,
+      /rel="canonical"[^>]*href="https:\/\/spacecallapp\.store\/brand\/samsung"/,
+    );
+  },
+);
 
-test("the homepage's actual JS and CSS assets are served with immutable caching", { timeout: 120000 }, async () => {
-  const home = await request("/");
-  assertDocument(home);
-  for (const [extension, contentType] of [
-    ["js", /(?:java|ecma)script/i],
-    ["css", /text\/css/i],
-  ]) {
-    const paths = [...home.body.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map((match) => match[1]);
-    const path = paths.find((value) => new URL(value, base).pathname.endsWith(`.${extension}`));
-    assert.ok(path, `SSR must reference a real ${extension} asset`);
-    const result = await request(path);
-    assert.equal(result.response.status, 200);
-    assert.match(result.response.headers.get("content-type") ?? "", contentType);
-    assert.match(result.response.headers.get("cache-control") ?? "", /immutable/);
-    assert.ok(result.body.length > 0);
-  }
-});
+test(
+  "Dashboard entry and a direct nested route render uncached noindex shells",
+  { timeout: 120000 },
+  async () => {
+    // This verifies routing and the anonymous shell, not an authenticated session.
+    for (const path of ["/dashboard", "/dashboard/products"]) {
+      const result = await request(path);
+      assertDocument(result);
+      assertNoStore(result.response);
+      assert.match(result.body, /Space Call.*Admin Dashboard/);
+      assert.match(result.body, /noindex, nofollow/);
+    }
+  },
+);
+
+test(
+  "the homepage's actual JS and CSS assets are served with immutable caching",
+  { timeout: 120000 },
+  async () => {
+    const home = await request("/");
+    assertDocument(home);
+    for (const [extension, contentType] of [
+      ["js", /(?:java|ecma)script/i],
+      ["css", /text\/css/i],
+    ]) {
+      const paths = [...home.body.matchAll(/(?:src|href)="(\/assets\/[^"]+)"/g)].map(
+        (match) => match[1],
+      );
+      const path = paths.find((value) => new URL(value, base).pathname.endsWith(`.${extension}`));
+      assert.ok(path, `SSR must reference a real ${extension} asset`);
+      const result = await request(path);
+      assert.equal(result.response.status, 200);
+      assert.match(result.response.headers.get("content-type") ?? "", contentType);
+      assert.match(result.response.headers.get("cache-control") ?? "", /immutable/);
+      assert.ok(result.body.length > 0);
+    }
+  },
+);
 
 test("original Space Call artwork is served as an SVG asset", { timeout: 60000 }, async () => {
   const { response, body } = await request("/logo.svg");
