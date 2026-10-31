@@ -4,9 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig*.json"
       - "vite.cloudflare.config.ts"
       - "wrangler.jsonc"
-      - "e2e/cloudflare-workers-migration.test.mjs"
+      - "e2e/cloudflare-*.mjs"
       - ".github/workflows/cloudflare-workers-staging.yml"
   workflow_dispatch:
 
@@ -40,7 +45,7 @@ jobs:
           ./node_modules/.bin/vite preview --config vite.cloudflare.config.ts --host 127.0.0.1 --port 4173 > /tmp/space-call-cloudflare-preview.log 2>&1 &
           PREVIEW_PID=$!
           trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
-          node --test e2e/cloudflare-worker-runtime.smoke.mjs || {
+          node --test --test-concurrency=1 e2e/cloudflare-worker-runtime.smoke.mjs || {
             cat /tmp/space-call-cloudflare-preview.log
             exit 1
           }

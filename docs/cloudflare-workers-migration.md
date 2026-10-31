@@ -41,7 +41,9 @@ and public store origins stay unchanged. Nothing in CI publishes a Worker or wri
 
 ## Cloudflare account setup (later)
 
-Cloudflare account access is **not yet connected**. Keep API tokens and Supabase secrets out of
+Cloudflare API access is connected. The `space-call-staging` Worker has a successful deployment
+from `main`, with both public Workers Dev and Preview URLs disabled. The public store still runs
+on Lovable; this is not a production cutover. Keep API tokens and Supabase secrets out of
 GitHub source and `VITE_*` variables. Cloudflare Workers settings → Variables and Secrets stores
 server-only values. Connect the Worker to a nonpublic, Access-protected staging hostname only
 after test data isolation. No automated `wrangler deploy` command is in the CI configuration.
@@ -54,8 +56,45 @@ Official references:
 ## Runtime smoke
 
 The staging-only CI also launches the bundled Worker in Cloudflare's local workerd runtime,
-checks a real SSR 404 route for security headers, and requests the public logo asset.
-This uses **read-only requests** and never deploys or modifies Supabase records.
+checks the homepage, shop, one product discovered from the SSR catalog, dashboard entry and
+nested dashboard route, real JS/CSS assets, a real SSR 404, security headers, CSP nonce
+uniqueness, no-store HTML and immutable asset caching.
+This uses **GET requests only**, refuses non-loopback targets and external redirects, and never
+deploys or modifies Supabase records. Catalog checks read the existing public catalog; they
+are not fixture-isolated. An unavailable or empty catalog fails the product check rather than
+silently passing a fallback. Dashboard checks verify only anonymous HTML shells, not login
+or authenticated business operations.
 
 Runtime smoke is intentionally named `*.smoke.mjs` (not `*.test.mjs`), so the generic
 unit suite never starts a network-dependent test without a local Worker preview.
+
+## Runtime configuration blocker
+
+The inspected Worker has no runtime bindings. The public storefront has its own public
+Supabase fallback, but private server operations and the shared mutation limiter require:
+
+- `SUPABASE_URL`: server-side URL of the intended Supabase project.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only privileged credential, stored as a Worker secret.
+  Never set this as a `VITE_*` variable, put it in Wrangler source, print it in logs or include
+  it in a build artifact.
+
+The mutation limiter fails closed when its Supabase connection is unavailable. Uploading a
+successful Worker bundle does not prove that POST/save/order operations work. Do not remove
+or bypass the limiter to make the migration appear ready.
+
+The connected Supabase tools expose publishable keys only; they cannot retrieve this
+privileged credential. Provision it through Cloudflare Variables and Secrets in an
+authorized secure session before production cutover. Do not connect a publicly accessible
+staging endpoint or run write tests against the live database.
+
+## Remaining cutover gates
+
+- Configure and verify required runtime secrets without revealing their values.
+- Verify authenticated staff/customer flows and business writes using an isolated test stack.
+- Review existing Supabase Auth redirects, passkey RP ID, Turnstile and any Auth0 settings.
+  Keeping the exact production hostnames avoids changing the passkey RP domain.
+- Review the domains and TLS configuration; change production routes/DNS only after explicit
+  user approval. Keep Lovable available for rollback.
+- A Cloudflare Access preview is not configured. Zero Trust onboarding currently asks for
+  payment details even on its Free plan, so it is not an accepted no-payment path here.
+  Use local workerd/CI validation until a protected remote preview is explicitly arranged.
