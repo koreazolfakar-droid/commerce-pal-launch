@@ -50,19 +50,17 @@ type DashboardRouteDefinition = {
 };
 
 const NAVIGATION_GROUPS: { label: string; items: string[] }[] = [
+  { label: "Overview", items: ["Dashboard", "Analytics", "Sales"] },
   {
-    label: "Daily operations",
-    items: ["Dashboard", "Orders", "Customers", "Inventory", "Receiving", "Purchase Orders", "Suppliers"],
+    label: "Commerce",
+    items: ["Orders", "Customers", "Inventory", "Receiving", "Purchase Orders", "Suppliers", "Procurement"],
   },
   { label: "Catalog", items: ["Add New Product", "Products", "Brands", "Collections", "Categories"] },
   {
     label: "Storefront & marketing",
     items: ["Homepage", "Hero banners", "Navigation", "Media library", "Promotions", "Campaigns", "Coupons", "SEO", "Reviews", "Messages"],
   },
-  {
-    label: "Insights & settings",
-    items: ["Analytics", "Sales", "Procurement", "Users", "Activity logs", "Security", "Settings"],
-  },
+  { label: "Administration", items: ["Users", "Activity logs", "Security", "Settings"] },
 ];
 
 const DASHBOARD_ROUTE_CHUNK_RELOAD_KEY = "space-call:dashboard-route-chunk-reload";
