@@ -204,6 +204,7 @@ function Sidebar({
       )}
       <aside
         ref={sidebarRef}
+        id="dashboard-sidebar-navigation"
         inert={smallSidebar && !mobileOpen ? true : undefined}
         role={mobileOpen ? "dialog" : undefined}
         aria-modal={mobileOpen ? true : undefined}
@@ -254,6 +255,7 @@ function Sidebar({
                     return (
                       <button
                         key={item.href}
+                        aria-label={t(item.label)}
                         title={collapsed ? t(item.label) : undefined}
                         aria-current={active ? "page" : undefined}
                         onMouseEnter={() => void preloadDashboardRoute(item.href)}
@@ -280,7 +282,7 @@ function Sidebar({
                               "/dashboard/reviews",
                             ].includes(item.href) &&
                             (!collapsed || mobileOpen) ? (
-                              <span className="ms-auto rounded bg-white/10 px-1.5 py-0.5 text-[9px]">
+                              <span className="dashboard-sidebar-status ms-auto rounded px-1.5 py-0.5 text-[10px]">
                                 {t("Not connected")}
                               </span>
                             ) : null}
@@ -514,7 +516,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
   );
 }
 
-function MobileBottomNav({ onMore }: { onMore: () => void }) {
+function MobileBottomNav({ onMore, open }: { onMore: () => void; open: boolean }) {
   const { t } = useLanguage();
   const [location, navigate] = useLocation();
   const items = [
@@ -561,7 +563,9 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
         <button
           type="button"
           onClick={onMore}
-          className="dashboard-mobile-nav-item flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium text-muted-foreground"
+          aria-controls="dashboard-sidebar-navigation"
+          aria-expanded={open}
+          className={`dashboard-mobile-nav-item flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium ${open ? "is-active text-primary" : "text-muted-foreground"}`}
         >
           <span className="dashboard-mobile-nav-icon grid size-9 place-items-center rounded-xl">
             <Menu className="size-[18px]" />
@@ -760,7 +764,7 @@ function DashboardLayout() {
             <Suspense fallback={<DashboardRouteFallback />}>{content}</Suspense>
           </DashboardErrorBoundary>
         </main>
-        <MobileBottomNav onMore={() => setMobileOpen(true)} />
+        <MobileBottomNav onMore={() => setMobileOpen(true)} open={mobileOpen} />
       </div>
     </div>
   );
