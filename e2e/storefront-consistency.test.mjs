@@ -53,9 +53,10 @@ test("homepage catalog preserves the last successful Supabase snapshot during tr
   assert.doesNotMatch(queries, /Shopify catalog refresh|SHOPIFY_QUERY_RETRY_COUNT/);
 });
 
-test("full storefront footer renders only on the home page", async () => {
+test("storefront pages share the deferred footer and policy navigation", async () => {
   const layout = await source("src/components/StoreLayout.tsx");
-  assert.match(layout, /onHomePage \? <DeferredSiteFooter \/> : null/);
+  assert.match(layout, /<DeferredSiteFooter \/>/);
+  assert.doesNotMatch(layout, /onHomePage \? <DeferredSiteFooter/);
   const deferred = await source("src/components/DeferredSiteFooter.tsx");
   assert.match(deferred, /import\("@\/components\/SiteFooter"\)/);
   assert.doesNotMatch(layout, /<SiteFooter compactTopSpacing=\{onCartPage\} \/>/);

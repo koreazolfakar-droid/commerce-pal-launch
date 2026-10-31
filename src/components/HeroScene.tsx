@@ -1,9 +1,4 @@
-import {
-  useRef,
-  type CSSProperties,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
+import { useRef, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import type { CmsHeroSlide } from "@/lib/cms";
 import {
   defaultHeroLayout,
@@ -27,11 +22,7 @@ function href(type: string | undefined, value: string | null | undefined) {
   if (!value) return undefined;
   if (type === "product") return `/product/${encodeURIComponent(value)}`;
   if (type === "collection") return `/collections/${encodeURIComponent(value)}`;
-  if (
-    type === "url" &&
-    (/^\/(?!\/)/.test(value) || /^https?:\/\//i.test(value))
-  )
-    return value;
+  if (type === "url" && (/^\/(?!\/)/.test(value) || /^https?:\/\//i.test(value))) return value;
   return undefined;
 }
 export function HeroScene({
@@ -48,11 +39,7 @@ export function HeroScene({
   priority?: boolean;
 }) {
   const config = normalizeHeroVisualConfig(slide.visual_config);
-  const fallback = defaultHeroLayout(
-    config,
-    slide.content_alignment,
-    language === "ar",
-  );
+  const fallback = defaultHeroLayout(config, slide.content_alignment, language === "ar");
   const desktop = config.desktopLayout ?? fallback,
     mobile = config.mobileLayout ?? fallback;
   const current = editor?.mode === "mobile" ? mobile : desktop;
@@ -67,19 +54,12 @@ export function HeroScene({
     layout: HeroLayout;
   } | null>(null);
   const placement = config.buttonPlacement ?? "inline";
-  const free =
-    placement === "free" ||
-    Boolean(config.desktopLayout || config.mobileLayout);
+  const free = placement === "free" || Boolean(config.desktopLayout || config.mobileLayout);
   const mobileImage = slide.mobile_image_url || slide.image_url;
   const desktopFocus = config.focalPoint ?? { x: 50, y: 50 };
   const mobileFocus = config.mobileFocalPoint ?? desktopFocus;
   const ar = language === "ar";
-  const patch = (
-    part: Part,
-    next: HeroLayout[Part],
-    base = config,
-    oldLayout = current,
-  ) =>
+  const patch = (part: Part, next: HeroLayout[Part], base = config, oldLayout = current) =>
     editor?.onChange({
       ...base,
       [editor.mode === "mobile" ? "mobileLayout" : "desktopLayout"]: {
@@ -126,13 +106,7 @@ export function HeroScene({
     if (!d || d.id !== event.pointerId) return;
     patch(
       d.part,
-      moveHeroPoint(
-        d.layout[d.part],
-        event.clientX - d.x,
-        event.clientY - d.y,
-        d.width,
-        d.height,
-      ),
+      moveHeroPoint(d.layout[d.part], event.clientX - d.x, event.clientY - d.y, d.width, d.height),
       d.config,
       d.layout,
     );
@@ -179,12 +153,7 @@ export function HeroScene({
         onKeyDown={
           editor
             ? (e) => {
-                if (
-                  !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-                    e.key,
-                  )
-                )
-                  return;
+                if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
                 e.preventDefault();
                 editor.onStart();
                 const step = e.shiftKey ? 10 : 1;
@@ -192,16 +161,8 @@ export function HeroScene({
                   part,
                   moveHeroPoint(
                     current[part],
-                    e.key === "ArrowLeft"
-                      ? -step
-                      : e.key === "ArrowRight"
-                        ? step
-                        : 0,
-                    e.key === "ArrowUp"
-                      ? -step
-                      : e.key === "ArrowDown"
-                        ? step
-                        : 0,
+                    e.key === "ArrowLeft" ? -step : e.key === "ArrowRight" ? step : 0,
+                    e.key === "ArrowUp" ? -step : e.key === "ArrowDown" ? step : 0,
                     100,
                     100,
                   ),
@@ -231,10 +192,20 @@ export function HeroScene({
   ].filter((button) => button.label && button.url);
   const hasInlineContent = Boolean(
     slide.eyebrow ||
-      slide.title ||
-      slide.subtitle ||
-      (placement === "inline" && buttons.length > 0),
+    slide.title ||
+    slide.subtitle ||
+    (placement === "inline" && buttons.length > 0),
   );
+  // Merchant artwork often includes its own printed CTA. Make that image
+  // actionable even when there is no separately configured text/button.
+  const artworkOnly = !slide.title && !slide.subtitle && !slide.eyebrow && buttons.length === 0;
+  const artworkHref =
+    artworkOnly && !editor
+      ? href(slide.target_type, slide.target_value) ||
+        (!slide.target_value && (!slide.target_type || slide.target_type === "none")
+          ? "/shop"
+          : undefined)
+      : undefined;
   const buttonNodes = (
     <div className="hero-scene-buttons-row">
       {buttons.map((button, i) =>
@@ -272,62 +243,58 @@ export function HeroScene({
       dir={ar ? "rtl" : "ltr"}
     >
       <div className="hero-scene-canvas" data-testid="home-hero-media">
+        {artworkHref ? (
+          <a
+            href={artworkHref}
+            aria-label={ar ? "تصفّح المنتجات" : "Shop products"}
+            className="absolute inset-0 z-[4] rounded-[inherit] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-primary"
+            target={slide.open_in_new_tab ? "_blank" : undefined}
+            rel={slide.open_in_new_tab ? "noopener noreferrer" : undefined}
+          />
+        ) : null}
         <picture className="hero-scene-artwork">
-          {!editor ? (
-            <source media="(max-width: 639px)" srcSet={mobileImage} />
-          ) : null}
+          {!editor ? <source media="(max-width: 639px)" srcSet={mobileImage} /> : null}
           <img
             src={editor?.mode === "mobile" ? mobileImage : slide.image_url}
-            alt={
-              (ar ? slide.image_alt_ar : slide.image_alt_en) ||
-              slide.title ||
-              "Space Call"
-            }
+            alt={(ar ? slide.image_alt_ar : slide.image_alt_en) || slide.title || "Space Call"}
             draggable={false}
             onError={onImageError}
             loading="eager"
             fetchPriority={priority ? "high" : "auto"}
             decoding="async"
-            style={{
-              "--hero-focus-x": `${desktopFocus.x}%`,
-              "--hero-focus-y": `${desktopFocus.y}%`,
-              "--hero-mobile-focus-x": `${mobileFocus.x}%`,
-              "--hero-mobile-focus-y": `${mobileFocus.y}%`,
-            } as CSSProperties}
+            style={
+              {
+                "--hero-focus-x": `${desktopFocus.x}%`,
+                "--hero-focus-y": `${desktopFocus.y}%`,
+                "--hero-mobile-focus-x": `${mobileFocus.x}%`,
+                "--hero-mobile-focus-y": `${mobileFocus.y}%`,
+              } as CSSProperties
+            }
           />
         </picture>
         <div
           className="hero-scene-shade"
           style={{
-            opacity:
-              Math.max(0, Math.min(90, slide.overlay_opacity ?? 20)) / 100,
+            opacity: Math.max(0, Math.min(90, slide.overlay_opacity ?? 20)) / 100,
           }}
         />
         <div className="hero-scene-safe" data-testid="home-hero-content">
-          {hasInlineContent
-            ? positioned(
-                "content",
-                <div className="hero-scene-copy">
-                  {slide.eyebrow ? (
-                    <div className="hero-scene-eyebrow">{slide.eyebrow}</div>
-                  ) : null}
-                  {slide.title ? <h2>{slide.title}</h2> : null}
-                  {slide.subtitle ? <p>{slide.subtitle}</p> : null}
-                  {placement === "inline" && buttons.length > 0
-                    ? buttonNodes
-                    : null}
-                </div>,
-              )
-            : editor
-              ? (
-                  <span className="hero-scene-editor-empty">
-                    {ar ? "لا يوجد نص بعد" : "No content yet"}
-                  </span>
-                )
-              : null}
-          {placement === "free" && buttons.length > 0
-            ? positioned("buttons", buttonNodes)
-            : null}
+          {hasInlineContent ? (
+            positioned(
+              "content",
+              <div className="hero-scene-copy">
+                {slide.eyebrow ? <div className="hero-scene-eyebrow">{slide.eyebrow}</div> : null}
+                {slide.title ? <h2>{slide.title}</h2> : null}
+                {slide.subtitle ? <p>{slide.subtitle}</p> : null}
+                {placement === "inline" && buttons.length > 0 ? buttonNodes : null}
+              </div>,
+            )
+          ) : editor ? (
+            <span className="hero-scene-editor-empty">
+              {ar ? "لا يوجد نص بعد" : "No content yet"}
+            </span>
+          ) : null}
+          {placement === "free" && buttons.length > 0 ? positioned("buttons", buttonNodes) : null}
         </div>
       </div>
       {placement === "below" && buttons.length > 0 ? (

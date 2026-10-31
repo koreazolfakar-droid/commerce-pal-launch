@@ -55,7 +55,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
   const cartQuantity = variant
-    ? cartItems.find((item) => item.variantId === variant.id)?.quantity ?? 0
+    ? (cartItems.find((item) => item.variantId === variant.id)?.quantity ?? 0)
     : 0;
 
   const handleAdd = async () => {
@@ -95,7 +95,9 @@ export const CompactProductCard = memo(function CompactProductCard({
   /** Keeps keyboard focus stable when decrementing the final cart item back to the add button. */
   const handleDecrement = async (currentQuantity: number, trigger: HTMLButtonElement) => {
     const restoreFocus =
-      currentQuantity === 1 && typeof document !== "undefined" && document.activeElement === trigger;
+      currentQuantity === 1 &&
+      typeof document !== "undefined" &&
+      document.activeElement === trigger;
 
     await handleQuantityChange(currentQuantity - 1);
 
@@ -141,9 +143,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         "hover:scale-[1.03] hover:shadow-lg",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:scale-100 disabled:opacity-40",
-        market
-          ? "market-product-action h-9 w-9"
-          : "h-9 w-9",
+        market ? "market-product-action h-9 w-9" : "h-9 w-9",
       )}
     >
       {isAdding ? (
@@ -174,6 +174,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           >
             <ProductImage
               url={image?.thumbnailUrl ?? image?.url}
+              fallbackUrl={image?.url}
               alt={image?.altText ?? node.title}
               size={320}
               sizes="(min-width: 1024px) 220px, (min-width: 640px) 24vw, 31vw"
@@ -323,6 +324,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           >
             <ProductImage
               url={image?.thumbnailUrl ?? image?.url}
+              fallbackUrl={image?.url}
               alt={image?.altText ?? node.title}
               size={320}
               sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 31vw"
@@ -356,7 +358,6 @@ export const CompactProductCard = memo(function CompactProductCard({
           )}
 
           {wishlistButton}
-
         </div>
 
         <div className="product-card-body market-product-copy market-product-copy-grid min-w-0 p-2.5 sm:p-3">
@@ -481,6 +482,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         >
           <ProductImage
             url={image?.thumbnailUrl ?? image?.url}
+            fallbackUrl={image?.url}
             alt={image?.altText ?? node.title}
             size={280}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"

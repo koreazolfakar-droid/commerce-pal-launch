@@ -306,7 +306,11 @@ export function TopBrands({ brands }: { brands: StoreBrand[] }) {
   if (!railBrands.length) return null;
 
   return (
-    <section aria-labelledby="top-brands" data-testid="top-brands" className="-mt-2 -mb-4 min-w-0 max-w-full overflow-x-hidden sm:-mb-5">
+    <section
+      aria-labelledby="top-brands"
+      data-testid="top-brands"
+      className="-mt-2 -mb-4 min-w-0 max-w-full overflow-x-hidden sm:-mb-5"
+    >
       <div className="home-section-header !mb-0 flex-nowrap items-end">
         <div className="min-w-0 flex-1">
           <h2 id="top-brands" className="text-xl font-bold tracking-[-0.02em]">
@@ -358,7 +362,7 @@ export function TopBrands({ brands }: { brands: StoreBrand[] }) {
           }}
           onWheel={() => pauseAfterInteraction(1200)}
           className="cursor-grab overflow-x-auto overflow-y-hidden overscroll-x-contain touch-auto active:cursor-grabbing [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="list"
+          role="navigation"
           aria-label={sectionTitle}
         >
           <div className="flex w-max items-center py-0.5 sm:py-1">
@@ -381,7 +385,6 @@ export function TopBrands({ brands }: { brands: StoreBrand[] }) {
                       key={`${cycleIndex}-${brand.slug}`}
                       to="/brand/$slug"
                       params={{ slug: brand.slug }}
-                      role={isPrimaryCycle ? "listitem" : undefined}
                       aria-label={isPrimaryCycle ? brand.label : undefined}
                       tabIndex={isPrimaryCycle ? undefined : -1}
                       data-brand-slug={brand.slug}

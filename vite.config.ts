@@ -42,7 +42,7 @@ export default defineConfig(({ command }) => ({
       "@tanstack/query-core",
     ],
   },
-  server: { host: "::", port: 8080 },
+  server: { host: "::", port: 8080, allowedHosts: ["terminal.local"] },
   optimizeDeps: {
     exclude: [
       "@tanstack/react-start",

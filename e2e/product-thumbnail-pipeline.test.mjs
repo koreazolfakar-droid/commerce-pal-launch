@@ -51,7 +51,7 @@ test("storefront cards prefer thumbnails while original product media stays avai
     assert.match(source, /image\?\.thumbnailUrl \?\? image\?\.url/);
   }
   assert.match(recent, /thumbnailUrl \?\? product\.node\.images\.edges\[0\]\.node\.url/);
-  assert.match(search, /image\.thumbnailUrl \?\? image\.url/);
+  assert.match(search, /image\?\.thumbnailUrl \?\? image\?\.url/);
 });
 
 test("media cleanup treats thumbnails as referenced assets", async () => {

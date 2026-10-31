@@ -18,6 +18,7 @@ import {
 import { displayCollections } from "@/lib/taxonomy";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/shop")({
   validateSearch: parseProductSearch,
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/shop")({
 });
 
 function ShopPage() {
+  const { language } = useLanguage();
   const { data: previewCatalog } = useSuspenseQuery(catalogPreviewQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
   const filters = Route.useSearch();
@@ -89,8 +91,12 @@ function ShopPage() {
   return (
     <StoreLayout>
       <CatalogView
-        title="Shop all products"
-        description="Browse Space Call phones, tablets, audio, wearables and accessories available for shoppers in Lebanon."
+        title={language === "ar" ? "تصفّح كل المنتجات" : "Shop all products"}
+        description={
+          language === "ar"
+            ? "تصفّح الهواتف والأجهزة اللوحية والسماعات والساعات والإكسسوارات المتوفّرة في Space Call في لبنان."
+            : "Browse Space Call phones, tablets, audio, wearables and accessories available for shoppers in Lebanon."
+        }
         products={products}
         total={catalog.products.length}
         filters={filters}

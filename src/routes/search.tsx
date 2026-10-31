@@ -7,11 +7,18 @@ import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/fil
 import { catalogQueryOptions, storefrontSearchQueryOptions } from "@/lib/queries";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/search")({
   validateSearch: parseProductSearch,
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(catalogQueryOptions());
+  loaderDeps: ({ search }) => ({ q: search.q?.trim() ?? "" }),
+  loader: async ({ context, deps }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      ...(deps.q
+        ? [context.queryClient.ensureQueryData(storefrontSearchQueryOptions(deps.q))]
+        : []),
+    ]);
   },
   head: () => ({
     meta: [
@@ -41,6 +48,8 @@ export const Route = createFileRoute("/search")({
 });
 
 function SearchPage() {
+  const { language } = useLanguage();
+  const ar = language === "ar";
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -51,8 +60,20 @@ function SearchPage() {
   return (
     <StoreLayout>
       <CatalogView
-        title={filters.q ? `Results for “${filters.q}”` : "Search products"}
-        description={`${products.length} matching product${products.length === 1 ? "" : "s"} from the live Space Call catalogue.`}
+        title={
+          filters.q
+            ? ar
+              ? `نتائج البحث عن «${filters.q}»`
+              : `Results for “${filters.q}”`
+            : ar
+              ? "البحث عن المنتجات"
+              : "Search products"
+        }
+        description={
+          ar
+            ? `${products.length} منتج مطابق من متجر Space Call.`
+            : `${products.length} matching product${products.length === 1 ? "" : "s"} from Space Call.`
+        }
         products={products}
         total={catalog.products.length}
         filters={filters}
