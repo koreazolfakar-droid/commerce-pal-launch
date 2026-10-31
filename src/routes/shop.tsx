@@ -3,6 +3,7 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { CatalogView } from "@/components/CatalogView";
+import { ProductGridSkeleton } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
 import {
   activeFilterCount,
@@ -54,7 +55,27 @@ export const Route = createFileRoute("/shop")({
     };
   },
   component: ShopPage,
+  pendingComponent: ShopPending,
+  pendingMs: 200,
+  pendingMinMs: 0,
 });
+
+function ShopPending() {
+  const { language } = useLanguage();
+  return (
+    <StoreLayout>
+      <div className="mx-auto w-full max-w-[80rem] px-3 py-4 sm:px-5 lg:px-6" role="status" aria-live="polite">
+        <span className="sr-only">{language === "ar" ? "جارٍ تحميل المنتجات" : "Loading products"}</span>
+        <div className="mb-5 space-y-3" aria-hidden="true">
+          <div className="shimmer h-6 w-44 rounded-md bg-surface" />
+          <div className="shimmer h-4 w-2/3 max-w-sm rounded-md bg-surface" />
+          <div className="shimmer h-10 w-full rounded-xl bg-surface" />
+        </div>
+        <ProductGridSkeleton />
+      </div>
+    </StoreLayout>
+  );
+}
 
 function ShopPage() {
   const { language } = useLanguage();
