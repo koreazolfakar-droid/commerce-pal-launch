@@ -99,7 +99,8 @@ test("homepage uses CMS hero slides and preloads its immediate fallback without 
     source("src/components/HomeHero.tsx"),
   ]);
   assert.doesNotMatch(home, /ensureQueryData\(newestQueryOptions\(\)\)/);
-  assert.match(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
+  assert.doesNotMatch(home, /collectionQueryOptions\(HOME_HERO_COLLECTION_HANDLE, 4\)/);
+  assert.match(home, /const catalogReady = Boolean\(catalog\)/);
   assert.match(home, /cmsHeroSlides=\{cms\.heroSlides\}/);
   assert.match(home, /useQuery\(cmsQueryOptions\(\)\)/);
   assert.match(home, /rel: "preload"(?: as const)?,\s*as: "image"(?: as const)?/);

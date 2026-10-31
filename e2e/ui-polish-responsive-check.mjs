@@ -12,16 +12,21 @@ const launcher = launchers[engineName];
 assert.ok(launcher, `Unsupported browser engine: ${engineName}`);
 
 const responsiveCases = [
+  { width: 280, height: 653, lang: "en", theme: "light" },
   { width: 320, height: 700, lang: "en", theme: "light" },
   { width: 360, height: 780, lang: "en", theme: "light" },
   { width: 375, height: 812, lang: "en", theme: "light" },
   { width: 390, height: 844, lang: "en", theme: "light" },
   { width: 412, height: 915, lang: "en", theme: "light" },
   { width: 430, height: 932, lang: "en", theme: "light" },
+  { width: 540, height: 960, lang: "en", theme: "light" },
   { width: 768, height: 1024, lang: "en", theme: "light" },
+  { width: 1024, height: 768, lang: "en", theme: "light" },
   { width: 1440, height: 1000, lang: "en", theme: "light" },
+  { width: 1920, height: 1080, lang: "en", theme: "light" },
   { width: 320, height: 700, lang: "ar", theme: "dark" },
   { width: 390, height: 844, lang: "ar", theme: "dark" },
+  { width: 540, height: 960, lang: "ar", theme: "dark" },
   { width: 768, height: 1024, lang: "ar", theme: "dark" },
   { width: 1440, height: 1000, lang: "ar", theme: "dark" },
 ];
@@ -160,7 +165,7 @@ async function runResponsive(browser) {
       assert.ok(response && response.status() < 400, `${engineName} ${route}: failed to load`);
       await page.waitForTimeout(180);
       await assertDocumentMode(page, testCase, route);
-      if (route === "/shop") {
+      if (route === "/shop" || route === "/") {
         await page
           .locator('[data-testid="product-card"]:visible, .product-list-card:visible')
           .first()
@@ -169,8 +174,21 @@ async function runResponsive(browser) {
       await assertViewportHealth(
         page,
         `${engineName} ${testCase.width}px ${testCase.lang}/${testCase.theme} ${route}`,
-        route === "/shop",
+        route === "/shop" || route === "/",
       );
+      if (route === "/") {
+        const spacing = await page.locator(".home-page").evaluate((home) => {
+          const blocks = Array.from(home.children)
+            .filter((block) => getComputedStyle(block).display !== "none")
+            .map((block) => block.getBoundingClientRect())
+            .filter((box) => box.height > 0);
+          return blocks.slice(1).map((box, index) => box.top - blocks[index].bottom);
+        });
+        assert.ok(
+          spacing.every((gap) => gap >= -1 && gap <= 100),
+          `${engineName} ${testCase.width}px: unexpected homepage section spacing ${spacing.join(", ")}`,
+        );
+      }
     }
 
     await page.close();
@@ -430,7 +448,9 @@ async function runRoutes(browser) {
 const browser = await launcher.launch({ headless: true });
 try {
   if (suite === "all") {
-    const loadingPage = await createStorefrontPage(browser, { viewport: { width: 390, height: 844 } });
+    const loadingPage = await createStorefrontPage(browser, {
+      viewport: { width: 390, height: 844 },
+    });
     await loadingPage.goto(`${baseURL}/`, { waitUntil: "load" });
     await loadingPage.locator(".store-layout").evaluate((layout) => {
       const placeholder = document.createElement("div");
@@ -438,9 +458,10 @@ try {
       placeholder.dataset.testid = "motion-check";
       layout.appendChild(placeholder);
     });
-    const animation = () => loadingPage.locator('[data-testid="motion-check"]').evaluate(
-      (element) => getComputedStyle(element, "::after").animationName,
-    );
+    const animation = () =>
+      loadingPage
+        .locator('[data-testid="motion-check"]')
+        .evaluate((element) => getComputedStyle(element, "::after").animationName);
     await loadingPage.emulateMedia({ reducedMotion: "no-preference" });
     assert.equal(await animation(), "shimmer", "loading shimmer should animate normally");
     await loadingPage.emulateMedia({ reducedMotion: "reduce" });

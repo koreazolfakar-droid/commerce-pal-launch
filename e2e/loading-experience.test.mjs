@@ -4,21 +4,28 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("home starts secondary product requests without waiting for the hero collection", async () => {
+test("home starts product requests without waiting for idle time or the hero collection", async () => {
   const home = await read("src/routes/index.tsx");
-  assert.match(home, /const secondaryQueriesReady = deferredWorkReady/);
-  assert.match(home, /const catalogReady =[\s\S]*heroCollectionFetched/);
+  assert.match(home, /const secondaryQueriesReady = catalogReady/);
+  assert.match(home, /const catalogReady = Boolean\(catalog\)/);
+  assert.match(home, /homepageCatalogQueryOptions\(\)/);
+  assert.doesNotMatch(home, /\.\.\.homepageCatalogQueryOptions\(\),\s*enabled: deferredWorkReady/);
 });
 
 test("loading feedback uses product-shaped placeholders and respects reduced motion", async () => {
   const [home, shop, grid, styles] = await Promise.all([
-    read("src/routes/index.tsx"), read("src/routes/shop.tsx"),
-    read("src/components/ProductGrid.tsx"), read("src/styles.css"),
+    read("src/routes/index.tsx"),
+    read("src/routes/shop.tsx"),
+    read("src/components/ProductGrid.tsx"),
+    read("src/styles.css"),
   ]);
   assert.match(home, /<ProductRailSkeleton/);
   assert.match(shop, /pendingComponent: ShopPending/);
   assert.match(grid, /viewMode === "dense" \? DENSE : GRID/);
-  assert.match(styles, /prefers-reduced-motion: no-preference[\s\S]*?\.store-layout \.shimmer::after[\s\S]*?animation: var\(--animate-shimmer\) !important/);
+  assert.match(
+    styles,
+    /prefers-reduced-motion: no-preference[\s\S]*?\.store-layout \.shimmer::after[\s\S]*?animation: var\(--animate-shimmer\) !important/,
+  );
 });
 
 test("homepage offers a retry when the catalogue fails instead of loading forever", async () => {
