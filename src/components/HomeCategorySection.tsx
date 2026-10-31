@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import { HomeCategorySkeletonItems } from "@/components/LoadingSkeletons";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { cdnImage } from "@/lib/image";
@@ -145,16 +146,7 @@ export function HomeCategorySection({
           aria-label={title}
         >
           {managedCategoriesPending
-            ? Array.from({ length: 5 }).map((_, index) => (
-                <div
-                  key={index}
-                  aria-hidden="true"
-                  className="flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
-                >
-                  <span className="shimmer h-[5.25rem] w-[5.25rem] rounded-xl bg-surface sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]" />
-                  <span className="shimmer h-7 w-16 rounded bg-surface" />
-                </div>
-              ))
+            ? <HomeCategorySkeletonItems />
             : categories.map((category) => {
                 const label =
                   language === "ar" && category.labelAr?.trim()

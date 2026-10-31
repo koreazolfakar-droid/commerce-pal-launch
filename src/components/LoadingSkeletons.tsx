@@ -39,3 +39,37 @@ export function BrandRailSkeleton() {
     </div>
   );
 }
+
+/** Shares one category-placeholder geometry with the CMS category rail. */
+export function HomeCategorySkeletonItems() {
+  return (
+    <>
+      {Array.from({ length: 5 }, (_, index) => (
+        <div
+          key={index}
+          aria-hidden="true"
+          className="flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
+        >
+          <span className="shimmer h-[5.25rem] w-[5.25rem] rounded-xl bg-surface sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]" />
+          <span className="shimmer h-7 w-16 rounded bg-surface" />
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Matches the real category-section dimensions while navigation data loads. */
+export function HomeCategorySkeleton() {
+  return (
+    <section aria-hidden="true" className="overflow-hidden" data-testid="home-category-skeleton">
+      <div className="home-section-header">
+        <span className="shimmer h-6 w-40 rounded-md bg-surface" />
+      </div>
+      <div className="relative -mx-4 sm:mx-0">
+        <div className="category-home-rail flex snap-x snap-proximity gap-3 overflow-x-auto px-4 pb-2 pe-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:px-0 sm:pe-0 lg:gap-5">
+          <HomeCategorySkeletonItems />
+        </div>
+      </div>
+    </section>
+  );
+}
