@@ -685,3 +685,49 @@
     grid-column: 1 / -1;
   }
 }
+
+/* Space Call dashboard refinement — shared across existing sections, scoped away from storefront. */
+.dashboard-theme-scope {
+  --dashboard-space-1: 0.25rem;
+  --dashboard-space-2: 0.5rem;
+  --dashboard-space-3: 0.75rem;
+  --dashboard-space-4: 1rem;
+  --dashboard-space-6: 1.5rem;
+  --dashboard-radius-control: 0.5rem;
+  --dashboard-radius-panel: 0.75rem;
+  --dashboard-focus-ring: var(--color-ring);
+}
+.dashboard-theme-scope .dashboard-main {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.dashboard-theme-scope .dashboard-main :where(input, textarea, select) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-main :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--dashboard-focus-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-main :where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.dashboard-theme-scope .dashboard-main :where(img, video, canvas) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-main :where(table) {
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-theme-scope .dashboard-main :where(th, td) {
+  vertical-align: middle;
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-main {
+    padding-inline: 0.875rem;
+  }
+  .dashboard-theme-scope .dashboard-main :where(dialog, [role="dialog"]) {
+    max-width: calc(100vw - 1rem);
+  }
+  .dashboard-theme-scope .dashboard-main :where(input, textarea, select) {
+    font-size: max(1rem, 16px);
+  }
+}
