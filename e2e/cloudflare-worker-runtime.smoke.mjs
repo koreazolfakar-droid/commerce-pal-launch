@@ -47,6 +47,22 @@ function assertDocument(result, status = 200) {
   assert.match(response.headers.get("content-security-policy") ?? "", /default-src 'self'/);
 }
 
+function assertInlineScriptNonces(body, nonce) {
+  let executableScripts = 0;
+  for (const [, attributes, code] of body.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    if (/\bsrc\s*=/i.test(attributes) || !code.trim()) continue;
+    const type = attributes.match(/\btype\s*=\s*["']([^"']*)["']/i)?.[1]?.toLowerCase() ?? "";
+    if (!["", "module", "text/javascript", "application/javascript"].includes(type)) continue;
+    executableScripts++;
+    assert.equal(
+      attributes.match(/\bnonce\s*=\s*["']([^"']*)["']/i)?.[1],
+      nonce,
+      "Every executable inline script must match its document CSP nonce",
+    );
+  }
+  assert.ok(executableScripts > 0, "The SSR document must contain its initialization scripts");
+}
+
 function assertNoStore(response) {
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
   assert.equal(response.headers.get("cdn-cache-control"), "no-store");
@@ -67,11 +83,13 @@ test("homepage renders content with unique CSP nonces and uncached HTML", { time
   const nonce = (first.response.headers.get("content-security-policy") ?? "")
     .match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
   assert.ok(nonce, "SSR must generate a CSP nonce");
+  assertInlineScriptNonces(first.body, nonce);
   const second = await request("/");
   assertDocument(second);
   const secondNonce = (second.response.headers.get("content-security-policy") ?? "")
     .match(/script-src[^;]*'nonce-([a-f0-9]{32})'/)?.[1];
   assert.ok(secondNonce);
+  assertInlineScriptNonces(second.body, secondNonce);
   assert.notEqual(nonce, secondNonce, "CSP nonces must change between requests");
 });
 

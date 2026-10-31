@@ -98,3 +98,7 @@ staging endpoint or run write tests against the live database.
 - A Cloudflare Access preview is not configured. Zero Trust onboarding currently asks for
   payment details even on its Free plan, so it is not an accepted no-payment path here.
   Use local workerd/CI validation until a protected remote preview is explicitly arranged.
+
+The connected Cloudflare account currently returns no DNS Zone named
+`spacecallapp.store`. DNS onboarding/ownership and the existing record inventory must be
+verified before a domain cutover; do not add or change DNS as part of this validation PR.
