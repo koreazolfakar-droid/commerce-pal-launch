@@ -26,6 +26,7 @@ test("managed homepage categories remain visible before products are assigned", 
 
 test("homepage categories never flash legacy artwork before dashboard-managed imagery resolves", async () => {
   const homeCategories = await read("src/components/HomeCategorySection.tsx");
+  const skeletons = await read("src/components/LoadingSkeletons.tsx");
 
   assert.match(homeCategories, /isPending: managedCategoriesPending/);
   assert.match(homeCategories, /isError: managedCategoriesFailed/);
@@ -33,7 +34,8 @@ test("homepage categories never flash legacy artwork before dashboard-managed im
     homeCategories,
     /const categories = managedCategoriesFailed \? fallbackItems : managedItems/,
   );
-  assert.match(homeCategories, /managedCategoriesPending[\s\S]*?Array\.from\(\{ length: 5 \}\)/);
+  assert.match(homeCategories, /managedCategoriesPending\s*\? <HomeCategorySkeletonItems \/>/);
+  assert.match(skeletons, /function HomeCategorySkeletonItems\(\)[\s\S]*?Array\.from\(\{ length: 5 \}\)/);
   assert.match(homeCategories, /managed: true/);
   assert.match(homeCategories, /managed: false/);
   assert.match(
