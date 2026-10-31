@@ -159,10 +159,26 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
 
   if (loading) {
     return (
-      <div className="grid min-h-[480px] place-items-center rounded-2xl border border-slate-200 bg-white">
-        <div className="flex items-center gap-3 text-sm font-semibold text-slate-500">
-          <RefreshCw className="size-5 animate-spin text-[#5968ea]" />
+      <div className="space-y-5" aria-busy="true">
+        <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+          <RefreshCw className="size-4 animate-spin text-primary" />
           {t("Loading live dashboard data…")}
+        </div>
+        <div aria-hidden="true" className="animate-pulse space-y-5">
+          <div className="h-9 w-48 max-w-full rounded-lg bg-muted" />
+          <div className="dashboard-overview-metrics grid grid-cols-2 gap-3 xl:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="dashboard-panel space-y-5 p-5">
+                <div className="h-3 w-24 max-w-full rounded bg-muted" />
+                <div className="h-8 w-32 max-w-full rounded bg-muted" />
+                <div className="h-3 w-20 rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="dashboard-panel h-64 bg-card" />
+            <div className="dashboard-panel h-64 bg-card" />
+          </div>
         </div>
       </div>
     );
