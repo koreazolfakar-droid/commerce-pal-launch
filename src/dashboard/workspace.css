@@ -1170,6 +1170,11 @@
   border-block-start: 1px solid var(--sc-command-line);
   background: var(--sc-command-canvas);
 }
+.dashboard-theme-scope .dashboard-sidebar-status {
+  color: var(--sc-command-secondary);
+  border: 1px solid var(--sc-command-line);
+  background: var(--sc-command-hover);
+}
 .dashboard-theme-scope .dashboard-sidebar-new-product {
   background: var(--sc-command-mark);
   color: var(--sc-command-mark-ink);
