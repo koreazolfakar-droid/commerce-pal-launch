@@ -228,64 +228,6 @@ function originAllowed(origin: string) {
   }
 }
 
-async function callLovable(args: {
-  systemInstruction: string;
-  input: string;
-}): Promise<{ ok: boolean; status: number; text: string; reason?: string }> {
-  const key = Deno.env.get("LOVABLE_API_KEY")?.trim();
-  if (!key) return { ok: false, status: 503, text: "", reason: "not_configured" };
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-      "X-Lovable-AIG-SDK": "fetch",
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-6-astra",
-      instructions: `${args.systemInstruction}\nReturn ONLY a valid JSON object matching the requested shape, no markdown.`,
-      input: args.input,
-      reasoning: { effort: "low" },
-      store: false,
-      stream: true,
-    }),
-  });
-  if (!response.ok || !response.body) {
-    console.warn("[dashboard-ai] Lovable AI failed", response.status);
-    return { ok: false, status: response.status, text: "", reason: "provider_error" };
-  }
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let out = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const data = line.slice(5).trim();
-      if (!data || data === "[DONE]") continue;
-      try {
-        const evt = JSON.parse(data);
-        if (evt.type === "response.output_text.delta" && typeof evt.delta === "string") {
-          out += evt.delta;
-        }
-      } catch {
-        // partial frame
-      }
-    }
-  }
-  const text = out
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```$/, "")
-    .trim();
-  return { ok: Boolean(text), status: 200, text };
-}
-
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
   return {
@@ -1311,7 +1253,6 @@ Deno.serve(async (req) => {
   const url = Deno.env.get("SUPABASE_URL")?.trim();
   const serviceKey = serverSecretKey();
   const geminiKey = Deno.env.get("GEMINI_API_KEY")?.trim();
-  const lovableConfigured = Boolean(Deno.env.get("LOVABLE_API_KEY")?.trim());
   const model = Deno.env.get("GEMINI_MODEL")?.trim() || DEFAULT_MODEL;
 
   if (!url || !serviceKey) return json(req, { error: "server_not_configured" }, 503);
@@ -1352,7 +1293,7 @@ Deno.serve(async (req) => {
   }
 
   console.info(
-    `[dashboard-ai] provider config gemini=${Boolean(geminiKey)} lovable=${lovableConfigured}`,
+    `[dashboard-ai] provider config gemini=${Boolean(geminiKey)}`,
   );
 
   let body: AiBody;
@@ -1444,71 +1385,20 @@ Live web grounding is unavailable for this retry. Set verified=false for every s
 
   let providerPayload: Record<string, unknown> = {};
   let rawText = "";
-  let usedModel = model;
+  const usedModel = model;
   if (gemini?.ok) {
     providerPayload = gemini.body as Record<string, unknown>;
     rawText = geminiText(providerPayload);
   }
 
   if (!rawText) {
-    try {
-      const fallback = await callLovable({
-        systemInstruction: `${geminiRequest.systemInstruction}
-This fallback has no live web search. Set verified=false for every suggestion. Score confidence independently per field and conservatively; do not assign one repeated default score.
-JSON schema:
-${JSON.stringify(responseSchema(suggestionFields))}`,
-        input: geminiRequest.input,
-      });
-      if (fallback.status === 402) {
-        return json(
-          req,
-          {
-            error: "ai_credits_exhausted",
-            message: "AI credits are exhausted. Add credits in workspace settings.",
-          },
-          402,
-        );
-      }
-      if (fallback.status === 429) {
-        return json(
-          req,
-          { error: "ai_rate_limited", message: "AI is busy right now. Try again in a minute." },
-          429,
-        );
-      }
-      if (!fallback.ok && fallback.reason === "not_configured") {
-        const primaryMessage = !geminiKey
-          ? "Gemini is not configured."
-          : gemini?.status === 429
-            ? "Gemini quota or rate limit was reached."
-            : "Gemini did not return a usable answer.";
-        return json(
-          req,
-          {
-            error: "ai_fallback_not_configured",
-            message: `${primaryMessage} Lovable AI fallback is not configured in Supabase.`,
-          },
-          503,
-        );
-      }
-      if (!fallback.ok) {
-        return json(
-          req,
-          { error: "ai_unavailable", message: "AI assistant is unavailable right now." },
-          502,
-        );
-      }
-      rawText = fallback.text;
-      usedModel = "openai/gpt-6-astra";
-      providerPayload = {};
-      fallbackWarning = "Generated without live web search. Review before saving.";
-    } catch {
-      return json(
-        req,
-        { error: "ai_unavailable", message: "AI assistant is unavailable right now." },
-        503,
-      );
+    if (!geminiKey) {
+      return json(req, { error: "ai_not_configured", message: "Gemini is not configured in Supabase." }, 503);
     }
+    if (gemini?.status === 429) {
+      return json(req, { error: "ai_rate_limited", message: "AI is busy right now. Try again in a minute." }, 429);
+    }
+    return json(req, { error: "ai_unavailable", message: "AI assistant is unavailable right now." }, 503);
   }
 
   let parsed: unknown;

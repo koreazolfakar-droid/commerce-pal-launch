@@ -5,16 +5,25 @@ import ts from "typescript";
 async function load(path) {
   const s = await readFile(new URL(path, import.meta.url), "utf8");
   const js = ts.transpileModule(s, {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.ESNext,
+    },
   }).outputText;
-  return import(`data:text/javascript;base64,${Buffer.from(js).toString("base64")}`);
+  return import(
+    `data:text/javascript;base64,${Buffer.from(js).toString("base64")}`
+  );
 }
-const { readQueryValue, writeQueryValue } = await load("../src/dashboard/lib/queryState.ts");
+const { readQueryValue, writeQueryValue } = await load(
+  "../src/dashboard/lib/queryState.ts",
+);
 const { rememberDashboardList, dashboardListHref } = await load(
   "../src/dashboard/lib/listContext.ts",
 );
 const guards = await load("../src/dashboard/lib/unsavedChanges.ts");
-const { brokeredPreviewStorage } = await load("../src/integrations/supabase/previewAuthStorage.ts");
+const { brokeredPreviewStorage } = await load(
+  "../src/integrations/supabase/previewAuthStorage.ts",
+);
 test("production auth migrates legacy sessions once and tolerates blocked storage", () => {
   const originalWindow = globalThis.window,
     originalLocation = globalThis.location;
@@ -32,7 +41,11 @@ test("production auth migrates legacy sessions once and tolerates blocked storag
       tab = storage();
     local.setItem(key, "legacy-session");
     globalThis.location = { hostname: "space-call.net" };
-    globalThis.window = { parent: null, localStorage: local, sessionStorage: tab };
+    globalThis.window = {
+      parent: null,
+      localStorage: local,
+      sessionStorage: tab,
+    };
     assert.equal(brokeredPreviewStorage().getItem(key), "legacy-session");
     assert.equal(local.getItem(key), null);
     globalThis.window.sessionStorage = storage();
@@ -47,13 +60,22 @@ test("production auth migrates legacy sessions once and tolerates blocked storag
     assert.equal(brokeredPreviewStorage().getItem(key), "current-session");
     assert.equal(local.getItem(key), null);
     globalThis.location = {
-      hostname: "id-preview--00000000-0000-4000-8000-000000000001.lovableproject.com",
+      hostname:
+        "id-preview--00000000-0000-4000-8000-000000000001.lovableproject.com",
       ancestorOrigins: ["https://lovable.dev"],
     };
     globalThis.window.parent = {};
     local.setItem(key, "preview-session");
-    assert.notEqual(brokeredPreviewStorage(), tab, "framed editor previews retain their broker");
-    assert.equal(local.getItem(key), "preview-session");
+    assert.equal(
+      brokeredPreviewStorage(),
+      tab,
+      "embedded pages keep auth scoped to their own tab",
+    );
+    assert.equal(
+      local.getItem(key),
+      null,
+      "embedded pages also clear legacy persistent tokens",
+    );
     globalThis.location = { hostname: "space-call.net" };
     globalThis.window.parent = null;
     local.setItem(key, "blocked-legacy");
@@ -78,18 +100,38 @@ test("production auth migrates legacy sessions once and tolerates blocked storag
 });
 test("URL list state rejects invalid pages, values, limits and booleans", () => {
   for (const value of ["-1", "0", "Infinity", "NaN", "2.5", "2000000"])
-    assert.equal(readQueryValue(new URLSearchParams({ page: value }), "page", 1), 1);
+    assert.equal(
+      readQueryValue(new URLSearchParams({ page: value }), "page", 1),
+      1,
+    );
   assert.equal(
-    readQueryValue(new URLSearchParams("status=admin"), "status", "All", ["All", "Draft"]),
+    readQueryValue(new URLSearchParams("status=admin"), "status", "All", [
+      "All",
+      "Draft",
+    ]),
     "All",
   );
   assert.equal(
-    readQueryValue(new URLSearchParams("pageSize=5000"), "pageSize", 20, [20, 50, 100]),
+    readQueryValue(
+      new URLSearchParams("pageSize=5000"),
+      "pageSize",
+      20,
+      [20, 50, 100],
+    ),
     20,
   );
-  assert.equal(readQueryValue(new URLSearchParams("onlyLow=false"), "onlyLow", true), false);
-  assert.equal(readQueryValue(new URLSearchParams("onlyLow=anything"), "onlyLow", true), true);
-  assert.equal(readQueryValue(new URLSearchParams("threshold=0"), "threshold", 10), 0);
+  assert.equal(
+    readQueryValue(new URLSearchParams("onlyLow=false"), "onlyLow", true),
+    false,
+  );
+  assert.equal(
+    readQueryValue(new URLSearchParams("onlyLow=anything"), "onlyLow", true),
+    true,
+  );
+  assert.equal(
+    readQueryValue(new URLSearchParams("threshold=0"), "threshold", 10),
+    0,
+  );
 });
 test("changing a filter resets the page while preserving other context", () => {
   const updated = writeQueryValue(
@@ -102,15 +144,27 @@ test("changing a filter resets the page while preserving other context", () => {
   assert.equal(updated.get("search"), "Phone");
   assert.equal(updated.get("category"), "phones");
   assert.equal(updated.get("stock"), "low");
-  assert.equal(writeQueryValue(updated, "stock", "all", "all").has("stock"), false);
+  assert.equal(
+    writeQueryValue(updated, "stock", "all", "all").has("stock"),
+    false,
+  );
   assert.equal(writeQueryValue(updated, "page", 3, 1).get("page"), "3");
 });
 test("list return context remains scoped to its own list", () => {
   rememberDashboardList("/dashboard/products", "status=Draft&page=2");
   rememberDashboardList("/dashboard/orders", "payment=unpaid");
-  assert.equal(dashboardListHref("/dashboard/products"), "/dashboard/products?status=Draft&page=2");
-  assert.equal(dashboardListHref("/dashboard/orders"), "/dashboard/orders?payment=unpaid");
-  assert.equal(dashboardListHref("/dashboard/collections"), "/dashboard/collections");
+  assert.equal(
+    dashboardListHref("/dashboard/products"),
+    "/dashboard/products?status=Draft&page=2",
+  );
+  assert.equal(
+    dashboardListHref("/dashboard/orders"),
+    "/dashboard/orders?payment=unpaid",
+  );
+  assert.equal(
+    dashboardListHref("/dashboard/collections"),
+    "/dashboard/collections",
+  );
 });
 test("Back within a filtered page retains dirty inventory protection", () => {
   const original = globalThis.window,
@@ -178,7 +232,10 @@ test("supplier creation passes the intended active state to the API", async () =
   const b = source.indexOf("export type CreatePurchaseOrderInput", a);
   const body = source.slice(a, b);
   const js = ts.transpileModule(body, {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.CommonJS,
+    },
   }).outputText;
   const exports = {};
   const chain = {
@@ -190,10 +247,19 @@ test("supplier creation passes the intended active state to the API", async () =
       return chain;
     },
     single() {
-      return Promise.resolve({ data: { id: "supplier", ...input }, error: null });
+      return Promise.resolve({
+        data: { id: "supplier", ...input },
+        error: null,
+      });
     },
   };
-  new Function("exports", "requireDashboardStaff", "supabase", "throwIfError", js)(
+  new Function(
+    "exports",
+    "requireDashboardStaff",
+    "supabase",
+    "throwIfError",
+    js,
+  )(
     exports,
     async () => {},
     { from: () => chain },
@@ -201,7 +267,10 @@ test("supplier creation passes the intended active state to the API", async () =
       if (e) throw e;
     },
   );
-  await exports.createReceivingSupplier({ name: "  Supplier  ", isActive: false });
+  await exports.createReceivingSupplier({
+    name: "  Supplier  ",
+    isActive: false,
+  });
   assert.equal(input.is_active, false);
   assert.equal(input.name, "Supplier");
   await exports.createReceivingSupplier({ name: "Default" });
@@ -212,9 +281,15 @@ test("workspace search is bounded, role-checked and preserves partial results", 
     new URL("../src/dashboard/data/workspaceSearch.ts", import.meta.url),
     "utf8",
   );
-  const js = ts.transpileModule(source.replace(/^import[\s\S]*?from ["'][^"']+["'];\n/gm, ""), {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
-  }).outputText;
+  const js = ts.transpileModule(
+    source.replace(/^import[\s\S]*?from ["'][^"']+["'];\n/gm, ""),
+    {
+      compilerOptions: {
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.CommonJS,
+      },
+    },
+  ).outputText;
   const calls = [];
   let role = "editor";
   const supabase = {
@@ -240,7 +315,11 @@ test("workspace search is bounded, role-checked and preserves partial results", 
               ? { data: null, error: new Error("CRM unavailable") }
               : {
                   data: [
-                    { id: "order", public_order_number: "12345-00001", customer_name: "Test" },
+                    {
+                      id: "order",
+                      public_order_number: "12345-00001",
+                      customer_name: "Test",
+                    },
                   ],
                   error: null,
                 },
@@ -251,7 +330,13 @@ test("workspace search is bounded, role-checked and preserves partial results", 
     },
   };
   const exports = {};
-  new Function("exports", "supabase", "getDashboardRole", "searchDashboardProducts", js)(
+  new Function(
+    "exports",
+    "supabase",
+    "getDashboardRole",
+    "searchDashboardProducts",
+    js,
+  )(
     exports,
     supabase,
     async () => role,
@@ -267,6 +352,9 @@ test("workspace search is bounded, role-checked and preserves partial results", 
   assert.ok(calls.every((call) => !call.fields.includes("*")));
   calls.length = 0;
   role = null;
-  await assert.rejects(exports.searchDashboardWorkspace("Test"), /authentication/);
+  await assert.rejects(
+    exports.searchDashboardWorkspace("Test"),
+    /authentication/,
+  );
   assert.equal(calls.length, 0);
 });

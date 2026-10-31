@@ -2,9 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const server = await readFile(new URL("../src/server.ts", import.meta.url), "utf8");
+const server = await readFile(
+  new URL("../src/server.ts", import.meta.url),
+  "utf8",
+);
 const storage = await readFile(
-  new URL("../src/integrations/supabase/previewAuthStorage.ts", import.meta.url),
+  new URL(
+    "../src/integrations/supabase/previewAuthStorage.ts",
+    import.meta.url,
+  ),
   "utf8",
 );
 const client = await readFile(
@@ -12,15 +18,24 @@ const client = await readFile(
   "utf8",
 );
 const auth0 = await readFile(
-  new URL("../src/dashboard/security/Auth0DashboardSecurity.tsx", import.meta.url),
+  new URL(
+    "../src/dashboard/security/Auth0DashboardSecurity.tsx",
+    import.meta.url,
+  ),
   "utf8",
 );
 const workflow = await readFile(
   new URL("../.github/workflows/storefront-ci.yml", import.meta.url),
   "utf8",
 );
-const router = await readFile(new URL("../src/router.tsx", import.meta.url), "utf8");
-const root = await readFile(new URL("../src/routes/__root.tsx", import.meta.url), "utf8");
+const router = await readFile(
+  new URL("../src/router.tsx", import.meta.url),
+  "utf8",
+);
+const root = await readFile(
+  new URL("../src/routes/__root.tsx", import.meta.url),
+  "utf8",
+);
 const csp = await readFile(
   new URL("../src/lib/contentSecurityPolicy.ts", import.meta.url),
   "utf8",
@@ -33,7 +48,10 @@ const errorPage = await readFile(
 test("dashboard responses are explicitly non-cacheable", () => {
   assert.match(server, /function withDashboardNoStore/);
   assert.match(server, /pathname\.startsWith\("\/dashboard"\)/);
-  assert.match(server, /Cache-Control", "no-store, max-age=0, must-revalidate"/);
+  assert.match(
+    server,
+    /Cache-Control", "no-store, max-age=0, must-revalidate"/,
+  );
   assert.match(server, /CDN-Cache-Control", "no-store"/);
   assert.match(server, /Surrogate-Control", "no-store"/);
   assert.match(server, /Pragma", "no-cache"/);
@@ -71,13 +89,25 @@ test("CSP uses a per-request nonce and removes script unsafe-inline", () => {
 });
 
 test("production Supabase sessions are tab-scoped, migrate legacy auth, and survive blocked storage", () => {
-  assert.match(storage, /if \(!projectId \|\| !framed\) return useTabScopedProductionStorage\(\)/);
-  assert.doesNotMatch(storage, /if \(!projectId \|\| !framed\) return localStorage/);
-  assert.match(storage, /SPACE_CALL_SUPABASE_AUTH_KEY = 'sb-rtwyankpxtffqqrasyzw-auth-token'/);
+  assert.match(storage, /return useTabScopedProductionStorage\(\)/);
+  assert.doesNotMatch(
+    storage,
+    /if \(!projectId \|\| !framed\) return localStorage/,
+  );
+  assert.match(
+    storage,
+    /SPACE_CALL_SUPABASE_AUTH_KEY = 'sb-rtwyankpxtffqqrasyzw-auth-token'/,
+  );
   assert.match(storage, /safeBrowserStorage\('session'\)/);
   assert.match(storage, /safeBrowserStorage\('local'\)/);
-  assert.match(storage, /tabStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/);
-  assert.match(storage, /legacyStorage\?\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/);
+  assert.match(
+    storage,
+    /tabStorage\.setItem\(SPACE_CALL_SUPABASE_AUTH_KEY, legacySession\)/,
+  );
+  assert.match(
+    storage,
+    /legacyStorage\?\.removeItem\(SPACE_CALL_SUPABASE_AUTH_KEY\)/,
+  );
   assert.match(storage, /return createMemoryStorage\(\)/);
   assert.match(storage, /window\.sessionStorage/);
   assert.match(storage, /window\.localStorage/);
@@ -85,9 +115,7 @@ test("production Supabase sessions are tab-scoped, migrate legacy auth, and surv
   assert.match(client, /persistSession: true/);
   assert.match(client, /autoRefreshToken: true/);
 
-  // Lovable's framed preview broker may keep its own local fallback for editor
-  // interoperability. The production/non-preview path above remains tab-scoped.
-  assert.match(storage, /localStorage\.setItem/);
+  assert.doesNotMatch(storage, /postMessage|editorOrigins|lovable-preview-auth/);
 });
 
 test("Auth0 dashboard tokens remain memory-only", () => {

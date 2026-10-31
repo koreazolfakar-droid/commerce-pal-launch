@@ -12,11 +12,15 @@ function isNewSupabaseApiKey(value: string): boolean {
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
-      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+      typeof Request !== "undefined" && input instanceof Request
+        ? input.headers
+        : undefined,
     );
 
     if (init?.headers) {
-      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+      new Headers(init.headers).forEach((value, key) =>
+        headers.set(key, value),
+      );
     }
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
@@ -41,7 +45,7 @@ function createSupabaseAdminClient() {
       ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ["SUPABASE_SERVICE_ROLE_KEY"] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Connect Supabase in Lovable Cloud.`;
+    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Configure the required Supabase environment variables on the hosting platform.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
@@ -64,9 +68,12 @@ let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
 // SECURITY: Only use this for trusted server-side operations, never expose to client code
 // Load inside server handlers: const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 // Top-level import is safe only in other .server.ts modules - route files and *.functions.ts ship to the client bundle.
-export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
-  get(_, prop, receiver) {
-    if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
-    return Reflect.get(_supabaseAdmin, prop, receiver);
+export const supabaseAdmin = new Proxy(
+  {} as ReturnType<typeof createSupabaseAdminClient>,
+  {
+    get(_, prop, receiver) {
+      if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
+      return Reflect.get(_supabaseAdmin, prop, receiver);
+    },
   },
-});
+);
