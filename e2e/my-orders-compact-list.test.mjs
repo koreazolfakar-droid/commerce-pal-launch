@@ -59,7 +59,7 @@ test("My Orders renders compact cards with two previews, quantity, other count, 
 test("My Orders replaces product discovery controls with order-status filters", () => {
   assert.match(storeLayout, /const onOrdersPage = pathname === "\/my-orders"/);
   assert.match(storeLayout, /showSearch=\{!onOrdersPage\}/);
-  assert.match(storeLayout, /showCategoryRail=\{!onHomePage && !onCartPage && !onShopPage && !onOrdersPage\}/);
+  assert.match(storeLayout, /showCategoryRail=\{!onHomePage && !onCartPage && !onShopPage && !onOrdersPage && !onProductPage\}/);
   assert.match(mobileTopBar, /showSearch = true/);
   assert.match(list, /OrderStatusFilters/);
   assert.match(list, /value: "all"/);
