@@ -53,7 +53,6 @@ import {
   SearchCheck,
   Settings2,
   ShoppingBag,
-  Sparkles,
   Star,
   Sun,
   Tags,
@@ -345,9 +344,12 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { enabled: auth0Enabled, logoutAuth0 } = useDashboardAuth0();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const identity = useDashboardIdentity();
   const profileRef = useRef<HTMLDivElement>(null);
+  const activeRoute = navSections.flatMap((section) => section.items)
+    .filter((item) => location === item.href || (item.href !== "/dashboard" && location.startsWith(item.href + "/")))
+    .sort((first, second) => second.href.length - first.href.length)[0];
   useEffect(() => {
     if (!profileOpen) return;
     profileRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
@@ -381,7 +383,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
     items[next]?.focus();
   };
   return (
-    <header className="dashboard-header sticky top-0 z-30 flex min-h-[68px] items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[74px] sm:px-6 sm:py-0 lg:px-9">
+    <header className="dashboard-header dashboard-commandbar sticky top-0 z-30 flex min-h-[68px] items-center justify-between gap-3 border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[74px] sm:px-6 sm:py-0 lg:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
@@ -391,12 +393,17 @@ function Header({ onMenu }: { onMenu: () => void }) {
         >
           <Menu className="size-5" />
         </button>
-        <DashboardCommandCenter />
+        <div className="dashboard-header-location hidden min-w-0 shrink-0 items-center gap-2.5 lg:flex">
+          <span className="dashboard-header-location-brand">Space Call</span>
+          <span aria-hidden="true" className="dashboard-header-separator" />
+          <span className="max-w-[11rem] truncate text-sm font-semibold text-foreground">{t(activeRoute?.label ?? "Dashboard")}</span>
+        </div>
+        <div className="dashboard-header-search min-w-0 flex-1"><DashboardCommandCenter /></div>
       </div>
-      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+      <div className="dashboard-header-actions flex shrink-0 items-center gap-1 sm:gap-2.5">
         <button
           onClick={() => navigate("/dashboard/activity")}
-          className="dashboard-icon-button grid size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground"
+          className="dashboard-icon-button dashboard-toolbar-button hidden size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground sm:grid"
           aria-label={t("Activity logs")}
           title={t("Activity logs")}
         >
@@ -405,7 +412,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={toggleTheme}
-          className="dashboard-icon-button grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
+          className="dashboard-icon-button dashboard-toolbar-button grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
           aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
           aria-pressed={theme === "dark"}
           title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
@@ -415,7 +422,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="hidden h-8 w-px bg-border sm:block" />
         <button
           onClick={() => setLang(lang === "en" ? "ar" : "en")}
-          className="dashboard-compact-control rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-bold text-muted-foreground transition hover:text-primary"
+          className="dashboard-compact-control dashboard-lang-switch min-h-9 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition hover:text-primary"
           title={lang === "en" ? "العربية" : t("English")}
         >
           {lang === "en" ? t("AR") : t("EN")}
@@ -430,7 +437,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         >
           <button
             onClick={() => setProfileOpen((current) => !current)}
-            className="flex items-center gap-2.5 rounded-lg p-1.5 pe-2 transition hover:bg-card"
+            className="dashboard-account-trigger flex items-center gap-2 rounded-lg p-1.5 pe-2 transition-colors hover:bg-muted"
             aria-label={t("Account menu")}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") {
@@ -441,7 +448,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
             aria-haspopup="menu"
             aria-expanded={profileOpen}
           >
-            <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-background">
+            <div className="dashboard-account-avatar grid size-9 place-items-center rounded-lg text-[11px] font-bold ring-2 ring-background">
               {identity.name.slice(0, 2).toUpperCase() || "…"}
             </div>
             <div className="hidden text-start sm:block">
@@ -522,7 +529,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
       className="dashboard-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_rgba(15,23,42,.08)] backdrop-blur-lg lg:hidden"
       aria-label="Dashboard mobile navigation"
     >
-      <div className="grid min-h-[64px] grid-cols-5">
+      <div className="dashboard-mobile-nav-grid grid min-h-[68px] grid-cols-5">
         {items.map(({ label, href, icon: Icon }) => {
           const active =
             href === "/dashboard"
@@ -539,11 +546,11 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
                 void preloadDashboardRoute(href);
                 navigate(href);
               }}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition active:scale-95 ${active ? "text-primary" : "text-muted-foreground"}`}
+              className={`dashboard-mobile-nav-item flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium ${active ? "is-active text-primary" : "text-muted-foreground"} ${href === "/dashboard/products/new" ? "dashboard-mobile-nav-create" : ""}`}
               aria-current={active ? "page" : undefined}
             >
               <span
-                className={`grid size-8 place-items-center rounded-lg ${active ? "bg-accent" : ""}`}
+                className={`dashboard-mobile-nav-icon grid size-9 place-items-center rounded-xl ${active ? "bg-accent" : ""}`}
               >
                 <Icon className="size-[18px]" strokeWidth={active ? 2.2 : 1.8} />
               </span>
@@ -554,9 +561,9 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
         <button
           type="button"
           onClick={onMore}
-          className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold text-muted-foreground transition active:scale-95"
+          className="dashboard-mobile-nav-item flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium text-muted-foreground"
         >
-          <span className="grid size-8 place-items-center rounded-lg">
+          <span className="dashboard-mobile-nav-icon grid size-9 place-items-center rounded-xl">
             <Menu className="size-[18px]" />
           </span>
           <span>{t("More")}</span>
@@ -739,7 +746,7 @@ function DashboardLayout() {
       />
       <div
         inert={mobileOpen ? true : undefined}
-        className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[82px]" : "lg:pl-[82px]") : lang === "ar" ? "lg:pr-[260px]" : "lg:pl-[260px]"}`}
+        className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[80px]" : "lg:pl-[80px]") : lang === "ar" ? "lg:pr-[272px]" : "lg:pl-[272px]"}`}
       >
         <Header onMenu={() => setMobileOpen(true)} />
         <DashboardConnectivity />
