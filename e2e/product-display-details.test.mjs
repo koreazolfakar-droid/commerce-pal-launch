@@ -46,6 +46,19 @@ test("real merchant description wins over fallback and removes only unhelpful te
   assert.equal(result[0].paragraphs[0], paragraphs[0].paragraphs[1]);
 });
 
+test("overview omits a repeated product title when useful description follows", () => {
+  const watch = "Samsung Galaxy Watch 8 - 40mm - Graphite";
+  const description = "A smartwatch designed for everyday activity and a connected lifestyle.";
+  const sections = [{ title: null, paragraphs: [watch, description], bullets: [], specs: [] }];
+  assert.deepEqual(buildDisplayOverview(sections, watch, "Samsung", "en")[0].paragraphs, [description]);
+});
+
+test("overview keeps a title-only merchant description rather than hiding the content", () => {
+  const watch = "Samsung Galaxy Watch 8 - 40mm - Graphite";
+  const sections = [{ title: null, paragraphs: [watch], bullets: [], specs: [] }];
+  assert.deepEqual(buildDisplayOverview(sections, watch, "Samsung", "en")[0].paragraphs, [watch]);
+});
+
 test("title facts supplement specifications without rewriting authoritative rows", () => {
   const brandSpecs = [{ title: "General", rows: [{ label: "Brand", value: "ACEFAST" }, { label: "Power", value: "33W" }] }];
   const groups = buildDisplaySpecificationGroups(brandSpecs, title, "en");

@@ -10,7 +10,7 @@ test("product gallery uses premium multi-image hierarchy", async () => {
 
   assert.match(gallery, /data-testid="product-gallery-counter"/);
   assert.match(gallery, /data-testid=\{compact \? undefined : "product-gallery-thumbnails"\}/);
-  assert.match(gallery, /aspect-\[1\/0\.92\]/);
+  assert.match(gallery, /aspect-\[1\/0\.82\]/);
   assert.match(gallery, /snap-x/);
   assert.match(gallery, /lg:flex-col/);
   assert.match(gallery, /\{index \+ 1\} \/ \{images\.length\}/);
@@ -22,7 +22,7 @@ test("multi-image thumbnails stay compact and variant-safe", async () => {
 
   assert.match(gallery, /onClick=\{\(\) => onSelect\(thumbIndex\)\}/);
   assert.match(gallery, /aria-pressed=\{thumbIndex === index\}/);
-  assert.match(gallery, /h-12 w-12/);
+  assert.match(gallery, /h-14 w-14/);
   assert.match(gallery, /lg:h-\[4\.75rem\] lg:w-\[4\.75rem\]/);
   assert.match(gallery, /object-contain/);
 });

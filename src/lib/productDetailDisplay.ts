@@ -120,7 +120,20 @@ export function buildDisplayOverview(
       paragraphs: section.paragraphs.filter((paragraph) => paragraph.trim().length >= 32),
     }))
     .filter((section) => section.paragraphs.length > 0 || section.bullets.length > 0);
-  if (meaningful.length) return meaningful;
+  if (meaningful.length) {
+    const normalize = (value: string) => value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+    const normalizedTitle = normalize(title);
+    const hasOtherContent = meaningful.some((section) =>
+      section.bullets.length > 0 || section.paragraphs.some((paragraph) => normalize(paragraph) !== normalizedTitle),
+    );
+    if (!normalizedTitle || !hasOtherContent) return meaningful;
+    return meaningful
+      .map((section) => ({
+        ...section,
+        paragraphs: section.paragraphs.filter((paragraph) => normalize(paragraph) !== normalizedTitle),
+      }))
+      .filter((section) => section.paragraphs.length > 0 || section.bullets.length > 0);
+  }
 
   const overview = overviewFromKnownFacts(title, brand, language);
   if (!overview) return [];
