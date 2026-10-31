@@ -559,12 +559,24 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
 function DashboardRouteFallback() {
   return (
     <div
-      className="grid min-h-[360px] place-items-center rounded-2xl border border-border/60 bg-card/40"
+      className="dashboard-route-skeleton min-h-[360px] space-y-6 rounded-2xl border border-border bg-card/70 p-5 sm:p-7"
       role="status"
       aria-live="polite"
       aria-label="Loading dashboard page"
     >
-      <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <Loader2 className="size-5 animate-spin text-primary" />
+        <span>Loading dashboard page…</span>
+      </div>
+      <div aria-hidden="true" className="animate-pulse space-y-6">
+        <div className="h-8 w-44 max-w-full rounded-lg bg-muted" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="h-24 rounded-xl border border-border bg-muted/70" />
+          ))}
+        </div>
+        <div className="h-52 rounded-xl border border-border bg-muted/70" />
+      </div>
     </div>
   );
 }
