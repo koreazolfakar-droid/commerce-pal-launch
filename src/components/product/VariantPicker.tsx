@@ -144,6 +144,11 @@ export function VariantPicker({
               <h2 className="text-[11px] font-medium text-muted-foreground">
                 {option.name}
               </h2>
+              {selected[option.name] && (
+                <span className="min-w-0 truncate text-xs font-semibold text-foreground">
+                  {selected[option.name]}
+                </span>
+              )}
             </div>
             <div className={cn("flex flex-wrap", color ? "gap-2" : "gap-2")}>
               {option.values.map((value) => {
