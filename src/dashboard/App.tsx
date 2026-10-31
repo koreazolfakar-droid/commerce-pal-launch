@@ -53,7 +53,6 @@ import {
   SearchCheck,
   Settings2,
   ShoppingBag,
-  Sparkles,
   Star,
   Sun,
   Tags,
@@ -106,17 +105,14 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 ${compact ? "justify-center" : ""}`}>
-      <div className="relative grid size-10 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-[#5c6bff] via-[#4c48d8] to-[#8c52d9] shadow-[0_10px_24px_rgba(86,77,223,.35)]">
-        <div className="absolute h-[22px] w-[30px] -rotate-[28deg] rounded-[50%] border-[3px] border-white/90" />
-        <div className="absolute h-2.5 w-2.5 translate-x-2 -translate-y-2 rounded-full bg-[#56b7ff]" />
+    <div className={`dashboard-brand flex min-w-0 items-center gap-3 ${compact ? "justify-center" : ""}`}>
+      <div className="dashboard-brand-mark grid size-11 shrink-0 place-items-center rounded-xl" aria-hidden="true">
+        <span>SC</span>
       </div>
       {!compact && (
         <div className="min-w-0">
-          <div className="text-[15px] font-bold tracking-[-.03em] text-white">Space Call</div>
-          <div className="mt-0.5 max-w-[170px] truncate text-[9px] font-medium uppercase tracking-[.18em] text-slate-400">
-            Tech for a better tomorrow
-          </div>
+          <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
+          <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
         </div>
       )}
     </div>
@@ -203,43 +199,48 @@ function Sidebar({
         <button
           aria-label={t("Close menu")}
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 touch-none bg-slate-950/45 backdrop-blur-[2px] lg:hidden"
+          className="dashboard-navigation-backdrop fixed inset-0 z-40 touch-none bg-slate-950/55 backdrop-blur-[2px] lg:hidden"
         />
       )}
       <aside
         ref={sidebarRef}
+        id="dashboard-sidebar-navigation"
         inert={smallSidebar && !mobileOpen ? true : undefined}
         role={mobileOpen ? "dialog" : undefined}
         aria-modal={mobileOpen ? true : undefined}
         aria-label={t("Navigation")}
         tabIndex={-1}
-        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(88vw,320px)] flex-col overscroll-contain bg-[#111827] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
+        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(90vw,336px)] flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white transition-transform duration-200 lg:w-[272px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[80px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
-        <div
-          className={`flex h-[76px] items-center border-b border-white/[.07] px-5 lg:h-[92px] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
-        >
+        <div className={`dashboard-sidebar-brand flex min-h-[88px] items-center justify-between gap-3 px-5 lg:min-h-[94px] ${collapsed ? "lg:justify-center lg:px-2" : ""}`}>
           <Logo compact={collapsed && !mobileOpen} />
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            aria-label={t("Close navigation")}
+            className="dashboard-sidebar-close grid size-10 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+          >
+            <X className="size-5" />
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
+        <nav aria-label={t("Workspace navigation")} className="dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
           {navSections.map((section) => (
-            <div key={section.label} className="mb-6">
+            <section key={section.label} className="dashboard-sidebar-group mb-5">
               {(!collapsed || mobileOpen) && (
                 <button
                   type="button"
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={!closedSections.includes(section.label)}
-                  className="dashboard-sidebar-section mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold tracking-wide text-slate-400 hover:text-white"
+                  className="dashboard-sidebar-section mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-400 hover:text-white"
                 >
                   <span>{t(section.label)}</span>
-                  <span
-                    aria-hidden
-                    className={`text-[11px] transition-transform ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
-                  >
-                    ▾
-                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`size-3.5 transition-transform duration-150 ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
+                  />
                 </button>
               )}
-              <div className="space-y-1">
+              <div className="dashboard-sidebar-items space-y-1">
                 {section.items
                   .filter((item) => !unavailableDashboardRoutes.has(item.href))
                   .filter((item) =>
@@ -254,6 +255,7 @@ function Sidebar({
                     return (
                       <button
                         key={item.href}
+                        aria-label={t(item.label)}
                         title={collapsed ? t(item.label) : undefined}
                         aria-current={active ? "page" : undefined}
                         onMouseEnter={() => void preloadDashboardRoute(item.href)}
@@ -264,10 +266,10 @@ function Sidebar({
                           navigate(item.href);
                           setMobileOpen(false);
                         }}
-                        className={`dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium transition-colors duration-150 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-white/[.11] text-white" : "text-slate-300 hover:bg-white/[.07] hover:text-white"}`}
+                        className={`dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-[13px] font-medium transition-colors duration-150 ${collapsed ? "lg:justify-center" : ""}`}
                       >
                         <Icon
-                          className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
+                          className="dashboard-sidebar-item-icon size-[18px] shrink-0"
                           strokeWidth={1.8}
                         />
                         {(!collapsed || mobileOpen) && (
@@ -280,7 +282,7 @@ function Sidebar({
                               "/dashboard/reviews",
                             ].includes(item.href) &&
                             (!collapsed || mobileOpen) ? (
-                              <span className="ms-auto rounded bg-white/10 px-1.5 py-0.5 text-[9px]">
+                              <span className="dashboard-sidebar-status ms-auto rounded px-1.5 py-0.5 text-[10px]">
                                 {t("Not connected")}
                               </span>
                             ) : null}
@@ -290,29 +292,38 @@ function Sidebar({
                     );
                   })}
               </div>
-            </div>
+            </section>
           ))}
-        </div>
-        <div className="border-t border-white/[.07] p-4">
+        </nav>
+        <div className="dashboard-sidebar-footer p-3">
           {(!collapsed || mobileOpen) && (
-            <div className="mb-3 rounded-xl border border-white/[.08] bg-white/[.05] p-3">
-              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300">
-                <Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Live workspace")}
-              </div>
-              <p className="mb-3 text-[11px] leading-4 text-slate-500">
-                {t("Store management workspace")}
-              </p>
+            <div className="dashboard-sidebar-shortcuts mb-3 space-y-1">
               <button
-                onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#a8b2ff] hover:text-white"
+                type="button"
+                onClick={() => {
+                  void preloadDashboardRoute("/dashboard/products/new");
+                  navigate("/dashboard/products/new");
+                  setMobileOpen(false);
+                }}
+                className="dashboard-sidebar-new-product flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-[13px] font-semibold"
               >
-                {t("View store")} <ExternalLink className="size-3" />
+                <PackagePlus className="size-[18px]" strokeWidth={1.8} />
+                <span className="flex-1 text-start">{t("Quick product")}</span>
+                <span aria-hidden="true">+</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
+                className="dashboard-sidebar-store flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-[12px] font-medium"
+              >
+                <ExternalLink className="size-4" />
+                <span className="flex-1 text-start">{t("Open store")}</span>
               </button>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] text-slate-500 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`}
+            className={`dashboard-sidebar-collapse hidden min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[12px] text-slate-400 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`}
             title={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
           >
             {collapsed ? (
@@ -335,9 +346,12 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { enabled: auth0Enabled, logoutAuth0 } = useDashboardAuth0();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const identity = useDashboardIdentity();
   const profileRef = useRef<HTMLDivElement>(null);
+  const activeRoute = navSections.flatMap((section) => section.items)
+    .filter((item) => location === item.href || (item.href !== "/dashboard" && location.startsWith(item.href + "/")))
+    .sort((first, second) => second.href.length - first.href.length)[0];
   useEffect(() => {
     if (!profileOpen) return;
     profileRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
@@ -371,7 +385,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
     items[next]?.focus();
   };
   return (
-    <header className="dashboard-header sticky top-0 z-30 flex min-h-[68px] items-center justify-between border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[74px] sm:px-6 sm:py-0 lg:px-9">
+    <header className="dashboard-header dashboard-commandbar sticky top-0 z-30 flex min-h-[68px] items-center justify-between gap-3 border-b border-border/80 bg-background/95 px-3 py-2 backdrop-blur-md sm:h-[74px] sm:px-6 sm:py-0 lg:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
@@ -381,12 +395,17 @@ function Header({ onMenu }: { onMenu: () => void }) {
         >
           <Menu className="size-5" />
         </button>
-        <DashboardCommandCenter />
+        <div className="dashboard-header-location hidden min-w-0 shrink-0 items-center gap-2.5 lg:flex">
+          <span className="dashboard-header-location-brand">Space Call</span>
+          <span aria-hidden="true" className="dashboard-header-separator" />
+          <span className="max-w-[11rem] truncate text-sm font-semibold text-foreground">{t(activeRoute?.label ?? "Dashboard")}</span>
+        </div>
+        <div className="dashboard-header-search min-w-0 flex-1"><DashboardCommandCenter /></div>
       </div>
-      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+      <div className="dashboard-header-actions flex shrink-0 items-center gap-1 sm:gap-2.5">
         <button
           onClick={() => navigate("/dashboard/activity")}
-          className="dashboard-icon-button grid size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground"
+          className="dashboard-icon-button dashboard-toolbar-button hidden size-10 place-items-center rounded-lg text-muted-foreground transition hover:bg-card hover:text-foreground sm:grid"
           aria-label={t("Activity logs")}
           title={t("Activity logs")}
         >
@@ -395,7 +414,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={toggleTheme}
-          className="dashboard-icon-button grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
+          className="dashboard-icon-button dashboard-toolbar-button grid size-10 place-items-center rounded-lg border border-transparent text-muted-foreground transition hover:border-border hover:bg-card hover:text-foreground active:scale-95"
           aria-label={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
           aria-pressed={theme === "dark"}
           title={theme === "dark" ? t("Switch to light mode") : t("Switch to dark mode")}
@@ -405,7 +424,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <div className="hidden h-8 w-px bg-border sm:block" />
         <button
           onClick={() => setLang(lang === "en" ? "ar" : "en")}
-          className="dashboard-compact-control rounded-lg border border-border bg-card px-2 py-1.5 text-[10px] font-bold text-muted-foreground transition hover:text-primary"
+          className="dashboard-compact-control dashboard-lang-switch min-h-9 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition hover:text-primary"
           title={lang === "en" ? "العربية" : t("English")}
         >
           {lang === "en" ? t("AR") : t("EN")}
@@ -420,7 +439,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         >
           <button
             onClick={() => setProfileOpen((current) => !current)}
-            className="flex items-center gap-2.5 rounded-lg p-1.5 pe-2 transition hover:bg-card"
+            className="dashboard-account-trigger flex items-center gap-2 rounded-lg p-1.5 pe-2 transition-colors hover:bg-muted"
             aria-label={t("Account menu")}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown") {
@@ -431,7 +450,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
             aria-haspopup="menu"
             aria-expanded={profileOpen}
           >
-            <div className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#f0c5a9] to-[#925f53] text-[11px] font-bold text-white ring-2 ring-background">
+            <div className="dashboard-account-avatar grid size-9 place-items-center rounded-lg text-[11px] font-bold ring-2 ring-background">
               {identity.name.slice(0, 2).toUpperCase() || "…"}
             </div>
             <div className="hidden text-start sm:block">
@@ -497,7 +516,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
   );
 }
 
-function MobileBottomNav({ onMore }: { onMore: () => void }) {
+function MobileBottomNav({ onMore, open }: { onMore: () => void; open: boolean }) {
   const { t } = useLanguage();
   const [location, navigate] = useLocation();
   const items = [
@@ -512,7 +531,7 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
       className="dashboard-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border/90 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_28px_rgba(15,23,42,.08)] backdrop-blur-lg lg:hidden"
       aria-label="Dashboard mobile navigation"
     >
-      <div className="grid min-h-[64px] grid-cols-5">
+      <div className="dashboard-mobile-nav-grid grid min-h-[68px] grid-cols-5">
         {items.map(({ label, href, icon: Icon }) => {
           const active =
             href === "/dashboard"
@@ -529,11 +548,11 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
                 void preloadDashboardRoute(href);
                 navigate(href);
               }}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition active:scale-95 ${active ? "text-primary" : "text-muted-foreground"}`}
+              className={`dashboard-mobile-nav-item flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium ${active ? "is-active text-primary" : "text-muted-foreground"} ${href === "/dashboard/products/new" ? "dashboard-mobile-nav-create" : ""}`}
               aria-current={active ? "page" : undefined}
             >
               <span
-                className={`grid size-8 place-items-center rounded-lg ${active ? "bg-accent" : ""}`}
+                className={`dashboard-mobile-nav-icon grid size-9 place-items-center rounded-xl ${active ? "bg-accent" : ""}`}
               >
                 <Icon className="size-[18px]" strokeWidth={active ? 2.2 : 1.8} />
               </span>
@@ -544,9 +563,11 @@ function MobileBottomNav({ onMore }: { onMore: () => void }) {
         <button
           type="button"
           onClick={onMore}
-          className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold text-muted-foreground transition active:scale-95"
+          aria-controls="dashboard-sidebar-navigation"
+          aria-expanded={open}
+          className={`dashboard-mobile-nav-item flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium ${open ? "is-active text-primary" : "text-muted-foreground"}`}
         >
-          <span className="grid size-8 place-items-center rounded-lg">
+          <span className="dashboard-mobile-nav-icon grid size-9 place-items-center rounded-xl">
             <Menu className="size-[18px]" />
           </span>
           <span>{t("More")}</span>
@@ -729,7 +750,7 @@ function DashboardLayout() {
       />
       <div
         inert={mobileOpen ? true : undefined}
-        className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[82px]" : "lg:pl-[82px]") : lang === "ar" ? "lg:pr-[260px]" : "lg:pl-[260px]"}`}
+        className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[80px]" : "lg:pl-[80px]") : lang === "ar" ? "lg:pr-[272px]" : "lg:pl-[272px]"}`}
       >
         <Header onMenu={() => setMobileOpen(true)} />
         <DashboardConnectivity />
@@ -743,7 +764,7 @@ function DashboardLayout() {
             <Suspense fallback={<DashboardRouteFallback />}>{content}</Suspense>
           </DashboardErrorBoundary>
         </main>
-        <MobileBottomNav onMore={() => setMobileOpen(true)} />
+        <MobileBottomNav onMore={() => setMobileOpen(true)} open={mobileOpen} />
       </div>
     </div>
   );

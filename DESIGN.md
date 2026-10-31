@@ -52,3 +52,26 @@ F. Compare before/after screenshots and interaction flows. Publish only after su
 - No unapproved feature removal, database migration, DNS change, or production deploy.
 - No fake success state: saving, publishing, and loading must reflect real backend responses.
 - Each UI implementation PR lists changed routes, before/after evidence, tests run, and any limitations.
+
+
+## Space Call Command navigation — implemented 2026-10-31
+Design inspiration: Linear's restrained focus and Shopify's transactional information density. This is an original Space Call dashboard execution, not a clone.
+
+### Shell and information architecture
+- Five intentional groups: Overview, Commerce, Catalog, Storefront & marketing, Administration. No routes or staff permissions removed; existing admin-only user management remains admin-only.
+- Desktop sidebar: 272px full / 80px collapsed; 336px maximum mobile drawer; physical divider and lightweight scroll region with keyboard-accessible expandable groups.
+- Sidebar has a compact original SC lettermark, contextual active route, and a footer with two existing workflows: create a product and view the store.
+- Desktop commandbar: current section label, preserved global command search, activity, theme, language and staff profile/security controls.
+- Mobile: five preserved actions (Dashboard, Orders, Products, Add, More), with a clear active marker, comfortable targets and a secured focus-managed drawer.
+- Collapsed navigation and expanded group preferences remain persistent. Route preloading and unsaved-change navigation protections remain intact.
+
+### Visual identity and semantics
+- Day mode: clean mineral-gray canvas, crisp neutral text and blue focus/selection; Night mode: blue-black matte sidebar, light typography and a reserved cool-blue active highlight.
+- One clear active-route indicator, low-noise 1px separators, 10px icon/control corners, 44px minimum sidebar actions, 68px mobile dock.
+- Variable-safe spacing and RTL logical properties (`inset-inline-start`, `border-inline-end`); no hardcoded left-only active indicators.
+- Short 150–180ms interaction states. Respect `prefers-reduced-motion`, logical navigation order, `aria-current`, accessible drawer focus, and keyboard shortcuts/search.
+- Do not add fake metrics, invented notification counts, unauthorized quick actions, or new data operations.
+
+### Validation
+- CI on navigation PR: TypeScript, ESLint, security/unit suites, desktop/mobile/Arabic responsive browser suites, commerce acceptance, Cloudflare non-deploying build.
+- Production publish depends on successful PR merge and separate Cloudflare build verification. Do not claim visual review or published status without evidence.

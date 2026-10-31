@@ -178,7 +178,7 @@ export default function DashboardCommandCenter() {
         aria-expanded={open}
       >
         <Search className="size-4 shrink-0" />
-        <span className="hidden min-w-0 flex-1 truncate text-start sm:block">
+        <span className="min-w-0 flex-1 truncate text-start text-xs sm:text-sm">
           {t("Search sections, products, orders…")}
         </span>
         <kbd className="hidden items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[10px] sm:flex">

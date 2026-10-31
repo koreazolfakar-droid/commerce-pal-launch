@@ -69,7 +69,7 @@ export const translations: Record<Language, Record<string, string>> = {
   ar: {
     ...dashboardUiArabic,
     Overview: "نظرة عامة",
-    Commerce: "التجارة",
+    Commerce: "المبيعات والعمليات",
     "Store content": "محتوى المتجر",
     Marketing: "التسويق",
     Management: "الإدارة",

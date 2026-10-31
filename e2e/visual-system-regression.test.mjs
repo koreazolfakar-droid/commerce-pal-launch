@@ -132,14 +132,32 @@ test("product actions stay aligned without overlapping compact card content", as
   assert.match(consistency, /\.market-product-quantity button \{[\s\S]*?min-width: 2rem/);
 });
 
-test("dashboard shared chrome stays compact without changing navigation structure", async () => {
-  const dashboard = await source("src/dashboard/App.tsx");
+test("dashboard command navigation keeps five reachable mobile actions and contextual search", async () => {
+  const [dashboard, workspace, routes, translations] = await Promise.all([
+    source("src/dashboard/App.tsx"),
+    source("src/dashboard/workspace.css"),
+    source("src/dashboard/config/routes.tsx"),
+    source("src/dashboard/uiTranslations.ts"),
+  ]);
 
-  assert.match(dashboard, /backdrop-blur-md/);
-  assert.match(dashboard, /grid min-h-\[64px\] grid-cols-5/);
-  assert.match(dashboard, /rounded-lg \$\{active \? "bg-accent" : ""\}/);
-  assert.match(dashboard, /shadow-\[0_-8px_28px_rgba\(15,23,42,\.08\)\]/);
   assert.match(dashboard, /<MobileBottomNav onMore=/);
+  assert.match(dashboard, /dashboard-mobile-nav-grid grid min-h-\[68px\] grid-cols-5/);
+  assert.match(dashboard, /dashboard-mobile-nav-create/);
+  assert.match(dashboard, /dashboard-sidebar-new-product/);
+  assert.match(dashboard, /dashboard-sidebar-store/);
+  assert.match(dashboard, /dashboard-header-search/);
+  assert.match(dashboard, /aria-current=\{active \? "page" : undefined\}/);
+  assert.match(dashboard, /useDashboardDialogFocus\(mobileOpen, sidebarRef/);
+  assert.match(workspace, /Space Call Command — navigation system/);
+  assert.match(workspace, /\.dark \.dashboard-theme-scope \{/);
+  assert.match(workspace, /\[dir="rtl"\]/);
+  assert.match(workspace, /prefers-reduced-motion: reduce/);
+  assert.match(routes, /label: "Overview"/);
+  assert.match(routes, /label: "Commerce"/);
+  assert.match(routes, /label: "Administration"/);
+  assert.match(translations, /Overview: "نظرة عامة"/);
+  assert.match(translations, /Commerce: "المبيعات والعمليات"/);
+  assert.match(translations, /Administration: "الإدارة والإعدادات"/);
 });
 
 test("shared controls expose one compact sizing and focus language", async () => {
