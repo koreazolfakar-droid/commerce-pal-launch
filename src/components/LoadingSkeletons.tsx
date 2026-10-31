@@ -47,6 +47,7 @@ export function HomeCategorySkeletonItems() {
       {Array.from({ length: 5 }, (_, index) => (
         <div
           key={index}
+          aria-hidden="true"
           className="flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
         >
           <span className="shimmer h-[5.25rem] w-[5.25rem] rounded-xl bg-surface sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]" />
