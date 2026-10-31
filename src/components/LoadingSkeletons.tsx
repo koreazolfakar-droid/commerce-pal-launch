@@ -1,16 +1,24 @@
-/** Placeholders preserve the shape of the content without exposing fake products. */
+/** Skeletons use the same horizontal geometry as the live product and brand rails.
+ * This reserves media and copy space before deferred sections hydrate. */
 export function ProductRailSkeleton() {
   return (
-    <div className="overflow-hidden" aria-hidden="true">
-      <div className="mb-3 h-5 w-36 rounded-md bg-surface shimmer" />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, index) => (
-          <div key={index} className={index === 3 ? "hidden lg:block" : index === 2 ? "hidden sm:block" : undefined}>
-            <div className="shimmer aspect-square rounded-xl bg-surface" />
-            <div className="mt-3 space-y-2">
-              <div className="shimmer h-3 w-4/5 rounded bg-surface" />
-              <div className="shimmer h-3 w-2/3 rounded bg-surface" />
-              <div className="shimmer h-4 w-1/3 rounded bg-surface" />
+    <div className="product-rail min-w-0 overflow-hidden" aria-hidden="true" data-testid="product-rail-skeleton">
+      <div className="scroll-rail product-rail-items product-swipe-rail">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div
+            key={index}
+            className="market-product-card homepage-product-card flex min-w-0 flex-col overflow-hidden border border-border/60 bg-card"
+          >
+            <div className="product-card-media market-product-media shimmer aspect-square w-full bg-image-stage" />
+            <div className="product-card-body market-product-copy flex flex-1 flex-col gap-2 p-2.5">
+              <div className="shimmer h-3 w-1/3 rounded bg-surface" />
+              <div className="shimmer h-3.5 w-full rounded bg-surface" />
+              <div className="shimmer h-3.5 w-4/5 rounded bg-surface" />
+              <div className="shimmer mt-1 h-4 w-2/5 rounded bg-surface" />
+              <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                <div className="shimmer h-3 w-1/3 rounded bg-surface" />
+                <div className="shimmer size-9 rounded-full bg-surface" />
+              </div>
             </div>
           </div>
         ))}
