@@ -106,17 +106,14 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 ${compact ? "justify-center" : ""}`}>
-      <div className="relative grid size-10 shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-[#5c6bff] via-[#4c48d8] to-[#8c52d9] shadow-[0_10px_24px_rgba(86,77,223,.35)]">
-        <div className="absolute h-[22px] w-[30px] -rotate-[28deg] rounded-[50%] border-[3px] border-white/90" />
-        <div className="absolute h-2.5 w-2.5 translate-x-2 -translate-y-2 rounded-full bg-[#56b7ff]" />
+    <div className={`dashboard-brand flex min-w-0 items-center gap-3 ${compact ? "justify-center" : ""}`}>
+      <div className="dashboard-brand-mark grid size-11 shrink-0 place-items-center rounded-xl" aria-hidden="true">
+        <span>SC</span>
       </div>
       {!compact && (
         <div className="min-w-0">
-          <div className="text-[15px] font-bold tracking-[-.03em] text-white">Space Call</div>
-          <div className="mt-0.5 max-w-[170px] truncate text-[9px] font-medium uppercase tracking-[.18em] text-slate-400">
-            Tech for a better tomorrow
-          </div>
+          <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
+          <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
         </div>
       )}
     </div>
@@ -203,7 +200,7 @@ function Sidebar({
         <button
           aria-label={t("Close menu")}
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 touch-none bg-slate-950/45 backdrop-blur-[2px] lg:hidden"
+          className="dashboard-navigation-backdrop fixed inset-0 z-40 touch-none bg-slate-950/55 backdrop-blur-[2px] lg:hidden"
         />
       )}
       <aside
@@ -213,33 +210,37 @@ function Sidebar({
         aria-modal={mobileOpen ? true : undefined}
         aria-label={t("Navigation")}
         tabIndex={-1}
-        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(88vw,320px)] flex-col overscroll-contain bg-[#111827] pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white shadow-xl transition-transform duration-200 lg:w-[260px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[82px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
+        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(90vw,336px)] flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white transition-transform duration-200 lg:w-[272px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[80px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
-        <div
-          className={`flex h-[76px] items-center border-b border-white/[.07] px-5 lg:h-[92px] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
-        >
+        <div className={`dashboard-sidebar-brand flex min-h-[88px] items-center justify-between gap-3 px-5 lg:min-h-[94px] ${collapsed ? "lg:justify-center lg:px-2" : ""}`}>
           <Logo compact={collapsed && !mobileOpen} />
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            aria-label={t("Close navigation")}
+            className="dashboard-sidebar-close grid size-10 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+          >
+            <X className="size-5" />
+          </button>
         </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
+        <nav aria-label={t("Workspace navigation")} className="dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
           {navSections.map((section) => (
-            <div key={section.label} className="mb-6">
+            <section key={section.label} className="dashboard-sidebar-group mb-5">
               {(!collapsed || mobileOpen) && (
                 <button
                   type="button"
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={!closedSections.includes(section.label)}
-                  className="dashboard-sidebar-section mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold tracking-wide text-slate-400 hover:text-white"
+                  className="dashboard-sidebar-section mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-400 hover:text-white"
                 >
                   <span>{t(section.label)}</span>
-                  <span
-                    aria-hidden
-                    className={`text-[11px] transition-transform ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
-                  >
-                    ▾
-                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`size-3.5 transition-transform duration-150 ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
+                  />
                 </button>
               )}
-              <div className="space-y-1">
+              <div className="dashboard-sidebar-items space-y-1">
                 {section.items
                   .filter((item) => !unavailableDashboardRoutes.has(item.href))
                   .filter((item) =>
@@ -264,10 +265,10 @@ function Sidebar({
                           navigate(item.href);
                           setMobileOpen(false);
                         }}
-                        className={`dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium transition-colors duration-150 ${collapsed ? "lg:justify-center" : ""} ${active ? "bg-white/[.11] text-white" : "text-slate-300 hover:bg-white/[.07] hover:text-white"}`}
+                        className={`dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-[13px] font-medium transition-colors duration-150 ${collapsed ? "lg:justify-center" : ""}`}
                       >
                         <Icon
-                          className={`size-[17px] shrink-0 ${active ? "text-white" : "text-slate-500 group-hover:text-slate-200"}`}
+                          className="dashboard-sidebar-item-icon size-[18px] shrink-0"
                           strokeWidth={1.8}
                         />
                         {(!collapsed || mobileOpen) && (
@@ -290,29 +291,38 @@ function Sidebar({
                     );
                   })}
               </div>
-            </div>
+            </section>
           ))}
-        </div>
-        <div className="border-t border-white/[.07] p-4">
+        </nav>
+        <div className="dashboard-sidebar-footer p-3">
           {(!collapsed || mobileOpen) && (
-            <div className="mb-3 rounded-xl border border-white/[.08] bg-white/[.05] p-3">
-              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-300">
-                <Sparkles className="size-3.5 text-[#8c8aff]" /> {t("Live workspace")}
-              </div>
-              <p className="mb-3 text-[11px] leading-4 text-slate-500">
-                {t("Store management workspace")}
-              </p>
+            <div className="dashboard-sidebar-shortcuts mb-3 space-y-1">
               <button
-                onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
-                className="flex items-center gap-1.5 text-[11px] font-semibold text-[#a8b2ff] hover:text-white"
+                type="button"
+                onClick={() => {
+                  void preloadDashboardRoute("/dashboard/products/new");
+                  navigate("/dashboard/products/new");
+                  setMobileOpen(false);
+                }}
+                className="dashboard-sidebar-new-product flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-[13px] font-semibold"
               >
-                {t("View store")} <ExternalLink className="size-3" />
+                <PackagePlus className="size-[18px]" strokeWidth={1.8} />
+                <span className="flex-1 text-start">{t("Quick product")}</span>
+                <span aria-hidden="true">+</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
+                className="dashboard-sidebar-store flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-[12px] font-medium"
+              >
+                <ExternalLink className="size-4" />
+                <span className="flex-1 text-start">{t("Open store")}</span>
               </button>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className={`hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] text-slate-500 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`}
+            className={`dashboard-sidebar-collapse hidden min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[12px] text-slate-400 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`}
             title={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
           >
             {collapsed ? (
