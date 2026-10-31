@@ -76,8 +76,8 @@ export function SiteFooter() {
 
   return (
     <footer className="mt-0 border-t bg-surface">
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid min-w-0 gap-10 md:grid-cols-2 lg:grid-cols-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12">
+        <div className="grid min-w-0 gap-6 sm:gap-10 md:grid-cols-2 lg:grid-cols-6">
           <div className="min-w-0 lg:col-span-2">
             <div className="flex items-center gap-2.5">
               <img
@@ -211,7 +211,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-10 border-t pt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-7 border-t pt-5 text-center text-sm text-muted-foreground sm:mt-10 sm:pt-6">
           <p>
             © {new Date().getFullYear()} {storeName}.{" "}
             {isAr
