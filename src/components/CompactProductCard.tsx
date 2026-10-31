@@ -36,7 +36,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   market?: boolean;
   borderless?: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const cartItems = useCartStore((state) => state.items);
@@ -46,6 +46,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   const toggleWishlist = useWishlistToggle();
 
   const node = product.node;
+  const displayTitle = language === "ar" && node.titleAr?.trim() ? node.titleAr : node.title;
   const variant = productPrimaryVariant(product);
   const image = node.images.edges[0]?.node;
   const price = variant?.price ?? node.priceRange.minVariantPrice;
@@ -71,7 +72,7 @@ export const CompactProductCard = memo(function CompactProductCard({
         selectedOptions: variant.selectedOptions ?? [],
       });
       if (success) {
-        toast.success(`${node.title}: ${t("addedToCart")}`, {
+        toast.success(`${displayTitle}: ${t("addedToCart")}`, {
           position: "top-center",
         });
       } else {
@@ -110,7 +111,7 @@ export const CompactProductCard = memo(function CompactProductCard({
     <button
       type="button"
       onClick={() => toggleWishlist(node.handle)}
-      aria-label={wishlisted ? `Remove ${node.title} from wishlist` : `Save ${node.title}`}
+      aria-label={wishlisted ? `Remove ${displayTitle} from wishlist` : `Save ${displayTitle}`}
       aria-pressed={wishlisted}
       className={cn(
         "product-card-secondary-action product-action-button press absolute z-20 grid place-items-center rounded-full border border-border/65",
@@ -136,7 +137,7 @@ export const CompactProductCard = memo(function CompactProductCard({
       type="button"
       onClick={handleAdd}
       disabled={isAdding || !variant || !inStock}
-      aria-label={`Add ${node.title} to bag`}
+      aria-label={`Add ${displayTitle} to bag`}
       className={cn(
         "product-card-primary-action product-action-button press relative grid shrink-0 place-items-center rounded-full bg-primary text-primary-foreground",
         "shadow-md transition-[opacity,transform,box-shadow]",
@@ -169,13 +170,13 @@ export const CompactProductCard = memo(function CompactProductCard({
           <Link
             to="/product/$handle"
             params={{ handle: node.handle }}
-            aria-label={node.title}
+            aria-label={displayTitle}
             className="block"
           >
             <ProductImage
               url={image?.thumbnailUrl ?? image?.url}
               fallbackUrl={image?.url}
-              alt={image?.altText ?? node.title}
+              alt={image?.altText ?? displayTitle}
               size={320}
               sizes="(min-width: 1024px) 220px, (min-width: 640px) 24vw, 31vw"
               eager={eager}
@@ -221,7 +222,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
           <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-1 min-w-0">
             <h3 className="product-card-title line-clamp-2 min-h-[2.1rem] break-words text-[0.72rem] font-medium leading-[1.42] text-foreground sm:min-h-[2.45rem] sm:text-sm">
-              {node.title}
+              {displayTitle}
             </h3>
           </Link>
 
@@ -255,13 +256,13 @@ export const CompactProductCard = memo(function CompactProductCard({
             {cartQuantity > 0 ? (
               <div
                 className="inline-flex h-9 shrink-0 items-center overflow-hidden rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                aria-label={`${node.title} quantity ${cartQuantity}`}
+                aria-label={`${displayTitle} quantity ${cartQuantity}`}
               >
                 <button
                   type="button"
                   onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
-                  aria-label={`Decrease ${node.title} quantity`}
+                  aria-label={`Decrease ${displayTitle} quantity`}
                   className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
@@ -273,7 +274,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                   type="button"
                   onClick={() => handleQuantityChange(cartQuantity + 1)}
                   disabled={isAdding || !inStock}
-                  aria-label={`Increase ${node.title} quantity`}
+                  aria-label={`Increase ${displayTitle} quantity`}
                   className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   {isAdding ? (
@@ -289,7 +290,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                 type="button"
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
-                aria-label={`Add ${node.title} to bag`}
+                aria-label={`Add ${displayTitle} to bag`}
                 className="press grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-[background-color,color,border-color,transform,box-shadow] hover:border-primary/35 hover:bg-primary/10 hover:shadow-sm active:scale-95 disabled:opacity-40"
               >
                 {isAdding ? (
@@ -319,13 +320,13 @@ export const CompactProductCard = memo(function CompactProductCard({
           <Link
             to="/product/$handle"
             params={{ handle: node.handle }}
-            aria-label={node.title}
+            aria-label={displayTitle}
             className="block"
           >
             <ProductImage
               url={image?.thumbnailUrl ?? image?.url}
               fallbackUrl={image?.url}
-              alt={image?.altText ?? node.title}
+              alt={image?.altText ?? displayTitle}
               size={320}
               sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 31vw"
               eager={eager}
@@ -371,7 +372,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
           <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
             <h3 className="product-card-title line-clamp-2 min-h-[2.15rem] break-words text-[0.8rem] font-semibold leading-[1.42] text-foreground transition-colors group-hover:text-primary sm:text-sm">
-              {node.title}
+              {displayTitle}
             </h3>
           </Link>
 
@@ -414,13 +415,13 @@ export const CompactProductCard = memo(function CompactProductCard({
             {cartQuantity > 0 ? (
               <div
                 className="market-product-quantity inline-flex h-[38px] shrink-0 items-center overflow-hidden rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
-                aria-label={`${node.title} quantity ${cartQuantity}`}
+                aria-label={`${displayTitle} quantity ${cartQuantity}`}
               >
                 <button
                   type="button"
                   onClick={(event) => void handleDecrement(cartQuantity, event.currentTarget)}
                   disabled={isAdding}
-                  aria-label={`Decrease ${node.title} quantity`}
+                  aria-label={`Decrease ${displayTitle} quantity`}
                   className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   <Minus aria-hidden className="h-3.5 w-3.5" strokeWidth={2} />
@@ -432,7 +433,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                   type="button"
                   onClick={() => handleQuantityChange(cartQuantity + 1)}
                   disabled={isAdding || !inStock}
-                  aria-label={`Increase ${node.title} quantity`}
+                  aria-label={`Increase ${displayTitle} quantity`}
                   className="press grid h-full w-8 place-items-center transition-colors hover:bg-primary/10 disabled:opacity-40"
                 >
                   {isAdding ? (
@@ -448,7 +449,7 @@ export const CompactProductCard = memo(function CompactProductCard({
                 type="button"
                 onClick={handleAdd}
                 disabled={isAdding || !variant || !inStock}
-                aria-label={`Add ${node.title} to bag`}
+                aria-label={`Add ${displayTitle} to bag`}
                 className="market-product-action market-add-button product-card-primary-action product-action-button press relative grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full border border-border/70 bg-background text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-[background-color,color,border-color,transform,box-shadow] hover:border-primary/35 hover:bg-primary/10 hover:shadow-sm active:scale-95 disabled:opacity-40"
               >
                 {isAdding ? (
@@ -477,13 +478,13 @@ export const CompactProductCard = memo(function CompactProductCard({
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
-          aria-label={node.title}
+          aria-label={displayTitle}
           className="block"
         >
           <ProductImage
             url={image?.thumbnailUrl ?? image?.url}
             fallbackUrl={image?.url}
-            alt={image?.altText ?? node.title}
+            alt={image?.altText ?? displayTitle}
             size={280}
             sizes="(min-width: 1024px) 240px, (min-width: 640px) 31vw, 44vw"
             eager={eager}
@@ -534,7 +535,7 @@ export const CompactProductCard = memo(function CompactProductCard({
 
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
           <h3 className="product-card-title break-words text-[0.82rem] font-semibold leading-[1.35] transition-colors group-hover:text-primary sm:text-sm">
-            {node.title}
+            {displayTitle}
           </h3>
         </Link>
 

@@ -1,7 +1,7 @@
 import { ProductRail } from "@/components/ProductRail";
 import { useLanguage } from "@/lib/i18n";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -44,7 +44,9 @@ import { buildDisplayOverview, buildDisplaySpecificationGroups, inferredBoxConte
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
-import { discountPercent, formatPrice } from "@/lib/productPricing";
+import { subscribeStorefrontRefresh } from "@/lib/nativeStore";
+import { optionsForVariant, selectProductVariant } from "@/lib/productVariantSelection";
+import { discountPercent, formatPrice, productPrimaryVariant } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
@@ -126,7 +128,7 @@ function ProductPending() {
     <StoreLayout>
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-4 sm:px-5 lg:grid-cols-2 lg:gap-12 lg:px-6 lg:py-10" role="status" aria-live="polite">
         <span className="sr-only">{language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}</span>
-        <div className="shimmer aspect-[1/0.82] rounded-xl bg-surface sm:aspect-square" aria-hidden="true" />
+        <div className="shimmer aspect-[4/3] rounded-xl bg-surface sm:aspect-square" aria-hidden="true" />
         <div className="space-y-4" aria-hidden="true">
           <div className="shimmer h-3 w-20 rounded bg-surface" />
           <div className="shimmer h-7 w-4/5 rounded bg-surface" />
@@ -147,6 +149,7 @@ const FEATURE_ICONS = {
 
 function ProductPage() {
   const { t, language } = useLanguage();
+  const router = useRouter();
   const { data: cms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
   const cmsWhatsApp = cms?.settings["whatsapp_number"];
@@ -156,25 +159,36 @@ function ProductPage() {
     typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
   const { product } = Route.useLoaderData() as { product: StoreProduct };
   const node = product.node;
+  const displayTitle = language === "ar" && node.titleAr?.trim() ? node.titleAr : node.title;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
   const images = useMemo(() => node.images.edges.map((edge) => edge.node), [node]);
+  const galleryImages = useMemo(() => {
+    const all = [...images];
+    const known = new Set(images.map((image) => image.url));
+    // Dashboard variants can have their own picture even if it is not in the
+    // product-wide image list. Preserve both sources without duplicates.
+    for (const variant of variants) {
+      const image = variant.image;
+      if (!image?.url || known.has(image.url)) continue;
+      all.push({ url: image.url, altText: image.altText ?? displayTitle });
+      known.add(image.url);
+    }
+    return all;
+  }, [images, variants, displayTitle]);
 
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      (variants[0]?.selectedOptions ?? []).map((option) => [option.name, option.value]),
-    ),
+  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
+    () => productPrimaryVariant(product)?.id,
   );
   const [activeImage, setActiveImage] = useState(0);
   const [recommendationViewMode, setRecommendationViewMode] = useProductViewMode();
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState<"cart" | "buy" | null>(null);
 
-  const selectedVariant = useMemo(() => {
-    const match = variants.find((variant) =>
-      variant.selectedOptions.every((option) => selectedOptions[option.name] === option.value),
-    );
-    return match ?? variants[0];
-  }, [variants, selectedOptions]);
+  const selectedVariant = useMemo(
+    () => variants.find((variant) => variant.id === selectedVariantId) ?? productPrimaryVariant(product),
+    [variants, selectedVariantId, product],
+  );
+  const selectedOptions = useMemo(() => optionsForVariant(selectedVariant), [selectedVariant]);
 
   const addItem = useCartStore((state) => state.addItem);
   const cartLoading = useCartStore((state) => state.isLoading);
@@ -188,29 +202,35 @@ function ProductPage() {
     addRecentlyViewed(node.handle);
     setActiveImage(0);
     setQuantity(1);
-    setSelectedOptions(
-      Object.fromEntries(
-        (variants[0]?.selectedOptions ?? []).map((option) => [option.name, option.value]),
-      ),
-    );
+    setSelectedVariantId(productPrimaryVariant(product)?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.handle]);
+
+  // Dashboard edits invalidate the native cache and re-run this route's direct
+  // Supabase loader, including changes made in another tab of this browser.
+  useEffect(() => {
+    const unsubscribe = subscribeStorefrontRefresh(() => { void router.invalidate(); });
+    return () => { unsubscribe(); };
+  }, [router]);
 
   useEffect(() => {
     const variantImage = selectedVariant?.image?.url;
     if (!variantImage) return;
-    const index = images.findIndex((image) => image.url === variantImage);
+    const index = galleryImages.findIndex((image) => image.url === variantImage);
     if (index >= 0) setActiveImage(index);
-  }, [selectedVariant?.image?.url, images]);
+  }, [selectedVariant?.image?.url, galleryImages]);
 
   const handleOptionSelect = (name: string, value: string) => {
-    setSelectedOptions((current) => ({ ...current, [name]: value }));
+    const next = selectProductVariant(variants, selectedVariant, name, value);
+    if (!next) return;
+    setSelectedVariantId(next.id);
+    setQuantity(1);
   };
 
   const handleShare = async () => {
     try {
       const url = window.location.href;
-      if (navigator.share) await navigator.share({ title: node.title, url });
+      if (navigator.share) await navigator.share({ title: displayTitle, url });
       else {
         await navigator.clipboard.writeText(url);
         toast.success(t("linkCopied"));
@@ -237,7 +257,7 @@ function ProductPage() {
         toast.error(t("addToCartFailed"), { position: "top-center" });
         return;
       }
-      toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+      toast.success(`${displayTitle}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
         window.location.assign("/cart");
       }
@@ -258,7 +278,7 @@ function ProductPage() {
   const busy = pending !== null || cartLoading;
   const isPhone = category?.slug === "smartphone" || category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
-    title: node.title,
+    title: displayTitle,
     url: absoluteUrl(`/product/${node.handle}`),
     quantity,
     options: selectedVariant?.selectedOptions ?? [],
@@ -267,8 +287,11 @@ function ProductPage() {
   });
 
   const content = useMemo(
-    () => splitSections(parseDescription(node.descriptionHtml, node.description)),
-    [node.descriptionHtml, node.description],
+    () => splitSections(parseDescription(
+      language === "ar" && node.descriptionAr?.trim() ? undefined : node.descriptionHtml,
+      language === "ar" && node.descriptionAr?.trim() ? node.descriptionAr : node.description,
+    )),
+    [language, node.descriptionHtml, node.description, node.descriptionAr],
   );
 
   const specGroups = useMemo(() => {
@@ -373,16 +396,16 @@ function ProductPage() {
             </>
           )}
           <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-          <span className="truncate text-foreground">{node.title}</span>
+          <span className="truncate text-foreground">{displayTitle}</span>
         </nav>
 
         <div
           data-testid="product-detail-canvas"
-          className="mt-0 grid gap-6 sm:mt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,.95fr)] lg:gap-12"
+          className="mt-0 grid gap-4 sm:mt-4 sm:gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,.95fr)] lg:gap-12"
         >
           <ProductGallery
-            images={images}
-            title={node.title}
+            images={galleryImages}
+            title={displayTitle}
             activeIndex={activeImage}
             onSelect={setActiveImage}
             badge={
@@ -406,7 +429,7 @@ function ProductPage() {
                 </Link>
               )}
               <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
-                {node.title}
+                {displayTitle}
               </h1>
               {selectedOptionSummary && (
                 <p className="mt-2 text-sm text-muted-foreground">{selectedOptionSummary}</p>

@@ -170,6 +170,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                     <ul className="divide-y">
                       {data.products.slice(0, 8).map((product) => {
                         const node = product.node;
+                        const displayTitle = ar && node.titleAr?.trim() ? node.titleAr : node.title;
                         const image = node.images.edges[0]?.node;
                         const price =
                           productPrimaryVariant(product)?.price ?? node.priceRange.minVariantPrice;
@@ -184,13 +185,13 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                               <ProductImage
                                 url={image?.thumbnailUrl ?? image?.url}
                                 fallbackUrl={image?.url}
-                                alt={image?.altText ?? node.title}
+                                alt={image?.altText ?? displayTitle}
                                 size={96}
                                 className="!size-12 shrink-0 rounded-xl"
                               />
                               <div className="min-w-0 flex-1">
                                 <p className="line-clamp-2 break-words text-sm font-medium">
-                                  {node.title}
+                                  {displayTitle}
                                 </p>
                                 {node.vendor && (
                                   <p className="truncate text-xs text-muted-foreground">

@@ -81,7 +81,16 @@ const COLOR_WORDS: Record<string, string> = {
   glacier: "#d8e5ee",
 };
 
+const ARABIC_COLORS: Record<string, string> = {
+  "أسود": "#111214", "اسود": "#111214", "أبيض": "#f7f7f8", "ابيض": "#f7f7f8",
+  "فضي": "#d8dade", "ذهبي": "#e2c48d", "أزرق": "#2f6fed", "ازرق": "#2f6fed",
+  "أحمر": "#e0303a", "احمر": "#e0303a", "أخضر": "#2e9e5b", "اخضر": "#2e9e5b",
+  "وردي": "#f0a7c0", "بنفسجي": "#a78bfa", "رمادي": "#8e8e93", "بيج": "#e4d8c6",
+};
+
 function swatchColor(value: string) {
+  const arabic = Object.entries(ARABIC_COLORS).find(([name]) => value.includes(name));
+  if (arabic) return arabic[1];
   const normalized = value.toLowerCase().replace(/[^a-z]/g, "");
   if (COLOR_WORDS[normalized]) return COLOR_WORDS[normalized];
   const words = value
@@ -95,7 +104,7 @@ function swatchColor(value: string) {
 }
 
 function isColorOption(name: string) {
-  return /colou?r|shade|finish/i.test(name);
+  return /colou?r|shade|finish|اللون|الألوان|لون/i.test(name);
 }
 
 /**
@@ -122,14 +131,15 @@ export function VariantPicker({
   );
   if (real.length === 0) return null;
 
+  // A change to one option can switch to another compatible in-stock variant.
+  // Don't falsely disable an available color just because the current storage
+  // size isn't sold in that color; ProductPage resolves the other options.
   const isAvailable = (name: string, value: string) =>
     variants.some(
       (variant) =>
         variant.availableForSale &&
-        variant.selectedOptions.every((option) =>
-          option.name === name
-            ? option.value === value
-            : (selected[option.name] ?? option.value) === option.value,
+        variant.selectedOptions.some(
+          (option) => option.name === name && option.value === value,
         ),
     );
 
@@ -143,6 +153,11 @@ export function VariantPicker({
               <h2 className="text-[11px] font-medium text-muted-foreground">
                 {option.name}
               </h2>
+              {selected[option.name] && (
+                <span className="min-w-0 truncate text-xs font-semibold text-foreground">
+                  {selected[option.name]}
+                </span>
+              )}
             </div>
             <div className={cn("flex flex-wrap", color ? "gap-2" : "gap-2")}>
               {option.values.map((value) => {

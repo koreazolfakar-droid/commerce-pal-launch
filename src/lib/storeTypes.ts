@@ -7,7 +7,9 @@
 export interface StoreProductNode {
   id: string;
   title: string;
+  titleAr?: string;
   description: string;
+  descriptionAr?: string;
   descriptionHtml?: string;
   handle: string;
   vendor?: string;

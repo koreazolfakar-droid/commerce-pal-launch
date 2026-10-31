@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { useLanguage } from "@/lib/i18n";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { useCartStore } from "@/stores/cartStore";
 import { discountPercent, formatPrice, productPrimaryVariant } from "@/lib/productPricing";
+import { optionsForVariant, selectProductVariant } from "@/lib/productVariantSelection";
 
 export default function QuickViewDialog({
   product,
@@ -23,21 +24,19 @@ export default function QuickViewDialog({
   product: StoreProduct;
   onClose: () => void;
 }) {
-  const { t, direction } = useLanguage();
+  const { t, direction, language } = useLanguage();
   const quantityId = useId();
   const node = product.node;
-  const variants = node.variants.edges.map(({ node: variant }) => variant);
+  const displayTitle = language === "ar" && node.titleAr?.trim() ? node.titleAr : node.title;
+  const variants = useMemo(() => node.variants.edges.map(({ node: variant }) => variant), [node]);
   const initial = productPrimaryVariant(product);
-  const [selected, setSelected] = useState<Record<string, string>>(() =>
-    Object.fromEntries((initial?.selectedOptions ?? []).map(({ name, value }) => [name, value])),
-  );
+  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(() => initial?.id);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState("1");
   const addItem = useCartStore((state) => state.addItem);
   const busy = useCartStore((state) => state.isLoading);
-  const variant = variants.find((item) =>
-    item.selectedOptions.every(({ name, value }) => selected[name] === value),
-  );
+  const variant = variants.find((item) => item.id === selectedVariantId) ?? initial;
+  const selected = optionsForVariant(variant);
   const price = variant?.price ?? node.priceRange.minVariantPrice;
   const compareAt = variant?.compareAtPrice?.amount;
   const discount = discountPercent(price.amount, compareAt);
@@ -48,7 +47,23 @@ export default function QuickViewDialog({
       : 99;
   const validQuantity =
     /^\d+$/.test(quantity) && Number.isInteger(amount) && amount >= 1 && amount <= maxQuantity;
-  const images = node.images.edges.slice(0, 2).map(({ node: image }) => image);
+  const images = useMemo(() => {
+    const all = node.images.edges.map(({ node: image }) => image);
+    const seen = new Set(all.map((image) => image.url));
+    for (const item of variants) {
+      if (!item.image?.url || seen.has(item.image.url)) continue;
+      all.push({ url: item.image.url, altText: item.image.altText ?? displayTitle });
+      seen.add(item.image.url);
+    }
+    return all;
+  }, [node, variants, displayTitle]);
+
+  useEffect(() => {
+    const imageUrl = variant?.image?.url;
+    if (!imageUrl) return;
+    const index = images.findIndex((image) => image.url === imageUrl);
+    if (index >= 0) setActiveImage(index);
+  }, [variant?.image?.url, images]);
 
   const add = async () => {
     if (!variant?.availableForSale || !validQuantity || busy) return;
@@ -78,14 +93,14 @@ export default function QuickViewDialog({
       className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-lg p-5 sm:p-7"
     >
       <DialogHeader className="pe-7 text-start sm:text-start">
-        <DialogTitle className="break-words leading-snug">{node.title}</DialogTitle>
+        <DialogTitle className="break-words leading-snug">{displayTitle}</DialogTitle>
         <DialogDescription>{t("quickViewDescription")}</DialogDescription>
       </DialogHeader>
       <div className="grid min-w-0 gap-6 md:grid-cols-2">
         <ProductGallery
           compact
           images={images}
-          title={node.title}
+          title={displayTitle}
           activeIndex={activeImage}
           onSelect={setActiveImage}
         />
@@ -109,7 +124,12 @@ export default function QuickViewDialog({
             options={node.options ?? []}
             variants={variants}
             selected={selected}
-            onSelect={(name, value) => setSelected((current) => ({ ...current, [name]: value }))}
+            onSelect={(name, value) => {
+              const next = selectProductVariant(variants, variant, name, value);
+              if (!next) return;
+              setSelectedVariantId(next.id);
+              setQuantity("1");
+            }}
           />
           <div>
             <label htmlFor={quantityId} className="mb-2 block text-sm font-semibold">

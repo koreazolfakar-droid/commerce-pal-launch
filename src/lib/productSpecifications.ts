@@ -155,6 +155,17 @@ export function specificationGroups(
   specificationValue: unknown,
 ): ProductSpecificationGroup[] {
   const template = normalizeSpecificationTemplate(templateValue);
+  // Older products and categories without a current template may still have
+  // valid saved spec values. Do not silently hide those Dashboard fields.
+  if (template.sections.length === 0) {
+    const savedValues = normalizeProductSpecifications(specificationValue);
+    const rows = Object.entries(savedValues).map(([key, value]) => ({
+      label: key.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()),
+      value,
+    }));
+    return rows.length ? [{ title: "Specifications", rows }] : [];
+  }
+
   const values = normalizeProductSpecifications(specificationValue, template);
 
   return template.sections
