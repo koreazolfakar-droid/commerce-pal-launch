@@ -122,14 +122,15 @@ export function VariantPicker({
   );
   if (real.length === 0) return null;
 
+  // A change to one option can switch to another compatible in-stock variant.
+  // Don't falsely disable an available color just because the current storage
+  // size isn't sold in that color; ProductPage resolves the other options.
   const isAvailable = (name: string, value: string) =>
     variants.some(
       (variant) =>
         variant.availableForSale &&
-        variant.selectedOptions.every((option) =>
-          option.name === name
-            ? option.value === value
-            : (selected[option.name] ?? option.value) === option.value,
+        variant.selectedOptions.some(
+          (option) => option.name === name && option.value === value,
         ),
     );
 
