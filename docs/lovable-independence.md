@@ -26,6 +26,7 @@ are already on Cloudflare, but registration/renewal remains managed through Lova
 Do not delete the Lovable account, domain registration or disable renewal before handover.
 
 Official transfer-out flow:
+
 1. Workspace settings → Workspace domains → Configure the domain.
 2. Open the three-dot menu → Transfer out.
 3. Check the exact eligibility date; new registrations have a mandatory 60-day lock.
@@ -48,6 +49,18 @@ project's Git sync and hosting from the Lovable UI. Do not revoke the GitHub app
 it may serve other projects. Keep the GitHub repository and Supabase project intact.
 Verification TXT records are not runtime dependencies and can remain during handover.
 
+### Possible no-payment registration handover
+
+Name.com documents free internal transfers between Name.com accounts, separate from
+paid transfers to another registrar. Whether Lovable can release this reseller-managed
+domain into the owner's own Name.com account must be confirmed by Lovable/Name.com support;
+the Lovable transfer-out UI documents only the EPP flow. Do not promise this route is
+available, create an account, or contact support without the owner's instruction.
+If supported, keep the existing Cloudflare nameservers and registrant details unchanged.
+
+- https://cs.name.com/hc/en-us/articles/205934797-Domain-transfer-FAQ
+
 References:
+
 - https://docs.lovable.dev/features/custom-domain
 - https://developers.cloudflare.com/registrar/get-started/transfer-domain-to-cloudflare/
