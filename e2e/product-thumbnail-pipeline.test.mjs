@@ -41,7 +41,7 @@ test("storefront cards prefer thumbnails while original product media stays avai
   assert.match(storeTypes, /thumbnailUrl\?: string/);
   assert.match(
     nativeStore,
-    /STOREFRONT_IMAGE_SELECT = "product_id,url,thumbnail_url,alt_text,is_primary,sort_order"/,
+    /STOREFRONT_IMAGE_SELECT\s*=\s*"product_id,url,thumbnail_url,alt_text,is_primary,sort_order"/,
   );
   assert.match(nativeStore, /thumbnailUrl: image\.thumbnail_url/);
   assert.match(rust, /store_product_images\(url,thumbnail_url,alt_text,is_primary,sort_order\)/);

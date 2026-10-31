@@ -19,7 +19,6 @@ import {
   homepageCatalogQueryOptions,
   homepageConfiguredProductsQueryOptions,
   navigationCatalogQueryOptions,
-  collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
 import type { HomepageProductSource } from "@/lib/storefrontData";
@@ -70,15 +69,11 @@ const LazyBrandShowcase = lazy(() =>
   ),
 );
 
-const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
 const HOME_SECONDARY_IDLE_TIMEOUT_MS = 2_500;
 const HOME_SECONDARY_FALLBACK_DELAY_MS = 900;
 
 type IdleCapableWindow = Window & {
-  requestIdleCallback?: (
-    callback: IdleRequestCallback,
-    options?: IdleRequestOptions,
-  ) => number;
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
   cancelIdleCallback?: (handle: number) => void;
 };
 
@@ -135,8 +130,7 @@ function takeUniqueProducts<T extends { node: { id: string } }>(
 export const Route = createFileRoute("/")({
   head: () => {
     const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
-    const description =
-      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
+    const description = `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
 
     return {
       meta: [
@@ -146,8 +140,7 @@ export const Route = createFileRoute("/")({
         { name: "apple-mobile-web-app-title", content: SITE_NAME },
         {
           name: "robots",
-          content:
-            "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
         ...socialMeta({
           title,
@@ -173,10 +166,7 @@ export const Route = createFileRoute("/")({
         canonicalLink("/"),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
-      scripts: [
-        jsonLd(websiteJsonLd()),
-        jsonLd(organizationJsonLd()),
-      ],
+      scripts: [jsonLd(websiteJsonLd()), jsonLd(organizationJsonLd())],
     };
   },
   component: Index,
@@ -256,7 +246,9 @@ function cmsBuilderState(section: CmsSection) {
       ? (section.content as Record<string, unknown>)
       : {};
   const builder =
-    content["builder"] && typeof content["builder"] === "object" && !Array.isArray(content["builder"])
+    content["builder"] &&
+    typeof content["builder"] === "object" &&
+    !Array.isArray(content["builder"])
       ? (content["builder"] as Record<string, unknown>)
       : {};
 
@@ -296,7 +288,9 @@ function cmsManualProductIds(section?: CmsSection) {
 function cmsFeaturedProductConfig(section?: CmsSection) {
   const builder = section ? cmsBuilderState(section) : {};
   const settings =
-    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+    builder["settings"] &&
+    typeof builder["settings"] === "object" &&
+    !Array.isArray(builder["settings"])
       ? (builder["settings"] as Record<string, unknown>)
       : {};
   const allowed = new Set<HomepageProductSource>([
@@ -377,7 +371,9 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
   const localized = localizeSection(section, language);
   const builder = cmsBuilderState(section);
   const settings =
-    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+    builder["settings"] &&
+    typeof builder["settings"] === "object" &&
+    !Array.isArray(builder["settings"])
       ? (builder["settings"] as Record<string, unknown>)
       : {};
   const type =
@@ -453,7 +449,9 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
       ) : null}
       <div className={`relative z-10 flex max-w-2xl flex-col gap-3 ${alignmentClass}`}>
         {eyebrow ? (
-          <div className={`text-xs font-semibold uppercase tracking-[.06em] ${dark ? "text-indigo-200" : "text-primary"}`}>
+          <div
+            className={`text-xs font-semibold uppercase tracking-[.06em] ${dark ? "text-indigo-200" : "text-primary"}`}
+          >
             {eyebrow}
           </div>
         ) : null}
@@ -461,12 +459,16 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{displayTitle}</h2>
         ) : null}
         {displaySubtitle ? (
-          <p className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}>
+          <p
+            className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}
+          >
             {displaySubtitle}
           </p>
         ) : null}
         {description ? (
-          <p className={`max-w-xl text-sm leading-6 ${dark ? "text-white/75" : "text-muted-foreground"}`}>
+          <p
+            className={`max-w-xl text-sm leading-6 ${dark ? "text-white/75" : "text-muted-foreground"}`}
+          >
             {description}
           </p>
         ) : null}
@@ -528,25 +530,22 @@ function Index() {
   );
   const featuredProductConfig = cmsFeaturedProductConfig(featuredMerchSection);
   const { data: navigationCatalog } = useQuery(navigationCatalogQueryOptions());
-  const { data: catalog, isError: catalogFailed, refetch: retryCatalog } = useQuery({
+  const {
+    data: catalog,
+    isError: catalogFailed,
+    refetch: retryCatalog,
+  } = useQuery({
     ...homepageCatalogQueryOptions(),
-    enabled: deferredWorkReady,
+    enabled: typeof window !== "undefined",
   });
   const { data: collections = [] } = useQuery({
     ...collectionsQueryOptions(),
     enabled: deferredWorkReady,
   });
-  const {
-    data: heroCollection,
-    isFetched: heroCollectionFetched,
-    isError: heroCollectionFailed,
-  } = useQuery({
-    ...collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
-    enabled: deferredWorkReady,
-  });
-  const catalogReady =
-    Boolean(catalog) && (heroCollectionFetched || heroCollectionFailed);
-  const secondaryQueriesReady = deferredWorkReady;
+  const catalogReady = Boolean(catalog);
+  // Start curated rails once the catalog has loaded, rather than waiting for
+  // the browser's idle window; avoid competing with the first product request.
+  const secondaryQueriesReady = catalogReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
     enabled: secondaryQueriesReady,
@@ -556,13 +555,9 @@ function Index() {
     enabled: secondaryQueriesReady,
   });
 
-  const heroOnlyProductIds = new Set(
-    (heroCollection?.products ?? [])
-      .filter((product) => Number(product.node.priceRange.minVariantPrice.amount) <= 0)
-      .map((product) => product.node.id),
-  );
   const isHomepageMerchandise = (product: NonNullable<typeof catalog>["products"][number]) =>
-    !heroOnlyProductIds.has(product.node.id);
+    Number(product.node.priceRange.minVariantPrice.amount) > 0 ||
+    !product.node.collections?.edges.some(({ node }) => node.handle === "homepage-hero");
 
   const products = catalog?.products ?? [];
   const merchandiseProducts = products.filter(isHomepageMerchandise);
@@ -598,11 +593,7 @@ function Index() {
     merchandiseProducts.filter((product) => productDiscountPercent(product) !== null),
     seenHomepageProductIds,
   );
-  const latest = takeUniqueProducts(
-    newItems.filter(isHomepageMerchandise),
-    seenHomepageProductIds,
-  );
-
+  const latest = takeUniqueProducts(newItems.filter(isHomepageMerchandise), seenHomepageProductIds);
 
   const sectionByKey = new Map(homeSections.map((section) => [section.section_key, section]));
   const coreKeys = new Set(["hero", "categories", "brands", "featured_products", "trust"]);
@@ -642,9 +633,7 @@ function Index() {
       order: orderOf("hero", 10),
       section: coreSection("hero"),
       visible: isLive(coreSection("hero")),
-      node: (
-        <HomeHero cmsHeroSlides={cms.heroSlides} />
-      ),
+      node: <HomeHero cmsHeroSlides={cms.heroSlides} />,
     },
     {
       key: "categories",
@@ -662,11 +651,7 @@ function Index() {
       order: orderOf("brands", 20),
       section: coreSection("brands"),
       visible: isLive(coreSection("brands")),
-      node: navigationReady ? (
-        <DeferredTopBrands brands={brands} />
-      ) : (
-        <BrandRailSkeleton />
-      ),
+      node: navigationReady ? <DeferredTopBrands brands={brands} /> : <BrandRailSkeleton />,
     },
     {
       key: "featured_products",
@@ -747,8 +732,16 @@ function Index() {
         </>
       ) : catalogFailed ? (
         <div className="rounded-xl border border-border bg-card p-4 text-sm" role="alert">
-          <p>{language === "ar" ? "تعذّر تحميل المنتجات حاليًا." : "Products could not be loaded right now."}</p>
-          <button type="button" onClick={() => void retryCatalog()} className="mt-2 min-h-11 font-semibold text-primary hover:underline">
+          <p>
+            {language === "ar"
+              ? "تعذّر تحميل المنتجات حاليًا."
+              : "Products could not be loaded right now."}
+          </p>
+          <button
+            type="button"
+            onClick={() => void retryCatalog()}
+            className="mt-2 min-h-11 font-semibold text-primary hover:underline"
+          >
             {language === "ar" ? "حاول مجددًا" : "Try again"}
           </button>
         </div>
@@ -804,5 +797,4 @@ function Index() {
       </div>
     </StoreLayout>
   );
-
 }
