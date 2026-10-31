@@ -497,6 +497,7 @@ async function callGemini(args: {
   input: string;
   fields: AiField[];
   withSearch: boolean;
+  unstructured?: boolean;
 }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
@@ -511,14 +512,21 @@ async function callGemini(args: {
         max_output_tokens: 8192,
         thinking_level: "low",
       },
-      response_format: [
+    };
+    if (args.unstructured) {
+      // Some provider projects reject a large schema combined with Search.
+      // Keep the search tool and server-side validation on this retry.
+      payload.system_instruction =
+        args.systemInstruction + "\nReturn exactly one valid JSON object matching the requested fields. No Markdown.";
+    } else {
+      payload.response_format = [
         {
           type: "text",
           mime_type: "application/json",
           schema: responseSchema(args.fields),
         },
-      ],
-    };
+      ];
+    }
     if (args.withSearch) payload.tools = [{ type: "google_search" }];
 
     const response = await fetch("https://generativelanguage.googleapis.com/v1/interactions", {
@@ -536,6 +544,20 @@ async function callGemini(args: {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function geminiErrorMessage(payload: unknown) {
+  if (!payload || typeof payload !== "object") return "";
+  const error = (payload as Record<string, unknown>).error;
+  if (!error || typeof error !== "object") return "";
+  const message = (error as Record<string, unknown>).message;
+  return typeof message === "string" ? message : "";
+}
+
+function searchSchemaRejected(payload: unknown) {
+  return /schema|response[_ -]?format|structured|constraint|too many states|tool.*combination/i.test(
+    geminiErrorMessage(payload),
+  );
 }
 
 function modelOutputBlocks(payload: Record<string, unknown>) {
@@ -1354,7 +1376,28 @@ Deno.serve(async (req) => {
         withSearch: true,
       });
 
-      if (!gemini.ok && (gemini.status === 400 || gemini.status === 403 || gemini.status === 429)) {
+      if (!gemini.ok && gemini.status === 400 && searchSchemaRejected(gemini.body)) {
+        // A schema/tool compatibility error is not proof that the account lacks Search.
+        // Retry grounded research without constrained decoding before giving up Search.
+        const simplerSearch = await callGemini({
+          apiKey: geminiKey,
+          model,
+          systemInstruction: geminiRequest.systemInstruction,
+          input: geminiRequest.input,
+          fields: suggestionFields,
+          withSearch: true,
+          unstructured: true,
+        });
+        gemini = simplerSearch;
+      }
+
+      if (!gemini.ok && (gemini.status === 400 || gemini.status === 403)) {
+        // Do not misclassify 429 (model or Search rate limiting) as unavailable.
+        // Keep the original failure category in server logs without leaking API details.
+        console.warn("[dashboard-ai] Search request rejected", {
+          status: gemini.status,
+          schemaOrToolError: searchSchemaRejected(gemini.body),
+        });
         const retry = await callGemini({
           apiKey: geminiKey,
           model,
@@ -1367,7 +1410,9 @@ Live web grounding is unavailable for this retry. Set verified=false for every s
         if (retry.ok) {
           gemini = retry;
           fallbackWarning =
-            "Google Search grounding was unavailable for the current Gemini project/tier. Suggestions are unverified until manually checked.";
+            "Live web verification is unavailable. Suggestions require manual review.";
+        } else {
+          gemini = retry;
         }
       }
     } catch (error) {
