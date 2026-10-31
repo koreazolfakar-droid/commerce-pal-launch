@@ -208,7 +208,10 @@ function ProductPage() {
 
   // Dashboard edits invalidate the native cache and re-run this route's direct
   // Supabase loader, including changes made in another tab of this browser.
-  useEffect(() => subscribeStorefrontRefresh(() => { void router.invalidate(); }), [router]);
+  useEffect(() => {
+    const unsubscribe = subscribeStorefrontRefresh(() => { void router.invalidate(); });
+    return () => { unsubscribe(); };
+  }, [router]);
 
   useEffect(() => {
     const variantImage = selectedVariant?.image?.url;
