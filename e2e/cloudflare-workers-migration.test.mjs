@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("Cloudflare builds remain separate from the current Lovable production build", async () => {
+test("local and Cloudflare builds use independent framework configuration", async () => {
   const [packageText, legacyVite, cloudflareVite] = await Promise.all([
     read("package.json"),
     read("vite.config.ts"),
@@ -12,10 +12,33 @@ test("Cloudflare builds remain separate from the current Lovable production buil
   ]);
   const manifest = JSON.parse(packageText);
   assert.equal(manifest.scripts.build, "vite build");
-  assert.equal(manifest.scripts["build:cloudflare"], "vite build --config vite.cloudflare.config.ts");
-  assert.match(legacyVite, /@lovable\.dev\/vite-tanstack-config/);
-  assert.match(cloudflareVite, /cloudflare\(\{ configPath: "\.\/wrangler\.jsonc", viteEnvironment: \{ name: "ssr" \} \}\)/);
+  assert.equal(
+    manifest.scripts["build:cloudflare"],
+    "vite build --config vite.cloudflare.config.ts",
+  );
+  assert.doesNotMatch(legacyVite, /@lovable\.dev\//);
+  assert.match(legacyVite, /from "nitro\/vite"/);
+  assert.match(legacyVite, /tanstackStart\(/);
+  assert.match(legacyVite, /server: \{ entry: "server" \}/);
+  assert.match(
+    cloudflareVite,
+    /cloudflare\(\{ configPath: "\.\/wrangler\.jsonc", viteEnvironment: \{ name: "ssr" \} \}\)/,
+  );
   assert.match(cloudflareVite, /server: \{ entry: "server" \}/);
+});
+
+test("reproducible dependencies do not require Lovable packages or its registry", async () => {
+  const [manifest, lock, config] = await Promise.all([
+    read("package.json"),
+    read("bun.lock"),
+    read("bunfig.toml"),
+  ]);
+  for (const source of [manifest, lock, config]) {
+    assert.doesNotMatch(
+      source,
+      /@lovable\.dev\/|lovable-core-prod|npm\.pkg\.dev/,
+    );
+  }
 });
 
 test("production Worker exposes only the approved domains and keeps public previews disabled", async () => {
@@ -34,5 +57,8 @@ test("production Worker exposes only the approved domains and keeps public previ
   const server = await read("src/server.ts");
   assert.match(server, /guardIncomingRequest\(request, env\)/);
   assert.match(server, /redirectAppHostDashboard\(request\)/);
-  assert.match(server, /withSecurityHeaders\(await normalizeCatastrophicSsrResponse/);
+  assert.match(
+    server,
+    /withSecurityHeaders\(await normalizeCatastrophicSsrResponse/,
+  );
 });

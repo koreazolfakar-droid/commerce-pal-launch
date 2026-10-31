@@ -13,8 +13,9 @@ to the `space-call-staging` Worker as enabled Custom Domains, with preview routi
 The Worker name is retained to preserve the existing Git build integration; it now serves
 production. `wrangler.jsonc` records the approved domains so subsequent main deployments
 retain the routing configuration. Both `workers_dev` and `preview_urls` remain false.
-The default Lovable Vite build remains available for rollback; use `bun run build:cloudflare`
-for Cloudflare. Cloudflare Builds deploys `main` with `npx wrangler deploy`.
+The default Vite build uses the framework plugins directly; use `bun run build:cloudflare`
+for the Cloudflare production artifact. The pre-independence Git tag/commit and existing Lovable
+hosted snapshot remain available as historical rollback references. Cloudflare Builds deploys `main` with `npx wrangler deploy`.
 
 Domain registration remains with the existing Lovable-managed registrar. Nameservers are
 `alberto.ns.cloudflare.com` and `mona.ns.cloudflare.com`. Moving registration is unnecessary.
@@ -77,10 +78,12 @@ DNS and open browser connections can retain either destination temporarily; vali
 navigation and asset loading after propagation. Do not delete the Worker, registrar account,
 Lovable project or Supabase data as part of rollback.
 
-Before deploying a rollback from source, remove the three production Custom Domains from
+An old Lovable rebuild requires checking out the pre-independence source and its original lockfile.
+Before deploying a routing rollback from source, remove the three production Custom Domains from
 Wrangler configuration as well, otherwise the next Cloudflare deploy will recreate them.
 
 Official references:
+
 - https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
 - https://developers.cloudflare.com/workers/configuration/secrets/
 - https://developers.cloudflare.com/workflows/reference/pricing/

@@ -9,18 +9,28 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { Suspense, lazy, useEffect, type ReactNode } from "react";
-import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
+import {
+  LANGUAGE_INIT_SCRIPT,
+  LanguageProvider,
+  useLanguage,
+} from "@/lib/i18n";
 
 import { absoluteUrl } from "@/lib/seo";
 
 import appCss from "../styles.css?url";
-import { CustomerAccountProvider, useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
-import { CustomerAuthProvider, useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
+import {
+  CustomerAccountProvider,
+  useCustomerAccount,
+} from "@/components/customer-account/CustomerAccountProvider";
+import {
+  CustomerAuthProvider,
+  useCustomerAuth,
+} from "@/components/customer-auth/CustomerAuthProvider";
 import { DeferredToaster } from "@/components/DeferredToaster";
 import { useCartSync } from "@/hooks/useCartSync";
 import { usePersistedStoreHydration } from "@/hooks/usePersistedStoreHydration";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportRuntimeError } from "../lib/runtime-error-reporting";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { buildContentSecurityPolicy } from "@/lib/contentSecurityPolicy";
 import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
@@ -40,16 +50,18 @@ const FONT_LOAD_SCRIPT = `(function(){
   document.head.appendChild(link);
 })();`;
 
-
-
 function NotFoundComponent() {
   const { t } = useLanguage();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">{t("pageNotFound")}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t("pageNotFoundDetail")}</p>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">
+          {t("pageNotFound")}
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {t("pageNotFoundDetail")}
+        </p>
         <div className="mt-6">
           <Link
             to="/"
@@ -63,12 +75,18 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
+function ErrorComponent({
+  error,
+  reset,
+}: {
+  error: unknown;
+  reset: () => void;
+}) {
   console.error(error);
   const router = useRouter();
   const { t } = useLanguage();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportRuntimeError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
@@ -77,7 +95,9 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           {t("somethingWentWrong")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{t("pageErrorDetail")}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {t("pageErrorDetail")}
+        </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -107,67 +127,77 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  headers: ({ ssr }) => {
-    const nonce = ssr?.nonce;
-    if (!nonce) return undefined;
-    return {
-      "Content-Security-Policy": buildContentSecurityPolicy(nonce),
-    };
-  },
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: STORE_NAME },
-      {
-        name: "description",
-        content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
-      },
-      {
-        name: "robots",
-        content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-      },
-      { property: "og:title", content: STORE_NAME },
-      {
-        property: "og:description",
-        content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:site_name", content: STORE_NAME },
-      { property: "og:locale", content: "en_LB" },
-      { property: "og:locale:alternate", content: "ar_LB" },
-      { property: "og:image", content: absoluteUrl("/logo.svg") },
-      { name: "twitter:image", content: absoluteUrl("/logo.svg") },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
+  {
+    headers: ({ ssr }) => {
+      const nonce = ssr?.nonce;
+      if (!nonce) return undefined;
+      return {
+        "Content-Security-Policy": buildContentSecurityPolicy(nonce),
+      };
+    },
+    head: () => ({
+      meta: [
+        { charSet: "utf-8" },
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1, viewport-fit=cover",
+        },
+        { title: STORE_NAME },
+        {
+          name: "description",
+          content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
+        },
+        {
+          name: "robots",
+          content:
+            "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+        },
+        { property: "og:title", content: STORE_NAME },
+        {
+          property: "og:description",
+          content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: STORE_NAME },
+        { property: "og:locale", content: "en_LB" },
+        { property: "og:locale:alternate", content: "ar_LB" },
+        { property: "og:image", content: absoluteUrl("/logo.svg") },
+        { name: "twitter:image", content: absoluteUrl("/logo.svg") },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
 
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "preconnect",
-        href: "https://rtwyankpxtffqqrasyzw.supabase.co",
-        crossOrigin: "anonymous",
-      },
-      {
-        rel: "preload",
-        href: FONT_STYLESHEET_URL,
-        as: "style",
-      },
-      { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-    ],
-  }),
-  shellComponent: RootShell,
-  component: RootComponent,
-  notFoundComponent: NotFoundComponent,
-  errorComponent: ErrorComponent,
-});
+      links: [
+        {
+          rel: "stylesheet",
+          href: appCss,
+        },
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossOrigin: "anonymous",
+        },
+        {
+          rel: "preconnect",
+          href: "https://rtwyankpxtffqqrasyzw.supabase.co",
+          crossOrigin: "anonymous",
+        },
+        {
+          rel: "preload",
+          href: FONT_STYLESHEET_URL,
+          as: "style",
+        },
+        { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
+        { rel: "manifest", href: "/manifest.webmanifest" },
+      ],
+    }),
+    shellComponent: RootShell,
+    component: RootComponent,
+    notFoundComponent: NotFoundComponent,
+    errorComponent: ErrorComponent,
+  },
+);
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -194,17 +224,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 const LazyCustomerAuthDialog = lazy(() =>
   importWithChunkRecovery("customer-auth-dialog", () =>
-    import("@/components/customer-auth/CustomerAuthDialog").then(({ CustomerAuthDialog }) => ({
-      default: CustomerAuthDialog,
-    })),
+    import("@/components/customer-auth/CustomerAuthDialog").then(
+      ({ CustomerAuthDialog }) => ({
+        default: CustomerAuthDialog,
+      }),
+    ),
   ),
 );
 
 const LazyCustomerAddressHub = lazy(() =>
   importWithChunkRecovery("customer-address-hub", () =>
-    import("@/components/customer-account/CustomerAddressHub").then(({ CustomerAddressHub }) => ({
-      default: CustomerAddressHub,
-    })),
+    import("@/components/customer-account/CustomerAddressHub").then(
+      ({ CustomerAddressHub }) => ({
+        default: CustomerAddressHub,
+      }),
+    ),
   ),
 );
 

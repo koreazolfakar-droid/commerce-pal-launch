@@ -6,7 +6,8 @@ import { brokeredPreviewStorage } from "./previewAuthStorage";
 // These are public browser credentials, not secrets. Environment variables still
 // take priority so the deployment can rotate the project/key without a code change.
 const DEFAULT_SUPABASE_URL = "https://rtwyankpxtffqqrasyzw.supabase.co";
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iJlqEj16CQ7YKOqAjYWaGQ_LiszVYE0";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -15,11 +16,15 @@ function isNewSupabaseApiKey(value: string): boolean {
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
-      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
+      typeof Request !== "undefined" && input instanceof Request
+        ? input.headers
+        : undefined,
     );
 
     if (init?.headers) {
-      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+      new Headers(init.headers).forEach((value, key) =>
+        headers.set(key, value),
+      );
     }
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
@@ -40,7 +45,10 @@ function getSupabaseEnv() {
   const nodeEnv = typeof process !== "undefined" ? process.env : undefined;
 
   return {
-    url: viteEnv["VITE_SUPABASE_URL"] || nodeEnv?.["SUPABASE_URL"] || DEFAULT_SUPABASE_URL,
+    url:
+      viteEnv["VITE_SUPABASE_URL"] ||
+      nodeEnv?.["SUPABASE_URL"] ||
+      DEFAULT_SUPABASE_URL,
     publishableKey:
       viteEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
       nodeEnv?.["SUPABASE_PUBLISHABLE_KEY"] ||
@@ -71,14 +79,15 @@ export function createEphemeralPasskeyClient() {
 }
 
 function createSupabaseClient() {
-  const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } = getSupabaseEnv();
+  const { url: SUPABASE_URL, publishableKey: SUPABASE_PUBLISHABLE_KEY } =
+    getSupabaseEnv();
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
       ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
       ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Connect Supabase in Lovable Cloud.`;
+    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Configure the required Supabase environment variables on the hosting platform.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
@@ -104,9 +113,12 @@ let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
-export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
-  get(_, prop, receiver) {
-    if (!_supabase) _supabase = createSupabaseClient();
-    return Reflect.get(_supabase, prop, receiver);
+export const supabase = new Proxy(
+  {} as ReturnType<typeof createSupabaseClient>,
+  {
+    get(_, prop, receiver) {
+      if (!_supabase) _supabase = createSupabaseClient();
+      return Reflect.get(_supabase, prop, receiver);
+    },
   },
-});
+);
