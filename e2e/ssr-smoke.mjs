@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 
 // Run after build. CI preloads the deterministic Supabase read fixture; omit
 // SPACE_CALL_VISUAL_FIXTURES for an optional read-only live storefront probe.
-const { default: handler } = await import("../.output/server/index.mjs");
+const { default: handler } = await import("../dist/server/index.mjs");
 const pending = [];
 const context = { waitUntil: (promise) => pending.push(promise), passThroughOnException() {} };
 

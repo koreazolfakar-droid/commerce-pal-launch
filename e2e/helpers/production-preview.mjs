@@ -5,8 +5,8 @@ import { readFile, stat } from "node:fs/promises";
 import { extname, resolve, sep } from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-const { default: handler } = await import("../../.output/server/index.mjs");
-const publicDir = fileURLToPath(new URL("../../.output/public/", import.meta.url));
+const { default: handler } = await import("../../dist/server/index.mjs");
+const publicDir = fileURLToPath(new URL("../../dist/client/", import.meta.url));
 const types = {
   ".js": "text/javascript",
   ".mjs": "text/javascript",
