@@ -104,7 +104,7 @@ function swatchColor(value: string) {
 }
 
 function isColorOption(name: string) {
-  return /colou?r|shade|finish/i.test(name);
+  return /colou?r|shade|finish|اللون|الألوان|لون/i.test(name);
 }
 
 /**
