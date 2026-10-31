@@ -329,9 +329,9 @@ export default function AiAssistPanel({
                 aria-labelledby={dialogTitleId}
                 tabIndex={-1}
                 dir={lang === "ar" ? "rtl" : "ltr"}
-                className="dashboard-theme-scope flex max-h-[96dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:m-4 sm:max-w-xl sm:rounded-2xl"
+                className="dashboard-theme-scope flex min-h-0 max-h-[100dvh] w-full min-w-0 flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:m-4 sm:max-h-[calc(100dvh-2rem)] sm:max-w-xl sm:rounded-2xl"
               >
-                <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5 sm:py-4">
                   <div>
                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-indigo-500">
                       <Sparkles className="size-3.5" />
@@ -339,11 +339,11 @@ export default function AiAssistPanel({
                     </div>
                     <h2
                       id={dialogTitleId}
-                      className="mt-1 text-[19px] font-black tracking-[-.03em] text-[#14203a]"
+                      className="mt-1 text-[18px] font-black leading-6 tracking-[-.03em] text-[#14203a] sm:text-[19px]"
                     >
                       {t("Research, fill and improve")}
                     </h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
                       {t(
                         "Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.",
                       )}
@@ -359,7 +359,7 @@ export default function AiAssistPanel({
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-5">
+                <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
                   <label className="block">
                     <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                       {t("What should AI research?")}
@@ -484,7 +484,7 @@ export default function AiAssistPanel({
                   )}
 
                   <div
-                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-3" : "grid-cols-2"}`}
+                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}
                   >
                     <ActionButton
                       label={t("Complete form")}
@@ -537,7 +537,7 @@ export default function AiAssistPanel({
                       <div
                         className={
                           "rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
-                          (result.entityMatch.status === "exact"
+                          (result.entityMatch.status === "exact" && result.grounded
                             ? "border-emerald-100 bg-emerald-50 text-emerald-700"
                             : result.entityMatch.status === "partial"
                               ? "border-amber-100 bg-amber-50 text-amber-800"
@@ -545,36 +545,45 @@ export default function AiAssistPanel({
                         }
                       >
                         <div className="flex items-center gap-2 font-black">
-                          {result.entityMatch.status === "exact" ? (
+                          {result.entityMatch.status === "exact" && result.grounded ? (
                             <ShieldCheck className="size-3.5" />
                           ) : (
                             <AlertTriangle className="size-3.5" />
                           )}
-                          {result.entityMatch.status === "exact"
-                            ? t("Exact entity verified")
+                          {result.entityMatch.status === "exact" && !result.grounded
+                            ? t("Identity not web-verified")
+                            : result.entityMatch.status === "exact"
+                              ? t("Exact entity verified")
                             : result.entityMatch.status === "partial"
                               ? t("Partial entity match")
                               : t("Entity uncertain")}
                         </div>
                         {result.entityMatch.canonicalName ? (
-                          <p className="mt-1 font-bold">{result.entityMatch.canonicalName}</p>
+                          <p className="mt-1 break-words font-bold">{result.entityMatch.canonicalName}</p>
                         ) : null}
                         {result.entityMatch.reason ? (
-                          <p className="mt-1 opacity-80">{result.entityMatch.reason}</p>
+                          <details className="mt-1">
+                            <summary className="cursor-pointer text-[10px] font-semibold opacity-80">
+                              {t("Review details")}
+                            </summary>
+                            <p className="mt-1 break-words text-[11px] leading-5 opacity-90">
+                              {result.entityMatch.reason}
+                            </p>
+                          </details>
                         ) : null}
                       </div>
 
                       {result.warnings.length ? (
-                        <div className="rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
-                          <div className="text-[10px] font-black text-amber-800">
-                            {t("Review warnings")}
-                          </div>
-                          <ul className="mt-1.5 space-y-1 text-[10px] leading-4 text-amber-700">
+                        <details className="rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
+                          <summary className="cursor-pointer text-xs font-bold text-amber-800">
+                            {t("Review warnings")} ({result.warnings.length})
+                          </summary>
+                          <ul className="mt-2 space-y-2 break-words text-[11px] leading-5 text-amber-700">
                             {result.warnings.map((warning, index) => (
-                              <li key={index}>• {warning}</li>
+                              <li key={index}>• {t(warning)}</li>
                             ))}
                           </ul>
-                        </div>
+                        </details>
                       ) : null}
 
                       <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -831,8 +840,8 @@ export default function AiAssistPanel({
                   ) : null}
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-4">
-                  <div className="text-[11px] leading-5 text-slate-400">
+                <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:flex-nowrap sm:px-5 sm:py-4">
+                  <div className="min-w-0 flex-1 text-[10px] leading-4 text-slate-500 sm:text-[11px] sm:leading-5">
                     {t(
                       "Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.",
                     )}
@@ -845,7 +854,7 @@ export default function AiAssistPanel({
                       !eligibleSuggestions.some((item) => selected.has(item.field)) ||
                       Boolean(loadingAction)
                     }
-                    className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[10px] font-bold text-white disabled:opacity-40"
+                    className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#5968ea] px-3 text-[11px] font-bold text-white disabled:opacity-40 sm:px-4"
                   >
                     <Check className="size-3.5" />
                     {t("Apply selected")} (
