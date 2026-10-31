@@ -588,3 +588,24 @@
     gap: 0.25rem;
   }
 }
+
+/* Taste storefront refinement: restore only intentional, low-cost product-card feedback.
+ * Static content and media retain the instant-render behavior from styles.css. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .store-layout .homepage-product-card {
+    transition-property: border-color, box-shadow, transform !important;
+    transition-duration: 180ms !important;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+}
+
+.store-layout .homepage-product-card:focus-within {
+  border-color: color-mix(in oklab, var(--color-primary) 32%, var(--color-border));
+}
+
+/* The rail and skeleton use the same card widths, including narrow devices. */
+.store-layout .product-rail,
+.store-layout .product-rail-items {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
