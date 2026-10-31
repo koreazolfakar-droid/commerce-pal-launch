@@ -27,11 +27,11 @@ Staff authentication is required to enter Dashboard. This browser has no staff s
 
 ## Validation
 
-- 622 unit, security, architecture, and behavioral checks pass locally.
+- 623 unit, security, architecture, and behavioral checks pass locally.
 - TypeScript passes; ESLint has zero errors and 27 existing Fast Refresh warnings.
 - Repository and Android source security gates pass.
 - Standalone production and Cloudflare SSR builds pass.
-- SSR smoke checks pass using deterministic Supabase fixtures, including home, help, privacy, shop, categories, and sitemap. The fixture intentionally exercises backend fallback with simulated Rust 503 responses.
+- SSR smoke checks pass using deterministic Supabase fixtures, including home, help, privacy, shop, categories, a brand page, a queried search page, and sitemap. The fixture intentionally exercises backend fallback with simulated Rust 503 responses.
 - A production SSR regression reproduced the brand failure before the repair. Standalone and workerd smoke suites now request a brand page and verify its H1/canonical metadata.
 - Four behavioral regressions cover image-only hero targets, exhausted image fallbacks, search loader readiness, and unloaded brand headings.
 - Mobile navigation checks also cover search focus restoration and Enter navigation to full results.

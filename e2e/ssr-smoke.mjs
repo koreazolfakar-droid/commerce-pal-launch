@@ -81,6 +81,10 @@ assert.match(
   /rel="canonical"[^>]*href="https:\/\/spacecallapp\.store\/brand\/samsung"/,
 );
 
+const search = await request("/search?q=Samsung");
+assert.match(search.body, /Results for .*Samsung/);
+assert.equal((search.body.match(/<h1\b/g) ?? []).length, 1);
+
 const sitemap = await request("/sitemap.xml");
 assert.match(sitemap.body, /https:\/\/spacecallapp\.store\//);
 assert.equal(sitemap.response.headers.get("x-frame-options"), "SAMEORIGIN");
@@ -93,7 +97,16 @@ console.log(
   JSON.stringify({
     passed: true,
     source: process.env.SPACE_CALL_VISUAL_FIXTURES === "1" ? "supabase-fixture" : "supabase-native",
-    paths: ["/", "/help", "/privacy", "/shop", "/categories", "/brand/samsung", "/sitemap.xml"],
+    paths: [
+      "/",
+      "/help",
+      "/privacy",
+      "/shop",
+      "/categories",
+      "/brand/samsung",
+      "/search?q=Samsung",
+      "/sitemap.xml",
+    ],
   }),
 );
 process.exit(0);
