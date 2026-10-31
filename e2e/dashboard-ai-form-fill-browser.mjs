@@ -238,9 +238,7 @@ try {
     overflow: node.scrollWidth > node.clientWidth,
     background: getComputedStyle(node).backgroundColor,
   }));
-  const warnings = arabicDialog.locator("details").filter({
-    has: arabicDialog.getByText("راجع التنبيهات", { exact: false }),
-  });
+  const warnings = arabicDialog.locator("details").filter({ hasText: "راجع التنبيهات" });
   assert.equal(await warnings.count(), 1);
   assert.equal(await warnings.getAttribute("open"), null);
   const applyBounds = await arabicDialog.getByRole("button", { name: /تطبيق المحدد/ }).boundingBox();
