@@ -1362,3 +1362,159 @@
     display: none;
   }
 }
+
+/* Space Call product editor — Phase 1. Scope every rule to the dashboard editor. */
+.dashboard-theme-scope .dashboard-product-editor {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header {
+  align-items: flex-start;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header > div {
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header > div:last-child {
+  align-items: center;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel {
+  border-color: var(--dashboard-stroke, var(--color-border));
+  border-radius: var(--dashboard-panel-radius, 1rem);
+  background: var(--color-card);
+  box-shadow: 0 2px 12px rgb(12 24 46 / 0.035);
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel-heading {
+  padding-block: 1rem;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel-heading > div:first-child {
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(input, select, textarea) {
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+  align-items: start;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-main,
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-aside {
+  min-width: 0;
+  align-self: start;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more {
+  position: relative;
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary {
+  list-style: none;
+  user-select: none;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary::-webkit-details-marker {
+  display: none;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu {
+  position: absolute;
+  z-index: 60;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  width: min(19rem, 85vw);
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-card);
+  box-shadow: 0 18px 48px rgb(8 20 42 / 0.16);
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu > :where(button, a) {
+  width: 100%;
+  min-height: 2.75rem;
+  justify-content: flex-start;
+  white-space: normal;
+  font-size: 0.8125rem;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary:focus-visible,
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu > :where(button, a):focus-visible,
+.dashboard-theme-scope .dashboard-product-editor .dashboard-form-map button:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer {
+  min-width: 0;
+}
+@media (min-width: 1280px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 0.9fr);
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 1279px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header {
+    margin-block-end: 1.25rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header > div:last-child {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header [role="group"] {
+    width: 100%;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary {
+    justify-content: center;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-form-map {
+    padding: 0.875rem;
+    min-width: 0;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-form-map nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    padding-block-end: 0.375rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-form-map nav > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(input, textarea, select) {
+    font-size: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(.grid) {
+    min-width: 0;
+  }
+  .dashboard-theme-scope .dashboard-product-editor {
+    padding-block-end: 7rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer {
+    position: sticky;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 25;
+    margin-block-end: 1rem;
+    padding: 0.75rem;
+    box-shadow: 0 8px 32px rgb(12 24 46 / 0.11);
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer > div:first-child {
+    display: none;
+  }
+  .dashboard-theme-scope .dashboard-product-editor [data-product-section] {
+    scroll-margin-bottom: 11rem;
+  }
+}
+@media (max-width: 389px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(.p-5) {
+    padding: 0.875rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+  }
+}

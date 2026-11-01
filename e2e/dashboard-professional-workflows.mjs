@@ -214,9 +214,33 @@ try {
   failInventory = false;
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await page.getByRole("heading", { name: "Inventory control", exact: true }).waitFor();
-  assert.equal(await page.getByRole("alert").count(), 0);
+  // Ensure the actual inventory refresh error is gone. Independent transient
+  // notices (for example offline/connection warnings) are not this condition.
+  await page
+    .getByRole("alert")
+    .getByText("Unable to refresh this section", { exact: true })
+    .waitFor({ state: "hidden" });
   await go("products/new");
-  await page.getByRole("button", { name: "Pricing & inventory", exact: true }).click();
+  // Real browser overflow regression at all supported Phase 1 breakpoints.
+  // The section rail scrolls within its own container, never the document.
+  for (const width of [360, 390, 768, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByLabel("Title", { exact: true }).waitFor();
+    const measured = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+      editor: document.querySelector(".dashboard-product-editor")?.getBoundingClientRect().width ?? 0,
+    }));
+    assert.ok(
+      measured.document <= measured.viewport + 1,
+      `horizontal document overflow at ${width}px: ${JSON.stringify(measured)}`,
+    );
+    assert.ok(measured.editor > 0, `product editor is hidden at ${width}px`);
+  }
+  await page.getByRole("button", { name: "Pricing", exact: true }).click();
+  await page.getByRole("button", { name: "Variants", exact: true }).click();
+  assert.equal(await page.evaluate(() => document.activeElement?.id), "product-variants");
+  await page.getByRole("button", { name: "Pricing", exact: true }).click();
   assert.equal(await page.evaluate(() => document.activeElement?.id), "product-pricing");
   await page.getByRole("button", { name: "Color: Graphite" }).click();
   assert.equal(
