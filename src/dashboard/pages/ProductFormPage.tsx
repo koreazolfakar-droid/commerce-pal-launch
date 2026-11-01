@@ -1019,6 +1019,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 section.fields.map((field) => ({
                   key: aiSpecificationFieldKey(field.key),
                   label: field.label,
+                  section: section.title,
+                  unit: field.unit,
                   description: `Exact factual specification. ${field.unit ? `Expected unit: ${field.unit}. ` : ""}Do not infer uncertain values.`,
                   review: true,
                   maxLength: 500,
