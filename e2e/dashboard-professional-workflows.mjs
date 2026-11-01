@@ -216,7 +216,10 @@ try {
   await page.getByRole("heading", { name: "Inventory control", exact: true }).waitFor();
   assert.equal(await page.getByRole("alert").count(), 0);
   await go("products/new");
-  await page.getByRole("button", { name: "Pricing & inventory", exact: true }).click();
+  await page.getByRole("button", { name: "Pricing", exact: true }).click();
+  await page.getByRole("button", { name: "Variants", exact: true }).click();
+  assert.equal(await page.evaluate(() => document.activeElement?.id), "product-variants");
+  await page.getByRole("button", { name: "Pricing", exact: true }).click();
   assert.equal(await page.evaluate(() => document.activeElement?.id), "product-pricing");
   await page.getByRole("button", { name: "Color: Graphite" }).click();
   assert.equal(
