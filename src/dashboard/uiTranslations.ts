@@ -558,6 +558,15 @@ export const dashboardUiArabic: Record<string, string> = {
   "Improve SEO": "تحسين بيانات البحث",
   Validate: "التحقق",
   "Review warnings": "راجع التنبيهات",
+  "Product research pages (optional)": "روابط صفحات المنتج للبحث (اختياري)",
+  "Up to 3 public HTTPS links, one per line. Official product pages improve verification when web search is limited.":
+    "حتى 3 روابط HTTPS عامة، رابط في كل سطر. صفحات الشركة الرسمية تساعد بالتحقق عندما يكون البحث المباشر محدوداً.",
+  "Enter up to three valid public HTTPS product page links, one per line.":
+    "أدخل حتى 3 روابط HTTPS صالحة لصفحات منتجات عامة، رابطاً في كل سطر.",
+  "Choose a product category first to let AI fill all matching specification fields.":
+    "اختر تصنيف المنتج أولاً ليتمكن الذكاء الاصطناعي من تعبئة جميع حقول المواصفات المطابقة.",
+  "Suggested fields": "الحقول المقترحة",
+  "Manual review": "للمراجعة اليدوية",
   "Current:": "الحالي:",
   Evidence: "المصادر الداعمة",
   "This field always requires manual review.": "يحتاج هذا الحقل دائمًا إلى مراجعة يدوية.",
