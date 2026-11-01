@@ -1,5 +1,5 @@
 import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
-import { formCompletion, hasFieldChanged } from "@/dashboard/ai/formFill";
+import { formCompletion, hasFieldChanged, mergeAiResponses } from "@/dashboard/ai/formFill";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   AlertTriangle,
@@ -115,6 +115,7 @@ export default function AiAssistPanel({
   query,
   currentData,
   fields,
+  categoryTemplates = [],
   context,
   onApply,
   compact = false,
@@ -126,6 +127,7 @@ export default function AiAssistPanel({
   query: string;
   currentData: Record<string, string>;
   fields: DashboardAiFieldDefinition[];
+  categoryTemplates?: Array<{ name: string; fields: DashboardAiFieldDefinition[] }>;
   context?: Record<string, unknown>;
   onApply: (patch: Record<string, string>) => void;
   compact?: boolean;
@@ -146,6 +148,7 @@ export default function AiAssistPanel({
   const resultFillMode = useRef<"empty" | "all">("empty");
   const [loadingAction, setLoadingAction] = useState<DashboardAiAction | null>(null);
   const [result, setResult] = useState<DashboardAiResponse | null>(null);
+  const [extraFields, setExtraFields] = useState<DashboardAiFieldDefinition[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useDashboardModal(() => setOpen(false), open);
@@ -160,6 +163,7 @@ export default function AiAssistPanel({
     requestValues.current = null;
     setLoadingAction(null);
     setResult(null);
+    setExtraFields([]);
     setSelected(new Set());
     setOpen(true);
   };
@@ -192,9 +196,13 @@ export default function AiAssistPanel({
     };
   }, [open]);
 
+  const availableFields = useMemo(() => {
+    const known = new Set(fields.map((field) => field.key));
+    return [...fields, ...extraFields.filter((field) => !known.has(field.key))];
+  }, [fields, extraFields]);
   const fieldMap = useMemo(
-    () => new Map(fields.map((field) => [field.key, field] as const)),
-    [fields],
+    () => new Map(availableFields.map((field) => [field.key, field] as const)),
+    [availableFields],
   );
 
   const localIssue = (
@@ -221,13 +229,13 @@ export default function AiAssistPanel({
     const definition = fieldMap.get(item.field);
     return definition && item.decision !== "block" && !localIssue(item, definition);
   });
-  const completion = formCompletion(fields, currentData, eligibleSuggestions, selected);
+  const completion = formCompletion(availableFields, currentData, eligibleSuggestions, selected);
   const orderedSuggestions = useMemo(() => {
-    const order = new Map(fields.map((field, index) => [field.key, index] as const));
+    const order = new Map(availableFields.map((field, index) => [field.key, index] as const));
     return [...(result?.suggestions ?? [])].sort(
       (a, b) => (order.get(a.field) ?? 10000) - (order.get(b.field) ?? 10000),
     );
-  }, [fields, result]);
+  }, [availableFields, result]);
 
   const run = async (action: DashboardAiAction) => {
     if (loadingAction) return;
@@ -255,10 +263,11 @@ export default function AiAssistPanel({
     setLoadingAction(action);
     setRequestError("");
     setResult(null);
+    setExtraFields([]);
     setSelected(new Set());
     setProgress({ completed: 0, total: 0 });
     try {
-      const response = await requestDashboardAiAssist(
+      let response = await requestDashboardAiAssist(
         {
           entity,
           action,
@@ -279,9 +288,56 @@ export default function AiAssistPanel({
         },
       );
       if (requestId !== requestIdRef.current) return;
+      // For a new product with no selected category, research category first,
+      // then automatically fill the actual dashboard template for that category.
+      // Both passes stay draft-only and the proposed category requires approval.
+      let discoveredFields: DashboardAiFieldDefinition[] = [];
+      if (
+        entity === "product" &&
+        action === "research_fill" &&
+        !fields.some((field) => field.key.startsWith("spec__")) &&
+        !(currentData.categoryName ?? "").trim()
+      ) {
+        const categorySuggestion = response.suggestions.find(
+          (item) => item.field === "categoryName" && item.decision !== "block",
+        );
+        const categoryTemplate = categoryTemplates.find(
+          (item) =>
+            item.name.trim().toLocaleLowerCase() ===
+            (categorySuggestion?.value ?? "").trim().toLocaleLowerCase(),
+        );
+        if (categoryTemplate?.fields.length) {
+          discoveredFields = categoryTemplate.fields;
+          const specifications = await requestDashboardAiAssist(
+            {
+              entity,
+              action,
+              query: researchQuery,
+              sourceText,
+              referenceUrls,
+              language: lang,
+              fillMode,
+              currentData: Object.fromEntries(discoveredFields.map((field) => [field.key, ""])),
+              fields: discoveredFields,
+              context,
+            },
+            {
+              signal: controller.signal,
+              onProgress: (completed, total) => {
+                if (requestId === requestIdRef.current)
+                  setProgress({ completed: completed + 1, total: total + 1 });
+              },
+            },
+          );
+          if (requestId !== requestIdRef.current) return;
+          response = mergeAiResponses([response, specifications]);
+        }
+      }
+      setExtraFields(discoveredFields);
       setResult(response);
+      const discoveredMap = new Map(discoveredFields.map((field) => [field.key, field] as const));
       const safeSuggestions = response.suggestions.filter((suggestion) => {
-        const definition = fieldMap.get(suggestion.field);
+        const definition = discoveredMap.get(suggestion.field) ?? fieldMap.get(suggestion.field);
         return (
           definition &&
           suggestion.decision === "allow" &&
@@ -304,6 +360,11 @@ export default function AiAssistPanel({
     const patch: Record<string, string> = {};
     for (const suggestion of result.suggestions) {
       if (!selected.has(suggestion.field)) continue;
+      if (
+        suggestion.field.startsWith("spec__") &&
+        !(currentData.categoryName ?? "").trim() &&
+        !selected.has("categoryName")
+      ) continue;
       const definition = fieldMap.get(suggestion.field);
       if (!definition) continue;
       const issue = localIssue(suggestion, definition);
@@ -724,7 +785,12 @@ export default function AiAssistPanel({
                             suggestion.checks.includes(
                               "No meaningful change from the current value",
                             );
-                          const blocked = Boolean(issue) || suggestion.decision === "block";
+                          const blocked =
+                            Boolean(issue) ||
+                            suggestion.decision === "block" ||
+                            (suggestion.field.startsWith("spec__") &&
+                              !(currentData.categoryName ?? "").trim() &&
+                              !selected.has("categoryName"));
                           const checked = !blocked && selected.has(suggestion.field);
                           const current = currentData[suggestion.field] ?? "";
                           const evidenceSources = result.sources.filter((source) =>
