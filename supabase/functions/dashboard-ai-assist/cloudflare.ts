@@ -25,12 +25,13 @@ export async function callCloudflareAi(args: CloudflareRequest) {
   if (!/^[a-f0-9]{32}$/i.test(args.accountId)) throw new Error("invalid_cloudflare_account_id");
   if (!isFreeCloudflareModel(args.model)) throw new Error("cloudflare_model_not_free");
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 25_000);
+  // The Dashboard client permits up to 90 seconds; complex catalog forms need more than 25s.
+  const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 65_000);
   try {
     const response = await (args.fetcher ?? fetch)(
       "https://api.cloudflare.com/client/v4/accounts/" +
         args.accountId +
-        "/ai/v1/chat/completions",
+        "/ai/run/" + args.model,
       {
         method: "POST",
         headers: {
@@ -38,7 +39,6 @@ export async function callCloudflareAi(args: CloudflareRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: args.model,
           messages: [
             {
               role: "system",
@@ -49,6 +49,9 @@ export async function callCloudflareAi(args: CloudflareRequest) {
             },
             { role: "user", content: args.input },
           ],
+          // Both allowlisted Workers Free models support non-thinking inference.
+          // Otherwise GLM can spend the original 25s budget on reasoning alone.
+          chat_template_kwargs: { enable_thinking: false },
           temperature: 0.1,
           max_tokens: 6144,
           stream: false,
@@ -67,6 +70,13 @@ export async function callCloudflareAi(args: CloudflareRequest) {
 export function cloudflareText(payload: unknown): string {
   if (!payload || typeof payload !== "object") return "";
   const body = payload as Record<string, unknown>;
+  // Workers AI /ai/run returns { success, result: { response: string } }.
+  const result = body.result;
+  if (result && typeof result === "object") {
+    const response = (result as Record<string, unknown>).response;
+    if (typeof response === "string") return response.trim();
+  }
+  // Continue accepting the previous OpenAI-compatible shape as a safe fallback.
   const choices = Array.isArray(body.choices) ? body.choices : [];
   const first = choices[0];
   if (!first || typeof first !== "object") return "";

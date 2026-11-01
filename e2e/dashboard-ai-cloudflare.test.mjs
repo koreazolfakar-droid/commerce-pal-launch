@@ -44,7 +44,7 @@ test("Cloudflare adapter is server-only and requests only free-listed Workers AI
   assert.equal(called, false);
 });
 
-test("Cloudflare adapter calls the authenticated chat completions endpoint with cautious instructions", async () => {
+test("Cloudflare adapter calls Workers AI non-thinking inference with cautious instructions", async () => {
   let url;
   let options;
   const output = await callCloudflareAi({
@@ -57,15 +57,15 @@ test("Cloudflare adapter calls the authenticated chat completions endpoint with 
         status: 200,
         headers: { get: () => null },
         json: async () => ({
-          choices: [{ message: { content: '{"suggestions":[]}' } }],
+          result: { response: '{"suggestions":[]}' },
         }),
       };
     },
   });
-  assert.match(url, /accounts\/a{32}\/ai\/v1\/chat\/completions$/);
+  assert.match(url, /accounts\/a{32}\/ai\/run\/@cf\/zai-org\/glm-4\.7-flash$/);
   assert.equal(options.headers.Authorization, "Bearer secret-only-on-server");
   const body = JSON.parse(options.body);
-  assert.equal(body.model, DEFAULT_CLOUDFLARE_MODEL);
+  assert.deepEqual(body.chat_template_kwargs, { enable_thinking: false });
   assert.equal(body.messages[0].role, "system");
   assert.match(body.messages[0].content, /NO live web search or URL retrieval/);
   assert.match(body.messages[0].content, /verified=false/);
@@ -78,8 +78,24 @@ test("Cloudflare adapter calls the authenticated chat completions endpoint with 
 test("Cloudflare response parser rejects reasoning-only and empty outputs", () => {
   assert.equal(cloudflareText({ choices: [{ message: { reasoning: "thoughts", content: null } }] }), "");
   assert.equal(cloudflareText({ choices: [{ message: { content: [{ type: "text", text: '{"ok":true}' }] } }] }), '{"ok":true}');
+  assert.equal(cloudflareText({ result: { response: '{"ok":true}' } }), '{"ok":true}');
   assert.equal(cloudflareText({ choices: [] }), "");
   assert.equal(cloudflareText(null), "");
+});
+
+test("Cloudflare adapter preserves successful Workers AI responses and bounded custom timeouts", async () => {
+  const result = await callCloudflareAi({
+    ...basic,
+    timeoutMs: 200,
+    fetcher: async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({ result: { response: '{"suggestions":[]}' } }),
+    }),
+  });
+  assert.equal(result.ok, true);
+  assert.equal(cloudflareText(result.body), '{"suggestions":[]}');
 });
 
 test("Cloudflare 429 is surfaced without hidden retries or paid-provider fallback", async () => {

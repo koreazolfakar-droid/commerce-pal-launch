@@ -1495,7 +1495,14 @@ Deno.serve(async (req) => {
         responseSchema: responseSchema(suggestionFields),
       });
     } catch (error) {
-      console.warn("[dashboard-ai] Cloudflare request threw", error instanceof Error ? error.name : error);
+      const kind = error instanceof Error ? error.name : "unknown";
+      console.warn("[dashboard-ai] Cloudflare request threw", kind);
+      if (kind === "AbortError") {
+        return json(req, {
+          error: "ai_timeout",
+          message: "Cloudflare AI took too long to answer. Try filling fewer fields or shortening the supplied source information.",
+        }, 504);
+      }
     }
     if (cloudflare && !cloudflare.ok)
       console.warn("[dashboard-ai] Cloudflare request failed", cloudflare.status);
