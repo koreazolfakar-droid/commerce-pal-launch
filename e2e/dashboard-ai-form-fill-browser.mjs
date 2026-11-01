@@ -229,7 +229,7 @@ try {
   await page.goto(`${origin}/dashboard/products/new`);
   await page.getByRole("button", { name: "مساعد الذكاء الاصطناعي", exact: true }).click();
   const arabicDialog = page.getByRole("dialog", { name: "بحث وكتابة وتحسين", exact: true });
-  await arabicDialog.getByLabel("ما الذي تريد البحث عنه؟", { exact: true }).fill("Phone 25");
+  await arabicDialog.getByLabel("اسم المنتج والموديل الدقيق", { exact: true }).fill("Phone 25");
   const beforeAutoResearch = requests.length;
   await arabicDialog.getByRole("button", { name: "إكمال النموذج", exact: true }).click();
   await arabicDialog.getByRole("button", { name: "تحديد الكل للمراجعة", exact: true }).waitFor();
