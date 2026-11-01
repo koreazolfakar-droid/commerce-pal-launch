@@ -39,8 +39,11 @@ this implementation does not enable paid plans or overages.
    `DASHBOARD_AI_PROVIDER=gemini` or restore the previous Edge Function
    deployment. Gemini is *not* used silently when Cloudflare fails.
 
-The API client requests Cloudflare's OpenAI-compatible
-`/ai/v1/chat/completions` endpoint from Supabase server-side only.
+The API client requests Cloudflare's Workers AI
+`/ai/run/@cf/...` endpoint from Supabase server-side only, with
+`chat_template_kwargs.enable_thinking=false` so long reasoning does not
+consume the dashboard request deadline. The upstream inference timeout
+is 65 seconds (the dashboard client allows 90 seconds).
 The model setting is strictly allowlisted, and the API token is never
 returned to the browser. An invalid or missing Cloudflare setup produces
 a clear service configuration error.
@@ -61,7 +64,7 @@ field. Do not claim an unverified source is grounded.
 
 Cloudflare free-tier exhaustion produces a 429 response with an
 explanation; the server never falls back to a paid or Gemini provider
-behind the user's back. Avoid repeated automatic retries on quota errors.
+behind the user's back. An upstream timeout produces a 504 response with a\nretry-fewer-fields hint, rather than misleadingly blaming API credentials.\nAvoid repeated automatic retries on quota errors.
 
 ## Verification
 
