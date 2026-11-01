@@ -787,7 +787,26 @@ function identityTokens(value: string) {
     .normalize("NFKC")
     .toLowerCase()
     .replace(/(\d+)\s*(gb|tb|mb)/g, "$1$2");
-  return new Set(normalized.match(/[\p{L}\p{N}]+/gu) ?? []);
+  const raw = normalized.match(/[\p{L}\p{N}]+/gu) ?? [];
+  const tokens = new Set(raw);
+  // Manufacturer catalogs often write the same model as Play20C or Play 20C.
+  // Add only exact joined/split alphanumeric tokens; never drop the number
+  // or silently treat different storage/variant numbers as equivalent.
+  for (let i = 0; i < raw.length; i += 1) {
+    const combined = raw[i].match(/^([\p{L}]+)(\d+[\p{L}]*)$/u);
+    if (combined) {
+      tokens.add(combined[1]);
+      tokens.add(combined[2]);
+    }
+    if (
+      i + 1 < raw.length &&
+      /^[\p{L}]+$/u.test(raw[i]) &&
+      /^\d+[\p{L}]*$/u.test(raw[i + 1])
+    ) {
+      tokens.add(raw[i] + raw[i + 1]);
+    }
+  }
+  return tokens;
 }
 
 function calibrateEntityMatch(
