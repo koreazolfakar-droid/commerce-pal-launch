@@ -108,8 +108,8 @@ function Logo() {
         <span>SC</span>
       </div>
       <div className="min-w-0">
-          <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
-          <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
+        <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
+        <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
       </div>
     </div>
   );
@@ -218,8 +218,7 @@ function Sidebar({
         <nav aria-label={t("Workspace navigation")} className="dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
           {navSections.map((section) => (
             <section key={section.label} className="dashboard-sidebar-group mb-5">
-              {(
-                <button
+              <button
                   type="button"
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={!closedSections.includes(section.label)}
@@ -231,7 +230,6 @@ function Sidebar({
                     className={`size-3.5 transition-transform duration-150 ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
                   />
                 </button>
-              )}
               <div className="dashboard-sidebar-items space-y-1">
                 {section.items
                   .filter((item) => !unavailableDashboardRoutes.has(item.href))
@@ -244,7 +242,7 @@ function Sidebar({
                       <button
                         key={item.href}
                         aria-label={t(item.label)}
-                                                aria-current={active ? "page" : undefined}
+                        aria-current={active ? "page" : undefined}
                         onMouseEnter={() => void preloadDashboardRoute(item.href)}
                         onFocus={() => void preloadDashboardRoute(item.href)}
                         onTouchStart={() => void preloadDashboardRoute(item.href)}
@@ -259,9 +257,8 @@ function Sidebar({
                           className="dashboard-sidebar-item-icon size-[18px] shrink-0"
                           strokeWidth={1.8}
                         />
-                        {(
-                          <>
-                            <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
+                        <>
+                          <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
                             {[
                               "/dashboard/marketing",
                               "/dashboard/coupons",
@@ -272,8 +269,7 @@ function Sidebar({
                                 {t("Not connected")}
                               </span>
                             ) : null}
-                          </>
-                        )}
+                        </>
                       </button>
                     );
                   })}
@@ -282,8 +278,7 @@ function Sidebar({
           ))}
         </nav>
         <div className="dashboard-sidebar-footer p-3">
-          {(
-            <div className="dashboard-sidebar-shortcuts mb-3 space-y-1">
+          <div className="dashboard-sidebar-shortcuts mb-3 space-y-1">
               <button
                 type="button"
                 onClick={() => {
@@ -305,9 +300,7 @@ function Sidebar({
                 <ExternalLink className="size-4" />
                 <span className="flex-1 text-start">{t("Open store")}</span>
               </button>
-            </div>
-          )}
-
+          </div>
         </div>
       </aside>
     </>
