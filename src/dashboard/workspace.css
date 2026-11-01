@@ -1518,3 +1518,13 @@
     inset-inline-end: auto;
   }
 }
+
+/* The AI assistant renders in a body portal. On desktop, the Dashboard root uses
+ * a two-column integrated-sidebar grid; never apply that root geometry to a modal. */
+.dashboard-theme-scope.dashboard-ai-dialog {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  align-items: stretch;
+  min-inline-size: 0;
+}
