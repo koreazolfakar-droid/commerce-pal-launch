@@ -1484,12 +1484,14 @@ Deno.serve(async (req) => {
     // Keep all generated facts unverified and use the existing manual-review rules.
     fallbackWarning = "Live web verification is unavailable. Suggestions require manual review.";
     try {
+      const cfSystem = geminiRequest.systemInstruction;
+      const cfInput = geminiRequest.input;
       cloudflare = await callCloudflareAi({
         accountId: cfAccountId,
         token: cfToken,
         model: cfModel,
-        systemInstruction: geminiRequest.systemInstruction,
-        input: geminiRequest.input,
+        systemInstruction: cfSystem,
+        input: cfInput,
         responseSchema: responseSchema(suggestionFields),
       });
     } catch (error) {
