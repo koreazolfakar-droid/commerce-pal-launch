@@ -876,6 +876,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
         {t("Save as Draft")}
       </button>
+      {id ? (
+        <button type="button" onClick={() => submitProduct()}
+          disabled={saving || pendingAction !== null} aria-busy={saving}
+          className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60 sm:flex-none">
+          {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
+          {t("Save changes")}
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => submitProduct("Active")}
