@@ -73,6 +73,10 @@ test("Cloudflare adapter calls Workers AI non-thinking inference with cautious i
   assert.match(body.messages[0].content, /NO live web search or URL retrieval/);
   assert.match(body.messages[0].content, /verified=false/);
   assert.match(body.messages[0].content, /missingFields/);
+  assert.match(body.messages[0].content, /EXACT product brand, model identifier/);
+  assert.match(body.messages[0].content, /Never silently substitute a similar model/);
+  assert.match(body.messages[0].content, /Only extract factual specifications when the supplied source text/);
+  assert.match(body.messages[0].content, /inputQuote/);
   assert.equal(body.messages[1].content, basic.input);
   assert.equal(output.ok, true);
   assert.equal(cloudflareText(output.body), '{"suggestions":[]}');

@@ -194,3 +194,21 @@ test("phase two adds deterministic verification metadata", () => {
   assert.match(panel, /evidenceSources/);
   assert.match(panel, /Evidence/);
 });
+
+test("product AI starts from the product name and hides secondary controls by default", async () => {
+  const specEditor = await readFile(
+    new URL("../src/dashboard/components/products/ProductSpecificationEditor.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(product, /query=\{form\.title\}/);
+  assert.match(panel, /researchQuery\.trim\(\)\.length < 2/);
+  assert.match(panel, /lastOpenedQueryRef\.current\.trim\(\)/);
+  assert.ok(panel.includes('setReferenceUrlText("")'));
+  assert.match(panel, /Advanced AI options \(sources, mode and validation\)/);
+  assert.match(panel, /onClick=\{\(\) => void run\("research_fill"\)\}/);
+  assert.match(specEditor, /showScopedAi \? \(/);
+  assert.match(specEditor, /Advanced AI tools for sections and individual fields/);
+  assert.doesNotMatch(specEditor, /<Sparkles/);
+  assert.match(specEditor, /AI Section/);
+  assert.match(specEditor, /section\.fields\.map\(\(field\) => \(/);
+});

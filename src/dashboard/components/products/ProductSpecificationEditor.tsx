@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { useState } from "react";
 import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import {
@@ -47,6 +47,7 @@ export default function ProductSpecificationEditor({
 }) {
   const { lang } = useLanguage();
   const ar = lang === "ar";
+  const [showScopedAi, setShowScopedAi] = useState(false);
   const fields = template.sections.flatMap((section) => section.fields);
   if (!fields.length) {
     return (
@@ -94,14 +95,52 @@ export default function ProductSpecificationEditor({
         />
       </div>
 
+      <details className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60" onToggle={(event) => setShowScopedAi(event.currentTarget.open)}>
+        <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-slate-600">
+          {ar ? "خيارات AI متقدمة للأقسام والحقول" : "Advanced AI tools for sections and individual fields"}
+        </summary>
+        {showScopedAi ? (
+          <div className="space-y-4 border-t border-slate-200 p-3">
+            {template.sections.map((section) => (
+              <div key={section.title} className="space-y-2">
+                <p className="text-xs font-semibold text-slate-600">{ar ? section.titleAr || section.title : section.title}</p>
+                <AiAssistPanel
+                  entity="product"
+                  query={query}
+                  currentData={Object.fromEntries(section.fields.map((field) => [
+                    aiSpecificationFieldKey(field.key), values[field.key] ?? "",
+                  ]))}
+                  fields={section.fields.map((field) => aiField(field, section.title, section.titleAr))}
+                  context={{ ...aiContext, specKeys: section.fields.map((field) => field.key) }}
+                  onApply={onAiApply}
+                  triggerLabel={ar ? "AI للقسم" : "AI Section"}
+                  showSeoAction={false}
+                  compact
+                />
+                <div className="flex flex-wrap gap-2">
+                  {section.fields.map((field) => (
+                    <AiAssistPanel
+                      key={field.key}
+                      entity="product"
+                      query={query}
+                      currentData={{ [aiSpecificationFieldKey(field.key)]: values[field.key] ?? "" }}
+                      fields={[aiField(field, section.title, section.titleAr)]}
+                      context={{ ...aiContext, specKeys: [field.key] }}
+                      onApply={onAiApply}
+                      triggerLabel={ar ? field.labelAr || field.label : field.label}
+                      showSeoAction={false}
+                      compact
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </details>
+
       <div className="space-y-4">
         {template.sections.map((section) => {
-          const sectionCurrentData = Object.fromEntries(
-            section.fields.map((field) => [
-              aiSpecificationFieldKey(field.key),
-              values[field.key] ?? "",
-            ]),
-          );
 
           return (
             <section
@@ -112,25 +151,10 @@ export default function ProductSpecificationEditor({
                 <div className="text-[10px] font-black uppercase tracking-[.1em] text-slate-500">
                   {ar ? section.titleAr || section.title : section.title}
                 </div>
-                <AiAssistPanel
-                  entity="product"
-                  query={query}
-                  currentData={sectionCurrentData}
-                  fields={section.fields.map((field) => aiField(field, section.title, section.titleAr))}
-                  context={{
-                    ...aiContext,
-                    specKeys: section.fields.map((field) => field.key),
-                  }}
-                  onApply={onAiApply}
-                  triggerLabel={ar ? "AI للقسم" : "AI Section"}
-                  showSeoAction={false}
-                  compact
-                />
               </div>
 
               <div className="grid gap-3 p-3.5 sm:grid-cols-2">
                 {section.fields.map((field) => {
-                  const aiKey = aiSpecificationFieldKey(field.key);
                   const generated = aiGeneratedKeys.has(field.key);
                   return (
                     <label key={field.key} className="block min-w-0">
@@ -144,21 +168,11 @@ export default function ProductSpecificationEditor({
                         <span className="flex items-center gap-1.5">
                           {generated ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[8px] font-black text-amber-700">
-                              <Sparkles className="size-2.5" />
+
                               {ar ? "AI · مراجعة" : "AI · review"}
                             </span>
                           ) : null}
-                          <AiAssistPanel
-                            entity="product"
-                            query={query}
-                            currentData={{ [aiKey]: values[field.key] ?? "" }}
-                            fields={[aiField(field, section.title, section.titleAr)]}
-                            context={{ ...aiContext, specKeys: [field.key] }}
-                            onApply={onAiApply}
-                            triggerLabel="AI"
-                            showSeoAction={false}
-                            compact
-                          />
+
                         </span>
                       </span>
                       <input

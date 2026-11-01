@@ -130,6 +130,7 @@ try {
   await page.getByRole("button", { name: "AI Assist", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Research, fill and improve", exact: true });
   await dialog.waitFor();
+  await dialog.getByText("Advanced AI options (sources, mode and validation)", { exact: true }).click();
   await dialog
     .getByLabel("Source information and specifications", { exact: true })
     .fill("Phone 25\n" + specFields.map((field, i) => `Field ${i}: Value ${i}`).join("\n"));
@@ -161,6 +162,7 @@ try {
   assert.deepEqual(writes, []);
   // A failed second batch must not expose a partially completed first batch for application.
   await page.getByRole("button", { name: "AI Assist", exact: true }).click();
+  await dialog.getByText("Advanced AI options (sources, mode and validation)", { exact: true }).click();
   await dialog.getByLabel("Also improve existing fields", { exact: true }).check();
   failAt = requests.length + 2;
   await dialog.getByRole("button", { name: "Complete form", exact: true }).click();
@@ -227,7 +229,7 @@ try {
   await page.goto(`${origin}/dashboard/products/new`);
   await page.getByRole("button", { name: "مساعد الذكاء الاصطناعي", exact: true }).click();
   const arabicDialog = page.getByRole("dialog", { name: "بحث وكتابة وتحسين", exact: true });
-  await arabicDialog.getByLabel("ما الذي تريد البحث عنه؟", { exact: true }).fill("Phone 25");
+  await arabicDialog.getByLabel("اسم المنتج والموديل الدقيق", { exact: true }).fill("Phone 25");
   const beforeAutoResearch = requests.length;
   await arabicDialog.getByRole("button", { name: "إكمال النموذج", exact: true }).click();
   await arabicDialog.getByRole("button", { name: "تحديد الكل للمراجعة", exact: true }).waitFor();

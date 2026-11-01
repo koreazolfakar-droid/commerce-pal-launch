@@ -154,10 +154,18 @@ export default function AiAssistPanel({
   const panelRef = useDashboardModal(() => setOpen(false), open);
   const queryInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
+  const lastOpenedQueryRef = useRef(query);
   const dialogTitleId = useId();
 
   const openPanel = () => {
     requestIdRef.current += 1;
+    // Never silently reuse another product model's reference sheet or URLs.
+    if (query.trim() !== lastOpenedQueryRef.current.trim()) {
+      setSourceText("");
+      setReferenceUrlText("");
+      setFillMode("empty");
+    }
+    lastOpenedQueryRef.current = query;
     setResearchQuery(query);
     setRequestError("");
     requestValues.current = null;
@@ -460,7 +468,7 @@ export default function AiAssistPanel({
                 <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
                   <label className="block">
                     <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                      {t("What should AI research?")}
+                      {t(entity === "product" ? "Product name / exact model" : "What should AI research?")}
                     </span>
                     <input
                       ref={queryInputRef}
@@ -474,11 +482,35 @@ export default function AiAssistPanel({
                         setResult(null);
                         setSelected(new Set());
                       }}
-                      placeholder={t("Exact name or subject of the form")}
+                      placeholder={t(entity === "product" ? "e.g. HONOR Play20C 4GB / 128GB" : "Exact name or subject of the form")}
                       className="h-11 w-full rounded-xl border border-slate-200 px-3 text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </label>
 
+                  {entity === "product" ? (
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      {t("Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.")}
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={Boolean(loadingAction) || researchQuery.trim().length < 2}
+                    onClick={() => void run("research_fill")}
+                    className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4858d8] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {loadingAction === "research_fill"
+                      ? <Loader2 className="size-4 animate-spin" />
+                      : <Search className="size-4" />}
+                    {t("Complete form")}
+                  </button>
+                  <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/60">
+                    <summary className="cursor-pointer px-3 py-3 text-xs font-semibold text-slate-700">
+                      {t("Advanced AI options (sources, mode and validation)")}
+                    </summary>
+                    <div className="border-t border-slate-200 px-3 pb-3">
+                      <p className="mt-3 text-xs leading-5 text-slate-500">
+                        {t("Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.")}
+                      </p>
                   <label className="mt-4 block">
                     <span className="mb-1.5 block text-xs font-bold text-foreground">
                       {t("Source information and specifications")}
@@ -499,7 +531,7 @@ export default function AiAssistPanel({
                       className="min-h-32 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground"
                     />
                     <span className="mt-1 block text-xs text-muted-foreground">
-                      {t("Optional reference text; web research can also be used.")}{" "}
+                      {t("Reference text improves factual accuracy. Live web lookup depends on your AI provider.")}{" "}
                       <bdi dir="ltr" className="whitespace-nowrap">
                         {sourceText.length.toLocaleString(lang)} / 12,000
                       </bdi>{" "}
@@ -527,7 +559,7 @@ export default function AiAssistPanel({
                       className="w-full resize-y rounded-xl border border-border bg-card p-3 text-left text-xs text-foreground outline-none focus:border-indigo-400"
                     />
                     <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                      {t("Up to 3 public HTTPS links, one per line. Official product pages improve verification when web search is limited.")}
+                      {t("Up to 3 HTTPS links. The Cloudflare model cannot open them; paste relevant product-sheet text above for factual extraction.")}
                     </span>
                   </label>
                   <fieldset className="mt-4 rounded-xl border border-border p-3">
@@ -591,6 +623,28 @@ export default function AiAssistPanel({
                       {t("Choose a product category first to let AI fill all matching specification fields.")}
                     </p>
                   ) : null}
+                  <div
+                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-2" : "grid-cols-1"}`}
+                  >
+                    {showSeoAction ? (
+                      <ActionButton
+                        label={t("Improve SEO")}
+                        icon={<WandSparkles className="size-3.5" />}
+                        active={loadingAction === "seo"}
+                        disabled={Boolean(loadingAction)}
+                        onClick={() => void run("seo")}
+                      />
+                    ) : null}
+                    <ActionButton
+                      label={t("Validate")}
+                      icon={<ShieldCheck className="size-3.5" />}
+                      active={loadingAction === "validate"}
+                      disabled={Boolean(loadingAction)}
+                      onClick={() => void run("validate")}
+                    />
+                  </div>
+                    </div>
+                  </details>
                   {requestError && (
                     <div
                       role="alert"
@@ -610,33 +664,7 @@ export default function AiAssistPanel({
                     </div>
                   )}
 
-                  <div
-                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}
-                  >
-                    <ActionButton
-                      label={t("Complete form")}
-                      icon={<Search className="size-3.5" />}
-                      active={loadingAction === "research_fill"}
-                      disabled={Boolean(loadingAction)}
-                      onClick={() => void run("research_fill")}
-                    />
-                    {showSeoAction ? (
-                      <ActionButton
-                        label={t("Improve SEO")}
-                        icon={<WandSparkles className="size-3.5" />}
-                        active={loadingAction === "seo"}
-                        disabled={Boolean(loadingAction)}
-                        onClick={() => void run("seo")}
-                      />
-                    ) : null}
-                    <ActionButton
-                      label={t("Validate")}
-                      icon={<ShieldCheck className="size-3.5" />}
-                      active={loadingAction === "validate"}
-                      disabled={Boolean(loadingAction)}
-                      onClick={() => void run("validate")}
-                    />
-                  </div>
+
 
                   {result ? (
                     <div className="mt-5 space-y-4">
