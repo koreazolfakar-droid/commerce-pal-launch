@@ -202,6 +202,8 @@ test("product AI starts from the product name and hides secondary controls by de
   );
   assert.match(product, /query=\{form\.title\}/);
   assert.match(panel, /researchQuery\.trim\(\)\.length < 2/);
+  assert.match(panel, /lastOpenedQueryRef\.current\.trim\(\)/);
+  assert.match(panel, /setReferenceUrlText\("")/);
   assert.match(panel, /Advanced AI options \(sources, mode and validation\)/);
   assert.match(panel, /onClick=\{\(\) => void run\("research_fill"\)\}/);
   assert.match(specEditor, /showScopedAi \? \(/);
