@@ -216,6 +216,22 @@ try {
   await page.getByRole("heading", { name: "Inventory control", exact: true }).waitFor();
   assert.equal(await page.getByRole("alert").count(), 0);
   await go("products/new");
+  // Real browser overflow regression at all supported Phase 1 breakpoints.
+  // The section rail scrolls within its own container, never the document.
+  for (const width of [360, 390, 768, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByLabel("Title", { exact: true }).waitFor();
+    const measured = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth,
+      editor: document.querySelector(".dashboard-product-editor")?.getBoundingClientRect().width ?? 0,
+    }));
+    assert.ok(
+      measured.document <= measured.viewport + 1,
+      `horizontal document overflow at ${width}px: ${JSON.stringify(measured)}`,
+    );
+    assert.ok(measured.editor > 0, `product editor is hidden at ${width}px`);
+  }
   await page.getByRole("button", { name: "Pricing", exact: true }).click();
   await page.getByRole("button", { name: "Variants", exact: true }).click();
   assert.equal(await page.evaluate(() => document.activeElement?.id), "product-variants");
