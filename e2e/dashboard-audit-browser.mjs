@@ -149,9 +149,63 @@ try {
     );
     await assertControlsFit("Mobile form controls at " + path);
   }
+  // Desktop-site mode on phones commonly has a 980px CSS viewport.
+  // Navigation must be part of the layout, never a drawer or optional toggle.
+  const assertIntegratedSidebar = async (label) => {
+    const geometry = await page.evaluate(() => {
+      const root = document.querySelector(".dashboard-theme-scope");
+      const sidebar = document.querySelector("#dashboard-sidebar-navigation");
+      const content = document.querySelector(".dashboard-desktop-content");
+      const menu = document.querySelector(".dashboard-menu-trigger");
+      const mobileNav = document.querySelector(".dashboard-mobile-nav");
+      if (!root || !sidebar || !content || !menu || !mobileNav) return null;
+      const side = sidebar.getBoundingClientRect();
+      const body = content.getBoundingClientRect();
+      return {
+        rootDisplay: getComputedStyle(root).display,
+        sidePosition: getComputedStyle(sidebar).position,
+        sideTransform: getComputedStyle(sidebar).transform,
+        sideTranslate: getComputedStyle(sidebar).translate,
+        sideVisible: side.width > 150 && side.height > 0,
+        sideRight: side.right,
+        sideLeft: side.left,
+        contentRight: body.right,
+        contentLeft: body.left,
+        contentWidth: body.width,
+        menuDisplay: getComputedStyle(menu).display,
+        mobileNavDisplay: getComputedStyle(mobileNav).display,
+        sidebarRole: sidebar.getAttribute("role"),
+        rtl: document.documentElement.dir === "rtl",
+        overflow: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    assert.ok(geometry, label + ": expected dashboard layout");
+    assert.equal(geometry.rootDisplay, "grid", label);
+    assert.equal(geometry.sidePosition, "sticky", label);
+    assert.equal(geometry.sideTransform, "none", label);
+    assert.equal(geometry.sideTranslate, "none", label);
+    assert.equal(geometry.sideVisible, true, label);
+    assert.equal(geometry.menuDisplay, "none", label);
+    assert.equal(geometry.mobileNavDisplay, "none", label);
+    assert.equal(geometry.sidebarRole, null, label);
+    assert.equal(geometry.overflow, false, label);
+    assert.ok(geometry.contentWidth > 350, label + ": content too narrow");
+    assert.ok(
+      geometry.rtl
+        ? geometry.sideLeft >= geometry.contentRight - 2
+        : geometry.sideRight <= geometry.contentLeft + 2,
+      label + ": sidebar overlaps workspace",
+    );
+  };
+  for (const width of [768, 980]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForTimeout(250);
+    await assertIntegratedSidebar("Permanent English sidebar at " + width);
+  }
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.getByRole("button", { name: "AR", exact: true }).click();
   await page.getByRole("button", { name: "التبديل إلى الوضع الداكن", exact: true }).click();
+  await assertIntegratedSidebar("Permanent Arabic desktop sidebar at 1024");
   for (const path of renderRoutes) {
     await page.goto(origin + "/dashboard/" + path, { waitUntil: "domcontentloaded" });
     await page.locator("main h1").first().waitFor({ timeout: 30000 });
@@ -163,6 +217,7 @@ try {
     await assertControlsFit("Arabic tablet form controls at " + path);
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await assertIntegratedSidebar("Permanent Arabic desktop sidebar at 1440");
 
   console.log(
     JSON.stringify({
@@ -178,6 +233,8 @@ try {
         "browser Back preserves unsaved edits",
         "all dashboard navigation routes render without mobile overflow",
         "all dashboard navigation routes render in Arabic dark tablet view",
+        "desktop-site viewport keeps an integrated sidebar without toggle",
+        "desktop sidebar does not overlap content in English or RTL",
       ],
       pageErrors: errors,
     }),
