@@ -63,7 +63,10 @@ test("new product images are queued locally, written to a draft then published",
   assert.match(form, /partialDraftIdRef\.current = savedProduct\.id/);
   assert.match(form, /id: id \?\? partialDraftIdRef\.current \?\? undefined/);
   assert.match(form, /uploadedPreviewsRef\.current\.has\(pending\.preview\)/);
-  const catchDraft = form.slice(form.indexOf("if (createdDraftId) {", form.indexOf("} catch (cause) {", form.indexOf("const handleSave"))));
+  const catchStart = form.indexOf("} catch (cause) {", form.indexOf("const handleSave"));
+  const catchEnd = form.indexOf("} finally {", catchStart);
+  const catchDraft = form.slice(catchStart, catchEnd);
+  assert.ok(catchStart > 0 && catchEnd > catchStart);
   assert.ok(!catchDraft.includes("navigate("), "partial-save failure stays on the editor");
   assert.match(preview, /blob:https\?/);
   assert.match(translations, /"Images upload after save"/);
