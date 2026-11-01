@@ -43,6 +43,8 @@ export const dashboardUiArabic: Record<string, string> = {
     "انتقل إلى أي قسم لمراجعته. لا يمنع المحتوى الاختياري حفظ المسودة.",
 
   "AI Assist": "مساعد الذكاء الاصطناعي",
+  "Product name / exact model": "اسم المنتج والموديل الدقيق",
+  "e.g. HONOR Play20C 4GB / 128GB": "مثلاً HONOR Play20C 4GB / 128GB",
   "Exact name or subject of the form": "الاسم الدقيق أو موضوع النموذج",
   "Research & Fill prepares safe draft suggestions. Nothing changes until Apply selected, and nothing is saved until you save the form.":
     "يجهّز المساعد مقترحات للمراجعة. طبّق المقترحات التي تختارها، ثم احفظ النموذج عندما تتأكد من المعلومات.",
