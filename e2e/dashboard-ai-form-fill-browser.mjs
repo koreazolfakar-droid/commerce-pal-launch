@@ -133,9 +133,12 @@ try {
   await dialog
     .getByLabel("Source information and specifications", { exact: true })
     .fill("Phone 25\n" + specFields.map((field, i) => `Field ${i}: Value ${i}`).join("\n"));
+  await dialog.getByLabel("Product research pages (optional)", { exact: true })
+    .fill("https://www.hihonor.com/global/phones/");
   await dialog.getByRole("button", { name: "Complete form", exact: true }).click();
   await dialog.getByRole("button", { name: "Select all for review", exact: true }).waitFor();
   assert.equal(requests.length, 2);
+  assert.ok(requests.every((body) => body.referenceUrls?.[0] === "https://www.hihonor.com/global/phones/"));
   assert.equal(
     requests.flatMap((body) => body.fields).filter((field) => field.key.startsWith("spec__"))
       .length,
