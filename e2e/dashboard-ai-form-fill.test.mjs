@@ -23,7 +23,7 @@ const edgeSource = await readFile(
 );
 const edge =
   edgeSource.replace(/^import .*;\n/gm, "") +
-  "\nexport { cleanFields, cleanReferenceUrls, grounding, specificationUnitIssue, buildGeminiRequest, normalizeAiResult, verifySuggestions, suggestionFieldsForAction };";
+  "\nexport { cleanFields, cleanReferenceUrls, grounding, specificationUnitIssue, calibrateEntityMatch, buildGeminiRequest, normalizeAiResult, verifySuggestions, suggestionFieldsForAction };";
 const output = ts.transpileModule(edge, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
@@ -161,6 +161,24 @@ test("unverified specifications require exact entity and a real supplied quotati
     entityMatch: { ...args.entityMatch, status: "partial" },
   });
   assert.equal(wrongModel.decision, "block");
+});
+
+test("joined and spaced model names match, but different variants do not", () => {
+  const match = { status: "exact", canonicalName: "Honor Play 20C", reason: "same device" };
+  assert.equal(engine.calibrateEntityMatch(match, "product", "Honor Play20C", {}).status, "exact");
+  assert.notEqual(
+    engine.calibrateEntityMatch({ ...match, canonicalName: "Honor Play 20D" }, "product", "Honor Play20C", {}).status,
+    "exact",
+  );
+  assert.notEqual(
+    engine.calibrateEntityMatch(
+      { ...match, canonicalName: "Honor Play 20C 256GB" },
+      "product",
+      "Honor Play20C 128GB",
+      {},
+    ).status,
+    "exact",
+  );
 });
 
 test("reference URLs are safe, de-duplicated and bounded before provider retrieval", () => {
