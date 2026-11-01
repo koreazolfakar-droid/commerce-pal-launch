@@ -154,10 +154,18 @@ export default function AiAssistPanel({
   const panelRef = useDashboardModal(() => setOpen(false), open);
   const queryInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
+  const lastOpenedQueryRef = useRef(query);
   const dialogTitleId = useId();
 
   const openPanel = () => {
     requestIdRef.current += 1;
+    // Never silently reuse another product model's reference sheet or URLs.
+    if (query.trim() !== lastOpenedQueryRef.current.trim()) {
+      setSourceText("");
+      setReferenceUrlText("");
+      setFillMode("empty");
+    }
+    lastOpenedQueryRef.current = query;
     setResearchQuery(query);
     setRequestError("");
     requestValues.current = null;
