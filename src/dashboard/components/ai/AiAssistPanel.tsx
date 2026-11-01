@@ -523,7 +523,7 @@ export default function AiAssistPanel({
                       className="min-h-32 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground"
                     />
                     <span className="mt-1 block text-xs text-muted-foreground">
-                      {t("Optional reference text; web research can also be used.")}{" "}
+                      {t("Reference text improves factual accuracy. Live web lookup depends on your AI provider.")}{" "}
                       <bdi dir="ltr" className="whitespace-nowrap">
                         {sourceText.length.toLocaleString(lang)} / 12,000
                       </bdi>{" "}
@@ -551,7 +551,7 @@ export default function AiAssistPanel({
                       className="w-full resize-y rounded-xl border border-border bg-card p-3 text-left text-xs text-foreground outline-none focus:border-indigo-400"
                     />
                     <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                      {t("Up to 3 public HTTPS links, one per line. Official product pages improve verification when web search is limited.")}
+                      {t("Up to 3 HTTPS links. The Cloudflare model cannot open them; paste relevant product-sheet text above for factual extraction.")}
                     </span>
                   </label>
                   <fieldset className="mt-4 rounded-xl border border-border p-3">
@@ -615,25 +615,6 @@ export default function AiAssistPanel({
                       {t("Choose a product category first to let AI fill all matching specification fields.")}
                     </p>
                   ) : null}
-                  {requestError && (
-                    <div
-                      role="alert"
-                      className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
-                    >
-                      {t(requestError)}
-                    </div>
-                  )}
-                  {loadingAction && (
-                    <div
-                      role="status"
-                      className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
-                    >
-                      <Loader2 className="size-4 animate-spin" />
-                      {t("Completing all requested fields…")}{" "}
-                      {progress.total > 1 ? `${progress.completed} / ${progress.total}` : ""}
-                    </div>
-                  )}
-
                   <div
                     className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-2" : "grid-cols-1"}`}
                   >
@@ -656,6 +637,26 @@ export default function AiAssistPanel({
                   </div>
                     </div>
                   </details>
+                  {requestError && (
+                    <div
+                      role="alert"
+                      className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                    >
+                      {t(requestError)}
+                    </div>
+                  )}
+                  {loadingAction && (
+                    <div
+                      role="status"
+                      className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
+                    >
+                      <Loader2 className="size-4 animate-spin" />
+                      {t("Completing all requested fields…")}{" "}
+                      {progress.total > 1 ? `${progress.completed} / ${progress.total}` : ""}
+                    </div>
+                  )}
+
+
 
                   {result ? (
                     <div className="mt-5 space-y-4">
