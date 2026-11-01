@@ -435,7 +435,7 @@ export default function AiAssistPanel({
                 aria-labelledby={dialogTitleId}
                 tabIndex={-1}
                 dir={lang === "ar" ? "rtl" : "ltr"}
-                className="dashboard-theme-scope flex min-h-0 min-w-0 w-[calc(100vw-24px)] max-w-[720px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl [max-height:calc(100dvh-24px)]"
+                className="dashboard-theme-scope flex min-h-0 min-w-0 w-[calc(100vw-24px)] max-w-[720px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl [height:calc(100dvh-24px)] [max-height:calc(100dvh-24px)]"
               >
                 <div className="flex min-w-0 shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
                   <div className="min-w-0 flex-1">
