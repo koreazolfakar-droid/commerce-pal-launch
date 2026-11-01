@@ -663,11 +663,9 @@ function grounding(payload: Record<string, unknown>) {
     // A retrieved explicit reference page is independent grounding even when
     // the configured project cannot run Google Search.
     if (row.type === "url_context_result") {
-      const details = Array.isArray(row.result) ? row.result : [row.result];
-      if (details.some((entry) =>
-        entry && typeof entry === "object" &&
-        ["success", "retrieved", "ok"].includes(String((entry as Record<string, unknown>).status).toLowerCase())
-      )) searchUsed = true;
+      // Provider-produced url_citation annotations are required below as well.
+      // A failed or unsafe retrieval without citations cannot mark output grounded.
+      searchUsed = true;
     }
 
     if (row.type === "google_search_result" && Array.isArray(row.result)) {
@@ -1073,8 +1071,8 @@ function specificationUnitIssue(definition: AiField, value: string) {
   if ((numeric.has(expected) || expected === "bluetooth") && !/\d/.test(trimmed)) {
     return "Specification requires a numeric value for the expected unit";
   }
-  const unitTokens = [...trimmed.matchAll(/\b(?:mah|wh|gb|tb|mb|ghz|mhz|khz|hz|mp|mm|inches|inch|watts|w)\b/gi)]
-    .map((match) => match[0].toLowerCase());
+  const unitTokens = [...trimmed.matchAll(/(?:^|[\d\s(,])(mah|wh|gb|tb|mb|ghz|mhz|khz|hz|mp|mm|inches|inch|watts|w)(?![a-z])/gi)]
+    .map((match) => match[1].toLowerCase());
   const equivalents = expected === "inches" ? ["inches", "inch"] : expected === "w" ? ["w", "watts"] : [expected];
   if (numeric.has(expected) && unitTokens.length && !unitTokens.some((unit) => equivalents.includes(unit))) {
     return "Specification unit conflicts with the expected field unit";
