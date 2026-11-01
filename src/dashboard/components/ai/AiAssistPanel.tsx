@@ -319,7 +319,7 @@ export default function AiAssistPanel({
               fillMode,
               currentData: Object.fromEntries(discoveredFields.map((field) => [field.key, ""])),
               fields: discoveredFields,
-              context,
+              context: { ...context, selectedCategory: categoryTemplate.name },
             },
             {
               signal: controller.signal,
@@ -700,6 +700,11 @@ export default function AiAssistPanel({
                         </details>
                       ) : null}
 
+                      {extraFields.length ? (
+                        <p className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs leading-5 text-indigo-900">
+                          {t("AI located a matching category template. Review the category selection together with its specifications before applying.")}
+                        </p>
+                      ) : null}
                       <div className="grid grid-cols-3 gap-2 text-center text-[10px] sm:text-xs">
                         <div className="rounded-xl border border-slate-200 p-2">
                           <strong className="block text-base text-slate-800">{result.suggestions.filter((item) => item.decision !== "block").length}</strong>
