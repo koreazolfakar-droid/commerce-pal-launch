@@ -567,6 +567,8 @@ export const dashboardUiArabic: Record<string, string> = {
     "اختر تصنيف المنتج أولاً ليتمكن الذكاء الاصطناعي من تعبئة جميع حقول المواصفات المطابقة.",
   "Suggested fields": "الحقول المقترحة",
   "Manual review": "للمراجعة اليدوية",
+  "AI located a matching category template. Review the category selection together with its specifications before applying.":
+    "تعرّف الذكاء الاصطناعي على قالب تصنيف مناسب. راجع اختيار التصنيف ومواصفاته معاً قبل تطبيق الاقتراحات.",
   "Current:": "الحالي:",
   Evidence: "المصادر الداعمة",
   "This field always requires manual review.": "يحتاج هذا الحقل دائمًا إلى مراجعة يدوية.",
