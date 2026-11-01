@@ -229,7 +229,13 @@ export default function AiAssistPanel({
     const definition = fieldMap.get(item.field);
     return definition && item.decision !== "block" && !localIssue(item, definition);
   });
-  const completion = formCompletion(availableFields, currentData, eligibleSuggestions, selected);
+  const applicableSuggestions = eligibleSuggestions.filter(
+    (item) =>
+      !item.field.startsWith("spec__") ||
+      Boolean((currentData.categoryName ?? "").trim()) ||
+      selected.has("categoryName"),
+  );
+  const completion = formCompletion(availableFields, currentData, applicableSuggestions, selected);
   const orderedSuggestions = useMemo(() => {
     const order = new Map(availableFields.map((field, index) => [field.key, index] as const));
     return [...(result?.suggestions ?? [])].sort(
@@ -999,14 +1005,14 @@ export default function AiAssistPanel({
                     onClick={applySelected}
                     disabled={
                       !result ||
-                      !eligibleSuggestions.some((item) => selected.has(item.field)) ||
+                      !applicableSuggestions.some((item) => selected.has(item.field)) ||
                       Boolean(loadingAction)
                     }
                     className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#5968ea] px-3 text-[11px] font-bold text-white disabled:opacity-40 sm:px-4"
                   >
                     <Check className="size-3.5" />
                     {t("Apply selected")} (
-                    {eligibleSuggestions.filter((item) => selected.has(item.field)).length})
+                    {applicableSuggestions.filter((item) => selected.has(item.field)).length})
                   </button>
                 </div>
               </div>
