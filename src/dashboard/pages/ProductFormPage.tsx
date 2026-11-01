@@ -597,11 +597,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
       document.getElementById("product-media")?.scrollIntoView({ block: "center" });
       return;
     }
-    if (id && status === "Active" && !form.imageUrl.trim() && !existing?.image.trim()) {
-      setPublishError(t("Add at least one image before publishing."));
-      document.getElementById("product-media")?.scrollIntoView({ block: "center" });
-      return;
-    }
     setPublishError("");
 
     for (const section of specificationTemplate.sections) {
