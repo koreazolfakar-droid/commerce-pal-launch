@@ -137,6 +137,7 @@ export default function AiAssistPanel({
   const [open, setOpen] = useState(false);
   const [researchQuery, setResearchQuery] = useState(query);
   const [sourceText, setSourceText] = useState("");
+  const [referenceUrlText, setReferenceUrlText] = useState("");
   const [fillMode, setFillMode] = useState<"empty" | "all">("empty");
   const [requestError, setRequestError] = useState("");
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
@@ -221,9 +222,30 @@ export default function AiAssistPanel({
     return definition && item.decision !== "block" && !localIssue(item, definition);
   });
   const completion = formCompletion(fields, currentData, eligibleSuggestions, selected);
+  const orderedSuggestions = useMemo(() => {
+    const order = new Map(fields.map((field, index) => [field.key, index] as const));
+    return [...(result?.suggestions ?? [])].sort(
+      (a, b) => (order.get(a.field) ?? 10000) - (order.get(b.field) ?? 10000),
+    );
+  }, [fields, result]);
 
   const run = async (action: DashboardAiAction) => {
     if (loadingAction) return;
+    const referenceUrls = referenceUrlText.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
+    if (
+      referenceUrls.length > 3 ||
+      referenceUrls.some((value) => {
+        try {
+          const url = new URL(value);
+          return url.protocol !== "https:" || !url.hostname.includes(".") || Boolean(url.username || url.password);
+        } catch {
+          return true;
+        }
+      })
+    ) {
+      setRequestError(t("Enter up to three valid public HTTPS product page links, one per line."));
+      return;
+    }
     const requestId = ++requestIdRef.current;
     requestController.current?.abort();
     const controller = new AbortController();
@@ -242,6 +264,7 @@ export default function AiAssistPanel({
           action,
           query: researchQuery,
           sourceText,
+          referenceUrls,
           language: lang,
           fillMode: action === "research_fill" ? fillMode : "all",
           currentData,
@@ -408,6 +431,30 @@ export default function AiAssistPanel({
                       · {t("Supplied information is shown separately from verified web sources.")}
                     </span>
                   </label>
+
+                  <label className="mt-4 block">
+                    <span className="mb-1.5 block text-xs font-bold text-foreground">
+                      {t("Product research pages (optional)")}
+                    </span>
+                    <textarea
+                      aria-label={t("Product research pages (optional)")}
+                      dir="ltr"
+                      rows={2}
+                      maxLength={4500}
+                      value={referenceUrlText}
+                      disabled={Boolean(loadingAction)}
+                      onChange={(event) => {
+                        setReferenceUrlText(event.target.value);
+                        setResult(null);
+                        setSelected(new Set());
+                      }}
+                      placeholder="https://www.hihonor.com/..."
+                      className="w-full resize-y rounded-xl border border-border bg-card p-3 text-left text-xs text-foreground outline-none focus:border-indigo-400"
+                    />
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                      {t("Up to 3 public HTTPS links, one per line. Official product pages improve verification when web search is limited.")}
+                    </span>
+                  </label>
                   <fieldset className="mt-4 rounded-xl border border-border p-3">
                     <legend className="px-1 text-xs font-bold text-foreground">
                       {t("Research & Fill behavior")}
@@ -464,6 +511,11 @@ export default function AiAssistPanel({
                       {t("Tracks the content fields supported by this assistant.")}
                     </p>
                   </div>
+                  {entity === "product" && !fields.some((field) => field.key.startsWith("spec__")) ? (
+                    <p className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
+                      {t("Choose a product category first to let AI fill all matching specification fields.")}
+                    </p>
+                  ) : null}
                   {requestError && (
                     <div
                       role="alert"
@@ -587,6 +639,20 @@ export default function AiAssistPanel({
                         </details>
                       ) : null}
 
+                      <div className="grid grid-cols-3 gap-2 text-center text-[10px] sm:text-xs">
+                        <div className="rounded-xl border border-slate-200 p-2">
+                          <strong className="block text-base text-slate-800">{result.suggestions.filter((item) => item.decision !== "block").length}</strong>
+                          {t("Suggested fields")}
+                        </div>
+                        <div className="rounded-xl border border-slate-200 p-2">
+                          <strong className="block text-base text-amber-700">{result.suggestions.filter((item) => item.decision === "review").length}</strong>
+                          {t("Manual review")}
+                        </div>
+                        <div className="rounded-xl border border-slate-200 p-2">
+                          <strong className="block text-base text-rose-700">{result.suggestions.filter((item) => item.decision === "block").length}</strong>
+                          {t("Blocked")}
+                        </div>
+                      </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs">
                         <button
                           type="button"
@@ -649,7 +715,7 @@ export default function AiAssistPanel({
                         </details>
                       )}
                       <div className="space-y-2">
-                        {result.suggestions.map((suggestion) => {
+                        {orderedSuggestions.map((suggestion, index) => {
                           const definition = fieldMap.get(suggestion.field);
                           if (!definition) return null;
                           const issue = localIssue(suggestion, definition);
@@ -664,9 +730,18 @@ export default function AiAssistPanel({
                           const evidenceSources = result.sources.filter((source) =>
                             suggestion.sourceUrls.includes(source.url),
                           );
+                          const section = definition.section;
+                          const previousSection = index > 0
+                            ? fieldMap.get(orderedSuggestions[index - 1].field)?.section
+                            : undefined;
                           return (
+                            <div key={suggestion.field}>
+                              {section && section !== previousSection ? (
+                                <h3 className="mb-2 mt-4 text-xs font-bold text-slate-700">
+                                  {section}
+                                </h3>
+                              ) : null}
                             <label
-                              key={suggestion.field}
                               data-ai-field={suggestion.field}
                               className={
                                 "block rounded-xl border p-3 transition " +
@@ -795,6 +870,7 @@ export default function AiAssistPanel({
                                 </div>
                               </div>
                             </label>
+                            </div>
                           );
                         })}
                         {!result.suggestions.length ? (
