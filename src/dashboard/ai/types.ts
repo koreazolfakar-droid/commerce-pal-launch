@@ -11,6 +11,7 @@ export type DashboardAiFieldDefinition = {
   label: string;
   /** The category section this field belongs to, for precise mapping. */
   section?: string;
+  sectionAr?: string;
   /** Expected specification unit, never a freeform field key. */
   unit?: string;
   description?: string;
