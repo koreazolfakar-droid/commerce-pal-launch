@@ -1027,6 +1027,20 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 })),
               ),
             ]}
+            categoryTemplates={categories.map((category) => ({
+              name: category.name,
+              fields: category.specTemplate.sections.flatMap((section) =>
+                section.fields.map((field) => ({
+                  key: aiSpecificationFieldKey(field.key),
+                  label: field.label,
+                  section: section.title,
+                  unit: field.unit,
+                  description: `Verified specification for the exact model. ${field.unit ? `Expected unit: ${field.unit}.` : ""}`,
+                  review: true,
+                  maxLength: 500,
+                })),
+              ),
+            }))}
             context={{
               market: "Lebanon",
               store: "Space Call",
