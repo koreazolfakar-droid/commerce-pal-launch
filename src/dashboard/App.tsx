@@ -47,8 +47,6 @@ import {
   Moon,
   Package,
   PackagePlus,
-  PanelLeftClose,
-  PanelLeftOpen,
   PanelsTopLeft,
   SearchCheck,
   Settings2,
@@ -103,30 +101,24 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
   LockKeyhole,
 };
 
-function Logo({ compact = false }: { compact?: boolean }) {
+function Logo() {
   return (
-    <div className={`dashboard-brand flex min-w-0 items-center gap-3 ${compact ? "justify-center" : ""}`}>
+    <div className="dashboard-brand flex min-w-0 items-center gap-3">
       <div className="dashboard-brand-mark grid size-11 shrink-0 place-items-center rounded-xl" aria-hidden="true">
         <span>SC</span>
       </div>
-      {!compact && (
-        <div className="min-w-0">
+      <div className="min-w-0">
           <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
           <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
 function Sidebar({
-  collapsed,
-  setCollapsed,
   mobileOpen,
   setMobileOpen,
 }: {
-  collapsed: boolean;
-  setCollapsed: (v: boolean) => void;
   mobileOpen: boolean;
   setMobileOpen: (v: boolean) => void;
 }) {
@@ -154,7 +146,7 @@ function Sidebar({
       return next;
     });
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 1023px)");
+    const media = window.matchMedia("(max-width: 767px)");
     const update = () => {
       setSmallSidebar(media.matches);
       if (!media.matches) setMobileOpen(false);
@@ -210,10 +202,10 @@ function Sidebar({
         aria-modal={mobileOpen ? true : undefined}
         aria-label={t("Navigation")}
         tabIndex={-1}
-        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(90vw,336px)] flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white transition-transform duration-200 lg:w-[272px] lg:translate-x-0 lg:py-0 ${collapsed ? "lg:w-[80px]" : ""} ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
+        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(90vw,336px)] flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white transition-transform duration-200 ${mobileOpen ? "translate-x-0" : lang === "ar" ? "translate-x-full" : "-translate-x-full"}`}
       >
-        <div className={`dashboard-sidebar-brand flex min-h-[88px] items-center justify-between gap-3 px-5 lg:min-h-[94px] ${collapsed ? "lg:justify-center lg:px-2" : ""}`}>
-          <Logo compact={collapsed && !mobileOpen} />
+        <div className="dashboard-sidebar-brand flex min-h-[88px] items-center justify-between gap-3 px-5">
+          <Logo />
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
@@ -226,7 +218,7 @@ function Sidebar({
         <nav aria-label={t("Workspace navigation")} className="dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
           {navSections.map((section) => (
             <section key={section.label} className="dashboard-sidebar-group mb-5">
-              {(!collapsed || mobileOpen) && (
+              {(
                 <button
                   type="button"
                   onClick={() => toggleSection(section.label)}
@@ -243,11 +235,7 @@ function Sidebar({
               <div className="dashboard-sidebar-items space-y-1">
                 {section.items
                   .filter((item) => !unavailableDashboardRoutes.has(item.href))
-                  .filter((item) =>
-                    collapsed && !mobileOpen
-                      ? true
-                      : !closedSections.includes(section.label) || item.href === activeHref,
-                  )
+                  .filter((item) => !closedSections.includes(section.label) || item.href === activeHref)
                   .filter((item) => item.href !== "/dashboard/users" || identity.role === "admin")
                   .map((item) => {
                     const Icon = iconMap[item.icon] ?? LayoutDashboard;
@@ -256,8 +244,7 @@ function Sidebar({
                       <button
                         key={item.href}
                         aria-label={t(item.label)}
-                        title={collapsed ? t(item.label) : undefined}
-                        aria-current={active ? "page" : undefined}
+                                                aria-current={active ? "page" : undefined}
                         onMouseEnter={() => void preloadDashboardRoute(item.href)}
                         onFocus={() => void preloadDashboardRoute(item.href)}
                         onTouchStart={() => void preloadDashboardRoute(item.href)}
@@ -266,13 +253,13 @@ function Sidebar({
                           navigate(item.href);
                           setMobileOpen(false);
                         }}
-                        className={`dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-[13px] font-medium transition-colors duration-150 ${collapsed ? "lg:justify-center" : ""}`}
+                        className="dashboard-sidebar-action group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-[13px] font-medium transition-colors duration-150"
                       >
                         <Icon
                           className="dashboard-sidebar-item-icon size-[18px] shrink-0"
                           strokeWidth={1.8}
                         />
-                        {(!collapsed || mobileOpen) && (
+                        {(
                           <>
                             <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
                             {[
@@ -280,8 +267,7 @@ function Sidebar({
                               "/dashboard/coupons",
                               "/dashboard/messages",
                               "/dashboard/reviews",
-                            ].includes(item.href) &&
-                            (!collapsed || mobileOpen) ? (
+                            ].includes(item.href) ? (
                               <span className="dashboard-sidebar-status ms-auto rounded px-1.5 py-0.5 text-[10px]">
                                 {t("Not connected")}
                               </span>
@@ -296,7 +282,7 @@ function Sidebar({
           ))}
         </nav>
         <div className="dashboard-sidebar-footer p-3">
-          {(!collapsed || mobileOpen) && (
+          {(
             <div className="dashboard-sidebar-shortcuts mb-3 space-y-1">
               <button
                 type="button"
@@ -321,20 +307,7 @@ function Sidebar({
               </button>
             </div>
           )}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className={`dashboard-sidebar-collapse hidden min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[12px] text-slate-400 hover:bg-white/[.06] hover:text-white lg:flex ${collapsed ? "justify-center" : ""}`}
-            title={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
-          >
-            {collapsed ? (
-              <PanelLeftOpen className="size-4" />
-            ) : (
-              <>
-                <PanelLeftClose className="size-4" />
-                <span>{t("Collapse sidebar")}</span>
-              </>
-            )}
-          </button>
+
         </div>
       </aside>
     </>
@@ -390,7 +363,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         <button
           type="button"
           onClick={onMenu}
-          className="dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground lg:hidden"
+          className="dashboard-menu-trigger dashboard-icon-button dashboard-icon-button-lg grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-muted-foreground lg:hidden"
           aria-label={t("Open dashboard menu")}
         >
           <Menu className="size-5" />
@@ -727,14 +700,8 @@ function DashboardGate() {
 
 function DashboardLayout() {
   const [location] = useLocation();
-  const { lang, t } = useLanguage();
-  const [collapsed, setCollapsed] = useState(
-    () => readPreference("spacecall-sidebar") === "collapsed",
-  );
+  const { t } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
-  useEffect(() => {
-    writePreference("spacecall-sidebar", collapsed ? "collapsed" : "expanded");
-  }, [collapsed]);
   const route = location.replace(/\/$/, "") || "/dashboard";
   const content = resolveDashboardRoute(route);
   return (
@@ -742,15 +709,10 @@ function DashboardLayout() {
       <a href="#dashboard-main" className="dashboard-skip-link">
         {t("Skip to content")}
       </a>
-      <Sidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-      />
+      <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div
         inert={mobileOpen ? true : undefined}
-        className={`min-h-screen min-h-[100dvh] transition-[padding] duration-200 ${collapsed ? (lang === "ar" ? "lg:pr-[80px]" : "lg:pl-[80px]") : lang === "ar" ? "lg:pr-[272px]" : "lg:pl-[272px]"}`}
+        className="dashboard-desktop-content min-h-screen min-h-[100dvh] min-w-0"
       >
         <Header onMenu={() => setMobileOpen(true)} />
         <DashboardConnectivity />
