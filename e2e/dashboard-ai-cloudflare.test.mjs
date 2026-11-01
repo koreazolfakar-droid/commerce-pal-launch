@@ -75,7 +75,24 @@ test("Cloudflare adapter calls Workers AI non-thinking inference with cautious i
   assert.equal(cloudflareText(output.body), '{"suggestions":[]}');
 });
 
+test("Cloudflare response parser handles /ai/run nested choices observed from GLM", () => {
+  const expected = '{"entityMatch":{"status":"uncertain","canonicalName":"","reason":"No source"},"summary":"Needs review","suggestions":[],"missingFields":[],"warnings":[]}';
+  const observed = {
+    success: true,
+    result: {
+      id: "chatcmpl-real-shape",
+      object: "chat.completion",
+      choices: [{ index: 0, message: { role: "assistant", content: expected }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 50, completion_tokens: 70 },
+    },
+  };
+  assert.equal(cloudflareText(observed), expected);
+  assert.equal(cloudflareText(observed.result), expected);
+  assert.equal(cloudflareText({ result: { choices: [{ message: { content: [{ type: "text", text: expected }] } }] } }), expected);
+});
+
 test("Cloudflare response parser rejects reasoning-only and empty outputs", () => {
+  assert.equal(cloudflareText({ result: { choices: [{ message: { reasoning: "thoughts", content: null } }] } }), "");
   assert.equal(cloudflareText({ choices: [{ message: { reasoning: "thoughts", content: null } }] }), "");
   assert.equal(cloudflareText({ choices: [{ message: { content: [{ type: "text", text: '{"ok":true}' }] } }] }), '{"ok":true}');
   assert.equal(cloudflareText({ result: { response: '{"ok":true}' } }), '{"ok":true}');
