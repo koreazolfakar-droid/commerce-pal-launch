@@ -43,7 +43,7 @@ const EMPTY: DashboardSeoInput = {
   isPublic: true,
 };
 
-const LIVE_ROUTES = new Set(["home", "brands"]);
+const LIVE_ROUTES = new Set(["brands"]);
 
 export default function SeoPage() {
   const { t } = useLanguage();
@@ -173,7 +173,7 @@ export default function SeoPage() {
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">{t("SEO")}</h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
             {t(
-              "Manage bilingual metadata, canonical URLs, robots and JSON-LD stored in cms_seo_pages.",
+              "Prepare search settings and review which storefront pages use them.",
             )}
           </p>
         </div>
@@ -196,7 +196,7 @@ export default function SeoPage() {
       <div className="mb-4 rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] p-4 text-[11px] leading-5 text-[#5962b8]">
         <strong>{t("Live now:")}</strong>{" "}
         {t(
-          "Home and Brands routes consume cms_seo_pages directly. Other page slugs can be prepared here, but only affect routes that explicitly call cmsSeoPage.",
+          "The Brands page uses its public record for English metadata, canonical URL, robots and social image. Home and other records are prepared only; they do not currently affect storefront pages. Arabic metadata and JSON-LD are not applied by this editor.",
         )}
       </div>
 

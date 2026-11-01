@@ -63,6 +63,7 @@ export default function ProductsPage() {
     [],
   );
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -106,6 +107,7 @@ export default function ProductsPage() {
       ]);
       if (request !== requestId.current) return;
       setCatalog(products);
+      setHasLoaded(true);
       setBrands(brandRows);
       setCategories(categoryRows);
       setSelected(
@@ -297,7 +299,7 @@ export default function ProductsPage() {
           ["Active", active, "text-emerald-600"],
           ["Draft", drafts, "text-amber-600"],
           ["Archived", archived, "text-slate-500"],
-          ["Low stock", lowStock, "text-rose-600"],
+          ["Low-stock products", lowStock, "text-rose-600"],
         ].map(([label, value, tone]) => (
           <div key={String(label)} className="dashboard-metric-card rounded-2xl border border-border bg-card p-4">
             <div className="text-[10px] font-semibold text-slate-400">{t(String(label))}</div>
@@ -305,6 +307,7 @@ export default function ProductsPage() {
           </div>
         ))}
       </div>
+      <p className="mb-3 text-xs text-muted-foreground">{t("Low-stock products count product stock from 1 to 10 across all statuses, regardless of tracking.")}</p>
 
       <div className="dashboard-filter-panel mb-4 rounded-2xl border border-border bg-card p-4">
         <div className="dashboard-catalog-filters">
@@ -373,8 +376,9 @@ export default function ProductsPage() {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
           <div className="dashboard-selection-note text-xs text-muted-foreground">
             <span role="status">
-              <Filter className="inline size-3.5" /> {filtered.length} {t("results")} ·{" "}
-              {selected.size} {t("selected across pages")}
+              {loading && !hasLoaded ? t("Loading…") : !hasLoaded ? t("Unable to load products.") : (
+                <><Filter className="inline size-3.5" /> {filtered.length} {t("results")} · {selected.size} {t("selected across pages")}{loading ? ` · ${t("Refreshing…")}` : ""}</>
+              )}
             </span>
             {hasFilters && (
               <button type="button" onClick={resetFilters} className="dashboard-inline-action">
@@ -408,11 +412,16 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {loading ? (
+      {error && hasLoaded ? (
+        <div role="alert" className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          {error} <button type="button" className="underline" onClick={() => void load()}>{t("Retry")}</button>
+        </div>
+      ) : null}
+      {loading && !hasLoaded ? (
         <div className="grid min-h-72 place-items-center rounded-2xl border border-slate-200 bg-white">
           <Loader2 className="size-6 animate-spin text-indigo-500" />
         </div>
-      ) : error ? (
+      ) : error && !hasLoaded ? (
         <div
           role="alert"
           className="rounded-2xl border border-rose-100 bg-rose-50 p-5 text-sm font-semibold text-rose-700"

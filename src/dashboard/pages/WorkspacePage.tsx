@@ -164,6 +164,8 @@ export default function WorkspacePage({ path }: { path: string }) {
                     )}
                   </div>
                   <p className="text-sm text-slate-500">{row.detail}</p>
+                  {row.recordId && <p className="text-sm text-slate-600">{ar ? "السجل" : "Record"}: <bdi>{row.recordId}</bdi></p>}
+                  {row.actor && <p className="text-sm text-slate-600">{ar ? "المستخدم" : "Actor"}: <bdi>{row.actor}</bdi></p>}
                   <time className="text-xs text-slate-400" dateTime={row.date}>
                     {new Date(row.date).toLocaleString(ar ? "ar-LB" : "en-US")}
                   </time>

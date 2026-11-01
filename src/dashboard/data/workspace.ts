@@ -8,6 +8,8 @@ export type WorkspaceRow = {
   detail: string;
   date: string;
   href?: string;
+  recordId?: string;
+  actor?: string;
 };
 export type WorkspaceSource = "catalog" | "cms" | "users" | "promotions";
 
@@ -66,7 +68,7 @@ export async function loadWorkspaceRows(
   if (source === "cms") {
     const { data, error } = await supabase
       .from("cms_audit_log")
-      .select("id,action,entity_type,created_at")
+      .select("id,action,entity_type,entity_id,actor_email,actor_id,created_at")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(offset, offset + WORKSPACE_PAGE_SIZE);
@@ -78,12 +80,14 @@ export async function loadWorkspaceRows(
         label: row.action,
         detail: row.entity_type ?? "",
         date: row.created_at,
+        recordId: row.entity_id ?? undefined,
+        actor: row.actor_email ?? row.actor_id ?? undefined,
       })),
     };
   }
   const { data, error } = await supabase
     .from("store_catalog_audit_log")
-    .select("id,action,entity_type,product_id,created_at")
+    .select("id,action,entity_type,product_id,changed_by,created_at")
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .range(offset, offset + WORKSPACE_PAGE_SIZE);
@@ -92,9 +96,12 @@ export async function loadWorkspaceRows(
     hasMore: (data?.length ?? 0) > WORKSPACE_PAGE_SIZE,
     rows: (data ?? []).slice(0, WORKSPACE_PAGE_SIZE).map((row) => ({
       id: String(row.id),
-      label: row.action,
-      detail: row.entity_type ?? "",
+      label: `${row.entity_type.replace(/[_-]/g, " ")} · ${row.action.replace(/[_-]/g, " ")}`,
+      detail: "",
       date: row.created_at,
+      recordId: row.product_id ?? undefined,
+      actor: row.changed_by ?? undefined,
+      href: row.product_id ? `/dashboard/products/${row.product_id}` : undefined,
     })),
   };
 }

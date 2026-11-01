@@ -49,7 +49,7 @@ jobs:
       - run: bun run typecheck
       - run: bun run lint
       - name: Dashboard behavior and safety checks
-        run: node --test e2e/dashboard-professional-workflows.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-release-readiness-regressions.test.mjs e2e/dashboard-ai-form-fill.test.mjs e2e/dashboard-ai-assist.test.mjs e2e/dashboard-product-specifications.test.mjs e2e/dashboard-mutation-flow.test.mjs e2e/dashboard-edge-cors-security.test.mjs
+        run: node --test e2e/dashboard-professional-workflows.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-release-readiness-regressions.test.mjs e2e/dashboard-ai-form-fill.test.mjs e2e/dashboard-ai-assist.test.mjs e2e/dashboard-product-specifications.test.mjs e2e/dashboard-mutation-flow.test.mjs e2e/dashboard-edge-cors-security.test.mjs e2e/dashboard-procurement-ratios.test.mjs
       - run: ./node_modules/.bin/playwright install --with-deps chromium
       - run: bun run build
       - name: Desktop, mobile, Arabic and workflow checks
@@ -64,5 +64,6 @@ jobs:
             sleep 1
           done
           bun run test:dashboard:browser
+          bun run test:dashboard:repairs
           bun run test:dashboard:professional
           node e2e/dashboard-ai-form-fill-browser.mjs

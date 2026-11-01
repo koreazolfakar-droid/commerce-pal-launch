@@ -167,7 +167,7 @@ export default function CollectionsPage() {
           <PageTitle
             eyebrow="Catalog / Collections"
             title="Collections"
-            description="Real storefront collections powered by Supabase."
+            description="Organize products into collections for your storefront."
           />
         </div>
         <div className="flex gap-2">
@@ -179,7 +179,7 @@ export default function CollectionsPage() {
           </button>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
+            className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-bold text-primary-foreground"
           >
             <FolderPlus className="size-4" /> {t("New collection")}
           </button>
@@ -232,7 +232,7 @@ export default function CollectionsPage() {
             {visible.map((item) => (
               <div
                 key={item.id}
-                className="grid gap-4 px-5 py-4 lg:grid-cols-[64px_1fr_140px_140px_150px] lg:items-center"
+                className="grid gap-4 px-5 py-4 lg:grid-cols-[64px_minmax(0,1fr)_auto_auto] lg:items-center"
               >
                 <div className="grid size-14 place-items-center overflow-hidden rounded-xl bg-slate-100">
                   {item.imageUrl ? (
@@ -265,35 +265,39 @@ export default function CollectionsPage() {
                 <div className="text-[11px] text-slate-500">
                   {t("Order")} {item.sortOrder + 1}
                 </div>
-                <div className="flex justify-end gap-1">
+                <div className="flex flex-wrap justify-start gap-1 lg:col-span-4 lg:justify-end">
                   <button
                     onClick={() => navigate(`/dashboard/collections/${item.id}#add-products`)}
                     title={t("Add products to this collection")}
-                    className="flex h-8 items-center gap-1.5 rounded-lg bg-[#5968ea] px-2.5 text-[10px] font-bold text-white"
+                    className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-2.5 text-[10px] font-bold text-primary-foreground"
                   >
                     <Plus className="size-3.5" />
                     {t("Add products")}
                   </button>
                   <button
                     onClick={() => void move(item.id, -1)}
+                    aria-label={t("Move up")}
                     className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
                   >
                     <ArrowUp className="size-3.5" />
                   </button>
                   <button
                     onClick={() => void move(item.id, 1)}
+                    aria-label={t("Move down")}
                     className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
                   >
                     <ArrowDown className="size-3.5" />
                   </button>
                   <button
                     onClick={() => navigate(`/dashboard/collections/${item.id}`)}
+                    aria-label={t("Edit")}
                     className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
                   >
                     <Pencil className="size-3.5" />
                   </button>
                   <button
                     onClick={() => setDeleteTarget(item)}
+                    aria-label={t("Delete")}
                     disabled={deleting}
                     className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -441,7 +445,7 @@ export default function CollectionsPage() {
               <button
                 onClick={() => void create()}
                 disabled={saving}
-                className="h-10 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50"
+                className="h-10 rounded-xl bg-primary px-4 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
               >
                 {saving ? t("Creating…") : t("Create collection")}
               </button>

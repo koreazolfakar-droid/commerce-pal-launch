@@ -409,9 +409,12 @@ export default function OrdersPage() {
           </div>
 
           <div className="grid gap-2.5 border-t border-slate-100 p-3 sm:p-4 lg:grid-cols-[minmax(280px,1fr)_170px_170px_auto] lg:items-center">
-            <div className="relative min-w-0">
+            <label className="min-w-0">
+              <span className="mb-1 block text-xs font-semibold text-slate-600">{t("Search orders")}</span>
+              <div className="relative">
               <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <input
+                type="search"
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
@@ -420,7 +423,8 @@ export default function OrdersPage() {
                 placeholder={t("Public order #, customer, phone or email")}
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-3 text-[11px] outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
               />
-            </div>
+              </div>
+            </label>
 
             <label className="relative">
               <span className="sr-only">{t("Payment status")}</span>

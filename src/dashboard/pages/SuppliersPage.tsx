@@ -3,7 +3,7 @@ import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
 import { Building2, Loader2, MapPin, Plus, Search, Save, Truck, X } from "lucide-react";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   createReceivingSupplier,
@@ -62,6 +62,8 @@ export default function SuppliersPage() {
   const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [supplierDraft, setSupplierDraft] = useState<SupplierDraft | null>(null);
   const [locationDraft, setLocationDraft] = useState<LocationDraft | null>(null);
+  const [supplierNameError, setSupplierNameError] = useState(false);
+  const supplierNameRef = useRef<HTMLInputElement>(null);
 
   const formGuard = useDashboardFormGuard(
     Boolean(supplierDraft || locationDraft),
@@ -73,7 +75,10 @@ export default function SuppliersPage() {
     },
   );
   const openSupplier = (draft: SupplierDraft) => {
-    if (formGuard.close()) setSupplierDraft(draft);
+    if (formGuard.close()) {
+      setSupplierNameError(false);
+      setSupplierDraft(draft);
+    }
   };
   const openLocation = (draft: LocationDraft) => {
     if (formGuard.close()) setLocationDraft(draft);
@@ -143,7 +148,12 @@ export default function SuppliersPage() {
   const saveSupplier = async () => {
     if (saving) return;
     if (!supplierDraft) return;
-    if (!supplierDraft.name.trim()) return toast.error("Supplier name is required.");
+    if (!supplierDraft.name.trim()) {
+      setSupplierNameError(true);
+      supplierNameRef.current?.focus();
+      return;
+    }
+    setSupplierNameError(false);
     setSaving(true);
     try {
       if (supplierDraft.id) {
@@ -245,7 +255,7 @@ export default function SuppliersPage() {
           </button>
           <button
             onClick={() => openSupplier({ ...blankSupplier })}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white"
+            className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-bold text-primary-foreground"
           >
             <Plus className="size-3.5" /> {t("New supplier")}
           </button>
@@ -268,36 +278,66 @@ export default function SuppliersPage() {
             </button>
           </div>
           <fieldset disabled={saving} className="min-w-0 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <input
-              value={supplierDraft.name}
-              onChange={(e) => setSupplierDraft({ ...supplierDraft, name: e.target.value })}
-              placeholder={t("Supplier name")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
-            <input
-              value={supplierDraft.code}
-              onChange={(e) => setSupplierDraft({ ...supplierDraft, code: e.target.value })}
-              placeholder={t("Code")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
-            <input
-              value={supplierDraft.phone}
-              onChange={(e) => setSupplierDraft({ ...supplierDraft, phone: e.target.value })}
-              placeholder={t("Phone")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
-            <input
-              value={supplierDraft.email}
-              onChange={(e) => setSupplierDraft({ ...supplierDraft, email: e.target.value })}
-              placeholder={t("Email")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
-            <input
-              value={supplierDraft.notes}
-              onChange={(e) => setSupplierDraft({ ...supplierDraft, notes: e.target.value })}
-              placeholder={t("Internal notes")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px] md:col-span-2 xl:col-span-3"
-            />
+            <div className="min-w-0">
+              <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+                {t("Supplier name")} <span aria-hidden="true">*</span>
+                <input
+                  ref={supplierNameRef}
+                  required
+                  aria-invalid={supplierNameError}
+                  aria-describedby={supplierNameError ? "supplier-name-error" : undefined}
+                  value={supplierDraft.name}
+                  onChange={(e) => {
+                    setSupplierNameError(false);
+                    setSupplierDraft({ ...supplierDraft, name: e.target.value });
+                  }}
+                  placeholder={t("Supplier name")}
+                  className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+                />
+              </label>
+              {supplierNameError && (
+                <span id="supplier-name-error" role="alert" className="text-xs text-rose-700">
+                  {t("Supplier name is required.")}
+                </span>
+              )}
+            </div>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+              {t("Code")}
+              <input
+                value={supplierDraft.code}
+                onChange={(e) => setSupplierDraft({ ...supplierDraft, code: e.target.value })}
+                placeholder={t("Code")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+              {t("Phone")}
+              <input
+                value={supplierDraft.phone}
+                onChange={(e) => setSupplierDraft({ ...supplierDraft, phone: e.target.value })}
+                placeholder={t("Phone")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+              {t("Email")}
+              <input
+                type="email"
+                value={supplierDraft.email}
+                onChange={(e) => setSupplierDraft({ ...supplierDraft, email: e.target.value })}
+                placeholder={t("Email")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700 md:col-span-2 xl:col-span-3">
+              {t("Internal notes")}
+              <input
+                value={supplierDraft.notes}
+                onChange={(e) => setSupplierDraft({ ...supplierDraft, notes: e.target.value })}
+                placeholder={t("Internal notes")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
             <label className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] text-slate-600">
               <input
                 type="checkbox"
@@ -311,7 +351,7 @@ export default function SuppliersPage() {
             <button
               onClick={() => void saveSupplier()}
               disabled={saving}
-              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
+              className="flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
             >
               <Save className="size-3.5" /> {t("Save supplier")}
             </button>
@@ -334,24 +374,33 @@ export default function SuppliersPage() {
             </button>
           </div>
           <fieldset disabled={saving} className="min-w-0 grid gap-3 md:grid-cols-4">
-            <input
-              value={locationDraft.name}
-              onChange={(e) => setLocationDraft({ ...locationDraft, name: e.target.value })}
-              placeholder={t("Location name")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
-            <input
-              value={locationDraft.code}
-              onChange={(e) => setLocationDraft({ ...locationDraft, code: e.target.value })}
-              placeholder={t("Code")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
-            <input
-              value={locationDraft.address}
-              onChange={(e) => setLocationDraft({ ...locationDraft, address: e.target.value })}
-              placeholder={t("Address")}
-              className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
-            />
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+              {t("Location name")}
+              <input
+                value={locationDraft.name}
+                onChange={(e) => setLocationDraft({ ...locationDraft, name: e.target.value })}
+                placeholder={t("Location name")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+              {t("Code")}
+              <input
+                value={locationDraft.code}
+                onChange={(e) => setLocationDraft({ ...locationDraft, code: e.target.value })}
+                placeholder={t("Code")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-slate-700">
+              {t("Address")}
+              <input
+                value={locationDraft.address}
+                onChange={(e) => setLocationDraft({ ...locationDraft, address: e.target.value })}
+                placeholder={t("Address")}
+                className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
+              />
+            </label>
             <label className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] text-slate-600">
               <input
                 type="checkbox"
@@ -365,7 +414,7 @@ export default function SuppliersPage() {
             <button
               onClick={() => void saveLocation()}
               disabled={saving}
-              className="rounded-xl bg-[#5968ea] px-5 py-2.5 text-[11px] font-bold text-white"
+              className="rounded-xl bg-primary px-5 py-2.5 text-[11px] font-bold text-primary-foreground"
             >
               {t("Save location")}
             </button>

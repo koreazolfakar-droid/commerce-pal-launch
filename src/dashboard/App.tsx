@@ -225,7 +225,7 @@ function Sidebar({
         </div>
         <nav aria-label={t("Workspace navigation")} className="dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
           {navSections.map((section) => (
-            <section key={section.label} className="dashboard-sidebar-group mb-5">
+            <section key={section.label} className="dashboard-sidebar-group mb-5 lg:mb-3">
               {(!collapsed || mobileOpen) && (
                 <button
                   type="button"

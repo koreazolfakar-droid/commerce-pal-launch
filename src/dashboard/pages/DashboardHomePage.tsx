@@ -318,7 +318,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
           icon={Activity}
           label={t("Low stock")}
           value={integer(snapshot.lowStockVariants)}
-          detail="Tracked variants with 1–10 units"
+          detail="Tracked active variants with 1–10 units"
         />
         <KpiCard
           icon={Package}
