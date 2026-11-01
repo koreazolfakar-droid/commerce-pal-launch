@@ -126,6 +126,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [uploadedImageCount, setUploadedImageCount] = useState(0);
   const queuedPreviewUrlsRef = useRef<string[]>([]);
   const pendingImageInputRef = useRef<HTMLInputElement>(null);
+  // A multi-step create can persist the draft before an image/network failure.
+  // Keep its ID and successful uploads for safe retries without duplicate rows.
+  const partialDraftIdRef = useRef<string | null>(null);
+  const uploadedPreviewsRef = useRef(new Set<string>());
+  const primaryUploadedUrlRef = useRef("");
 
   useEffect(
     () => () => queuedPreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)),
@@ -133,6 +138,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
 
   const stageProductImages = (files: File[]) => {
+    if (partialDraftIdRef.current) {
+      toast.info(t("Finish saving the product before adding more images."));
+      return;
+    }
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
     const validFiles = files.filter(
       (file) => allowedTypes.has(file.type) && file.size <= 20 * 1024 * 1024,
@@ -157,17 +166,25 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const reorderPendingImage = (index: number, direction: -1 | 1) => {
+    if (partialDraftIdRef.current) {
+      toast.info(t("Finish saving the product before rearranging uploaded images."));
+      return;
+    }
+    setSaved(false);
     setPendingImages((current) => {
       const destination = index + direction;
       if (destination < 0 || destination >= current.length) return current;
       const reordered = [...current];
       [reordered[index], reordered[destination]] = [reordered[destination], reordered[index]];
-      setSaved(false);
       return reordered;
     });
   };
 
   const removePendingImage = (index: number) => {
+    if (partialDraftIdRef.current) {
+      toast.info(t("Finish saving the product before removing uploaded images."));
+      return;
+    }
     const removed = pendingImages[index];
     if (removed) URL.revokeObjectURL(removed.preview);
     setPendingImages((current) => current.filter((_, position) => position !== index));
@@ -629,12 +646,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
     const createWithVariantOptions =
       !id && Boolean(newVariantColor.trim() || newVariantStorage.trim());
     const createAsDraft = createWithImages || createWithVariantOptions;
-    let createdDraftId: string | null = null;
-    setUploadedImageCount(0);
+    let createdDraftId: string | null = partialDraftIdRef.current;
+    setUploadedImageCount(uploadedPreviewsRef.current.size);
     setSaving(true);
     try {
       const productInput = {
-        id,
+        id: id ?? partialDraftIdRef.current ?? undefined,
         title: form.title,
         description: form.description,
         brandId: form.brandId || null,
@@ -653,10 +670,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
         collectionIds: nextCollectionIds,
       };
       const savedProduct = await saveDashboardProduct(productInput);
-      if (createAsDraft) createdDraftId = savedProduct.id;
-      let firstImageUrl = "";
+      if (createAsDraft) {
+        createdDraftId = savedProduct.id;
+        partialDraftIdRef.current = savedProduct.id;
+      }
+      let firstImageUrl = primaryUploadedUrlRef.current;
       if (createWithImages) {
         for (const [position, pending] of pendingImages.entries()) {
+          if (uploadedPreviewsRef.current.has(pending.preview)) continue;
           const uploaded = await uploadDashboardProductImage(
             savedProduct.id,
             pending.file,
@@ -665,8 +686,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
             position,
             position === 0,
           );
-          if (position === 0) firstImageUrl = uploaded.image.url;
-          setUploadedImageCount(position + 1);
+          if (position === 0) {
+            firstImageUrl = uploaded.image.url;
+            primaryUploadedUrlRef.current = firstImageUrl;
+          }
+          uploadedPreviewsRef.current.add(pending.preview);
+          setUploadedImageCount(uploadedPreviewsRef.current.size);
         }
       }
       if (createWithVariantOptions) {
@@ -770,9 +795,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Product save failed.";
       if (createdDraftId) {
-        toast.error(`${t("Product remains a draft because setup did not finish.")} ${message}`);
-        markDraftSaved();
-        navigate(`/dashboard/products/${createdDraftId}`);
+        // The server draft exists; keep the unsaved form and queued File objects
+        // on screen. Retrying updates the same product instead of inserting another.
+        toast.error(`${t("Product remains a draft because setup did not finish.")} ${message} ${t("Retry saving to finish setup.")}`);
       } else {
         toast.error(message);
       }
@@ -928,7 +953,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 {t("More Actions")}
               </summary>
               <div className="dashboard-product-more-menu">
-              <button
+                <button
                 type="button"
                 onClick={() => navigate("/dashboard/products/new")}
                 disabled={saving || pendingAction !== null}
@@ -1299,18 +1324,18 @@ export default function ProductFormPage({ id }: { id?: string }) {
                           <button
                             type="button"
                             onClick={() => removePendingImage(index)}
-                            disabled={saving}
+                            disabled={saving || Boolean(partialDraftIdRef.current)}
                             aria-label={t("Remove image")}
                             className="absolute end-1 top-1 grid size-6 place-items-center rounded-full bg-rose-600 text-white disabled:opacity-50"
                           >
                             <Trash2 className="size-3" />
                           </button>
                           <div className="absolute bottom-1 end-1 flex gap-1">
-                            <button type="button" disabled={saving || index === 0}
+                            <button type="button" disabled={saving || Boolean(partialDraftIdRef.current) || index === 0}
                               aria-label={t("Move image earlier")}
                               onClick={() => reorderPendingImage(index, -1)}
                               className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40">←</button>
-                            <button type="button" disabled={saving || index === pendingImages.length - 1}
+                            <button type="button" disabled={saving || Boolean(partialDraftIdRef.current) || index === pendingImages.length - 1}
                               aria-label={t("Move image later")}
                               onClick={() => reorderPendingImage(index, 1)}
                               className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40">→</button>
@@ -1465,7 +1490,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 {t("Save the product first, then add or edit variants.")}
               </div>
             )}
-          </Panel>          <OptionalPanel
+          </Panel>
+
+          <OptionalPanel
             id="product-specifications"
             title={t("Specifications")}
             subtitle={
@@ -1641,7 +1668,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 </div>
               </div>
             </Panel>
-          ) : null}          {!existing ? (
+          ) : null}
+          {!existing ? (
             <Panel id="product-advanced" title={t("Product settings")} subtitle={t("Saved product details")}>
               <p className="p-5 text-sm leading-6 text-muted-foreground">
                 {t("Save the product to view its permanent handle and record details.")}
