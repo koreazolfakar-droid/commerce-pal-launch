@@ -385,7 +385,7 @@ function cleanReferenceUrls(value: unknown): string[] {
       const url = new URL(raw.trim());
       const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
       if (url.protocol !== "https:" || url.username || url.password) continue;
-      if (!host.includes(".") || /^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.|0\.|::|fc|fd)/.test(host)) continue;
+      if (!host.includes(".") || host === "localhost" || host.includes(":")) continue;
       if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(host) || /\.(?:local|internal|localhost|onion|test|invalid)$/.test(host)) continue;
       seen.add(url.toString());
       if (seen.size === 3) break;
@@ -1064,6 +1064,24 @@ function validGtin(value: string) {
   return (10 - (sum % 10)) % 10 === checkDigit;
 }
 
+/** Detect obvious unit swaps before placing a model suggestion in a specification slot. */
+function specificationUnitIssue(definition: AiField, value: string) {
+  const expected = definition.unit?.trim().toLowerCase() ?? "";
+  if (!expected) return "";
+  const numeric = new Set(["gb", "tb", "mb", "mah", "wh", "w", "hz", "khz", "mhz", "ghz", "mp", "mm", "inch", "inches"]);
+  const trimmed = value.trim();
+  if ((numeric.has(expected) || expected === "bluetooth") && !/\d/.test(trimmed)) {
+    return "Specification requires a numeric value for the expected unit";
+  }
+  const unitTokens = [...trimmed.matchAll(/\b(?:mah|wh|gb|tb|mb|ghz|mhz|khz|hz|mp|mm|inches|inch|watts|w)\b/gi)]
+    .map((match) => match[0].toLowerCase());
+  const equivalents = expected === "inches" ? ["inches", "inch"] : expected === "w" ? ["w", "watts"] : [expected];
+  if (numeric.has(expected) && unitTokens.length && !unitTokens.some((unit) => equivalents.includes(unit))) {
+    return "Specification unit conflicts with the expected field unit";
+  }
+  return "";
+}
+
 function localFieldChecks(args: {
   entity: string;
   field: string;
@@ -1107,6 +1125,10 @@ function localFieldChecks(args: {
   if (args.field === "barcode") {
     if (!validGtin(trimmed)) blockers.push("Barcode / GTIN checksum or length is invalid");
     else passes.push("Barcode / GTIN checksum is valid");
+  }
+  if (args.field.startsWith("spec__")) {
+    const unitIssue = specificationUnitIssue(args.definition, trimmed);
+    if (unitIssue) blockers.push(unitIssue);
   }
 
   if (args.field === "icon") {
