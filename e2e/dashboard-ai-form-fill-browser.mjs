@@ -228,8 +228,21 @@ try {
   await page.getByRole("button", { name: "مساعد الذكاء الاصطناعي", exact: true }).click();
   const arabicDialog = page.getByRole("dialog", { name: "بحث وكتابة وتحسين", exact: true });
   await arabicDialog.getByLabel("ما الذي تريد البحث عنه؟", { exact: true }).fill("Phone 25");
+  const beforeAutoResearch = requests.length;
   await arabicDialog.getByRole("button", { name: "إكمال النموذج", exact: true }).click();
   await arabicDialog.getByRole("button", { name: "تحديد الكل للمراجعة", exact: true }).waitFor();
+  const autoRequests = requests.slice(beforeAutoResearch);
+  assert.equal(autoRequests.length, 3);
+  assert.ok(autoRequests[0].fields.some((field) => field.key === "categoryName"));
+  assert.equal(
+    autoRequests.filter((item) => item.fields.some((field) => field.key.startsWith("spec__"))).length,
+    2,
+  );
+  assert.ok(autoRequests.slice(1).every((item) => item.context.selectedCategory === "Phones"));
+  await arabicDialog.getByText("تعرّف الذكاء الاصطناعي على قالب تصنيف مناسب", { exact: false }).waitFor();
+  assert.equal(await arabicDialog.locator('[data-ai-field="spec__field_44"] input').isDisabled(), true);
+  await arabicDialog.getByRole("button", { name: "تحديد الكل للمراجعة", exact: true }).click();
+  assert.equal(await arabicDialog.locator('[data-ai-field="spec__field_44"] input').isDisabled(), false);
   assert.equal(requests.at(-1).language, "ar");
   assert.equal(await arabicDialog.getAttribute("dir"), "rtl");
   assert.equal(
@@ -266,6 +279,7 @@ try {
         "collection and bilingual SEO filling",
         "failed batches do not expose partial results",
         "cancelled requests cannot restore stale results",
+        "AI category discovery followed by exact 46-field template research",
         "Arabic RTL mobile dark-mode layout",
       ],
       pageErrors,
