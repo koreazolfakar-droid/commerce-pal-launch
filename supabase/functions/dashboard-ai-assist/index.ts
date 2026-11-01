@@ -1,5 +1,6 @@
 import { suppliedEvidenceQuote } from "./formEvidence.ts";
 import { checkDashboardAiAccess } from "./access.ts";
+import { callCloudflareAi, cloudflareText, DEFAULT_CLOUDFLARE_MODEL, isFreeCloudflareModel } from "./cloudflare.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.116.0";
 
@@ -1374,6 +1375,12 @@ Deno.serve(async (req) => {
   const serviceKey = serverSecretKey();
   const geminiKey = Deno.env.get("GEMINI_API_KEY")?.trim();
   const model = Deno.env.get("GEMINI_MODEL")?.trim() || DEFAULT_MODEL;
+  const aiProvider = Deno.env.get("DASHBOARD_AI_PROVIDER")?.trim().toLowerCase() || "gemini";
+  const cfAccountId = Deno.env.get("CLOUDFLARE_ACCOUNT_ID")?.trim() || "";
+  const cfToken = Deno.env.get("CLOUDFLARE_WORKERS_AI_TOKEN")?.trim() || "";
+  const cfModel = Deno.env.get("CLOUDFLARE_AI_MODEL")?.trim() || DEFAULT_CLOUDFLARE_MODEL;
+  if (aiProvider !== "gemini" && aiProvider !== "cloudflare")
+    return json(req, { error: "ai_provider_not_supported" }, 503);
 
   if (!url || !serviceKey) return json(req, { error: "server_not_configured" }, 503);
 
@@ -1413,7 +1420,7 @@ Deno.serve(async (req) => {
   }
 
   console.info(
-    `[dashboard-ai] provider config gemini=${Boolean(geminiKey)}`,
+    `[dashboard-ai] provider config gemini=${Boolean(geminiKey)} cloudflare=${Boolean(cfAccountId && cfToken)} selected=${aiProvider}`,
   );
 
   let body: AiBody;
@@ -1464,8 +1471,33 @@ Deno.serve(async (req) => {
   });
 
   let gemini: { ok: boolean; status: number; body: unknown } | undefined;
+  let cloudflare: Awaited<ReturnType<typeof callCloudflareAi>> | undefined;
   let fallbackWarning = "";
-  if (geminiKey) {
+  if (aiProvider === "cloudflare") {
+    if (!cfAccountId || !cfToken || !isFreeCloudflareModel(cfModel)) {
+      return json(req, {
+        error: "ai_not_configured",
+        message: "Cloudflare Workers AI must have a valid account ID, server-side token and free-plan model.",
+      }, 503);
+    }
+    // This provider does not have Gemini's Google Search or URL Context tools.
+    // Keep all generated facts unverified and use the existing manual-review rules.
+    fallbackWarning = "Live web verification is unavailable. Suggestions require manual review.";
+    try {
+      cloudflare = await callCloudflareAi({
+        accountId: cfAccountId,
+        token: cfToken,
+        model: cfModel,
+        systemInstruction: geminiRequest.systemInstruction,
+        input: geminiRequest.input,
+        responseSchema: responseSchema(suggestionFields),
+      });
+    } catch (error) {
+      console.warn("[dashboard-ai] Cloudflare request threw", error instanceof Error ? error.name : error);
+    }
+    if (cloudflare && !cloudflare.ok)
+      console.warn("[dashboard-ai] Cloudflare request failed", cloudflare.status);
+  } else if (geminiKey) {
     try {
       gemini = await callGemini({
         apiKey: geminiKey,
@@ -1553,13 +1585,33 @@ Live web grounding is unavailable for this retry. Set verified=false for every s
 
   let providerPayload: Record<string, unknown> = {};
   let rawText = "";
-  const usedModel = model;
-  if (gemini?.ok) {
+  const usedModel = aiProvider === "cloudflare" ? cfModel : model;
+  if (aiProvider === "cloudflare" && cloudflare?.ok) {
+    rawText = cloudflareText(cloudflare.body);
+  } else if (aiProvider === "gemini" && gemini?.ok) {
     providerPayload = gemini.body as Record<string, unknown>;
     rawText = geminiText(providerPayload);
   }
 
   if (!rawText) {
+    if (aiProvider === "cloudflare") {
+      if (cloudflare?.status === 429) {
+        const limited = json(req, {
+          error: "ai_rate_limited",
+          message: "Cloudflare free AI capacity or daily quota has been reached. Check Workers AI usage and try after the limit resets.",
+        }, 429);
+        if (cloudflare.retryAfter && /^\d{1,6}$/.test(cloudflare.retryAfter)) {
+          limited.headers.set("Retry-After", cloudflare.retryAfter);
+        }
+        return limited;
+      }
+      return json(req, {
+        error: cloudflare?.status === 401 || cloudflare?.status === 403
+          ? "ai_provider_configuration_error"
+          : "ai_unavailable",
+        message: "Cloudflare AI could not complete the request. Check provider access and availability.",
+      }, 503);
+    }
     if (!geminiKey) {
       return json(req, { error: "ai_not_configured", message: "Gemini is not configured in Supabase." }, 503);
     }
@@ -1583,7 +1635,7 @@ Live web grounding is unavailable for this retry. Set verified=false for every s
   }
 
   const research =
-    usedModel === model ? grounding(providerPayload) : { grounded: false, sources: [] };
+    aiProvider === "gemini" ? grounding(providerPayload) : { grounded: false, sources: [] };
   const officialDomains = await trustedOfficialDomains({ admin, entity, currentData });
   const sources = scoreSources(research.sources, officialDomains);
   const normalized = normalizeAiResult(
