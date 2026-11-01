@@ -135,7 +135,7 @@ function editor({
     setForm: (updater) => {
       // This harness tracks inventory reconciliation, not the independent
       // status-only form sync performed after a successful save.
-      if (/\\bstock\\s*:/.test(updater.toString())) {
+      if (updater.toString().includes("stock:")) {
         calls.formStock.push(updater({ ...draft, stock: currentStock }).stock);
       }
     },
