@@ -85,6 +85,7 @@ type AiField = {
   label: string;
   description?: string;
   section?: string;
+  sectionAr?: string;
   unit?: string;
   review?: boolean;
   maxLength?: number;
@@ -319,6 +320,10 @@ function cleanFields(value: unknown, entity: string, context: Record<string, unk
       section:
         key.startsWith("spec__") && typeof row.section === "string"
           ? row.section.slice(0, 80)
+          : undefined,
+      sectionAr:
+        key.startsWith("spec__") && typeof row.sectionAr === "string"
+          ? row.sectionAr.slice(0, 80)
           : undefined,
       unit:
         key.startsWith("spec__") && typeof row.unit === "string"
