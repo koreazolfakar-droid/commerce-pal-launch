@@ -946,7 +946,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </>
           ) : null}
           <AiAssistPanel
-            disabled={saving || pendingAction !== null}
+            disabled={loading || saving || pendingAction !== null}
             entity="product"
             query={form.title}
             currentData={{
