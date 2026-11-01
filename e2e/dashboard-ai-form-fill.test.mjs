@@ -23,7 +23,7 @@ const edgeSource = await readFile(
 );
 const edge =
   edgeSource.replace(/^import .*;\n/gm, "") +
-  "\nexport { cleanFields, buildGeminiRequest, normalizeAiResult, verifySuggestions, suggestionFieldsForAction };";
+  "\nexport { cleanFields, cleanReferenceUrls, grounding, specificationUnitIssue, calibrateEntityMatch, buildGeminiRequest, normalizeAiResult, verifySuggestions, suggestionFieldsForAction };";
 const output = ts.transpileModule(edge, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText;
@@ -162,6 +162,73 @@ test("unverified specifications require exact entity and a real supplied quotati
   });
   assert.equal(wrongModel.decision, "block");
 });
+
+test("joined and spaced model names match, but different variants do not", () => {
+  const match = { status: "exact", canonicalName: "Honor Play 20C", reason: "same device" };
+  assert.equal(engine.calibrateEntityMatch(match, "product", "Honor Play20C", {}).status, "exact");
+  assert.notEqual(
+    engine.calibrateEntityMatch({ ...match, canonicalName: "Honor Play 20D" }, "product", "Honor Play20C", {}).status,
+    "exact",
+  );
+  assert.notEqual(
+    engine.calibrateEntityMatch(
+      { ...match, canonicalName: "Honor Play 20C 256GB" },
+      "product",
+      "Honor Play20C 128GB",
+      {},
+    ).status,
+    "exact",
+  );
+});
+
+test("reference URLs are safe, de-duplicated and bounded before provider retrieval", () => {
+  const urls = engine.cleanReferenceUrls([
+    "https://www.hihonor.com/global/",
+    "https://www.hihonor.com/global/",
+    "https://www.samsung.com/phones/",
+    "https://support.apple.com/en-us/",
+    "https://www.sony.com/",
+    "http://unsecured.example.com",
+    "https://127.0.0.1/private",
+    "https://host.local/internal",
+  ]);
+  assert.deepEqual([...urls], [
+    "https://www.hihonor.com/global/",
+    "https://www.samsung.com/phones/",
+    "https://support.apple.com/en-us/",
+  ]);
+  assert.deepEqual([...engine.cleanReferenceUrls(["https://localhost/private", "http://example.com"])], []);
+});
+
+test("cited URL Context provides independent evidence, but an uncited retrieval does not", () => {
+  const source = "https://www.hihonor.com/global/phones/";
+  const retrieved = { type: "url_context_result", result: { status: "success" } };
+  const cited = {
+    type: "model_output",
+    content: [{ type: "text", text: "{}", annotations: [
+      { type: "url_citation", url: source, title: "HONOR device specifications" },
+    ] }],
+  };
+  assert.equal(engine.grounding({ steps: [retrieved] }).grounded, false);
+  const result = engine.grounding({ steps: [retrieved, cited] });
+  assert.equal(result.grounded, true);
+  assert.equal(result.sources.length, 1);
+  assert.equal(result.sources[0].url, source);
+});
+
+test("unit-aware schema mapping protects RAM, storage and battery slots", () => {
+  assert.equal(engine.specificationUnitIssue({ unit: "GB" }, "128 GB"), "");
+  assert.equal(engine.specificationUnitIssue({ unit: "mAh" }, "5000mAh"), "");
+  assert.match(engine.specificationUnitIssue({ unit: "GB" }, "5000 mAh"), /conflicts/);
+  assert.match(engine.specificationUnitIssue({ unit: "mAh" }, "128GB"), /conflicts/);
+  assert.match(engine.specificationUnitIssue({ unit: "GHz" }, "Unknown"), /numeric/);
+  const cleaned = engine.cleanFields([
+    { ...field("spec__storage"), section: "Memory", unit: "GB" },
+  ], "product", { specKeys: ["storage"] });
+  assert.equal(cleaned[0].section, "Memory");
+  assert.equal(cleaned[0].unit, "GB");
+});
+
 test("content entities cannot request operational fields or arbitrary specification keys", () => {
   const keys = engine
     .cleanFields(

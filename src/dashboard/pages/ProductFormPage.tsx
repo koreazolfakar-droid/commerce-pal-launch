@@ -946,7 +946,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </>
           ) : null}
           <AiAssistPanel
-            disabled={saving || pendingAction !== null}
+            disabled={loading || saving || pendingAction !== null}
             entity="product"
             query={form.title}
             currentData={{
@@ -1019,12 +1019,30 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 section.fields.map((field) => ({
                   key: aiSpecificationFieldKey(field.key),
                   label: field.label,
+                  section: section.title,
+                  sectionAr: section.titleAr,
+                  unit: field.unit,
                   description: `Exact factual specification. ${field.unit ? `Expected unit: ${field.unit}. ` : ""}Do not infer uncertain values.`,
                   review: true,
                   maxLength: 500,
                 })),
               ),
             ]}
+            categoryTemplates={categories.map((category) => ({
+              name: category.name,
+              fields: category.specTemplate.sections.flatMap((section) =>
+                section.fields.map((field) => ({
+                  key: aiSpecificationFieldKey(field.key),
+                  label: field.label,
+                  section: section.title,
+                  sectionAr: section.titleAr,
+                  unit: field.unit,
+                  description: `Verified specification for the exact model. ${field.unit ? `Expected unit: ${field.unit}.` : ""}`,
+                  review: true,
+                  maxLength: 500,
+                })),
+              ),
+            }))}
             context={{
               market: "Lebanon",
               store: "Space Call",

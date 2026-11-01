@@ -29,6 +29,10 @@ The assistant supports:
 - preview and explicit Apply Selected before the normal form save
 - unchanged or non-meaningful suggestions blocked from application
 - optional reference text (up to 12,000 characters), with literal quotations shown separately from web evidence
+- optional direct manufacturer/product-page URLs (up to three public HTTPS links) using Gemini URL Context, with independently cited results counted as web grounding
+- specification-aware extraction: each dynamic field carries its exact category section and expected unit, and incompatible unit assignments are rejected server-side
+- two-stage first-product research: if no category is selected, resolve an existing dashboard category and then research that category's template in the same review session (still no auto-save)
+- clear grouped suggestion review with safe/review/blocked counts and official evidence links
 - complete-form filling that preserves populated fields by default, with an explicit mode to propose improvements
 - every category specification slot, processed in bounded batches of at most 40 fields and 60 KB of UTF-8 JSON instead of silently dropping fields after the first 40
 - progress, content-field completeness and reasons for fields that still need information
@@ -61,7 +65,7 @@ Dashboard form
 
 The existing form save functions remain the only paths that persist changes. No AI result is saved automatically. If any batch fails, the request shows an error without applying earlier batches.
 
-For product specifications, select the category first so its specification template is available. Prices, stock and media remain in their normal form controls and are excluded from the assistant's completeness count.
+For product specifications, select a category first when possible. If the product has no selected category, the full-product assistant may propose an existing category and, when it matches an exact registered category name, research that category's specification template in a second pass before any draft changes are applied. Specification suggestions remain blocked from application until the category suggestion is selected too. Prices, stock and media remain in their normal form controls and are excluded from the assistant's completeness count.
 
 ## Rollout and local checks
 
@@ -85,7 +89,7 @@ GEMINI_MODEL=gemini-3.5-flash-lite
 
 Never expose the Gemini key through a `VITE_*` variable or browser code.
 
-The Edge Function uses the Gemini Interactions API with structured JSON output and defaults to Gemini 3.5 Flash-Lite. It attempts Google Search grounding first. If a 400 response indicates a structured-output schema or tool conflict, it retries Search without constrained decoding while retaining server-side verification. For 400/403 Search failures it falls back to ungrounded, manual-review-only suggestions. A 429 is treated as rate limiting (not silently relabeled a Search tier issue).
+The Edge Function uses the Gemini Interactions API with structured JSON output and defaults to Gemini 3.5 Flash-Lite. It attempts Google Search grounding first and combines it with URL Context when staff provide direct product pages. If a 400 response indicates a structured-output schema or tool conflict, it retries Search without constrained decoding while retaining server-side verification. On 400/403 Search failures, it tries URL Context alone when URLs were supplied, then safely falls back to ungrounded, manual-review-only suggestions. A 429 is treated as rate limiting (not silently relabeled a Search tier issue). Results with neither a real Search result nor a cited retrieved URL are never marked as independently grounded.
 
 As of September 2026, Gemini API Free Tier access depends on the selected model/project. Search grounding also has separate tier/quota rules, so the implementation never assumes Search is available: a 400/403 Search failure may fall back to ungrounded manual-review output, and 429 fails explicitly instead of making unsupported claims about account access. Verify current model and grounding limits before enabling billing:
 
