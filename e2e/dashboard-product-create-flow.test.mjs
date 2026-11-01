@@ -58,7 +58,13 @@ test("new product images are queued locally, written to a draft then published",
     "draft save precedes uploads and option updates, then activation",
   );
   assert.match(form, /if \(createdDraftId\) \{/);
-  assert.match(form, /navigate\(\`\/dashboard\/products\/\$\{createdDraftId\}\`\)/);
+  // A failed upload must not redirect away and lose staged File objects.
+  // Retry uses the already-persisted draft ID and skips uploaded images.
+  assert.match(form, /partialDraftIdRef\.current = savedProduct\.id/);
+  assert.match(form, /id: id \?\? partialDraftIdRef\.current \?\? undefined/);
+  assert.match(form, /uploadedPreviewsRef\.current\.has\(pending\.preview\)/);
+  const catchDraft = form.slice(form.indexOf("if (createdDraftId) {", form.indexOf("} catch (cause) {", form.indexOf("const handleSave"))));
+  assert.ok(!catchDraft.includes("navigate("), "partial-save failure stays on the editor");
   assert.match(preview, /blob:https\?/);
   assert.match(translations, /"Images upload after save"/);
 });
