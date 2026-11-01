@@ -57,7 +57,10 @@ test("Cloudflare adapter calls Workers AI non-thinking inference with cautious i
         status: 200,
         headers: { get: () => null },
         json: async () => ({
-          result: { response: '{"suggestions":[]}' },
+          success: true,
+          result: {
+            choices: [{ message: { content: '{"suggestions":[]}' }, finish_reason: "stop" }],
+          },
         }),
       };
     },
