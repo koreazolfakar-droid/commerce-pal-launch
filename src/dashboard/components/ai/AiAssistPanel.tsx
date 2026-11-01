@@ -479,6 +479,30 @@ export default function AiAssistPanel({
                     />
                   </label>
 
+                  {entity === "product" ? (
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      {t("Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.")}
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={Boolean(loadingAction) || researchQuery.trim().length < 2}
+                    onClick={() => void run("research_fill")}
+                    className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4858d8] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {loadingAction === "research_fill"
+                      ? <Loader2 className="size-4 animate-spin" />
+                      : <Search className="size-4" />}
+                    {t("Complete form")}
+                  </button>
+                  <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/60">
+                    <summary className="cursor-pointer px-3 py-3 text-xs font-semibold text-slate-700">
+                      {t("Advanced AI options (sources, mode and validation)")}
+                    </summary>
+                    <div className="border-t border-slate-200 px-3 pb-3">
+                      <p className="mt-3 text-xs leading-5 text-slate-500">
+                        {t("Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.")}
+                      </p>
                   <label className="mt-4 block">
                     <span className="mb-1.5 block text-xs font-bold text-foreground">
                       {t("Source information and specifications")}
@@ -611,15 +635,8 @@ export default function AiAssistPanel({
                   )}
 
                   <div
-                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}
+                    className={`mt-3 grid gap-2 ${showSeoAction ? "grid-cols-2" : "grid-cols-1"}`}
                   >
-                    <ActionButton
-                      label={t("Complete form")}
-                      icon={<Search className="size-3.5" />}
-                      active={loadingAction === "research_fill"}
-                      disabled={Boolean(loadingAction)}
-                      onClick={() => void run("research_fill")}
-                    />
                     {showSeoAction ? (
                       <ActionButton
                         label={t("Improve SEO")}
@@ -637,6 +654,8 @@ export default function AiAssistPanel({
                       onClick={() => void run("validate")}
                     />
                   </div>
+                    </div>
+                  </details>
 
                   {result ? (
                     <div className="mt-5 space-y-4">
