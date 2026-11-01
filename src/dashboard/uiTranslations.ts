@@ -54,6 +54,16 @@ export const dashboardUiArabic: Record<string, string> = {
   "The form context is too large. Shorten the supplied information and try again.":
     "معلومات النموذج كبيرة جدًا. اختصر النص المرجعي وحاول مجددًا.",
   "Complete form": "إكمال النموذج",
+  "Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.":
+    "اكتب اسم المنتج والموديل والنسخة بدقّة. المساعد بيقترح تعبئة الخانات، وبيوضح المعلومات اللي ما إلها مصدر موثوق.",
+  "Advanced AI options (sources, mode and validation)": "خيارات متقدمة: مصادر وطريقة التعبئة والتحقق",
+  "Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.":
+    "اختياري: أضف نص المواصفات الرسمية لدقّة أعلى. الرابط وحده مش إثبات إذا البحث المباشر غير متاح.",
+  "Reference text improves factual accuracy. Live web lookup depends on your AI provider.":
+    "النص المرجعي يحسّن دقّة المواصفات، والبحث المباشر يعتمد على مزوّد الذكاء الاصطناعي.",
+  "Up to 3 HTTPS links. The Cloudflare model cannot open them; paste relevant product-sheet text above for factual extraction.":
+    "حدّ أقصى ٣ روابط HTTPS. نموذج Cloudflare لا يفتحها تلقائياً؛ الصق نص المواصفات أعلاه للتحقق من القيم.",
+
   "Source information and specifications": "المعلومات والمواصفات المرجعية",
   "Optional reference text; web research can also be used.":
     "نص مرجعي اختياري؛ يمكنك الاعتماد على البحث في الويب أيضًا.",
