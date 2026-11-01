@@ -9,10 +9,12 @@ import {
   type ProductSpecificationValues,
 } from "@/lib/productSpecifications";
 
-function aiField(field: ProductSpecificationField) {
+function aiField(field: ProductSpecificationField, section?: string) {
   return {
     key: aiSpecificationFieldKey(field.key),
     label: field.label,
+    section,
+    unit: field.unit,
     description: [
       "Exact factual product specification for this category field.",
       field.unit ? `Expected unit or format: ${field.unit}.` : "",
@@ -80,7 +82,9 @@ export default function ProductSpecificationEditor({
           entity="product"
           query={query}
           currentData={currentData}
-          fields={fields.map(aiField)}
+          fields={template.sections.flatMap((section) =>
+            section.fields.map((field) => aiField(field, section.title))
+          )}
           context={context}
           onApply={onAiApply}
           triggerLabel={ar ? "تعبئة المواصفات بالذكاء الاصطناعي" : "AI Fill Specifications"}
@@ -111,7 +115,7 @@ export default function ProductSpecificationEditor({
                   entity="product"
                   query={query}
                   currentData={sectionCurrentData}
-                  fields={section.fields.map(aiField)}
+                  fields={section.fields.map((field) => aiField(field, section.title))}
                   context={{
                     ...aiContext,
                     specKeys: section.fields.map((field) => field.key),
@@ -147,7 +151,7 @@ export default function ProductSpecificationEditor({
                             entity="product"
                             query={query}
                             currentData={{ [aiKey]: values[field.key] ?? "" }}
-                            fields={[aiField(field)]}
+                            fields={[aiField(field, section.title)]}
                             context={{ ...aiContext, specKeys: [field.key] }}
                             onApply={onAiApply}
                             triggerLabel="AI"
