@@ -9,6 +9,10 @@ export type DashboardAiEntityMatchStatus = "exact" | "partial" | "uncertain";
 export type DashboardAiFieldDefinition = {
   key: string;
   label: string;
+  /** The category section this field belongs to, for precise mapping. */
+  section?: string;
+  /** Expected specification unit, never a freeform field key. */
+  unit?: string;
   description?: string;
   review?: boolean;
   maxLength?: number;
@@ -19,6 +23,8 @@ export type DashboardAiRequest = {
   action: DashboardAiAction;
   query: string;
   sourceText?: string;
+  /** Explicit HTTPS public product/specification pages to read with URL Context. */
+  referenceUrls?: string[];
   language?: "en" | "ar";
   fillMode?: "empty" | "all";
   currentData: Record<string, string>;
