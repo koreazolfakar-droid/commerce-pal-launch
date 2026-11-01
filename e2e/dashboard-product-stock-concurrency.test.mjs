@@ -132,7 +132,13 @@ function editor({
     getProductImageResolution: () => "standard",
     t: (value) => value,
     setStockBaseline: (value) => calls.baseline.push(value),
-    setForm: (updater) => calls.formStock.push(updater({ ...draft, stock: currentStock }).stock),
+    setForm: (updater) => {
+      // This harness tracks inventory reconciliation, not the independent
+      // status-only form sync performed after a successful save.
+      if (/\\bstock\\s*:/.test(updater.toString())) {
+        calls.formStock.push(updater({ ...draft, stock: currentStock }).stock);
+      }
+    },
     setExisting: () => {},
     markDraftSaved: () => {},
     setPersistedCollectionIds: () => {},
