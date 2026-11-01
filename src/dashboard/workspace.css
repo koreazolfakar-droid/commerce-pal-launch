@@ -1491,8 +1491,22 @@
   .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(.grid) {
     min-width: 0;
   }
+  .dashboard-theme-scope .dashboard-product-editor {
+    padding-block-end: 7rem;
+  }
   .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer {
-    margin-block-end: 5.5rem;
+    position: sticky;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 25;
+    margin-block-end: 1rem;
+    padding: 0.75rem;
+    box-shadow: 0 8px 32px rgb(12 24 46 / 0.11);
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer > div:first-child {
+    display: none;
+  }
+  .dashboard-theme-scope .dashboard-product-editor [data-product-section] {
+    scroll-margin-bottom: 11rem;
   }
 }
 @media (max-width: 389px) {
