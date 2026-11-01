@@ -251,7 +251,15 @@ export default function AiAssistPanel({
       referenceUrls.some((value) => {
         try {
           const url = new URL(value);
-          return url.protocol !== "https:" || !url.hostname.includes(".") || Boolean(url.username || url.password);
+          const host = url.hostname.toLowerCase();
+          return (
+            url.protocol !== "https:" ||
+            !host.includes(".") ||
+            host.includes(":") ||
+            /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host) ||
+            /\.(?:local|internal|localhost|onion|test|invalid)$/.test(host) ||
+            Boolean(url.username || url.password)
+          );
         } catch {
           return true;
         }
@@ -807,10 +815,11 @@ export default function AiAssistPanel({
                           const evidenceSources = result.sources.filter((source) =>
                             suggestion.sourceUrls.includes(source.url),
                           );
-                          const section = definition.section;
-                          const previousSection = index > 0
-                            ? fieldMap.get(orderedSuggestions[index - 1].field)?.section
-                            : undefined;
+                          const section = lang === "ar" ? definition.sectionAr || definition.section : definition.section;
+                          const previousDefinition = index > 0 ? fieldMap.get(orderedSuggestions[index - 1].field) : undefined;
+                          const previousSection = lang === "ar"
+                            ? previousDefinition?.sectionAr || previousDefinition?.section
+                            : previousDefinition?.section;
                           return (
                             <div key={suggestion.field}>
                               {section && section !== previousSection ? (
