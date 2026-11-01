@@ -460,7 +460,7 @@ export default function AiAssistPanel({
                 <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
                   <label className="block">
                     <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                      {t("What should AI research?")}
+                      {t(entity === "product" ? "Product name / exact model" : "What should AI research?")}
                     </span>
                     <input
                       ref={queryInputRef}
@@ -474,7 +474,7 @@ export default function AiAssistPanel({
                         setResult(null);
                         setSelected(new Set());
                       }}
-                      placeholder={t("Exact name or subject of the form")}
+                      placeholder={t(entity === "product" ? "e.g. HONOR Play20C 4GB / 128GB" : "Exact name or subject of the form")}
                       className="h-11 w-full rounded-xl border border-slate-200 px-3 text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </label>
