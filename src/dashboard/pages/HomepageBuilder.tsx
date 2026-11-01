@@ -228,8 +228,8 @@ function SectionCard({
         <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
           <Layers3 className="size-4" />
         </div>
-        <button onClick={onSelect} className="min-w-0 flex-1 text-start">
-          <div className="truncate text-[12px] font-bold text-slate-700">{section.name}</div>
+        <button onClick={onSelect} aria-pressed={selected} className="min-w-0 flex-1 text-start">
+          <div className="break-words text-[12px] font-bold text-slate-700">{section.name}</div>
           <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
             <span>{sectionTypeLabels[section.type]}</span>
             <span>·</span>
@@ -241,7 +241,8 @@ function SectionCard({
             )}
           </div>
         </button>
-        <div className="flex shrink-0 items-center gap-1">
+      </div>
+      <div className="mt-2 flex items-center justify-end gap-1">
           <button
             title={t("Move up")}
             onClick={() => onMove("up")}
@@ -270,7 +271,6 @@ function SectionCard({
           >
             <Trash2 className="size-3.5" />
           </button>
-        </div>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
         <span className="text-[10px] font-semibold text-slate-400">
@@ -1612,7 +1612,7 @@ export default function HomepageBuilderPage() {
             {t("Homepage section builder")}
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            {t("Manage homepage order, visibility and section content from the Supabase CMS.")}
+            {t("Arrange homepage sections, edit content and control visibility.")}
           </p>
         </div>
 
@@ -1622,7 +1622,7 @@ export default function HomepageBuilderPage() {
               dirty ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
             }`}
           >
-            {dirty ? t("Unsaved changes") : t("Synced to Supabase")}
+            {dirty ? t("Unsaved changes") : t("Saved")}
           </span>
           <button
             onClick={() => void saveChanges()}
@@ -1635,7 +1635,7 @@ export default function HomepageBuilderPage() {
           <button
             onClick={() => void publishAll()}
             disabled={!sections.length || saving}
-            className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{" "}
             {t("Publish all")}
@@ -1653,7 +1653,7 @@ export default function HomepageBuilderPage() {
         <div className="flex items-center gap-2 text-[11px] font-semibold text-[#5962b8]">
           <Check className="size-4" />
           {t(
-            "Save writes to cms_sections. Published and visible sections are served through public-cms.",
+            "Save your changes and preview them before publishing.",
           )}
         </div>
         <button
@@ -1671,7 +1671,7 @@ export default function HomepageBuilderPage() {
           </div>
           <button
             onClick={() => setShowAdd(true)}
-            className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
+            className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-bold text-primary-foreground"
           >
             <Plus className="size-4" /> {t("Add first section")}
           </button>

@@ -172,6 +172,7 @@ export type ProcurementProductOption = {
   variantId: string | null;
   title: string;
   sku: string;
+  productStatus: ProductRow["status"];
   currentStock: number;
 };
 
@@ -555,6 +556,7 @@ export async function loadReceivingWorkspace(
           variantId: variant.id,
           title: `${product.title} · ${variant.title}`,
           sku: variant.sku ?? product.sku ?? "",
+          productStatus: product.status,
           currentStock: variant.stock_quantity,
         });
       }
@@ -565,6 +567,7 @@ export async function loadReceivingWorkspace(
         variantId: null,
         title: product.title,
         sku: product.sku ?? "",
+        productStatus: product.status,
         currentStock: product.stock_quantity,
       });
     }
@@ -1059,6 +1062,7 @@ export async function loadProcurementFormOptions(): Promise<ProcurementFormOptio
           variantId: variant.id,
           title: `${product.title} · ${variant.title}`,
           sku: variant.sku ?? product.sku ?? "",
+          productStatus: product.status,
           currentStock: variant.stock_quantity,
         });
       }
@@ -1069,6 +1073,7 @@ export async function loadProcurementFormOptions(): Promise<ProcurementFormOptio
         variantId: null,
         title: product.title,
         sku: product.sku ?? "",
+        productStatus: product.status,
         currentStock: product.stock_quantity,
       });
     }
@@ -1928,15 +1933,16 @@ export type ProcurementAnalytics = {
   overduePoCount: number;
   receivedUnits: number;
   damagedUnits: number;
-  damageRate: number;
+  damageRate: number | null;
   supplierSpend: Array<{
     supplierId: string;
     supplierName: string;
     spend: number;
     poCount: number;
     completedPoCount: number;
+    onTimeEligibleCount: number;
     onTimeCompletedCount: number;
-    onTimeRate: number;
+    onTimeRate: number | null;
     damagedUnits: number;
   }>;
 };
@@ -1967,6 +1973,7 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
       spend: number;
       poCount: number;
       completedPoCount: number;
+      onTimeEligibleCount: number;
       onTimeCompletedCount: number;
       damagedUnits: number;
     }
@@ -1979,6 +1986,7 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
       spend: 0,
       poCount: 0,
       completedPoCount: 0,
+      onTimeEligibleCount: 0,
       onTimeCompletedCount: 0,
       damagedUnits: 0,
     };
@@ -1994,10 +2002,12 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
       current.completedPoCount += 1;
       const completedAt = poReceipts.reduce<string | null>((latest, receipt) => {
         const stamp = receipt.approvedAt ?? receipt.receivedAt;
+        if (!stamp || !Number.isFinite(Date.parse(stamp))) return latest;
         return !latest || new Date(stamp) > new Date(latest) ? stamp : latest;
       }, null);
-      if (po.expectedAt && completedAt && new Date(completedAt) <= new Date(po.expectedAt)) {
-        current.onTimeCompletedCount += 1;
+      if (po.expectedAt && Number.isFinite(Date.parse(po.expectedAt)) && completedAt) {
+        current.onTimeEligibleCount += 1;
+        if (new Date(completedAt) <= new Date(po.expectedAt)) current.onTimeCompletedCount += 1;
       }
     }
 
@@ -2012,14 +2022,14 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
     receivedUnits,
     damagedUnits,
     damageRate:
-      receivedUnits + damagedUnits > 0 ? damagedUnits / (receivedUnits + damagedUnits) : 0,
+      receivedUnits + damagedUnits > 0 ? damagedUnits / (receivedUnits + damagedUnits) : null,
     supplierSpend: [...supplierMap.values()]
       .map((supplier) => ({
         ...supplier,
         onTimeRate:
-          supplier.completedPoCount > 0
-            ? supplier.onTimeCompletedCount / supplier.completedPoCount
-            : 0,
+          supplier.onTimeEligibleCount > 0
+            ? supplier.onTimeCompletedCount / supplier.onTimeEligibleCount
+            : null,
       }))
       .sort((a, b) => b.spend - a.spend),
   };
@@ -2031,6 +2041,7 @@ export type ReorderSuggestion = {
   variantId: string | null;
   title: string;
   sku: string;
+  productStatus: ProductRow["status"];
   currentStock: number;
   onOrder: number;
   suggestedQuantity: number;
@@ -2068,6 +2079,7 @@ export function buildReorderSuggestions(
         variantId: option.variantId,
         title: option.title,
         sku: option.sku,
+        productStatus: option.productStatus,
         currentStock: option.currentStock,
         onOrder,
         suggestedQuantity: Math.max(0, targetStock - projected),

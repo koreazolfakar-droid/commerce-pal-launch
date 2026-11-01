@@ -19,7 +19,7 @@ test("homepage builder no longer persists production state in localStorage", () 
   assert.match(builder, /loadDashboardHomepageWorkspace/);
   assert.match(builder, /saveDashboardHomepageSections/);
   assert.match(builder, /deleteDashboardHomepageSection/);
-  assert.match(builder, /Synced to Supabase/);
+  assert.match(builder, /t\("Saved"\)/);
 });
 
 test("homepage CMS data layer reads and writes cms_sections with existing RLS session", () => {

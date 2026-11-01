@@ -50,6 +50,8 @@ type ReceivingDraftLine = {
 };
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useLanguage();
+  const readableStatus = status.replaceAll("_", " ");
   const tone =
     status === "received" || status === "approved" || status === "closed"
       ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
@@ -68,7 +70,7 @@ function StatusBadge({ status }: { status: string }) {
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ${tone}`}
     >
-      {status.replaceAll("_", " ")}
+      {t(readableStatus.charAt(0).toUpperCase() + readableStatus.slice(1))}
     </span>
   );
 }
@@ -701,8 +703,7 @@ export default function ReceivingPage({
               </button>
               <button
                 onClick={() => navigate("/dashboard/purchase-orders/new")}
-                disabled={!suppliers.length || !productOptions.length}
-                className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
+                className="flex h-10 items-center gap-2 rounded-xl bg-primary px-3.5 text-[11px] font-bold text-primary-foreground disabled:opacity-40"
               >
                 <ClipboardList className="size-3.5" />
                 {t("New PO")}
@@ -712,7 +713,7 @@ export default function ReceivingPage({
             <button
               onClick={() => openPanel("receive")}
               disabled={!openPurchaseOrders.length}
-              className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
+              className="flex h-10 items-center gap-2 rounded-xl bg-primary px-3.5 text-[11px] font-bold text-primary-foreground disabled:opacity-40"
             >
               <PackageCheck className="size-3.5" />
               {t("Receive PO")}
@@ -720,6 +721,30 @@ export default function ReceivingPage({
           )}
         </div>
       </div>
+
+      {purchaseOrderCreateMode && !loading && !error && workspace &&
+      (!suppliers.length || !locations.length || !productOptions.length) ? (
+        <div role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <p>{t("A purchase order requires:")}</p>
+          <ul className="ms-5 list-disc">
+            {!suppliers.length && <li>{t("An active supplier")}</li>}
+            {!locations.length && <li>{t("An active location")}</li>}
+            {!productOptions.length && <li>{t("A tracked product")}</li>}
+          </ul>
+          <div className="mt-2 flex flex-wrap gap-3">
+            {(!suppliers.length || !locations.length) && (
+              <button type="button" className="underline" onClick={() => navigate("/dashboard/suppliers")}>
+                {t("Manage suppliers and locations")}
+              </button>
+            )}
+            {!productOptions.length && (
+              <button type="button" className="underline" onClick={() => navigate("/dashboard/products")}>
+                {t("Manage products")}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {!purchaseOrderCreateMode ? (
         <div className="dashboard-summary-grid mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -841,7 +866,7 @@ export default function ReceivingPage({
                 <button
                   onClick={() => void saveSupplier()}
                   disabled={saving}
-                  className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
+                  className="h-10 rounded-xl bg-primary px-5 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
                 >
                   {t("Save supplier")}
                 </button>
@@ -1098,7 +1123,7 @@ export default function ReceivingPage({
                   <button
                     onClick={() => void savePo()}
                     disabled={saving}
-                    className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
+                    className="h-10 rounded-xl bg-primary px-5 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
                   >
                     {t("Save PO draft")}
                   </button>
@@ -1346,7 +1371,7 @@ export default function ReceivingPage({
                   <button
                     onClick={() => void saveReceiving()}
                     disabled={saving || !selectedReceivingPo}
-                    className="h-10 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
+                    className="h-10 rounded-xl bg-primary px-5 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
                   >
                     {t("Create receiving draft")}
                   </button>
@@ -1554,6 +1579,11 @@ export default function ReceivingPage({
                     </div>
                   </div>
 
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                    <span>{t("Created date")}: {new Date(po.createdAt).toLocaleString()}</span>
+                    <span>{t("Issued date")}: {po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}</span>
+                  </div>
+
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <div>
                       <div className="text-[9px] text-slate-400">{t("Expected cost")}</div>
@@ -1572,7 +1602,7 @@ export default function ReceivingPage({
                     ) : po.status === "ordered" || po.status === "partially_received" ? (
                       <button
                         onClick={() => navigate(`/dashboard/receiving/${po.id}`)}
-                        className="h-8 rounded-lg bg-[#5968ea] px-3 text-[10px] font-bold text-white"
+                        className="h-8 rounded-lg bg-primary px-3 text-[10px] font-bold text-primary-foreground"
                       >
                         {t("Receive PO")}
                       </button>
@@ -1583,15 +1613,13 @@ export default function ReceivingPage({
             })}
           </div>
 
-          <div className="hidden overflow-x-auto lg:block">
-            <table className="w-full min-w-[1240px] text-start">
+          <div className="hidden overflow-x-auto lg:block" role="region" aria-label={t("Purchase Orders")} tabIndex={0}>
+            <table className="w-full min-w-[960px] text-start">
               <thead className="bg-[#fafbfe] text-[9px] uppercase tracking-[.1em] text-slate-400">
                 <tr>
                   <th className="px-5 py-3">{t("PO number")}</th>
-                  <th className="px-3 py-3">{t("Created date")}</th>
                   <th className="px-3 py-3">{t("Supplier")}</th>
                   <th className="px-3 py-3">{t("Expected delivery")}</th>
-                  <th className="px-3 py-3">{t("Issued date")}</th>
                   <th className="px-3 py-3">{t("Status")}</th>
                   <th className="px-3 py-3">{t("Amount")}</th>
                   <th className="px-3 py-3">{t("Progress")}</th>
@@ -1615,9 +1643,8 @@ export default function ReceivingPage({
                       <div className="mt-0.5 text-[9px] text-slate-400">
                         {po.expectedUnits} {t("ordered units")}
                       </div>
-                    </td>
-                    <td className="px-3 py-3 text-[10px] text-slate-500">
-                      {new Date(po.createdAt).toLocaleString()}
+                      <div className="mt-1 text-[10px] text-slate-500">{t("Created date")}: {new Date(po.createdAt).toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-500">{t("Issued date")}: {po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}</div>
                     </td>
                     <td className="px-3 py-3">
                       <div className="text-[11px] font-semibold text-slate-700">
@@ -1641,9 +1668,6 @@ export default function ReceivingPage({
                       ) : (
                         "—"
                       )}
-                    </td>
-                    <td className="px-3 py-3 text-[10px] text-slate-500">
-                      {po.orderedAt ? new Date(po.orderedAt).toLocaleString() : "—"}
                     </td>
                     <td className="px-3 py-3">
                       <StatusBadge status={po.status} />
@@ -1681,7 +1705,7 @@ export default function ReceivingPage({
                       ) : po.status === "ordered" || po.status === "partially_received" ? (
                         <button
                           onClick={() => navigate(`/dashboard/receiving/${po.id}`)}
-                          className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white hover:bg-[#4f5edb]"
+                          className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground hover:bg-primary/90"
                         >
                           {t("Receive")}
                         </button>

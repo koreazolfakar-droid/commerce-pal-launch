@@ -21,6 +21,8 @@ export default function ProcurementAnalyticsPage() {
   const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [targetStock, setTargetStock] = useState(10);
+  const [suggestionSearch, setSuggestionSearch] = useState("");
+  const [suggestionPage, setSuggestionPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +52,13 @@ export default function ProcurementAnalyticsPage() {
     () => (workspace ? buildReorderSuggestions(workspace, targetStock) : []),
     [targetStock, workspace],
   );
+  const filteredSuggestions = useMemo(() => {
+    const term = suggestionSearch.trim().toLocaleLowerCase();
+    return term ? suggestions.filter((item) => `${item.title} ${item.sku}`.toLocaleLowerCase().includes(term)) : suggestions;
+  }, [suggestionSearch, suggestions]);
+  const suggestionPageCount = Math.max(1, Math.ceil(filteredSuggestions.length / 20));
+  const currentSuggestionPage = Math.min(suggestionPage, suggestionPageCount);
+  const visibleSuggestions = filteredSuggestions.slice((currentSuggestionPage - 1) * 20, currentSuggestionPage * 20);
 
   if (loading && !workspace) {
     return (
@@ -65,7 +74,7 @@ export default function ProcurementAnalyticsPage() {
     { label: "Purchase spend", value: money(analytics.totalSpend), icon: BarChart3 },
     { label: "Open POs", value: analytics.openPoCount.toLocaleString(), icon: ShoppingCart },
     { label: "Overdue POs", value: analytics.overduePoCount.toLocaleString(), icon: AlertTriangle },
-    { label: "Damage rate", value: `${(analytics.damageRate * 100).toFixed(1)}%`, icon: Boxes },
+    { label: "Damage rate", value: analytics.damageRate == null ? t("No data") : `${(analytics.damageRate * 100).toFixed(1)}%`, icon: Boxes },
   ];
 
   return (
@@ -86,7 +95,7 @@ export default function ProcurementAnalyticsPage() {
         </div>
         <button
           onClick={() => navigate("/dashboard/purchase-orders/new")}
-          className="h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white"
+          className="h-10 rounded-xl bg-primary px-4 text-[11px] font-bold text-primary-foreground"
         >
           {t("Create Purchase Order")}
         </button>
@@ -117,6 +126,9 @@ export default function ProcurementAnalyticsPage() {
             <div className="mt-1 text-[10px] text-slate-400">
               {t("PO value in USD using the saved exchange rates.")}
             </div>
+            <div className="mt-1 text-xs text-slate-600">
+              {t("On-time compares the latest approved receipt with the expected delivery time for completed orders with both dates.")}
+            </div>
           </div>
           <div className="divide-y divide-slate-100">
             {analytics.supplierSpend.slice(0, 12).map((supplier) => (
@@ -137,12 +149,14 @@ export default function ProcurementAnalyticsPage() {
                   {t("On-time")}
                   <b
                     className={
-                      supplier.completedPoCount > 0 && supplier.onTimeRate < 0.8
+                      supplier.onTimeRate == null
+                        ? "text-slate-600"
+                        : supplier.onTimeRate < 0.8
                         ? "text-amber-600"
                         : "text-emerald-600"
                     }
                   >
-                    {(supplier.onTimeRate * 100).toFixed(0)}%
+                    {supplier.onTimeRate == null ? t("No data") : `${(supplier.onTimeRate * 100).toFixed(0)}%`}
                   </b>
                 </div>
                 <div className="text-[10px] text-slate-400">
@@ -184,7 +198,7 @@ export default function ProcurementAnalyticsPage() {
           <div>
             <div className="text-[14px] font-bold text-[#14203a]">{t("Suggested reorder")}</div>
             <div className="mt-1 text-[10px] text-slate-400">
-              {t("Uses current stock plus quantities already on open purchase orders.")}
+              {t("Tracked active and draft products are included. Projected stock includes quantities on approved, ordered and partially received purchase orders.")}
             </div>
           </div>
           <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
@@ -193,11 +207,15 @@ export default function ProcurementAnalyticsPage() {
               type="number"
               min={1}
               value={targetStock}
-              onChange={(e) => setTargetStock(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => { setSuggestionPage(1); setTargetStock(Math.max(1, Number(e.target.value) || 1)); }}
               className="h-9 w-20 rounded-lg border border-slate-200 px-2 text-[11px]"
             />
           </label>
         </div>
+        <label className="flex flex-col gap-1 px-4 py-3 text-xs font-semibold text-slate-600">
+          {t("Search products")}
+          <input type="search" value={suggestionSearch} onChange={(event) => { setSuggestionSearch(event.target.value); setSuggestionPage(1); }} className="h-10 max-w-sm rounded-lg border border-slate-200 px-3 text-sm" />
+        </label>
         <div className="overflow-x-auto">
           <DashboardResponsiveTable>
             <table className="w-full min-w-[900px] text-start">
@@ -213,9 +231,9 @@ export default function ProcurementAnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {suggestions.map((item) => (
+                {visibleSuggestions.map((item) => (
                   <tr key={item.key} className="border-t border-slate-100">
-                    <td className="px-5 py-3 text-[11px] font-bold text-slate-700">{item.title}</td>
+                    <td className="px-5 py-3 text-[11px] font-bold text-slate-700">{item.title} {item.productStatus === "draft" ? <span className="font-normal">· {t("Draft")}</span> : null}</td>
                     <td className="px-3 py-3 font-mono text-[10px] text-slate-400">
                       {item.sku || "—"}
                     </td>
@@ -238,9 +256,14 @@ export default function ProcurementAnalyticsPage() {
             </table>
           </DashboardResponsiveTable>
         </div>
-        {!suggestions.length ? (
+        {filteredSuggestions.length > 20 && <div className="flex items-center justify-end gap-3 border-t border-slate-100 p-4 text-sm">
+          <button type="button" className="dashboard-button" aria-label={t("Previous page")} disabled={currentSuggestionPage <= 1} onClick={() => setSuggestionPage(currentSuggestionPage - 1)}>{t("Previous page")}</button>
+          <span>{currentSuggestionPage} / {suggestionPageCount}</span>
+          <button type="button" className="dashboard-button" aria-label={t("Next page")} disabled={currentSuggestionPage >= suggestionPageCount} onClick={() => setSuggestionPage(currentSuggestionPage + 1)}>{t("Next page")}</button>
+        </div>}
+        {!filteredSuggestions.length ? (
           <div className="p-8 text-center text-[11px] text-emerald-600">
-            {t("No products are below the selected projected stock target.")}
+            {suggestionSearch ? t("No products match the current filters.") : t("No products are below the selected projected stock target.")}
           </div>
         ) : null}
       </div>

@@ -415,16 +415,18 @@ export default function InventoryManagerPage() {
           <div className="text-[11px] text-slate-400">{t("Total units")}</div>
           <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">{totalUnits}</div>
           <div className="mt-1 text-[10px] text-slate-400">
-            {summary.variantCount} {t("variants")}
+            {summary.variantCount} {t("variants")} · {t("All variants, including inactive and untracked")}
           </div>
         </div>
         <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
           <div className="text-[11px] text-amber-700/70">{t("Low stock variants")}</div>
           <div className="mt-1 text-2xl font-bold text-amber-700">{low}</div>
+          <div className="mt-1 text-xs text-amber-800">{t("Tracked variants across all product and variant statuses; threshold applies.")}</div>
         </div>
         <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
           <div className="text-[11px] text-rose-700/70">{t("Out of stock variants")}</div>
           <div className="mt-1 text-2xl font-bold text-rose-700">{out}</div>
+          <div className="mt-1 text-xs text-rose-800">{t("Tracked variants across all product and variant statuses.")}</div>
         </div>
       </div>
 

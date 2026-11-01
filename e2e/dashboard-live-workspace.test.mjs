@@ -50,6 +50,8 @@ test("activity pagination returns only the page and carries a next-page marker",
     id,
     action: "UPDATE",
     entity_type: "product",
+    product_id: "product-1",
+    changed_by: "actor-1",
     created_at: "2026-09-19T12:00:00Z",
   }));
   const { api, calls } = await moduleWithTransport("../src/dashboard/data/workspace.ts", "admin", [
@@ -59,7 +61,9 @@ test("activity pagination returns only the page and carries a next-page marker",
   assert.equal(result.rows.length, 25);
   assert.equal(result.hasMore, true);
   assert.ok(calls.some((call) => JSON.stringify(call) === JSON.stringify(["range", 50, 75])));
-  assert.equal(result.rows[0].label, "UPDATE");
+  assert.equal(result.rows[0].label, "product · UPDATE");
+  assert.equal(result.rows[0].href, "/dashboard/products/product-1");
+  assert.equal(result.rows[0].actor, "actor-1");
 });
 
 test("failed queries propagate errors instead of masquerading as empty data", async () => {
