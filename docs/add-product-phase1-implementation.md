@@ -27,7 +27,7 @@ Base revision inspected: `1706b854e6679f62f8752818300562c3ab37b38f` (`main`, 202
 - Loading failure has an explicit retry control; missing product remains a distinct state.
 - New-product image order can be changed before upload; the first image remains primary.
 - Partially-created drafts retain the saved product ID and completed image set in the mounted editor. Retrying updates that draft and skips previously uploaded files instead of silently making another product. Failed operations keep staged file objects on-screen.
-- Scoped responsive CSS, accessible focus states, compact details menu, single-column tablet/mobile layout and horizontally-scrollable section navigation. No new overlay competing with the dashboard mobile navigation.
+- Scoped responsive CSS, accessible focus states, compact details menu, single-column tablet/mobile layout and horizontally-scrollable section navigation. Mobile action footer stays sticky above the existing dashboard bottom navigation with extra scroll clearance.
 - **No schema migrations, new AI providers, paid dependencies or changes to deployment or production data.**
 
 ## Backend rules / limitations (not disguised as completed features)
@@ -49,6 +49,6 @@ Base revision inspected: `1706b854e6679f62f8752818300562c3ab37b38f` (`main`, 202
 | Storefront visibility/SEO/cache | Existing `product-add-edit-supabase` and SEO tests; verify page/list/search/collection brand/category visibility after staging publish |
 | AI conflict guard | Existing `AiAssistPanel` guard checked; manual-write-versus-response test to be verified in browser |
 | Responsive visual/a11y | Verify browser at widths 360, 390, 768, 1024, 1280, 1440. Focus, drawer, media and variant dialogs require actual device/browser verification |
-| CI | Run `pnpm typecheck`, `pnpm lint`, `pnpm test:unit`, `pnpm build` and staging/browser suites before marking PR ready |
+| CI | Run `pnpm typecheck`, `pnpm lint`, `pnpm test:unit`, `pnpm build` and staging/browser suites before marking PR ready. The automated Cloudflare staging check stopped **before initialization** with zero build logs on this branch; other feature branches had the same instant failure. It provides no code-build result. |
 
 **Deployment policy:** This branch is PR-only. Do not merge or publish before the user's approval.
