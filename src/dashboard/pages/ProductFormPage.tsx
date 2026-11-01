@@ -107,6 +107,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [variantRevision, setVariantRevision] = useState(0);
   const [role, setRole] = useState<"admin" | "editor" | null>(null);
   const [loading, setLoading] = useState(Boolean(id));
+  const [loadError, setLoadError] = useState("");
+  const [loadRevision, setLoadRevision] = useState(0);
   const [saving, setSaving] = useState(false);
   const [pendingAction, setPendingAction] = useState<"duplicate" | "archive" | "delete" | null>(
     null,
@@ -154,6 +156,17 @@ export default function ProductFormPage({ id }: { id?: string }) {
     }
   };
 
+  const reorderPendingImage = (index: number, direction: -1 | 1) => {
+    setPendingImages((current) => {
+      const destination = index + direction;
+      if (destination < 0 || destination >= current.length) return current;
+      const reordered = [...current];
+      [reordered[index], reordered[destination]] = [reordered[destination], reordered[index]];
+      setSaved(false);
+      return reordered;
+    });
+  };
+
   const removePendingImage = (index: number) => {
     const removed = pendingImages[index];
     if (removed) URL.revokeObjectURL(removed.preview);
@@ -166,6 +179,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError("");
     Promise.all([
       id ? getDashboardProduct(id) : Promise.resolve(null),
       listDashboardBrands(),
@@ -220,7 +234,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         },
       )
       .catch((cause) => {
-        toast.error(cause instanceof Error ? cause.message : "Unable to load product.");
+        if (!cancelled) setLoadError(cause instanceof Error ? cause.message : "Unable to load product.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -229,7 +243,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, loadRevision]);
 
   const update = (key: keyof ProductDraft, value: string) => {
     setSaved(false);
@@ -566,6 +580,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
       document.getElementById("product-media")?.scrollIntoView({ block: "center" });
       return;
     }
+    if (id && status === "Active" && !form.imageUrl.trim() && !existing?.image.trim()) {
+      setPublishError(t("Add at least one image before publishing."));
+      document.getElementById("product-media")?.scrollIntoView({ block: "center" });
+      return;
+    }
     setPublishError("");
 
     for (const section of specificationTemplate.sections) {
@@ -727,6 +746,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
       }
 
       setSpecifications(cleanSpecifications);
+      // Status buttons override the selector. Synchronize the single draft value
+      // only after the server confirms the requested status was persisted.
+      setForm((current) => ({ ...current, status }));
       setAiSpecificationKeys(new Set());
       setSaved(true);
       if (shouldRefreshVariantManager) {
@@ -855,9 +877,22 @@ export default function ProductFormPage({ id }: { id?: string }) {
     );
   }
 
+  if (loadError) {
+    return (
+      <div role="alert" className="rounded-2xl border border-destructive/30 bg-card p-6">
+        <p className="text-sm font-semibold text-destructive">{t("Unable to load product.")}</p>
+        <p className="mt-2 break-words text-sm text-muted-foreground">{loadError}</p>
+        <button type="button" onClick={() => setLoadRevision((value) => value + 1)}
+          className="dashboard-button mt-4 min-h-11 rounded-lg border border-border px-4 text-sm">
+          {t("Retry")}
+        </button>
+      </div>
+    );
+  }
+
   if (id && !existing) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
+      <div role="alert" className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
         {t("Product not found.")}
       </div>
     );
@@ -888,7 +923,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {id ? (
-            <>
+            <details className="dashboard-product-more">
+              <summary className="dashboard-button flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold">
+                {t("More Actions")}
+              </summary>
+              <div className="dashboard-product-more-menu">
               <button
                 type="button"
                 onClick={() => navigate("/dashboard/products/new")}
@@ -935,16 +974,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <Trash2 className="size-3.5" /> {t("Delete")}
                 </button>
               ) : null}
-            </>
+              </div>
+            </details>
           ) : null}
           {!id ? (
-            <>
-              <span className="inline-flex min-h-11 items-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-[11px] font-bold text-amber-700">
-                {t("Draft")}
-              </span>
-              {renderCreateActions("header")}
-            </>
+            <span className="inline-flex min-h-11 items-center rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-700">
+              {t("Draft")}
+            </span>
           ) : null}
+          {renderCreateActions("header")}
           <AiAssistPanel
             disabled={loading || saving || pendingAction !== null}
             entity="product"
@@ -1063,55 +1101,21 @@ export default function ProductFormPage({ id }: { id?: string }) {
             }}
             onApply={applyAiPatch}
           />
-          {id ? (
-            <button
-              type="button"
-              onClick={() => submitProduct()}
-              disabled={saving || pendingAction !== null}
-              className="dashboard-button dashboard-button-primary flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold disabled:opacity-60"
-            >
-              {saving ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : saved ? (
-                <Check className="size-4" />
-              ) : (
-                <Save className="size-4" />
-              )}
-              {saved ? t("Saved") : t("Save product")}
-            </button>
-          ) : null}
         </div>
       </div>
 
       <ProductFormMap
         dirty={dirty}
         sections={[
-          {
-            id: "product-information",
-            label: "Product information",
-            complete: Boolean(form.title.trim()),
-          },
-          {
-            id: "product-specifications",
-            label: "Specifications",
-            complete: Object.keys(specifications).length > 0,
-          },
-          { id: "product-collections", label: "Collections", complete: collectionIds.length > 0 },
-          {
-            id: "product-pricing",
-            label: "Pricing & inventory",
-            complete: variantLocked || validateProductDraft(form).valid,
-          },
-          {
-            id: "product-media",
-            label: "Media",
-            complete: Boolean(form.imageUrl || pendingImages.length || existing?.image),
-          },
-          {
-            id: "product-seo",
-            label: "SEO",
-            complete: Boolean(form.seoTitle.trim() && form.seoDescription.trim()),
-          },
+          { id: "product-information", label: "General", complete: Boolean(form.title.trim()) },
+          { id: "product-variants", label: "Variants", complete: Boolean(variantCount || newVariantColor || newVariantStorage) },
+          { id: "product-inventory", label: "Inventory", complete: !variantLocked && form.stock.trim() !== "" },
+          { id: "product-media", label: "Media", complete: Boolean(form.imageUrl || pendingImages.length || existing?.image) },
+          { id: "product-specifications", label: "Specifications", complete: Object.keys(specifications).length > 0 },
+          { id: "product-seo", label: "SEO", complete: Boolean(form.seoTitle.trim() && form.seoDescription.trim()) },
+          { id: "product-shipping", label: "Shipping", complete: true },
+          { id: "product-pricing", label: "Pricing", complete: variantLocked || validateProductDraft(form).valid },
+          { id: "product-advanced", label: "Advanced", complete: Boolean(id) },
         ]}
       />
 
@@ -1119,7 +1123,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         disabled={saving || pendingAction !== null}
         className="dashboard-editor-grid grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]"
       >
-        <div className="space-y-4">
+        <div className="dashboard-product-main space-y-4">
           <Panel
             id="product-information"
             title={t("Product information")}
@@ -1222,48 +1226,118 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     ))}
                   </SelectField>
                 </div>
-                {id ? (
-                  <SelectField
-                    label={t("Status")}
-                    value={form.status}
-                    onChange={(value) => update("status", value as ProductStatus)}
-                  >
-                    <option value="Active">{t("Active")}</option>
-                    <option value="Draft">{t("Draft")}</option>
-                    <option value="Archived">{t("Archived")}</option>
-                  </SelectField>
-                ) : null}
+
               </div>
             </div>
           </Panel>
 
-          <OptionalPanel
-            id="product-specifications"
-            title={t("Specifications")}
-            subtitle={
-              selectedCategory ? `${selectedCategory.name} template` : t("Select a category")
-            }
-            defaultOpen={Boolean(id)}
+          <Panel
+            id="product-media"
+            title={t("Media")}
+            subtitle={id ? t("Live Supabase product gallery") : t("Images upload after save")}
           >
-            <div className="p-5">
-              <ProductSpecificationEditor
-                template={specificationTemplate}
-                values={specifications}
-                query={form.title}
-                aiContext={{
-                  market: "Lebanon",
-                  store: "Space Call",
-                  entityId: id ?? existing?.id ?? "",
-                  officialDomains: [
-                    brands.find((brand) => brand.id === form.brandId)?.website ?? "",
-                  ].filter(Boolean),
+            {id ? (
+              <ProductMediaManager
+                productId={id}
+                productTitle={form.title}
+                onPrimaryChange={(url) => {
+                  // Media Manager already persists primary-image changes independently.
+                  // Keep the baseline in sync so the unsaved-changes guard does not
+                  // mistakenly mark the product dirty after a successful media save.
+                  setForm((current) =>
+                    current.imageUrl === url ? current : { ...current, imageUrl: url },
+                  );
+                  setExisting((current) =>
+                    current && current.image !== url ? { ...current, image: url } : current,
+                  );
                 }}
-                aiGeneratedKeys={aiSpecificationKeys}
-                onChange={changeSpecification}
-                onAiApply={applyAiPatch}
               />
-            </div>
-          </OptionalPanel>
+            ) : (
+              <div className="space-y-3 p-5">
+                <input
+                  ref={pendingImageInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  onChange={(event) => {
+                    stageProductImages(Array.from(event.target.files ?? []));
+                    event.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => pendingImageInputRef.current?.click()}
+                  className="dashboard-editor-upload grid min-h-36 w-full place-items-center rounded-xl border-2 border-dashed border-border bg-muted/35 text-center transition-colors hover:border-primary"
+                >
+                  <span>
+                    <UploadCloud className="mx-auto size-5 text-indigo-400" />
+                    <span className="mt-2 block text-[11px] font-bold text-slate-600">
+                      {t("Select product images")}
+                    </span>
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      {t("Images upload after save")}
+                    </span>
+                  </span>
+                </button>
+                {pendingImages.length ? (
+                  <>
+                    <div className="text-[11px] font-semibold text-slate-600">
+                      {t("Images to upload")} ({pendingImages.length}/12)
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {pendingImages.map((pending, index) => (
+                        <div
+                          key={pending.preview}
+                          className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white"
+                        >
+                          <img
+                            src={pending.preview}
+                            alt={pending.file.name}
+                            className="size-full object-contain"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePendingImage(index)}
+                            disabled={saving}
+                            aria-label={t("Remove image")}
+                            className="absolute end-1 top-1 grid size-6 place-items-center rounded-full bg-rose-600 text-white disabled:opacity-50"
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                          <div className="absolute bottom-1 end-1 flex gap-1">
+                            <button type="button" disabled={saving || index === 0}
+                              aria-label={t("Move image earlier")}
+                              onClick={() => reorderPendingImage(index, -1)}
+                              className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40">←</button>
+                            <button type="button" disabled={saving || index === pendingImages.length - 1}
+                              aria-label={t("Move image later")}
+                              onClick={() => reorderPendingImage(index, 1)}
+                              className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40">→</button>
+                          </div>
+                          {index === 0 ? (
+                            <span className="absolute bottom-1 start-1 rounded bg-indigo-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                              {t("Primary")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+                {saving && pendingImages.length ? (
+                  <p role="status" className="text-xs font-semibold text-indigo-700">
+                    {t("Uploading images")} {uploadedImageCount}/{pendingImages.length}
+                  </p>
+                ) : null}
+                {publishError ? (
+                  <p role="alert" className="text-xs text-rose-700">
+                    {publishError}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </Panel>
 
           <OptionalPanel
             id="product-collections"
@@ -1348,50 +1422,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
           </OptionalPanel>
 
           <Panel
-            id="product-pricing"
-            title={t("Pricing & inventory")}
-            subtitle={variantLocked ? t("Managed per variant") : t("Default / single variant")}
+            id="product-variants"
+            title={t("Variants")}
+            subtitle={t("Color · storage · identifiers · price · stock · image")}
           >
             <div className="grid gap-4 p-5 sm:grid-cols-2">
-              <Field
-                label={t("Price")}
-                type="number"
-                value={form.price}
-                onChange={(value) => update("price", value)}
-                disabled={variantLocked}
-                fieldKey="price"
-                error={fieldErrors.price}
-              />
-              <Field
-                label={t("Compare-at price")}
-                type="number"
-                value={form.compareAt}
-                onChange={(value) => update("compareAt", value)}
-                disabled={variantLocked}
-                fieldKey="compareAt"
-                error={fieldErrors.compareAt}
-              />
-              <Field
-                label={t("SKU")}
-                value={form.sku}
-                onChange={(value) => update("sku", value)}
-                disabled={variantLocked}
-              />
-              <Field
-                label={t("Barcode")}
-                value={form.barcode}
-                onChange={(value) => update("barcode", value)}
-                disabled={variantLocked}
-              />
-              <Field
-                label={t("Stock")}
-                type="number"
-                value={form.stock}
-                onChange={(value) => update("stock", value)}
-                disabled={variantLocked}
-                fieldKey="stock"
-                error={fieldErrors.stock}
-              />
               {!id ? (
                 <div className="space-y-4 border-t border-slate-100 pt-4 sm:col-span-2">
                   <div>
@@ -1418,20 +1453,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 </div>
               ) : null}
             </div>
-            {variantLocked ? (
-              <div className="mx-5 mb-5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-[10px] leading-5 text-indigo-700">
-                {t("This product has")} {variantCount}{" "}
-                {t(
-                  "variants. Price, SKU, barcode and stock are controlled from Variant Manager below so one product-level save cannot overwrite them.",
-                )}
-              </div>
-            ) : null}
-          </Panel>
-
-          <Panel
-            title={t("Variant Manager")}
-            subtitle={t("Color · storage · identifiers · price · stock · image")}
-          >
             {id ? (
               <ProductVariantManager
                 key={variantRevision}
@@ -1444,119 +1465,33 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 {t("Save the product first, then add or edit variants.")}
               </div>
             )}
-          </Panel>
-        </div>
-
-        <div className="space-y-4">
-          {!id ? (
-            <ProductCreatePreview
-              title={form.title}
-              brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
-              price={form.price}
-              compareAt={form.compareAt}
-              stock={form.stock}
-              imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
-              color={newVariantColor}
-              storage={newVariantStorage}
-            />
-          ) : null}
-          <Panel
-            id="product-media"
-            title={t("Media")}
-            subtitle={id ? t("Live Supabase product gallery") : t("Images upload after save")}
+          </Panel>          <OptionalPanel
+            id="product-specifications"
+            title={t("Specifications")}
+            subtitle={
+              selectedCategory ? `${selectedCategory.name} template` : t("Select a category")
+            }
+            defaultOpen={Boolean(id)}
           >
-            {id ? (
-              <ProductMediaManager
-                productId={id}
-                productTitle={form.title}
-                onPrimaryChange={(url) => {
-                  // Media Manager already persists primary-image changes independently.
-                  // Keep the baseline in sync so the unsaved-changes guard does not
-                  // mistakenly mark the product dirty after a successful media save.
-                  setForm((current) =>
-                    current.imageUrl === url ? current : { ...current, imageUrl: url },
-                  );
-                  setExisting((current) =>
-                    current && current.image !== url ? { ...current, image: url } : current,
-                  );
+            <div className="p-5">
+              <ProductSpecificationEditor
+                template={specificationTemplate}
+                values={specifications}
+                query={form.title}
+                aiContext={{
+                  market: "Lebanon",
+                  store: "Space Call",
+                  entityId: id ?? existing?.id ?? "",
+                  officialDomains: [
+                    brands.find((brand) => brand.id === form.brandId)?.website ?? "",
+                  ].filter(Boolean),
                 }}
+                aiGeneratedKeys={aiSpecificationKeys}
+                onChange={changeSpecification}
+                onAiApply={applyAiPatch}
               />
-            ) : (
-              <div className="space-y-3 p-5">
-                <input
-                  ref={pendingImageInputRef}
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png,image/webp,image/avif"
-                  className="hidden"
-                  onChange={(event) => {
-                    stageProductImages(Array.from(event.target.files ?? []));
-                    event.target.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => pendingImageInputRef.current?.click()}
-                  className="dashboard-editor-upload grid min-h-36 w-full place-items-center rounded-xl border-2 border-dashed border-border bg-muted/35 text-center transition-colors hover:border-primary"
-                >
-                  <span>
-                    <UploadCloud className="mx-auto size-5 text-indigo-400" />
-                    <span className="mt-2 block text-[11px] font-bold text-slate-600">
-                      {t("Select product images")}
-                    </span>
-                    <span className="mt-1 block text-[10px] text-slate-400">
-                      {t("Images upload after save")}
-                    </span>
-                  </span>
-                </button>
-                {pendingImages.length ? (
-                  <>
-                    <div className="text-[11px] font-semibold text-slate-600">
-                      {t("Images to upload")} ({pendingImages.length}/12)
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                      {pendingImages.map((pending, index) => (
-                        <div
-                          key={pending.preview}
-                          className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white"
-                        >
-                          <img
-                            src={pending.preview}
-                            alt={pending.file.name}
-                            className="size-full object-contain"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removePendingImage(index)}
-                            disabled={saving}
-                            aria-label={t("Remove image")}
-                            className="absolute end-1 top-1 grid size-6 place-items-center rounded-full bg-rose-600 text-white disabled:opacity-50"
-                          >
-                            <Trash2 className="size-3" />
-                          </button>
-                          {index === 0 ? (
-                            <span className="absolute bottom-1 start-1 rounded bg-indigo-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
-                              {t("Primary")}
-                            </span>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-                {saving && pendingImages.length ? (
-                  <p role="status" className="text-xs font-semibold text-indigo-700">
-                    {t("Uploading images")} {uploadedImageCount}/{pendingImages.length}
-                  </p>
-                ) : null}
-                {publishError ? (
-                  <p role="alert" className="text-xs text-rose-700">
-                    {publishError}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </Panel>
+            </div>
+          </OptionalPanel>
 
           <OptionalPanel
             id="product-seo"
@@ -1584,8 +1519,109 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </div>
           </OptionalPanel>
 
+        </div>
+        <aside className="dashboard-product-aside space-y-4">
+          <Panel id="product-publishing" title={t("Publishing")} subtitle={t("Storefront visibility")}>
+            <div className="space-y-4 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">{t("Current status")}</span>
+                <span role="status" className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+                  {t(existing?.status ?? "Draft")}
+                </span>
+              </div>
+                {id ? (
+                  <SelectField
+                    label={t("Status")}
+                    value={form.status}
+                    onChange={(value) => update("status", value as ProductStatus)}
+                  >
+                    <option value="Active">{t("Active")}</option>
+                    <option value="Draft">{t("Draft")}</option>
+                    <option value="Archived">{t("Archived")}</option>
+                  </SelectField>
+                ) : null}
+              <p className="text-xs leading-5 text-muted-foreground">
+                {t("Only published products appear in the public catalog. Saving a draft keeps it hidden.")}
+              </p>
+            </div>
+          </Panel>
+          <Panel id="product-pricing" title={t("Pricing")} subtitle={variantLocked ? t("Managed per variant") : t("Default / single variant")}>
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              <Field
+                label={t("Price")}
+                type="number"
+                value={form.price}
+                onChange={(value) => update("price", value)}
+                disabled={variantLocked}
+                fieldKey="price"
+                error={fieldErrors.price}
+              />
+              <Field
+                label={t("Compare-at price")}
+                type="number"
+                value={form.compareAt}
+                onChange={(value) => update("compareAt", value)}
+                disabled={variantLocked}
+                fieldKey="compareAt"
+                error={fieldErrors.compareAt}
+              />
+            </div>
+          </Panel>
+          <Panel id="product-inventory" title={t("Inventory")} subtitle={variantLocked ? t("Managed per variant") : t("SKU · barcode · stock")}>
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
+              <Field
+                label={t("SKU")}
+                value={form.sku}
+                onChange={(value) => update("sku", value)}
+                disabled={variantLocked}
+              />
+              <Field
+                label={t("Barcode")}
+                value={form.barcode}
+                onChange={(value) => update("barcode", value)}
+                disabled={variantLocked}
+              />
+              <Field
+                label={t("Stock")}
+                type="number"
+                value={form.stock}
+                onChange={(value) => update("stock", value)}
+                disabled={variantLocked}
+                fieldKey="stock"
+                error={fieldErrors.stock}
+              />
+            </div>
+            {variantLocked ? (
+              <div className="mx-5 mb-5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-[10px] leading-5 text-indigo-700">
+                {t("This product has")} {variantCount}{" "}
+                {t(
+                  "variants. Price, SKU, barcode and stock are controlled from Variant Manager below so one product-level save cannot overwrite them.",
+                )}
+              </div>
+            ) : null}
+          </Panel>
+          <Panel id="product-shipping" title={t("Shipping")} subtitle={t("Store-wide delivery configuration")}>
+            <div className="space-y-3 p-5 text-sm text-muted-foreground">
+              <p>{t("Delivery fees are configured for the store, not individually per product.")}</p>
+              <a href="/dashboard/settings" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                {t("Manage delivery settings")}
+              </a>
+            </div>
+          </Panel>
+          {!id ? (
+            <ProductCreatePreview
+              title={form.title}
+              brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
+              price={form.price}
+              compareAt={form.compareAt}
+              stock={form.stock}
+              imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
+              color={newVariantColor}
+              storage={newVariantStorage}
+            />
+          ) : null}
           {existing ? (
-            <Panel title={t("Product record")}>
+            <Panel id="product-advanced" title={t("Product settings")}>
               <div className="space-y-2 p-5 text-[10px] text-slate-500">
                 <div className="flex justify-between gap-4">
                   <span>{t("Handle")}</span>
@@ -1605,18 +1641,22 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 </div>
               </div>
             </Panel>
+          ) : null}          {!existing ? (
+            <Panel id="product-advanced" title={t("Product settings")} subtitle={t("Saved product details")}>
+              <p className="p-5 text-sm leading-6 text-muted-foreground">
+                {t("Save the product to view its permanent handle and record details.")}
+              </p>
+            </Panel>
           ) : null}
-        </div>
+        </aside>
       </fieldset>
 
-      {!id ? (
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+      <div className="dashboard-product-footer mt-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="mb-3 text-sm font-bold text-slate-700">
             {t("Save as Draft")} / {t("Publish Product")}
           </div>
           {renderCreateActions("footer")}
-        </div>
-      ) : null}
+      </div>
 
       <DashboardConfirmDialog
         open={confirmAction === "archive"}
