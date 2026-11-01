@@ -214,7 +214,12 @@ try {
   failInventory = false;
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await page.getByRole("heading", { name: "Inventory control", exact: true }).waitFor();
-  assert.equal(await page.getByRole("alert").count(), 0);
+  // Ensure the actual inventory refresh error is gone. Independent transient
+  // notices (for example offline/connection warnings) are not this condition.
+  await page
+    .getByRole("alert")
+    .getByText("Unable to refresh this section", { exact: true })
+    .waitFor({ state: "hidden" });
   await go("products/new");
   // Real browser overflow regression at all supported Phase 1 breakpoints.
   // The section rail scrolls within its own container, never the document.
