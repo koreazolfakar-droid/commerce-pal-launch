@@ -70,14 +70,16 @@ export async function callCloudflareAi(args: CloudflareRequest) {
 export function cloudflareText(payload: unknown): string {
   if (!payload || typeof payload !== "object") return "";
   const body = payload as Record<string, unknown>;
-  // Workers AI /ai/run returns { success, result: { response: string } }.
+  // Workers AI /ai/run can return either { result: { response: string } }
+  // or { result: { choices: [{ message: { content: string } }] } }.
+  // The latter is the actual GLM-4.7-Flash response observed in production.
+  // Also support direct OpenAI-compatible responses without a result wrapper.
   const result = body.result;
-  if (result && typeof result === "object") {
-    const response = (result as Record<string, unknown>).response;
-    if (typeof response === "string") return response.trim();
-  }
-  // Continue accepting the previous OpenAI-compatible shape as a safe fallback.
-  const choices = Array.isArray(body.choices) ? body.choices : [];
+  const output = result && typeof result === "object" && !Array.isArray(result)
+    ? result as Record<string, unknown>
+    : body;
+  if (typeof output.response === "string" && output.response.trim()) return output.response.trim();
+  const choices = Array.isArray(output.choices) ? output.choices : [];
   const first = choices[0];
   if (!first || typeof first !== "object") return "";
   const message = (first as Record<string, unknown>).message;
