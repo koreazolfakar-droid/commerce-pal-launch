@@ -1,6 +1,7 @@
 import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 import { formCompletion, hasFieldChanged, mergeAiResponses } from "@/dashboard/ai/formFill";
 import { useLanguage } from "@/dashboard/i18n";
+import "./AiAssistPanel.css";
 import {
   AlertTriangle,
   Check,
@@ -423,7 +424,7 @@ export default function AiAssistPanel({
       {open && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[120] flex items-center justify-center overflow-hidden bg-slate-950/45 p-3 backdrop-blur-[2px] [height:100dvh]"
+              className="spacecall-ai-overlay fixed inset-0 z-[120] flex items-center justify-center overflow-hidden bg-slate-950/45 p-3 backdrop-blur-[2px] [height:100dvh]"
               onMouseDown={(event) => {
                 if (event.target === event.currentTarget) setOpen(false);
               }}
@@ -435,11 +436,11 @@ export default function AiAssistPanel({
                 aria-labelledby={dialogTitleId}
                 tabIndex={-1}
                 dir={lang === "ar" ? "rtl" : "ltr"}
-                className="dashboard-theme-scope dashboard-ai-dialog flex min-h-0 min-w-0 w-[calc(100vw-24px)] max-w-[720px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl [max-height:calc(100dvh-24px)]"
+                className="dashboard-theme-scope dashboard-ai-dialog spacecall-ai-modal flex min-h-0 min-w-0 w-[calc(100vw-24px)] max-w-[720px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl [max-height:calc(100dvh-24px)]"
               >
-                <div className="flex min-w-0 shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
+                <div className="spacecall-ai-header flex min-w-0 shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-indigo-500">
+                    <div className="spacecall-ai-eyebrow flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-indigo-500">
                       <Sparkles className="size-3.5" />
                       {t("Space Call AI")}
                     </div>
@@ -459,13 +460,14 @@ export default function AiAssistPanel({
                     type="button"
                     onClick={() => setOpen(false)}
                     aria-label={t("Close AI assistant")}
-                    className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 disabled:opacity-50"
+                    className="spacecall-ai-close grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 disabled:opacity-50"
                   >
                     <X className="size-4" />
                   </button>
                 </div>
 
-                <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-3 sm:px-5 sm:py-5">
+                <div className="spacecall-ai-body min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-3 sm:px-5 sm:py-5">
+                  <div className="spacecall-ai-setup">
                   <label className="block">
                     <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
                       {t(entity === "product" ? "Product name / exact model" : "What should AI research?")}
@@ -488,7 +490,7 @@ export default function AiAssistPanel({
                   </label>
 
                   {entity === "product" ? (
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                    <p className="spacecall-ai-helper mt-2 text-xs leading-5 text-slate-500">
                       {t("Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.")}
                     </p>
                   ) : null}
@@ -496,14 +498,15 @@ export default function AiAssistPanel({
                     type="button"
                     disabled={Boolean(loadingAction) || researchQuery.trim().length < 2}
                     onClick={() => void run("research_fill")}
-                    className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4858d8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="spacecall-ai-primary mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4858d8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {loadingAction === "research_fill"
                       ? <Loader2 className="size-4 animate-spin" />
                       : <Search className="size-4" />}
                     {t("Complete form")}
                   </button>
-                  <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/60">
+                  </div>
+                  <details className="spacecall-ai-advanced mt-3 rounded-xl border border-slate-200 bg-slate-50/60">
                     <summary className="cursor-pointer px-3 py-3 text-xs font-semibold text-slate-700">
                       {t("Advanced AI options (sources, mode and validation)")}
                     </summary>
@@ -648,7 +651,7 @@ export default function AiAssistPanel({
                   {requestError && (
                     <div
                       role="alert"
-                      className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                      className="spacecall-ai-error mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
                     >
                       {t(requestError)}
                     </div>
@@ -656,7 +659,7 @@ export default function AiAssistPanel({
                   {loadingAction && (
                     <div
                       role="status"
-                      className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
+                      className="spacecall-ai-loading mt-4 flex items-center gap-2 text-sm text-muted-foreground"
                     >
                       <Loader2 className="size-4 animate-spin" />
                       {t("Completing all requested fields…")}{" "}
@@ -667,10 +670,12 @@ export default function AiAssistPanel({
 
 
                   {result ? (
-                    <div className="mt-5 space-y-4">
+                    <div className="spacecall-ai-results mt-5 space-y-4">
+                      <div className="spacecall-ai-status-grid">
                       <div
+                        data-level={result.grounded ? "success" : "warning"}
                         className={
-                          "rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
+                          "spacecall-ai-status rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
                           (result.grounded
                             ? "border-emerald-100 bg-emerald-50 text-emerald-700"
                             : "border-amber-100 bg-amber-50 text-amber-800")
@@ -690,8 +695,9 @@ export default function AiAssistPanel({
                       </div>
 
                       <div
+                        data-level={result.entityMatch.status === "exact" && result.grounded ? "success" : result.entityMatch.status === "uncertain" ? "error" : "warning"}
                         className={
-                          "rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
+                          "spacecall-ai-status rounded-xl border px-3.5 py-3 text-[10px] leading-4 " +
                           (result.entityMatch.status === "exact" && result.grounded
                             ? "border-emerald-100 bg-emerald-50 text-emerald-700"
                             : result.entityMatch.status === "partial" ||
@@ -728,9 +734,10 @@ export default function AiAssistPanel({
                           </details>
                         ) : null}
                       </div>
+                      </div>
 
                       {result.warnings.length ? (
-                        <details className="rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
+                        <details className="spacecall-ai-warnings rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3">
                           <summary className="cursor-pointer text-xs font-bold text-amber-800">
                             {t("Review warnings")} ({result.warnings.length})
                           </summary>
@@ -747,21 +754,21 @@ export default function AiAssistPanel({
                           {t("AI located a matching category template. Review the category selection together with its specifications before applying.")}
                         </p>
                       ) : null}
-                      <div className="grid min-w-0 grid-cols-1 gap-2 text-center text-[10px] min-[375px]:grid-cols-3 sm:text-xs">
-                        <div className="rounded-xl border border-slate-200 p-2">
+                      <div className="spacecall-ai-metrics grid min-w-0 grid-cols-1 gap-2 text-center text-[10px] min-[375px]:grid-cols-3 sm:text-xs">
+                        <div className="spacecall-ai-metric rounded-xl border border-slate-200 p-2">
                           <strong className="block text-base text-slate-800">{result.suggestions.filter((item) => item.decision !== "block").length}</strong>
                           {t("Suggested fields")}
                         </div>
-                        <div className="rounded-xl border border-slate-200 p-2">
+                        <div className="spacecall-ai-metric rounded-xl border border-slate-200 p-2">
                           <strong className="block text-base text-amber-700">{result.suggestions.filter((item) => item.decision === "review").length}</strong>
                           {t("Manual review")}
                         </div>
-                        <div className="rounded-xl border border-slate-200 p-2">
+                        <div className="spacecall-ai-metric rounded-xl border border-slate-200 p-2">
                           <strong className="block text-base text-rose-700">{result.suggestions.filter((item) => item.decision === "block").length}</strong>
                           {t("Blocked")}
                         </div>
                       </div>
-                      <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs [&>button]:min-h-10 [&>button]:whitespace-normal">
+                      <div className="spacecall-ai-selection flex min-w-0 flex-wrap items-center gap-2 text-xs [&>button]:min-h-10 [&>button]:whitespace-normal">
                         <button
                           type="button"
                           className="dashboard-button"
@@ -802,7 +809,7 @@ export default function AiAssistPanel({
                         </span>
                       </div>
                       {completion.missing.length > 0 && (
-                        <details className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                        <details className="spacecall-ai-missing rounded-xl border border-amber-200 bg-amber-50 p-3">
                           <summary className="cursor-pointer text-xs font-bold text-amber-800">
                             {t("Fields still needing information")} ({completion.missing.length})
                           </summary>
@@ -822,7 +829,7 @@ export default function AiAssistPanel({
                           </ul>
                         </details>
                       )}
-                      <div className="space-y-2">
+                      <div className="spacecall-ai-suggestions space-y-2">
                         {orderedSuggestions.map((suggestion, index) => {
                           const definition = fieldMap.get(suggestion.field);
                           if (!definition) return null;
@@ -857,8 +864,10 @@ export default function AiAssistPanel({
                               ) : null}
                             <label
                               data-ai-field={suggestion.field}
+                              data-selected={checked}
+                              data-disabled={blocked}
                               className={
-                                "block rounded-xl border p-3 transition " +
+                                "spacecall-ai-suggestion block rounded-xl border p-3 transition " +
                                 (blocked
                                   ? "cursor-default border-slate-200 bg-slate-50/70"
                                   : checked
@@ -884,7 +893,7 @@ export default function AiAssistPanel({
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-[11px] font-black text-slate-700">
+                                    <span className="spacecall-ai-suggestion-heading text-[11px] font-black text-slate-700">
                                       {t(definition.label)}
                                     </span>
                                     <span
@@ -931,7 +940,7 @@ export default function AiAssistPanel({
                                       <span className="font-semibold">{current}</span>
                                     </div>
                                   ) : null}
-                                  <div className="mt-1.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[11px] font-semibold leading-5 text-slate-700">
+                                  <div className="spacecall-ai-suggestion-value mt-1.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[11px] font-semibold leading-5 text-slate-700">
                                     {suggestion.value}
                                   </div>
                                   {suggestion.inputQuote && (
@@ -988,14 +997,14 @@ export default function AiAssistPanel({
                           );
                         })}
                         {!result.suggestions.length ? (
-                          <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-[10px] text-slate-400">
+                          <div className="spacecall-ai-empty rounded-xl border border-dashed border-slate-200 p-5 text-center text-[10px] text-slate-400">
                             {t("No field changes were suggested.")}
                           </div>
                         ) : null}
                       </div>
 
                       {result.sources.length ? (
-                        <div>
+                        <div className="spacecall-ai-sources">
                           <div className="mb-2 text-[10px] font-black uppercase tracking-[.12em] text-slate-400">
                             {t("Research sources")}
                           </div>
@@ -1031,7 +1040,7 @@ export default function AiAssistPanel({
                   ) : null}
                 </div>
 
-                <div className="flex min-w-0 shrink-0 flex-col items-stretch gap-2 border-t border-slate-100 bg-white px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:flex-row md:items-center md:justify-between md:px-5">
+                <div className="spacecall-ai-footer flex min-w-0 shrink-0 flex-col items-stretch gap-2 border-t border-slate-100 bg-white px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:flex-row md:items-center md:justify-between md:px-5">
                   <div className="hidden min-w-0 w-full break-words text-[10px] leading-4 text-slate-500 [overflow-wrap:anywhere] sm:block md:flex-1 md:text-[11px] md:leading-5">
                     {t(
                       "Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.",
@@ -1045,7 +1054,7 @@ export default function AiAssistPanel({
                       !applicableSuggestions.some((item) => selected.has(item.field)) ||
                       Boolean(loadingAction)
                     }
-                    className="inline-flex min-h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-3 py-2 text-center text-xs font-bold text-white disabled:opacity-40 md:w-auto md:px-4"
+                    className="spacecall-ai-apply inline-flex min-h-11 w-full min-w-0 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-3 py-2 text-center text-xs font-bold text-white disabled:opacity-40 md:w-auto md:px-4"
                   >
                     <Check className="size-3.5" />
                     {t("Apply selected")} (
