@@ -1,6 +1,7 @@
 import { suppliedEvidenceQuote } from "./formEvidence.ts";
 import { checkDashboardAiAccess } from "./access.ts";
 import { callCloudflareAi, cloudflareText, DEFAULT_CLOUDFLARE_MODEL, isFreeCloudflareModel } from "./cloudflare.ts";
+import { modelIdentifiers, modelMismatch } from "./modelIdentity.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.116.0";
 
@@ -1653,6 +1654,55 @@ Live web grounding is unavailable for this retry. Set verified=false for every s
     research.grounded,
     fallbackWarning,
   );
+
+  // A missing live search result is NOT evidence that a device is nonexistent.
+  // Never allow a language model to change Samsung A57 to Samsung A55.
+  const identityConflict = entity === "product" &&
+    modelMismatch(query, normalized.entityMatch.canonicalName);
+  if (identityConflict) {
+    normalized.entityMatch = {
+      status: "uncertain",
+      canonicalName: query,
+      reason: "The AI proposed a different model identifier. The original requested model was preserved.",
+    };
+    normalized.summary = "The AI suggested another device, so its product research was rejected. Live verification is still required for specifications.";
+    normalized.suggestions = [];
+    normalized.missingFields = [];
+    normalized.warnings = [
+      "A different model was rejected. Enter official source information to verify this exact product.",
+      ...(fallbackWarning ? [fallbackWarning] : []),
+    ];
+  } else if (entity === "product") {
+    // Reject wrong-model claims even when the model's top-level identity looks correct.
+    normalized.suggestions = normalized.suggestions.filter((item) =>
+      !modelMismatch(query, item.value)
+    );
+    if (!research.grounded &&
+      /\b(?:not found|does not exist|doesn't exist|not released|no official listing|cannot be found)\b/i.test(normalized.summary)) {
+      normalized.summary = "Live verification is unavailable. This does not mean the requested model is nonexistent.";
+      normalized.warnings = [fallbackWarning || "Exact model existence cannot be checked without web research."];
+      normalized.missingFields = [];
+    }
+  }
+
+  // The merchant's own exact name is safe as *unverified draft text*, never
+  // as a web-verified title or specification. Preserve price and stock guards.
+  const titleField = suggestionFields.find((field) => field.key === "title");
+  if (entity === "product" && action === "research_fill" && titleField &&
+    modelIdentifiers(query).length > 0 &&
+    !(currentData.title ?? "").trim() &&
+    !normalized.suggestions.some((item) => item.field === "title")) {
+    normalized.suggestions.unshift({
+      field: "title",
+      value: query.slice(0, titleField.maxLength ?? 300),
+      modelConfidence: 0.9,
+      verified: false,
+      reason: "Copied exactly from the product name entered by the editor; it is not independently web-verified.",
+      sourceUrls: [],
+      inputQuote: "",
+    });
+  }
+
   const entityMatch = calibrateEntityMatch(normalized.entityMatch, entity, query, currentData);
   const suggestions = await verifySuggestions({
     admin,
