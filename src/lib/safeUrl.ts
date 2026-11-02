@@ -6,7 +6,11 @@ export function safeStoreHref(value: unknown): string | null {
   // A leading slash followed by a backslash is interpreted by browsers as
   // a protocol-relative cross-origin URL. Reject path separators/control
   // characters that URL parsers can silently normalize into another origin.
-  if (/[\\\u0000-\u001F\u007F]/u.test(raw) || /%(?:5c|0[0ad]|7f)/i.test(raw)) return null;
+  const hasUnsafeCharacters = [...raw].some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 0x1f || code === 0x7f || character === "\\";
+  });
+  if (hasUnsafeCharacters || /%(?:5c|0[0ad]|7f)/i.test(raw)) return null;
 
   if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
   if (raw.startsWith("#")) return raw;
