@@ -5,6 +5,7 @@ import { isClientDisconnectError } from "./lib/client-disconnect";
 import { renderErrorPage } from "./lib/error-page";
 import { buildContentSecurityPolicy } from "./lib/contentSecurityPolicy";
 import { consumeSharedMutationRateLimit } from "./security/mutation-rate-limit.server";
+import { exceedsMutationBodyLimit } from "./security/request-body-limit.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -146,6 +147,18 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
     return securityError(413, "Request body is too large");
   }
 
+  // Content-Length is not guaranteed for chunked/streamed POST requests and
+  // must never be accepted as proof of the actual request body size.
+  if (MUTATING_METHODS.has(request.method.toUpperCase()) && request.body) {
+    try {
+      if (await exceedsMutationBodyLimit(request, MAX_REQUEST_BYTES)) {
+        return securityError(413, "Request body is too large");
+      }
+    } catch {
+      return securityError(400, "Invalid request body");
+    }
+  }
+
   if (!isTrustedMutationOrigin(request)) {
     return securityError(403, "Cross-site mutation blocked");
   }
@@ -174,7 +187,7 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
 function redirectAppHostDashboard(request: Request): Response | null {
   const url = new URL(request.url);
   if (url.hostname !== "app.spacecallapp.store") return null;
-  if (!url.pathname.startsWith("/dashboard")) return null;
+  if (url.pathname !== "/dashboard" && !url.pathname.startsWith("/dashboard/")) return null;
 
   const target = `https://www.spacecallapp.store${url.pathname}${url.search}`;
   return new Response(null, {
@@ -186,7 +199,7 @@ function redirectAppHostDashboard(request: Request): Response | null {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const hostRedirect = redirectAppHostDashboard(request);
-    if (hostRedirect) return hostRedirect;
+    if (hostRedirect) return withSecurityHeaders(hostRedirect);
 
     const blocked = await guardIncomingRequest(request, env);
     if (blocked) return blocked;
@@ -199,13 +212,16 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withDashboardNoStore(
+      return withSensitiveResponseNoStore(
         request,
-        withDocumentCache(
+        withDashboardNoStore(
           request,
-          withStaticAssetCache(
+          withDocumentCache(
             request,
-            withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response)),
+            withStaticAssetCache(
+              request,
+              withSecurityHeaders(await normalizeCatastrophicSsrResponse(request, response)),
+            ),
           ),
         ),
       );
@@ -223,6 +239,30 @@ export default {
     }
   },
 };
+
+/**
+ * Defend against accidental CDN caching of mutations, bearer-authenticated
+ * responses, and responses that create or refresh a session cookie. Ordinary
+ * static assets and anonymous storefront reads keep their current cache rules.
+ */
+function withSensitiveResponseNoStore(request: Request, response: Response): Response {
+  const sensitive =
+    MUTATING_METHODS.has(request.method.toUpperCase()) ||
+    request.headers.has("authorization") ||
+    response.headers.has("set-cookie");
+
+  if (!sensitive) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+  headers.set("CDN-Cache-Control", "no-store");
+  headers.set("Surrogate-Control", "no-store");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
 
 /**
  * HTML is dynamic storefront state and must never survive a deploy at the CDN.
