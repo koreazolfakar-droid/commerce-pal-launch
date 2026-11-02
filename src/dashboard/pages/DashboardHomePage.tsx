@@ -62,15 +62,17 @@ function KpiCard({
 function Panel({
   title,
   subtitle,
+  className = "",
   children,
 }: {
   title: string;
   subtitle?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   const { t } = useLanguage();
   return (
-    <div className="dashboard-panel">
+    <div className={`dashboard-panel ${className}`}>
       <div className="dashboard-panel-heading">
         <h2>{t(title)}</h2>
         {subtitle ? <p>{t(subtitle)}</p> : null}
@@ -204,8 +206,8 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
   if (!snapshot) return null;
 
   return (
-    <div>
-      <div className="dashboard-overview-header">
+    <div className="dashboard-home-page">
+      <div className="dashboard-overview-header dashboard-home-header">
         <div>
           <PageTitle
             eyebrow="Store performance"
@@ -280,7 +282,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         )}
       </div>
 
-      <div className="dashboard-overview-metrics grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="dashboard-overview-metrics dashboard-home-primary-metrics grid grid-cols-2 gap-4 xl:grid-cols-4">
         <KpiCard
           icon={BarChart3}
           label={t("Gross sales")}
@@ -307,7 +309,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         />
       </div>
 
-      <div className="dashboard-overview-metrics dashboard-overview-secondary mt-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="dashboard-overview-metrics dashboard-overview-secondary dashboard-home-secondary-metrics mt-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <KpiCard
           icon={Boxes}
           label={t("Units on hand")}
@@ -335,9 +337,9 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
       </div>
 
       {!analyticsView ? (
-        <div className="mt-5 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+        <div className="dashboard-home-priority-grid mt-5 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <Panel title="Quick actions">
-            <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
+            <div className="dashboard-quick-actions-grid grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
               {[
                 { label: "Add New Product", href: "/dashboard/products/new", icon: PackagePlus },
                 { label: "View orders", href: "/dashboard/orders", icon: ShoppingBag },
@@ -358,9 +360,9 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
               ))}
             </div>
           </Panel>
-          <Panel title="Needs attention">
+          <Panel title="Needs attention" className="dashboard-attention-panel">
             {snapshot.lowStockVariants || snapshot.outOfStockVariants ? (
-              <div className="divide-y divide-slate-100">
+              <div className="dashboard-attention-list divide-y divide-slate-100">
                 {[
                   {
                     label: "Out of stock",
@@ -383,15 +385,15 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
                           `/dashboard/inventory?attention=${row.label === "Out of stock" ? "out" : "low"}`,
                         )
                       }
-                      className="flex w-full items-center gap-3 px-5 py-3.5 text-start hover:bg-slate-50"
+                      className="dashboard-attention-row flex w-full items-center gap-3 px-5 py-3.5 text-start hover:bg-slate-50"
                     >
                       <span className={`grid size-8 place-items-center rounded-lg ${row.tone}`}>
                         <AlertTriangle className="size-4" />
                       </span>
-                      <span className="flex-1 text-[12px] font-semibold text-slate-700">
+                      <span className="dashboard-attention-label flex-1 text-[12px] font-semibold text-slate-700">
                         {t(row.label)}
                       </span>
-                      <span className="text-[13px] font-bold text-[#14203a]">
+                      <span className="dashboard-attention-value text-[13px] font-bold text-[#14203a]">
                         {integer(row.value)}
                       </span>
                     </button>
@@ -481,15 +483,15 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_1fr]">
         <Panel title={t("Recent orders")} subtitle={t("Latest real orders")}>
           {snapshot.recentOrders.length ? (
-            <div className="divide-y divide-slate-100">
+            <div className="dashboard-recent-orders divide-y divide-slate-100">
               {snapshot.recentOrders.map((order) => (
                 <button
                   key={order.id}
                   onClick={() => navigate(`/dashboard/orders/${order.id}`)}
-                  className="grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
+                  className="dashboard-recent-order-row grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
                 >
                   <div className="min-w-0">
-                    <div className="text-[12px] font-bold text-slate-700">
+                    <div className="dashboard-recent-order-title text-[12px] font-bold text-slate-700">
                       #{order.orderNumber} · {order.customer}
                     </div>
                     <div className="mt-1 text-[10px] text-slate-400">
