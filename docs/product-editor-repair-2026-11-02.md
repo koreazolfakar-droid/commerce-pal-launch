@@ -14,6 +14,11 @@ This report distinguishes implemented changes, existing behavior, compatibility 
 6. The 1024–1279px editor used a single long column despite available desktop space. It now has a scoped main/aside grid, with one-column pricing/inventory inputs in the narrower aside. Dialog geometry is not affected by these rules.
 7. AI request cancellation required closing the dialog. A dedicated Cancel research action aborts and invalidates the request, keeps the draft unchanged, and offers retry. Errors now have an explicit retry action and wrap long messages.
 8. SKU/barcode length errors lacked client feedback. Bounded identifier validation is connected to inline errors and focus targets.
+9. Inline validation text changed the input's accessible name. Product inputs now keep stable explicit names while describing errors separately.
+10. Both storefront and dashboard toast renderers were mounted on dashboard routes, producing duplicate save/error messages. Dashboard routes now use their own themed toast renderer; storefront deferred feedback is preserved on storefront routes.
+11. Product metadata saves overwrote custom primary-image alternative text. The migration now initializes alt text on insertion and preserves it on existing images.
+12. Additional-option review identified dedicated color/capacity alias loss and numeric values turning into strings after clearing/retyping. Dedicated options now normalize names consistently and custom numeric options retain their declared type until payload parsing.
+13. Variant image files could remain queued after cancelling or switching editors. Each editor session now clears pending files and rejects delayed image-editor results from older sessions.
 
 ## Added compatible capabilities
 
@@ -25,7 +30,7 @@ This report distinguishes implemented changes, existing behavior, compatibility 
 
 ## Field-to-storage map and storefront flow
 
-The main editor calls `saveDashboardProduct` → `save_store_product_editor` with named arguments. The RPC validates staff, locks existing products, enforces expected-stock concurrency, writes specifications/collections and records actual stock movements. The new migration changes only when price/stock validation is performed; it adds no table/column and updates no product rows during installation.
+The main editor calls `saveDashboardProduct` → `save_store_product_editor` with named arguments. The RPC validates staff, locks existing products, enforces expected-stock concurrency, writes specifications/collections and records actual stock movements. The new migration defers owned-field validation and preserves existing image alt text; it adds no table/column and updates no product rows during installation.
 
 | Editor field | Storage / operation | Public use |
 | --- | --- | --- |

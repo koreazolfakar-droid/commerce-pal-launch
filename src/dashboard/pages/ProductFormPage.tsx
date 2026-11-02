@@ -1230,6 +1230,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   {t("Description")}
                 </span>
                 <textarea
+                  aria-label={t("Description")}
                   value={form.description}
                   onChange={(event) => update("description", event.target.value)}
                   rows={6}
@@ -1616,6 +1617,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   {t("SEO description")}
                 </span>
                 <textarea
+                  aria-label={t("SEO description")}
                   value={form.seoDescription}
                   onChange={(event) => update("seoDescription", event.target.value)}
                   rows={4}

@@ -88,7 +88,7 @@ try {
   assert.equal(await page.locator("[data-sonner-toaster]").count(), 1, "dashboard feedback must have a single toast host");
   assert.equal(await page.getByLabel("Description", { exact: true }).inputValue(), "Persisted update");
   await page.getByRole("button", { name: "Save changes", exact: true }).first().click();
-  await page.getByText("Product saved to Supabase.", { exact: true }).waitFor();
+  await page.getByText("Product saved to Supabase.", { exact: true }).last().waitFor();
   await page.reload({ waitUntil: "domcontentloaded" });
   assert.equal(await page.getByLabel("Description", { exact: true }).inputValue(), "Persisted update");
   evidence.push({ check: "Edit save failure recovery and fixture persistence after reload", result: "PASS" });
