@@ -1528,3 +1528,48 @@
   align-items: stretch;
   min-inline-size: 0;
 }
+
+/* Variant editors are body portals too: keep dashboard root geometry out. */
+.dashboard-theme-scope.dashboard-variant-dialog {
+  display: block;
+  grid-template-columns: none;
+  min-inline-size: 0;
+  min-block-size: 0;
+  overflow-wrap: anywhere;
+  padding-block-end: max(1.25rem, env(safe-area-inset-bottom));
+}
+.dashboard-variant-dialog :where(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 1rem;
+}
+.dashboard-variant-dialog :where(button, input, select, textarea):focus-visible,
+.dashboard-ai-dialog :where(button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel-heading {
+  overflow-wrap: anywhere;
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 1fr);
+    gap: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-aside .sm\:grid-cols-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-ai-dialog input:not([type="checkbox"]):not([type="radio"]),
+  .dashboard-ai-dialog textarea {
+    font-size: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer {
+    position: static;
+  }
+}

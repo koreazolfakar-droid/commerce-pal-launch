@@ -10,7 +10,15 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
+import {
+  buildVariantOptions,
+  dedicatedVariantOptionText,
+  variantOptionRows,
+  type VariantOptionRow,
+} from "@/dashboard/lib/variantOptions";
 import { toast } from "sonner";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ProductColorPicker from "@/dashboard/components/products/ProductColorPicker";
@@ -70,11 +78,7 @@ const EMPTY_DRAFT: VariantDraft = {
 };
 
 function optionText(options: Record<string, DashboardVariantOptionValue>, keys: string[]) {
-  for (const key of keys) {
-    const value = options[key];
-    if (typeof value === "string" || typeof value === "number") return String(value);
-  }
-  return "";
+  return dedicatedVariantOptionText(options, keys);
 }
 
 function draftFromVariant(variant: DashboardProductVariant): VariantDraft {
@@ -160,6 +164,18 @@ export default function ProductVariantManager({
   const [editing, setEditing] = useState<DashboardProductVariant | null>(null);
   const [draft, setDraft] = useState<VariantDraft>(EMPTY_DRAFT);
   const [open, setOpen] = useState(false);
+  const [optionRows, setOptionRows] = useState<VariantOptionRow[]>([]);
+  const [optionError, setOptionError] = useState("");
+  const editorSessionRef = useRef(0);
+  const closeEditor = () => {
+    editorSessionRef.current += 1;
+    setPendingImageFile(null);
+    setOpen(false);
+  };
+  const variantTitleId = useId();
+  const panelRef = useDashboardModal(() => {
+    if (!saving && !uploading) closeEditor();
+  }, open);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
   const onCountChangeRef = useRef(onCountChange);
@@ -197,14 +213,22 @@ export default function ProductVariantManager({
   }, [load]);
 
   const openCreate = () => {
+    editorSessionRef.current += 1;
+    setPendingImageFile(null);
     setEditing(null);
     setDraft({ ...EMPTY_DRAFT, sortOrder: variants.length * 10 });
+    setOptionRows([]);
+    setOptionError("");
     setOpen(true);
   };
 
   const openEdit = (variant: DashboardProductVariant) => {
+    editorSessionRef.current += 1;
+    setPendingImageFile(null);
     setEditing(variant);
     setDraft(draftFromVariant(variant));
+    setOptionRows(variantOptionRows(variant.options));
+    setOptionError("");
     setOpen(true);
   };
 
@@ -212,9 +236,12 @@ export default function ProductVariantManager({
     if (saving) return;
     let input: DashboardProductVariantInput;
     try {
-      input = buildInput(draft);
+      input = buildInput({ ...draft, baseOptions: buildVariantOptions(optionRows) });
+      setOptionError("");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Invalid variant.");
+      const message = cause instanceof Error ? cause.message : "Invalid variant.";
+      setOptionError(message);
+      toast.error(t(message));
       return;
     }
 
@@ -230,7 +257,7 @@ export default function ProductVariantManager({
       setEditing(saved);
       setDraft(draftFromVariant(saved));
       toast.success(editing ? "Variant updated." : "Variant created.");
-      if (!editing) setOpen(false);
+      if (!editing) closeEditor();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Variant save failed.");
     } finally {
@@ -475,243 +502,346 @@ export default function ProductVariantManager({
         ) : null}
       </div>
 
-      {open ? (
-        <div
-          className="fixed inset-0 z-[80] overflow-y-auto bg-slate-950/40 p-4 sm:p-8"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="mx-auto w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <div className="text-lg font-bold text-slate-800">
-                  {editing ? t("Edit variant") : t("Add variant")}
-                </div>
-                <div className="mt-1 text-[11px] text-slate-400">
-                  {t(
-                    "Color, storage, identifiers, price, stock and image are stored on the real variant row.",
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-slate-950/40 p-3 sm:p-6"
+              dir={document.documentElement.dir === "rtl" ? "rtl" : "ltr"}
+              onClick={(event) => {
+                if (event.target === event.currentTarget && !saving && !uploading) closeEditor();
+              }}
+            >
+              <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={variantTitleId}
+                tabIndex={-1}
+                className="dashboard-theme-scope dashboard-variant-dialog mx-auto w-full min-w-0 max-w-3xl rounded-xl bg-white p-4 shadow-2xl sm:p-5"
+                onClick={(event) => event.stopPropagation()}
               >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label={t("Variant title")}
-                value={draft.title}
-                onChange={(value) => setDraft((current) => ({ ...current, title: value }))}
-              />
-              <div className="sm:col-span-2">
-                <ProductColorPicker
-                  value={draft.color}
-                  onChange={(value) => setDraft((current) => ({ ...current, color: value }))}
-                />
-              </div>
-              <Field
-                label={t("Storage / capacity")}
-                value={draft.storage}
-                onChange={(value) => setDraft((current) => ({ ...current, storage: value }))}
-                placeholder={t("e.g. 256GB")}
-              />
-              <Field
-                label={t("SKU")}
-                value={draft.sku}
-                onChange={(value) => setDraft((current) => ({ ...current, sku: value }))}
-              />
-              <Field
-                label={t("Barcode")}
-                value={draft.barcode}
-                onChange={(value) => setDraft((current) => ({ ...current, barcode: value }))}
-              />
-              <Field
-                label={t("Price")}
-                type="number"
-                value={draft.price}
-                onChange={(value) => setDraft((current) => ({ ...current, price: value }))}
-              />
-              <Field
-                label={t("Compare-at price")}
-                type="number"
-                value={draft.compareAt}
-                onChange={(value) => setDraft((current) => ({ ...current, compareAt: value }))}
-              />
-              <Field
-                label={t("Stock")}
-                type="number"
-                integer
-                value={draft.stock}
-                onChange={(value) => setDraft((current) => ({ ...current, stock: value }))}
-              />
-            </div>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
-              <CheckField
-                label={t("Track inventory")}
-                checked={draft.trackInventory}
-                onChange={(checked) =>
-                  setDraft((current) => ({ ...current, trackInventory: checked }))
-                }
-              />
-              <CheckField
-                label={t("Allow backorder")}
-                checked={draft.allowBackorder}
-                onChange={(checked) =>
-                  setDraft((current) => ({ ...current, allowBackorder: checked }))
-                }
-              />
-              <CheckField
-                label={t("Active variant")}
-                checked={draft.isActive}
-                onChange={(checked) => setDraft((current) => ({ ...current, isActive: checked }))}
-              />
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-slate-200 p-4">
-              <div className="mb-3 text-[11px] font-bold text-slate-600">{t("Variant image")}</div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="grid size-24 place-items-center overflow-hidden rounded-xl bg-slate-50">
-                  {draft.imageUrl ? (
-                    <img src={draft.imageUrl} alt="" className="size-full object-contain" />
-                  ) : (
-                    <ImageIcon className="size-6 text-slate-300" />
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/avif"
-                    className="hidden"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] ?? null;
-                      event.currentTarget.value = "";
-                      if (!file) return;
-                      void imageEditor
-                        .editFile(file, {
-                          title: "Adjust variant image",
-                          preset: "square",
-                          transparent: true,
-                          defaultFit: "contain",
-                          previewContext: "product",
-                        })
-                        .then((edited) => {
-                          if (edited) setPendingImageFile(edited);
-                        });
-                    }}
-                  />
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <div id={variantTitleId} className="text-lg font-bold text-slate-800">
+                      {editing ? t("Edit variant") : t("Add variant")}
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-400">
+                      {t(
+                        "Color, storage, identifiers, price, stock and image are stored on the real variant row.",
+                      )}
+                    </div>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => fileRef.current?.click()}
-                    disabled={!editing || uploading}
-                    className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={closeEditor}
+                    disabled={saving || uploading}
+                    aria-label={t("Close variant editor")}
+                    className="grid size-11 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
                   >
-                    {uploading ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <UploadCloud className="size-3.5" />
-                    )}
-                    {editing ? t("Upload / replace") : t("Save variant first")}
+                    <X className="size-4" />
                   </button>
-                  {editing && draft.imageUrl ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void imageEditor
-                            .editUrl(draft.imageUrl, {
-                              title: "Adjust existing variant image",
-                              preset: "square",
-                              transparent: true,
-                              defaultFit: "contain",
-                              previewContext: "product",
-                            })
-                            .then((edited) => {
-                              if (!edited) return;
-                              void upload(
-                                edited,
-                                "Variant image adjustment saved. Storefront refresh requested.",
-                              );
-                            });
-                        }}
-                        disabled={uploading}
-                        className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
-                      >
-                        {t("Adjust")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void clearImage()}
-                        className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-600"
-                      >
-                        {t("Clear image")}
-                      </button>
-                    </>
-                  ) : null}
                 </div>
-              </div>
-              {pendingImageFile ? (
-                <div className="mt-3 space-y-2">
-                  <ImageOptimizationPreview
-                    files={[pendingImageFile]}
-                    resolution={imageResolution}
-                    onResolutionChange={(value) => {
-                      setImageResolution(value);
-                      setProductImageResolution(value);
-                    }}
-                    title={t("Variant image compression preview")}
-                    compact
-                  />
-                  <div className="flex justify-end gap-2">
+
+                <fieldset disabled={saving || uploading} className="min-w-0">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field
+                      label={t("Variant title")}
+                      value={draft.title}
+                      onChange={(value) => setDraft((current) => ({ ...current, title: value }))}
+                    />
+                    <div className="sm:col-span-2">
+                      <ProductColorPicker
+                        value={draft.color}
+                        onChange={(value) => setDraft((current) => ({ ...current, color: value }))}
+                      />
+                    </div>
+                    <Field
+                      label={t("Storage / capacity")}
+                      value={draft.storage}
+                      onChange={(value) => setDraft((current) => ({ ...current, storage: value }))}
+                      placeholder={t("e.g. 256GB")}
+                    />
+                    <Field
+                      label={t("SKU")}
+                      value={draft.sku}
+                      onChange={(value) => setDraft((current) => ({ ...current, sku: value }))}
+                    />
+                    <Field
+                      label={t("Barcode")}
+                      value={draft.barcode}
+                      onChange={(value) => setDraft((current) => ({ ...current, barcode: value }))}
+                    />
+                    <Field
+                      label={t("Price")}
+                      type="number"
+                      value={draft.price}
+                      onChange={(value) => setDraft((current) => ({ ...current, price: value }))}
+                    />
+                    <Field
+                      label={t("Compare-at price")}
+                      type="number"
+                      value={draft.compareAt}
+                      onChange={(value) =>
+                        setDraft((current) => ({ ...current, compareAt: value }))
+                      }
+                    />
+                    <Field
+                      label={t("Stock")}
+                      type="number"
+                      integer
+                      value={draft.stock}
+                      onChange={(value) => setDraft((current) => ({ ...current, stock: value }))}
+                    />
+                  </div>
+
+                  <section className="mt-4 min-w-0 space-y-3" aria-label={t("Additional options")}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-sm font-semibold">{t("Additional options")}</h3>
+                      <button
+                        type="button"
+                        className="dashboard-button min-h-11 px-3 text-xs"
+                        onClick={() => setOptionRows((rows) => [...rows, { name: "", value: "" }])}
+                      >
+                        <Plus className="size-4" /> {t("Add option")}
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        "Add RAM, size, material or another option. Each variant represents one combination.",
+                      )}
+                    </p>
+                    {optionRows.map((row, index) => (
+                      <div
+                        key={index}
+                        className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2"
+                      >
+                        <Field
+                          label={`${t("Option name")} ${index + 1}`}
+                          value={row.name}
+                          onChange={(name) =>
+                            setOptionRows((rows) =>
+                              rows.map((item, i) => (i === index ? { ...item, name } : item)),
+                            )
+                          }
+                        />
+                        {typeof row.value === "boolean" ? (
+                          <CheckField
+                            label={`${t("Option value")} ${index + 1}`}
+                            checked={row.value}
+                            onChange={(value) =>
+                              setOptionRows((rows) =>
+                                rows.map((item, i) => (i === index ? { ...item, value } : item)),
+                              )
+                            }
+                          />
+                        ) : (
+                          <Field
+                            label={`${t("Option value")} ${index + 1}`}
+                            value={String(row.value)}
+                            type={row.kind === "number" ? "number" : "text"}
+                            onChange={(value) =>
+                              setOptionRows((rows) =>
+                                rows.map((item, i) =>
+                                  i === index
+                                    ? {
+                                        ...item,
+                                        value,
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                        )}
+                        <button
+                          type="button"
+                          aria-label={`${t("Remove option")} ${index + 1}`}
+                          onClick={() =>
+                            setOptionRows((rows) => rows.filter((_, i) => i !== index))
+                          }
+                          className="grid size-11 place-items-center rounded-lg border border-border text-destructive"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </section>
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    <CheckField
+                      label={t("Track inventory")}
+                      checked={draft.trackInventory}
+                      onChange={(checked) =>
+                        setDraft((current) => ({ ...current, trackInventory: checked }))
+                      }
+                    />
+                    <CheckField
+                      label={t("Allow backorder")}
+                      checked={draft.allowBackorder}
+                      onChange={(checked) =>
+                        setDraft((current) => ({ ...current, allowBackorder: checked }))
+                      }
+                    />
+                    <CheckField
+                      label={t("Active variant")}
+                      checked={draft.isActive}
+                      onChange={(checked) =>
+                        setDraft((current) => ({ ...current, isActive: checked }))
+                      }
+                    />
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-slate-200 p-4">
+                    <div className="mb-3 text-[11px] font-bold text-slate-600">
+                      {t("Variant image")}
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <div className="grid size-24 place-items-center overflow-hidden rounded-xl bg-slate-50">
+                        {draft.imageUrl ? (
+                          <img src={draft.imageUrl} alt="" className="size-full object-contain" />
+                        ) : (
+                          <ImageIcon className="size-6 text-slate-300" />
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <input
+                          ref={fileRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/avif"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            event.currentTarget.value = "";
+                            if (!file) return;
+                            const session = editorSessionRef.current;
+                            void imageEditor
+                              .editFile(file, {
+                                title: "Adjust variant image",
+                                preset: "square",
+                                transparent: true,
+                                defaultFit: "contain",
+                                previewContext: "product",
+                              })
+                              .then((edited) => {
+                                if (edited && session === editorSessionRef.current)
+                                  setPendingImageFile(edited);
+                              });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileRef.current?.click()}
+                          disabled={!editing || uploading}
+                          className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {uploading ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <UploadCloud className="size-3.5" />
+                          )}
+                          {editing ? t("Upload / replace") : t("Save variant first")}
+                        </button>
+                        {editing && draft.imageUrl ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const session = editorSessionRef.current;
+                                void imageEditor
+                                  .editUrl(draft.imageUrl, {
+                                    title: "Adjust existing variant image",
+                                    preset: "square",
+                                    transparent: true,
+                                    defaultFit: "contain",
+                                    previewContext: "product",
+                                  })
+                                  .then((edited) => {
+                                    if (!edited || session !== editorSessionRef.current) return;
+                                    void upload(
+                                      edited,
+                                      "Variant image adjustment saved. Storefront refresh requested.",
+                                    );
+                                  });
+                              }}
+                              disabled={uploading}
+                              className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
+                            >
+                              {t("Adjust")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void clearImage()}
+                              className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-600"
+                            >
+                              {t("Clear image")}
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                    {pendingImageFile ? (
+                      <div className="mt-3 space-y-2">
+                        <ImageOptimizationPreview
+                          files={[pendingImageFile]}
+                          resolution={imageResolution}
+                          onResolutionChange={(value) => {
+                            setImageResolution(value);
+                            setProductImageResolution(value);
+                          }}
+                          title={t("Variant image compression preview")}
+                          compact
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPendingImageFile(null)}
+                            disabled={uploading}
+                            className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
+                          >
+                            {t("Cancel")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void upload(pendingImageFile)}
+                            disabled={uploading}
+                            className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
+                          >
+                            {t("Confirm & upload")}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {optionError ? (
+                    <p role="alert" className="mt-4 text-sm text-destructive">
+                      {t(optionError)}
+                    </p>
+                  ) : null}
+                  <div className="mt-5 flex justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => setPendingImageFile(null)}
-                      disabled={uploading}
-                      className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
+                      onClick={closeEditor}
+                      className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
                     >
                       {t("Cancel")}
                     </button>
                     <button
                       type="button"
-                      onClick={() => void upload(pendingImageFile)}
-                      disabled={uploading}
-                      className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
+                      onClick={() => void save()}
+                      disabled={saving}
+                      className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50"
                     >
-                      {t("Confirm & upload")}
+                      {saving ? <Loader2 className="size-4 animate-spin" /> : null}{" "}
+                      {t("Save variant")}
                     </button>
                   </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
-              >
-                {t("Cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={() => void save()}
-                disabled={saving}
-                className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="size-4 animate-spin" /> : null} {t("Save variant")}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                </fieldset>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <DashboardConfirmDialog
         open={deleteTarget !== null}

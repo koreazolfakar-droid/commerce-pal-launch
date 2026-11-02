@@ -320,7 +320,7 @@ test("PostgreSQL executes the guarded stock migration against inventory regressi
     await db.exec(
       await readFile(
         new URL(
-          "../supabase/migrations/20261005000000_product_editor_stock_concurrency.sql",
+          "../supabase/migrations/20261102000000_product_editor_owned_field_validation.sql",
           import.meta.url,
         ),
         "utf8",
@@ -480,7 +480,7 @@ test("PostgreSQL executes the guarded stock migration against inventory regressi
     assert.deepEqual(
       (await db.query("select specifications from store_products where id=$1", [created.id]))
         .rows[0].specifications,
-      { memory: "256 GB" },
+      { values: { memory: "256 GB" }, keySpecs: [] },
     );
     assert.deepEqual(
       (

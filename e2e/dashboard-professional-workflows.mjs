@@ -256,6 +256,7 @@ try {
   assert.equal(await page.locator("#product-specifications").getAttribute("open"), "");
   await page.getByRole("button", { name: "Save as Draft", exact: true }).first().click();
   await page.getByText("Product title is required", { exact: true }).waitFor();
+  await page.waitForFunction(() => document.activeElement?.dataset.productField === "title");
   assert.equal(await page.evaluate(() => document.activeElement?.dataset.productField), "title");
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   // navigator.onLine is the browser source of truth; emulate it explicitly for this local fixture.

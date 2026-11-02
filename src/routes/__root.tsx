@@ -4,16 +4,13 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   ScriptOnce,
   Scripts,
 } from "@tanstack/react-router";
 import { Suspense, lazy, useEffect, type ReactNode } from "react";
-import {
-  LANGUAGE_INIT_SCRIPT,
-  LanguageProvider,
-  useLanguage,
-} from "@/lib/i18n";
+import { LANGUAGE_INIT_SCRIPT, LanguageProvider, useLanguage } from "@/lib/i18n";
 
 import { absoluteUrl } from "@/lib/seo";
 
@@ -56,12 +53,8 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">
-          {t("pageNotFound")}
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("pageNotFoundDetail")}
-        </p>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">{t("pageNotFound")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("pageNotFoundDetail")}</p>
         <div className="mt-6">
           <Link
             to="/"
@@ -75,13 +68,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({
-  error,
-  reset,
-}: {
-  error: unknown;
-  reset: () => void;
-}) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   const { t } = useLanguage();
@@ -95,9 +82,7 @@ function ErrorComponent({
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           {t("somethingWentWrong")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("pageErrorDetail")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("pageErrorDetail")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -127,77 +112,74 @@ function ErrorComponent({
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
-  {
-    headers: ({ ssr }) => {
-      const nonce = ssr?.nonce;
-      if (!nonce) return undefined;
-      return {
-        "Content-Security-Policy": buildContentSecurityPolicy(nonce),
-      };
-    },
-    head: () => ({
-      meta: [
-        { charSet: "utf-8" },
-        {
-          name: "viewport",
-          content: "width=device-width, initial-scale=1, viewport-fit=cover",
-        },
-        { title: STORE_NAME },
-        {
-          name: "description",
-          content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
-        },
-        {
-          name: "robots",
-          content:
-            "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
-        },
-        { property: "og:title", content: STORE_NAME },
-        {
-          property: "og:description",
-          content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
-        },
-        { property: "og:type", content: "website" },
-        { property: "og:site_name", content: STORE_NAME },
-        { property: "og:locale", content: "en_LB" },
-        { property: "og:locale:alternate", content: "ar_LB" },
-        { property: "og:image", content: absoluteUrl("/logo.svg") },
-        { name: "twitter:image", content: absoluteUrl("/logo.svg") },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-
-      links: [
-        {
-          rel: "stylesheet",
-          href: appCss,
-        },
-        { rel: "preconnect", href: "https://fonts.googleapis.com" },
-        {
-          rel: "preconnect",
-          href: "https://fonts.gstatic.com",
-          crossOrigin: "anonymous",
-        },
-        {
-          rel: "preconnect",
-          href: "https://rtwyankpxtffqqrasyzw.supabase.co",
-          crossOrigin: "anonymous",
-        },
-        {
-          rel: "preload",
-          href: FONT_STYLESHEET_URL,
-          as: "style",
-        },
-        { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
-        { rel: "manifest", href: "/manifest.webmanifest" },
-      ],
-    }),
-    shellComponent: RootShell,
-    component: RootComponent,
-    notFoundComponent: NotFoundComponent,
-    errorComponent: ErrorComponent,
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  headers: ({ ssr }) => {
+    const nonce = ssr?.nonce;
+    if (!nonce) return undefined;
+    return {
+      "Content-Security-Policy": buildContentSecurityPolicy(nonce),
+    };
   },
-);
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
+      { title: STORE_NAME },
+      {
+        name: "description",
+        content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
+      },
+      {
+        name: "robots",
+        content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+      },
+      { property: "og:title", content: STORE_NAME },
+      {
+        property: "og:description",
+        content: `Shop phones, tablets, audio, wearables and accessories in Lebanon from ${STORE_NAME}.`,
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: STORE_NAME },
+      { property: "og:locale", content: "en_LB" },
+      { property: "og:locale:alternate", content: "ar_LB" },
+      { property: "og:image", content: absoluteUrl("/logo.svg") },
+      { name: "twitter:image", content: absoluteUrl("/logo.svg") },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+
+    links: [
+      {
+        rel: "stylesheet",
+        href: appCss,
+      },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preconnect",
+        href: "https://rtwyankpxtffqqrasyzw.supabase.co",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preload",
+        href: FONT_STYLESHEET_URL,
+        as: "style",
+      },
+      { rel: "icon", href: "/logo.svg", type: "image/svg+xml" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+    ],
+  }),
+  shellComponent: RootShell,
+  component: RootComponent,
+  notFoundComponent: NotFoundComponent,
+  errorComponent: ErrorComponent,
+});
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -224,21 +206,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 const LazyCustomerAuthDialog = lazy(() =>
   importWithChunkRecovery("customer-auth-dialog", () =>
-    import("@/components/customer-auth/CustomerAuthDialog").then(
-      ({ CustomerAuthDialog }) => ({
-        default: CustomerAuthDialog,
-      }),
-    ),
+    import("@/components/customer-auth/CustomerAuthDialog").then(({ CustomerAuthDialog }) => ({
+      default: CustomerAuthDialog,
+    })),
   ),
 );
 
 const LazyCustomerAddressHub = lazy(() =>
   importWithChunkRecovery("customer-address-hub", () =>
-    import("@/components/customer-account/CustomerAddressHub").then(
-      ({ CustomerAddressHub }) => ({
-        default: CustomerAddressHub,
-      }),
-    ),
+    import("@/components/customer-account/CustomerAddressHub").then(({ CustomerAddressHub }) => ({
+      default: CustomerAddressHub,
+    })),
   ),
 );
 
@@ -258,6 +236,9 @@ function DeferredCustomerOverlays() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const dashboardRoute = useRouterState({
+    select: (state) => state.location.pathname.startsWith("/dashboard"),
+  });
   usePersistedStoreHydration();
   useCartSync();
 
@@ -270,7 +251,7 @@ function RootComponent() {
           <DeferredCustomerOverlays />
         </CustomerAccountProvider>
       </CustomerAuthProvider>
-      <DeferredToaster />
+      {!dashboardRoute ? <DeferredToaster /> : null}
     </QueryClientProvider>
   );
 }

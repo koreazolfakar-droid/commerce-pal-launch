@@ -1452,6 +1452,28 @@ export async function listDashboardProductImages(
   return ((data ?? []) as ImageRow[]).map(mapProductImage);
 }
 
+export async function updateDashboardProductImageAltText(
+  productId: string,
+  imageId: string,
+  altText: string,
+): Promise<DashboardProductImage> {
+  await requireDashboardRole();
+  const value = altText.trim();
+  if (value.length > 500)
+    throw new Error("Image alternative text must be 500 characters or fewer.");
+  const { data, error } = await supabase
+    .from("store_product_images")
+    .update({ alt_text: value })
+    .eq("id", imageId)
+    .eq("product_id", productId)
+    .select("*")
+    .single();
+  throwIfError(error, "Saving image alternative text failed");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
+  return mapProductImage(data as ImageRow);
+}
+
 function productStoragePathFromUrl(url: string) {
   const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`;
   const index = url.indexOf(marker);

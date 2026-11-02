@@ -170,6 +170,8 @@ try {
   assert.equal(await dialog.locator("[data-ai-field]").count(), 0);
   assert.equal(await page.getByLabel("Field 44", { exact: true }).inputValue(), "Value 44");
   failAt = -1;
+  await dialog.getByRole("button", { name: "Retry AI request", exact: true }).click();
+  await dialog.getByRole("button", { name: "Select all for review", exact: true }).waitFor();
   await dialog.getByRole("button", { name: "Close AI assistant", exact: true }).click();
   // Cancelled responses must not appear in a subsequently reopened panel.
   let releaseDelay;
@@ -185,9 +187,12 @@ try {
   await page.getByRole("button", { name: "AI Assist", exact: true }).click();
   await dialog.getByRole("button", { name: "Complete form", exact: true }).click();
   await started;
-  await dialog.getByRole("button", { name: "Close AI assistant", exact: true }).click();
+  await dialog.getByRole("button", { name: "Cancel research", exact: true }).click();
+  await dialog.getByRole("alert").filter({ hasText: "Research cancelled. Your draft has not changed." }).waitFor();
   releaseDelay();
   await finished;
+  assert.equal(await dialog.locator("[data-ai-field]").count(), 0);
+  await dialog.getByRole("button", { name: "Close AI assistant", exact: true }).click();
   await page.getByRole("button", { name: "AI Assist", exact: true }).click();
   assert.equal(await dialog.locator("[data-ai-field]").count(), 0);
   await page.keyboard.press("Escape");

@@ -21,6 +21,7 @@ import {
   replaceDashboardProductImage,
   setDashboardPrimaryProductImage,
   uploadDashboardProductImage,
+  updateDashboardProductImageAltText,
   type DashboardProductImage,
 } from "@/dashboard/data/catalog";
 import {
@@ -50,6 +51,7 @@ export default function ProductMediaManager({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [altDrafts, setAltDrafts] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<DashboardProductImage | null>(null);
   const [replaceTarget, setReplaceTarget] = useState<DashboardProductImage | null>(null);
   const [resolution, setResolution] = useState<ProductImageResolution>(() =>
@@ -183,6 +185,31 @@ export default function ProductMediaManager({
       toast.success("Primary image updated.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Primary image update failed.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const saveAltText = async (image: DashboardProductImage) => {
+    if (busyId || uploading) return;
+    setBusyId(image.id);
+    try {
+      const updated = await updateDashboardProductImageAltText(
+        productId,
+        image.id,
+        altDrafts[image.id] ?? image.altText,
+      );
+      setImages((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+      setAltDrafts((drafts) => {
+        const next = { ...drafts };
+        delete next[image.id];
+        return next;
+      });
+      toast.success(t("Image alternative text saved."));
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error ? cause.message : t("Saving image alternative text failed"),
+      );
     } finally {
       setBusyId(null);
     }
@@ -519,6 +546,31 @@ export default function ProductMediaManager({
               </div>
 
               <div className="space-y-2 border-t border-slate-100 p-2.5">
+                <label className="block text-xs font-medium text-slate-600">
+                  {t("Image alternative text")} {index + 1}
+                  <input
+                    className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-border bg-card px-3 text-sm"
+                    maxLength={500}
+                    disabled={busyId !== null || uploading}
+                    value={altDrafts[image.id] ?? image.altText}
+                    onChange={(event) =>
+                      setAltDrafts((drafts) => ({ ...drafts, [image.id]: event.target.value }))
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void saveAltText(image)}
+                  disabled={
+                    busyId !== null ||
+                    uploading ||
+                    altDrafts[image.id] === undefined ||
+                    altDrafts[image.id] === image.altText
+                  }
+                  className="min-h-11 rounded-lg border border-border px-3 text-xs font-semibold disabled:opacity-40"
+                >
+                  {t("Save alternative text")}
+                </button>
                 <div className="rounded-lg bg-slate-50 px-2 py-1.5 text-[9px] font-semibold text-slate-500">
                   {t("Actual:")}{" "}
                   {storedMeta[image.id]?.width
