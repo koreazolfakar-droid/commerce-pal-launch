@@ -14,6 +14,7 @@
   --ai-accent: #535dcc;
   --ai-accent-hover: #414aad;
   --ai-accent-soft: #eef0ff;
+  --ai-accent-text: var(--ai-accent);
   background: var(--ai-canvas);
   color: var(--ai-ink);
   border: 1px solid rgba(207, 214, 225, 0.9);
@@ -41,7 +42,7 @@
   gap: 20px;
 }
 .spacecall-ai-modal .spacecall-ai-eyebrow {
-  color: var(--ai-accent);
+  color: var(--ai-accent-text);
   font-size: 10px;
   font-weight: 700;
   line-height: 1.35;
@@ -66,7 +67,7 @@
   border: 1px solid var(--ai-border);
   border-radius: 10px;
   background: var(--ai-canvas);
-  color: #687387;
+  color: var(--ai-muted);
   transition: background-color 140ms ease, color 140ms ease;
 }
 .spacecall-ai-modal .spacecall-ai-close:hover {
@@ -92,16 +93,16 @@
 .spacecall-ai-modal .spacecall-ai-setup label > span:first-child {
   display: block;
   margin-block-end: 8px;
-  color: #384457;
+  color: var(--ai-ink);
   font-size: 12px;
   font-weight: 650;
   line-height: 1.4;
 }
 .spacecall-ai-modal :is(input:not([type="checkbox"]):not([type="radio"]), textarea) {
   min-inline-size: 0;
-  border: 1px solid #d6dde8;
+  border: 1px solid var(--ai-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--ai-canvas);
   color: var(--ai-ink);
   line-height: 1.45;
   box-shadow: 0 1px 1px rgba(14, 24, 42, 0.025);
@@ -116,15 +117,15 @@
   font-size: 13px;
 }
 .spacecall-ai-modal :is(input:not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
-  color: #929bae;
+  color: var(--ai-subtle);
 }
 .spacecall-ai-modal :is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus-visible {
   outline: 2px solid rgba(83, 93, 204, 0.35);
   outline-offset: 1px;
-  border-color: var(--ai-accent);
+  border-color: var(--ai-accent-text);
 }
 .spacecall-ai-modal :is(input[type="radio"], input[type="checkbox"], progress) {
-  accent-color: var(--ai-accent);
+  accent-color: var(--ai-accent-text);
 }
 .spacecall-ai-modal :is(button, summary, a):focus-visible {
   outline: 2px solid var(--ai-accent);
@@ -158,7 +159,7 @@
   overflow: hidden;
   border: 1px solid var(--ai-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--ai-canvas);
 }
 .spacecall-ai-modal .spacecall-ai-advanced > summary {
   display: flex;
@@ -166,7 +167,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 11px 15px;
-  color: #4c5668;
+  color: var(--ai-muted);
   font-size: 12px;
   font-weight: 590;
   list-style: none;
@@ -179,8 +180,8 @@
   block-size: 7px;
   inline-size: 7px;
   flex: 0 0 auto;
-  border-inline-end: 1.7px solid #7d8797;
-  border-block-end: 1.7px solid #7d8797;
+  border-inline-end: 1.7px solid var(--ai-muted);
+  border-block-end: 1.7px solid var(--ai-muted);
   transform: rotate(45deg);
   transition: transform 140ms ease;
 }
@@ -192,7 +193,7 @@
   border-color: var(--ai-border);
 }
 .spacecall-ai-modal .spacecall-ai-advanced :is(label > span:first-child, legend) {
-  color: #384457;
+  color: var(--ai-ink);
   font-size: 12px;
   font-weight: 650;
 }
@@ -206,7 +207,7 @@
   padding: 12px 14px;
   border: 1px solid var(--ai-border);
   border-radius: 11px;
-  background: #fff;
+  background: var(--ai-canvas);
   color: var(--ai-ink);
   font-size: 12px;
   line-height: 1.5;
@@ -234,7 +235,7 @@
   border: 1px solid var(--ai-border);
   border-inline-start: 3px solid #c2a35a;
   border-radius: 11px;
-  background: #fff;
+  background: var(--ai-canvas);
   color: var(--ai-ink);
   font-size: 12px;
   line-height: 1.5;
@@ -246,28 +247,28 @@
   border-inline-start-color: #be5867;
 }
 .spacecall-ai-modal .spacecall-ai-status > div:first-child {
-  color: #384457;
+  color: var(--ai-ink);
   font-size: 12px;
   font-weight: 680;
 }
 .spacecall-ai-modal .spacecall-ai-status > p {
   margin-block-start: 6px;
-  color: #606c7d;
+  color: var(--ai-muted);
   font-size: 12px;
   font-weight: 430;
   line-height: 1.52;
 }
 .spacecall-ai-modal .spacecall-ai-status > details {
   margin-block-start: 7px;
-  color: #525d70;
+  color: var(--ai-muted);
 }
 .spacecall-ai-modal .spacecall-ai-status details summary {
-  color: var(--ai-accent);
+  color: var(--ai-accent-text);
   font-size: 12px;
   font-weight: 600;
 }
 .spacecall-ai-modal .spacecall-ai-status details p {
-  color: #5b6575;
+  color: var(--ai-muted);
   font-size: 12px;
   line-height: 1.55;
 }
@@ -277,12 +278,12 @@
   overflow: hidden;
   border: 1px solid var(--ai-border);
   border-radius: 11px;
-  background: #fff;
+  background: var(--ai-canvas);
   padding: 0;
 }
 .spacecall-ai-modal :is(.spacecall-ai-warnings, .spacecall-ai-missing) > summary {
   padding: 10px 14px;
-  color: #394457;
+  color: var(--ai-ink);
   font-size: 12px;
   line-height: 1.4;
   font-weight: 650;
@@ -297,18 +298,18 @@
   overflow-y: auto;
   padding: 12px 15px 14px;
   margin: 0;
-  background: #fff;
-  color: #596477;
+  background: var(--ai-canvas);
+  color: var(--ai-muted);
   font-size: 12px;
   line-height: 1.56;
 }
 .spacecall-ai-modal .spacecall-ai-missing li + li {
   margin-block-start: 12px;
   padding-block-start: 11px;
-  border-block-start: 1px solid #edf0f5;
+  border-block-start: 1px solid var(--ai-border);
 }
 .spacecall-ai-modal .spacecall-ai-missing li strong {
-  color: #30394b;
+  color: var(--ai-ink);
   font-size: 12px;
   font-weight: 660;
 }
@@ -329,7 +330,7 @@
   border: 1px solid var(--ai-border);
   border-radius: 11px;
   background: var(--ai-tint);
-  color: #5c6878;
+  color: var(--ai-muted);
   font-size: 11px;
   line-height: 1.35;
   text-align: center;
@@ -352,8 +353,8 @@
 .spacecall-ai-modal .spacecall-ai-selection button {
   border: 1px solid var(--ai-border);
   border-radius: 9px;
-  background: #fff;
-  color: #3c4656;
+  background: var(--ai-canvas);
+  color: var(--ai-ink);
   padding-inline: 12px;
   font-size: 12px;
   font-weight: 580;
@@ -376,7 +377,7 @@
   gap: 9px;
 }
 .spacecall-ai-modal .spacecall-ai-suggestions h3 {
-  color: #4e5766;
+  color: var(--ai-muted);
   font-size: 12px;
   font-weight: 670;
   letter-spacing: 0;
@@ -385,7 +386,7 @@
   border: 1px solid var(--ai-border);
   border-radius: 12px;
   padding: 13px 14px;
-  background: #fff;
+  background: var(--ai-canvas);
   transition: border-color 140ms ease, background-color 140ms ease;
 }
 .spacecall-ai-modal .spacecall-ai-suggestion:not([data-disabled="true"]):hover {
@@ -393,10 +394,10 @@
 }
 .spacecall-ai-modal .spacecall-ai-suggestion[data-selected="true"] {
   border-color: #adb7f0;
-  background: #f7f8ff;
+  background: var(--ai-accent-soft);
 }
 .spacecall-ai-modal .spacecall-ai-suggestion[data-disabled="true"] {
-  background: #fafbfd;
+  background: var(--ai-tint);
 }
 .spacecall-ai-modal .spacecall-ai-suggestion input[type="checkbox"] {
   inline-size: 17px;
@@ -404,13 +405,13 @@
   margin-block-start: 2px;
 }
 .spacecall-ai-modal .spacecall-ai-suggestion-heading {
-  color: #283347;
+  color: var(--ai-ink);
   font-size: 13px;
   font-weight: 680;
 }
 .spacecall-ai-modal .spacecall-ai-suggestion-value {
   margin-block-start: 9px;
-  color: #323e50;
+  color: var(--ai-ink);
   font-size: 13px;
   font-weight: 450;
   line-height: 1.6;
@@ -435,7 +436,7 @@
 }
 
 .spacecall-ai-modal .spacecall-ai-sources > div:first-child {
-  color: #5b6575;
+  color: var(--ai-muted);
   font-size: 11px;
   font-weight: 680;
   letter-spacing: 0.035em;
@@ -444,8 +445,8 @@
   min-block-size: 42px;
   border: 1px solid var(--ai-border);
   border-radius: 10px;
-  color: #394457;
-  background: #fff;
+  color: var(--ai-ink);
+  background: var(--ai-canvas);
   font-size: 12px;
 }
 .spacecall-ai-modal .spacecall-ai-sources a:hover {
@@ -457,7 +458,7 @@
   gap: 12px;
   padding: 14px 24px max(14px, env(safe-area-inset-bottom));
   border-block-start: 1px solid var(--ai-border);
-  background: #fff;
+  background: var(--ai-canvas);
 }
 .spacecall-ai-modal .spacecall-ai-footer > div {
   color: var(--ai-muted);
@@ -479,11 +480,60 @@
   background: var(--ai-accent-hover);
 }
 .spacecall-ai-modal .spacecall-ai-apply:disabled {
-  color: #5e6979;
-  background: #e6eaf2;
-  border-color: #e1e5ed;
+  color: var(--ai-muted);
+  background: var(--ai-tint);
+  border-color: var(--ai-border);
   box-shadow: none;
   opacity: 1;
+}
+
+
+/* Dark dashboard: reuse the same spacing and structure with true dark surfaces.
+   The assistant portal lives under body, so theme follows html.dark. */
+html.dark .dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal {
+  --ai-ink: #f0f3f8;
+  --ai-muted: #b5c0d1;
+  --ai-subtle: #9daabd;
+  --ai-border: #394357;
+  --ai-canvas: #1b2433;
+  --ai-tint: #242e40;
+  --ai-accent-soft: #2d345a;
+  --ai-accent-text: #b4baff;
+  border-color: #394357;
+  box-shadow: 0 24px 75px rgba(0, 0, 0, 0.47), 0 3px 10px rgba(0, 0, 0, 0.26);
+}
+html.dark .spacecall-ai-modal .spacecall-ai-setup {
+  background: var(--ai-tint);
+}
+html.dark .spacecall-ai-modal .spacecall-ai-status {
+  border-inline-start-color: #b99755;
+}
+html.dark .spacecall-ai-modal .spacecall-ai-status[data-level="success"] {
+  border-inline-start-color: #5aaf91;
+}
+html.dark .spacecall-ai-modal .spacecall-ai-status[data-level="error"] {
+  border-inline-start-color: #d77f8b;
+}
+html.dark .spacecall-ai-modal .spacecall-ai-suggestion[data-selected="true"] {
+  background: var(--ai-accent-soft);
+  border-color: #6e79b8;
+}
+html.dark .spacecall-ai-modal .spacecall-ai-suggestion .rounded-full {
+  filter: saturate(0.85);
+}
+html.dark .spacecall-ai-modal .spacecall-ai-error {
+  background: #34252e;
+  color: #ffd5d9;
+  border-color: #784753;
+}
+html.dark .spacecall-ai-modal .spacecall-ai-apply:disabled {
+  background: #323d50;
+  color: #a6b1c2;
+  border-color: var(--ai-border);
+}
+html.dark .spacecall-ai-modal .spacecall-ai-primary,
+html.dark .spacecall-ai-modal .spacecall-ai-apply {
+  color: #fff;
 }
 
 @media (max-width: 639px) {
