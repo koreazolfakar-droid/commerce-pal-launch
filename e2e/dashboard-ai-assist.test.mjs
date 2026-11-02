@@ -106,7 +106,7 @@ test("dashboard AI grounds research and validates structured output", () => {
   assert.match(panel, /Apply selected/);
   assert.match(panel, /Web research grounded/);
   assert.match(panel, /Identity not web-verified/);
-  assert.match(panel, /<details className="rounded-xl border border-amber-100/);
+  assert.match(panel, /<details className="spacecall-ai-warnings rounded-xl border border-amber-100/);
   assert.match(panel, /overscroll-contain/);
   assert.match(panel, /Product research pages \(optional\)/);
   assert.match(panel, /orderedSuggestions/);
