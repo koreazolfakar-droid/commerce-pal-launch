@@ -147,18 +147,6 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
     return securityError(413, "Request body is too large");
   }
 
-  // Content-Length is not guaranteed for chunked/streamed POST requests and
-  // must never be accepted as proof of the actual request body size.
-  if (MUTATING_METHODS.has(request.method.toUpperCase()) && request.body) {
-    try {
-      if (await exceedsMutationBodyLimit(request, MAX_REQUEST_BYTES)) {
-        return securityError(413, "Request body is too large");
-      }
-    } catch {
-      return securityError(400, "Invalid request body");
-    }
-  }
-
   if (!isTrustedMutationOrigin(request)) {
     return securityError(403, "Cross-site mutation blocked");
   }
@@ -171,6 +159,18 @@ export async function guardIncomingRequest(request: Request, env: unknown): Prom
   }
   if (!rate.allowed) {
     return securityError(429, "Too many requests", { "retry-after": String(rate.retryAfter) });
+  }
+
+  // Content-Length is not guaranteed for chunked/streamed POST requests and
+  // must never be accepted as proof of the actual request body size.
+  if (MUTATING_METHODS.has(request.method.toUpperCase()) && request.body) {
+    try {
+      if (await exceedsMutationBodyLimit(request, MAX_REQUEST_BYTES)) {
+        return securityError(413, "Request body is too large");
+      }
+    } catch {
+      return securityError(400, "Invalid request body");
+    }
   }
 
   return null;
