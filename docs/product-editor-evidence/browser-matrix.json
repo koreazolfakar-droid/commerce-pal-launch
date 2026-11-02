@@ -1,0 +1,209 @@
+{
+  "evidence": [
+    {
+      "check": "Add product layout 320px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 360px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 375px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 390px and section navigation",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 430px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 600px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 768px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 980px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 1024px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 1280px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 1440px and section navigation",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 1600px",
+      "result": "PASS"
+    },
+    {
+      "check": "Add product layout 1920px",
+      "result": "PASS"
+    },
+    {
+      "check": "Invalid create, draft save and editor navigation",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit save failure recovery and fixture persistence after reload",
+      "result": "PASS"
+    },
+    {
+      "check": "Alternative text and additional variant options reach existing transports",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 320px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 390px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 768px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 980px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 1024px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 1280px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 1440px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 1600px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 1920px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Arabic RTL at Android desktop-site viewport",
+      "result": "PASS"
+    }
+  ],
+  "writes": [
+    {
+      "name": "save_store_product_editor",
+      "body": {
+        "p_product_id": null,
+        "p_title": "New test phone",
+        "p_description": "",
+        "p_brand_id": null,
+        "p_category_id": "category-1",
+        "p_status": "draft",
+        "p_price": 120,
+        "p_compare_at_price": null,
+        "p_sku": "",
+        "p_barcode": "",
+        "p_stock": 4,
+        "p_expected_stock": null,
+        "p_image_url": "",
+        "p_seo_title": "",
+        "p_seo_description": "",
+        "p_specifications": {
+          "ram": "8"
+        },
+        "p_collection_ids": []
+      }
+    },
+    {
+      "name": "save_store_product_editor",
+      "body": {
+        "p_product_id": "00000000-0000-4000-8000-000000000021",
+        "p_title": "New test phone",
+        "p_description": "Persisted update",
+        "p_brand_id": null,
+        "p_category_id": "category-1",
+        "p_status": "draft",
+        "p_price": 120,
+        "p_compare_at_price": null,
+        "p_sku": "SKU",
+        "p_barcode": "",
+        "p_stock": 4,
+        "p_expected_stock": null,
+        "p_image_url": "https://images.example.test/product.svg",
+        "p_seo_title": "",
+        "p_seo_description": "",
+        "p_specifications": {
+          "ram": "8"
+        },
+        "p_collection_ids": []
+      }
+    },
+    {
+      "name": "save_store_product_editor",
+      "body": {
+        "p_product_id": "00000000-0000-4000-8000-000000000021",
+        "p_title": "New test phone",
+        "p_description": "Persisted update",
+        "p_brand_id": null,
+        "p_category_id": "category-1",
+        "p_status": "draft",
+        "p_price": 120,
+        "p_compare_at_price": null,
+        "p_sku": "SKU",
+        "p_barcode": "",
+        "p_stock": 4,
+        "p_expected_stock": null,
+        "p_image_url": "https://images.example.test/product.svg",
+        "p_seo_title": "",
+        "p_seo_description": "",
+        "p_specifications": {
+          "ram": "8"
+        },
+        "p_collection_ids": []
+      }
+    },
+    {
+      "name": "store_product_images",
+      "body": {
+        "alt_text": "Phone front view"
+      }
+    },
+    {
+      "name": "create_store_product_variant",
+      "body": {
+        "p_product_id": "00000000-0000-4000-8000-000000000021",
+        "p_title": "8GB Blue",
+        "p_sku": "",
+        "p_barcode": "",
+        "p_price": 125,
+        "p_compare_at_price": null,
+        "p_stock": 0,
+        "p_track_inventory": true,
+        "p_allow_backorder": false,
+        "p_options": {
+          "RAM": "8GB"
+        },
+        "p_image_url": "",
+        "p_sort_order": 10,
+        "p_is_active": true
+      }
+    }
+  ],
+  "runtimeErrors": []
+}

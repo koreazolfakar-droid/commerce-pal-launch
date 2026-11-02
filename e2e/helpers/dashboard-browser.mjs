@@ -1,7 +1,7 @@
 import { chromium } from "@playwright/test";
 
 // Synthetic session and intercepted fixtures. Never sends dashboard writes to a real backend.
-export async function createDashboardBrowser() {
+export async function createDashboardBrowser(contextOptions = {}) {
   const browser = await chromium.launch({
     headless: true,
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
@@ -11,7 +11,7 @@ export async function createDashboardBrowser() {
       ? { args: JSON.parse(process.env.PLAYWRIGHT_CHROMIUM_ARGS) }
       : {}),
   });
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, ...contextOptions });
   const id = "00000000-0000-4000-8000-000000000001";
   const user = {
     id,

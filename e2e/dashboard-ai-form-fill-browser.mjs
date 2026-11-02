@@ -188,7 +188,7 @@ try {
   await dialog.getByRole("button", { name: "Complete form", exact: true }).click();
   await started;
   await dialog.getByRole("button", { name: "Cancel research", exact: true }).click();
-  await dialog.getByText("Research cancelled. Your draft has not changed.", { exact: true }).waitFor();
+  await dialog.getByRole("alert").filter({ hasText: "Research cancelled. Your draft has not changed." }).waitFor();
   releaseDelay();
   await finished;
   assert.equal(await dialog.locator("[data-ai-field]").count(), 0);

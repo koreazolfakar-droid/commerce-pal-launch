@@ -108,7 +108,7 @@ try {
   await dialog.waitFor({ state: "hidden" });
   assert.equal(variants.find(v => v.id === "variant-new").options.RAM, "8GB");
   evidence.push({ check: "Alternative text and additional variant options reach existing transports", result: "PASS" });
-  for (const width of [320, 390, 768, 980, 1024, 1280, 1440, 1600, 1920]) {
+  for (const width of [320, 360, 375, 390, 430, 600, 768, 980, 1024, 1280, 1440, 1600, 1920]) {
     await page.setViewportSize({ width, height: 800 }); await noOverflow(`edit ${width}`);
     await page.getByRole("button", { name: "Add variant", exact: true }).click();
     const modal = page.getByRole("dialog", { name: "Add variant", exact: true }); await modal.waitFor();
@@ -127,6 +127,21 @@ try {
   assert.equal(await page.locator("html").getAttribute("dir"), "rtl"); await noOverflow("Arabic desktop-site viewport");
   await page.screenshot({ path: `${output}/edit-ar-980.png`, fullPage: true });
   evidence.push({ check: "Arabic RTL at Android desktop-site viewport", result: "PASS" });
+  const emulation = await createDashboardBrowser({ viewport: { width: 980, height: 600 }, hasTouch: true, isMobile: false,
+    userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36" });
+  try {
+    const touchPage = await emulation.context.newPage();
+    touchPage.on("pageerror", error => errors.push(error.message));
+    await touchPage.goto(`${origin}/dashboard/products/new`, { waitUntil: "domcontentloaded" });
+    await touchPage.getByRole("button", { name: "AI Assist", exact: true }).tap();
+    const touchDialog = touchPage.getByRole("dialog", { name: "Research, fill and improve", exact: true });
+    await touchDialog.getByLabel("Product name / exact model").fill("Phone desktop-site mode");
+    assert.equal(await touchDialog.getByRole("button", { name: "Complete form", exact: true }).isEnabled(), true);
+    const metrics = await touchPage.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, touch: navigator.maxTouchPoints }));
+    assert.ok(metrics.touch > 0 && metrics.scrollWidth <= metrics.width + 1);
+    await touchDialog.getByRole("button", { name: "Close AI assistant", exact: true }).tap();
+    evidence.push({ check: "Android desktop-site approximation: desktop UA, 980px viewport, touch input and AI controls", result: "PASS" });
+  } finally { await emulation.browser.close(); }
   assert.deepEqual(errors, []);
   await writeFile(`${output}/matrix.json`, JSON.stringify({ evidence, writes, runtimeErrors: errors }, null, 2));
   console.log(JSON.stringify({ passed: true, checks: evidence.length, writes: writes.length }));

@@ -140,3 +140,37 @@ The broader brief includes capabilities beyond this incremental repair. In parti
 Production write persistence, real provider responses/quota, physical Android keyboard/desktop-site behavior and every upload/replace/delete path require additional acceptance evidence. Browser interception and embedded PostgreSQL tests do not establish those claims.
 
 Merge and deployment must be reported using actual remote PR/commit/deployment evidence. Passing compilation alone is insufficient.
+
+## Current delivery evidence
+
+- Pull request: https://github.com/koreazolfakar-droid/commerce-pal-launch/pull/475 (draft while final checks run).
+- Full local unit suite after independent-review fixes and toast-host repair: **678 passed, 0 failed**.
+- New PostgreSQL/transport/editor regression group: **20 passed, 0 failed**.
+- TypeScript: passed (`node node_modules/typescript/bin/tsc --noEmit`).
+- Full ESLint: **0 errors, 27 existing warnings** (`--fix-dry-run`).
+- Production build: passed; fixture-backed SSR smoke passed eight routes.
+- Product editor Playwright: **26 checks passed**, 5 intercepted fixture writes, no page/runtime errors. This covers add-layout widths 320/360/375/390/430/600/768/980/1024/1280/1440/1600/1920, real section navigation at mobile/desktop, invalid submission, revealing/focusing an invalid specification, draft creation, edit/save failure recovery, reload persistence in the fixture, alt text, generic variant options, edit/variant portal widths, focus trap, Escape and Arabic at 980px.
+- Before screenshots were built from the inspected main snapshot in a separate source directory; both before/after show expanded optional sections, using the same system-font test fixture.
+- Cloudflare's branch preview initially failed after a successful build with authentication codes 10000/9109. The existing preview trigger referenced the invalid older build token. Its token reference was switched to the already-existing Workers Builds token in the same account. The subsequent Cloudflare preview build succeeded. No token secret was read and no account permissions were changed.
+- GitHub frozen-lockfile Cloudflare build/workerd smoke and real isolated Auth/PostgREST/PostgreSQL commerce acceptance passed on the first implementation commit. Exact final-head checks remain the merge gate.
+
+### Visual and interactive evidence
+
+| View | Before | After |
+| --- | --- | --- |
+| Add Product, 390px | [Before](product-editor-evidence/before-add-390.png) | [After](product-editor-evidence/after-add-390.png) |
+| Add Product, 1440px | [Before](product-editor-evidence/before-add-1440.png) | [After](product-editor-evidence/after-add-1440.png) |
+| Variant editor | — | [390px](product-editor-evidence/after-variant-390.png), [1440px](product-editor-evidence/after-variant-1440.png) |
+| Arabic desktop-site viewport | — | [980px](product-editor-evidence/after-edit-ar-980.png) |
+
+[Executed browser matrix and fixture transport evidence](product-editor-evidence/browser-matrix.json).
+
+### Changed files
+
+Source: `ProductFormPage.tsx`, `AiAssistPanel.tsx`, `ProductVariantManager.tsx`, `ProductMediaManager.tsx`, `ProductSpecificationEditor.tsx`, `ProductCreatePreview.tsx`, new `ProductSearchPreview.tsx`, `catalog.ts`, `validation.ts`, new `variantOptions.ts` and `productSearchPreview.ts`, `uiTranslations.ts`, `workspace.css`, and `src/routes/__root.tsx` (single toast host).
+
+Database: new additive `supabase/migrations/20261102000000_product_editor_owned_field_validation.sql`; no tables/columns/data are deleted, and prior migrations are unchanged.
+
+Verification: four new regression suites (editor helpers/lifecycle, alt-text transport, PostgreSQL metadata ownership, full editor browser), existing stock SQL regression updated to the current specification document shape/new migration, expanded AI responsive/control regressions, browser helper and dashboard CI workflow, this report and its evidence, implementation plan.
+
+Production migration application, merge SHA and deployment state are recorded separately after the final gate; they are not implied by the preview build.
