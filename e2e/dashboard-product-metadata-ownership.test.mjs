@@ -7,7 +7,7 @@ test("metadata-only saves preserve multi-variant pricing, quantities and movemen
   const db = new PGlite();
   try {
     await db.exec(await readFile(new URL("./fixtures/product-editor-stock-schema.sql", import.meta.url), "utf8"));
-    await db.exec(await readFile(new URL("../supabase/migrations/20261102000000_product_editor_owned_field_validation.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../supabase/migrations/20261102002908_product_editor_owned_field_validation.sql", import.meta.url), "utf8"));
     const id = "00000000-0000-4000-8000-000000000001";
     await db.query("insert into store_products(id,title,handle,status,stock_quantity) values ($1,'Phone','phone','draft',5)", [id]);
     await db.query("insert into store_product_variants(product_id,title,price,stock_quantity) values ($1,'Free',0,2),($1,'Paid',100,3)", [id]);

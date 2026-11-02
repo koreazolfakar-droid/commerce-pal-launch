@@ -69,7 +69,23 @@
       "result": "PASS"
     },
     {
+      "check": "Edit and variant portal 360px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 375px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
       "check": "Edit and variant portal 390px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 430px, focus trap and Escape",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit and variant portal 600px, focus trap and Escape",
       "result": "PASS"
     },
     {
@@ -102,6 +118,10 @@
     },
     {
       "check": "Arabic RTL at Android desktop-site viewport",
+      "result": "PASS"
+    },
+    {
+      "check": "Android desktop-site approximation: desktop UA, 980px viewport, touch input and AI controls",
       "result": "PASS"
     }
   ],

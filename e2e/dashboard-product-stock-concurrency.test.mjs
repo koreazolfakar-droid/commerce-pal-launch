@@ -320,7 +320,7 @@ test("PostgreSQL executes the guarded stock migration against inventory regressi
     await db.exec(
       await readFile(
         new URL(
-          "../supabase/migrations/20261102000000_product_editor_owned_field_validation.sql",
+          "../supabase/migrations/20261102002908_product_editor_owned_field_validation.sql",
           import.meta.url,
         ),
         "utf8",

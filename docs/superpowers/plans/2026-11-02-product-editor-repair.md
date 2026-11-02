@@ -9,11 +9,11 @@
 ## Tasks
 
 - [x] Read source, migrations, routes, recent PR #473 and existing tests; materialize the exact main snapshot on an isolated branch.
-- [ ] Reproduce and test editable-field validation, section navigation, required specifications and dialog accessibility.
-- [ ] Repair the product form and variant dialog; preserve AI desktop-grid isolation and add explicit request cancellation/retry feedback.
-- [ ] Add editable generic variant options using existing `options` JSON and a live SEO preview using existing metadata and canonical URL.
-- [ ] Compare all requested capabilities against official Shopify documentation and map editor fields to backend/storefront representations.
-- [ ] Execute unit, database, type, lint, browser and production build checks, with desktop/mobile/RTL screenshots.
+- [x] Reproduce and test editable-field validation, section navigation, required specifications and dialog accessibility.
+- [x] Repair the product form and variant dialog; preserve AI desktop-grid isolation and add explicit request cancellation/retry feedback.
+- [x] Add editable generic variant options using existing `options` JSON and a live SEO preview using existing metadata and canonical URL.
+- [x] Compare all requested capabilities against official Shopify documentation and map editor fields to backend/storefront representations.
+- [x] Execute unit, database, type, lint, browser and production build checks, with desktop/mobile/RTL screenshots.
 - [ ] Review the complete diff, create a PR, and merge only if required verification passes; verify production deployment separately.
 
 ## Review focus
@@ -30,3 +30,5 @@
 - Initial source-only baseline: 460 passing / 28 failing (missing dependencies and initially omitted binary assets). This is an environment baseline, not an acceptance result.
 - Dependency installation and binary restoration are in progress. Existing cached packages are reused only in this workspace.
 - Ruling: execute the user's detailed implementation brief directly, without another design approval round; explicit instruction requests implementation through delivery.
+
+Final local verification: 678 unit tests; 31 product editor browser checks; AI responsive/workflow and dashboard professional browser suites; TypeScript, ESLint, production build, SSR and security scan passed. Independent review findings were fixed and regression tested. Production migration applied with version 20261102002908; local filename synchronized to that recorded version. PR #475 is the delivery branch. CI/merge/deployment gate remains pending. The report documents broader feature-parity gaps.

@@ -149,7 +149,7 @@ Merge and deployment must be reported using actual remote PR/commit/deployment e
 - TypeScript: passed (`node node_modules/typescript/bin/tsc --noEmit`).
 - Full ESLint: **0 errors, 27 existing warnings** (`--fix-dry-run`).
 - Production build: passed; fixture-backed SSR smoke passed eight routes.
-- Product editor Playwright: **26 checks passed**, 5 intercepted fixture writes, no page/runtime errors. This covers add-layout widths 320/360/375/390/430/600/768/980/1024/1280/1440/1600/1920, real section navigation at mobile/desktop, invalid submission, revealing/focusing an invalid specification, draft creation, edit/save failure recovery, reload persistence in the fixture, alt text, generic variant options, edit/variant portal widths, focus trap, Escape and Arabic at 980px.
+- Product editor Playwright: **31 checks passed**, 5 intercepted fixture writes, no page/runtime errors. This covers add-layout widths 320/360/375/390/430/600/768/980/1024/1280/1440/1600/1920, real section navigation at mobile/desktop, invalid submission, revealing/focusing an invalid specification, draft creation, edit/save failure recovery, reload persistence in the fixture, alt text, generic variant options, edit/variant portal widths, focus trap, Escape, Arabic at 980px and a separate desktop-UA/touch-enabled Android desktop-site approximation.
 - Before screenshots were built from the inspected main snapshot in a separate source directory; both before/after show expanded optional sections, using the same system-font test fixture.
 - Cloudflare's branch preview initially failed after a successful build with authentication codes 10000/9109. The existing preview trigger referenced the invalid older build token. Its token reference was switched to the already-existing Workers Builds token in the same account. The subsequent Cloudflare preview build succeeded. No token secret was read and no account permissions were changed.
 - GitHub frozen-lockfile Cloudflare build/workerd smoke and real isolated Auth/PostgREST/PostgreSQL commerce acceptance passed on the first implementation commit. Exact final-head checks remain the merge gate.
@@ -169,8 +169,12 @@ Merge and deployment must be reported using actual remote PR/commit/deployment e
 
 Source: `ProductFormPage.tsx`, `AiAssistPanel.tsx`, `ProductVariantManager.tsx`, `ProductMediaManager.tsx`, `ProductSpecificationEditor.tsx`, `ProductCreatePreview.tsx`, new `ProductSearchPreview.tsx`, `catalog.ts`, `validation.ts`, new `variantOptions.ts` and `productSearchPreview.ts`, `uiTranslations.ts`, `workspace.css`, and `src/routes/__root.tsx` (single toast host).
 
-Database: new additive `supabase/migrations/20261102000000_product_editor_owned_field_validation.sql`; no tables/columns/data are deleted, and prior migrations are unchanged.
+Database: new additive `supabase/migrations/20261102002908_product_editor_owned_field_validation.sql`; no tables/columns/data are deleted, and prior migrations are unchanged.
 
 Verification: four new regression suites (editor helpers/lifecycle, alt-text transport, PostgreSQL metadata ownership, full editor browser), existing stock SQL regression updated to the current specification document shape/new migration, expanded AI responsive/control regressions, browser helper and dashboard CI workflow, this report and its evidence, implementation plan.
 
 Production migration application, merge SHA and deployment state are recorded separately after the final gate; they are not implied by the preview build.
+
+- The product editor migration was applied successfully to the connected production project and its security-invoker/alt-text-preservation properties were re-read. No product rows were edited during installation.
+- Explicit AI retry/cancel browser checks passed; the full dashboard professional workflow suite passed with no page errors.
+- Screenshot: [Arabic AI dialog, 390px, dark mode](product-editor-evidence/ai-after-ar-390.png).
