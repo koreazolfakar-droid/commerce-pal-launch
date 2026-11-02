@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -70,7 +71,7 @@ test("storefront polish avoids restoring decorative page gradients", async () =>
 
 test("shared RTL primitives use logical spacing and semantic dark-mode text", async () => {
   const [dashboard, select, table, pagination] = await Promise.all([
-    source("src/dashboard/App.tsx"),
+    readDashboardShellSource(),
     source("src/components/ui/select.tsx"),
     source("src/components/ui/table.tsx"),
     source("src/components/ui/pagination.tsx"),
@@ -134,7 +135,7 @@ test("product actions stay aligned without overlapping compact card content", as
 
 test("dashboard command navigation keeps five reachable mobile actions and contextual search", async () => {
   const [dashboard, workspace, routes, translations] = await Promise.all([
-    source("src/dashboard/App.tsx"),
+    readDashboardShellSource(),
     source("src/dashboard/workspace.css"),
     source("src/dashboard/config/routes.tsx"),
     source("src/dashboard/uiTranslations.ts"),
@@ -185,7 +186,7 @@ test("semantic product and dashboard hooks replace fragile visual selectors", as
     source("src/components/CompactProductCard.tsx"),
     source("src/ui-overhaul.css"),
     source("src/design-consistency.css"),
-    source("src/dashboard/App.tsx"),
+    readDashboardShellSource(),
     source("src/styles.css"),
   ]);
 
@@ -215,7 +216,7 @@ test("semantic product and dashboard hooks replace fragile visual selectors", as
 test("dashboard design refresh stays scoped, theme-aware and responsive", async () => {
   const [workspace, app, pageTitle, modal, editor, products] = await Promise.all([
     source("src/dashboard/workspace.css"),
-    source("src/dashboard/App.tsx"),
+    readDashboardShellSource(),
     source("src/dashboard/components/layout/PageTitle.tsx"),
     source("src/dashboard/components/DashboardModal.tsx"),
     source("src/dashboard/pages/ProductFormPage.tsx"),

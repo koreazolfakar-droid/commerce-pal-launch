@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 
 const files = {
   workspaceSearch: await readFile(
     new URL("../src/dashboard/data/workspaceSearch.ts", import.meta.url),
     "utf8",
   ),
-  app: await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  app: await readDashboardShellSource(),
   routes: await readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   brands: await readFile(new URL("../src/dashboard/pages/BrandsPage.tsx", import.meta.url), "utf8"),
   categories: await readFile(
