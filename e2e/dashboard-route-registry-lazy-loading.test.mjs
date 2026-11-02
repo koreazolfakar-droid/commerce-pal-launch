@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 import test from "node:test";
 
 const [app, routes, navigation, appMount] = await Promise.all([
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  readDashboardShellSource(),
   readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/config/navigation.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/AppMount.tsx", import.meta.url), "utf8"),

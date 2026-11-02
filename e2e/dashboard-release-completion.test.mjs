@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 import test from "node:test";
 
 const [
@@ -29,7 +30,7 @@ const [
   ),
   readFile(new URL("../src/routes/product.$handle.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/i18n.ts", import.meta.url), "utf8"),
-  readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  readDashboardShellSource(),
   readFile(new URL("../src/dashboard/hooks/useDashboardDialogFocus.ts", import.meta.url), "utf8"),
   readFile(
     new URL("../src/dashboard/components/DashboardConfirmDialog.tsx", import.meta.url),
