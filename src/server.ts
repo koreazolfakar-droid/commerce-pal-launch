@@ -212,9 +212,9 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withSensitiveResponseNoStore(
+      return withDashboardNoStore(
         request,
-        withDashboardNoStore(
+        withSensitiveResponseNoStore(
           request,
           withDocumentCache(
             request,
