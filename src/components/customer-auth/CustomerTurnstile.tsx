@@ -24,16 +24,15 @@ type TurnstileApi = {
   remove: (id: string) => void;
 };
 
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-  }
+function turnstileApi(): TurnstileApi | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (window as unknown as { turnstile?: TurnstileApi }).turnstile;
 }
 
 let scriptPromise: Promise<void> | null = null;
 
 function ensureScript(): Promise<void> {
-  if (typeof window === "undefined" || window.turnstile) return Promise.resolve();
+  if (typeof window === "undefined" || turnstileApi()) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
 
   scriptPromise = new Promise<void>((resolve, reject) => {
@@ -77,8 +76,8 @@ export default function CustomerTurnstile({
 
     void ensureScript()
       .then(() => {
-        if (cancelled || !containerRef.current || !window.turnstile) return;
-        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        if (cancelled || !containerRef.current || !turnstileApi()) return;
+        widgetIdRef.current = turnstileApi().render(containerRef.current, {
           sitekey: customerTurnstileSiteKey,
           theme: "auto",
           size: "flexible",
@@ -92,8 +91,8 @@ export default function CustomerTurnstile({
 
     return () => {
       cancelled = true;
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
+      if (widgetIdRef.current && turnstileApi()) {
+        turnstileApi().remove(widgetIdRef.current);
         widgetIdRef.current = null;
       }
       onTokenChange(null);
@@ -103,8 +102,8 @@ export default function CustomerTurnstile({
   useEffect(() => {
     if (!customerTurnstileSiteKey) return;
     onTokenChange(null);
-    if (widgetIdRef.current && window.turnstile) {
-      window.turnstile.reset(widgetIdRef.current);
+    if (widgetIdRef.current && turnstileApi()) {
+      turnstileApi().reset(widgetIdRef.current);
     }
   }, [resetNonce, onTokenChange]);
 
