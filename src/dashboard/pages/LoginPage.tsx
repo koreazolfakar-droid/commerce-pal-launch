@@ -186,7 +186,7 @@ function WorkspacePreview() {
   const { lang } = useLanguage();
   const copy = loginCopy[lang];
   return (
-    <div className="login-soft relative overflow-hidden rounded-[24px] border border-white/[.08] bg-[#0d172b]/72 p-5 shadow-[0_24px_80px_rgba(0,0,0,.22)] backdrop-blur-xl">
+    <div className="login-soft relative overflow-hidden rounded-2xl border border-white/[.08] bg-[#0d172b]/72 p-5">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/35 to-transparent" />
       <div className="flex items-center gap-3">
         <div className="grid size-11 shrink-0 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.08] text-indigo-200">
@@ -200,15 +200,6 @@ function WorkspacePreview() {
             {copy.protectedBody}
           </div>
         </div>
-      </div>
-      <div className="mt-5 grid grid-cols-[1.25fr_.75fr] gap-2" aria-hidden="true">
-        <div className="login-placeholder h-16 rounded-2xl bg-white/[.035]" />
-        <div className="login-placeholder h-16 rounded-2xl bg-white/[.025]" />
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-2" aria-hidden="true">
-        <div className="login-placeholder h-10 rounded-xl bg-white/[.025]" />
-        <div className="login-placeholder h-10 rounded-xl bg-white/[.04]" />
-        <div className="login-placeholder h-10 rounded-xl bg-white/[.025]" />
       </div>
     </div>
   );
@@ -612,28 +603,28 @@ export default function LoginPage() {
       className="login-root relative min-h-[100dvh] overflow-hidden bg-[#07101f] text-white print:hidden"
     >
       <style>{`
-        [data-login-theme="light"].login-root { background: #eef2f7 !important; color: #0f172a !important; }
-        [data-login-theme="light"] .login-card { background: rgba(255,255,255,.96) !important; border-color: #e2e8f0 !important; box-shadow: 0 36px 110px rgba(15,23,42,.14) !important; }
+        [data-login-theme="light"].login-root { background: #f2f3f5 !important; color: #172033 !important; }
+        [data-login-theme="light"] .login-card { background: rgba(255,255,255,.96) !important; border-color: #e2e8f0 !important; box-shadow: 0 18px 60px rgba(15,23,42,.08) !important; }
         [data-login-theme="light"] .login-form-panel { background: #ffffff !important; }
         [data-login-theme="light"] .login-showcase { border-color: #e2e8f0 !important; }
-        [data-login-theme="light"] .login-showcase-bg { background: radial-gradient(circle at 20% 10%, rgba(99,102,241,.14), transparent 34%), linear-gradient(145deg,#f8faff 0%,#f4f6ff 52%,#eef2ff 100%) !important; }
+        [data-login-theme="light"] .login-showcase-bg { background: #e9edf4 !important; }
         [data-login-theme="light"] .login-heading { color: #0f172a !important; }
         [data-login-theme="light"] .login-muted { color: #64748b !important; }
         [data-login-theme="light"] .login-label { color: #334155 !important; }
         [data-login-theme="light"] .login-input { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #0f172a !important; box-shadow: inset 0 1px 2px rgba(15,23,42,.03) !important; }
         [data-login-theme="light"] .login-input:focus { background: #fff !important; border-color: #818cf8 !important; }
         [data-login-theme="light"] .login-icon-button, [data-login-theme="light"] .login-control { color: #475569 !important; background: #fff !important; border-color: #e2e8f0 !important; }
-        [data-login-theme="light"] .login-soft { background: rgba(255,255,255,.78) !important; border-color: #e0e7ff !important; box-shadow: 0 20px 60px rgba(79,70,229,.08) !important; }
+        [data-login-theme="light"] .login-soft { background: rgba(255,255,255,.82) !important; border-color: #d9e0ea !important; box-shadow: none !important; }
         [data-login-theme="light"] .login-placeholder { background: #f1f5f9 !important; }
         [data-login-theme="light"] .login-footer { background: #f8fafc !important; border-color: #e2e8f0 !important; }
         [data-login-theme="light"] .login-privacy { background: rgba(238,242,247,.98) !important; }
         [data-login-theme="light"] .login-logo-tile { background: #fff !important; border-color: #e2e8f0 !important; box-shadow: 0 12px 32px rgba(30,41,59,.10) !important; }
         [data-login-theme="light"] .login-error { background: #fff1f2 !important; border-color: #fecdd3 !important; color: #be123c !important; }
         [data-login-theme="light"] .login-secret { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #334155 !important; }
-        [data-login-theme="light"] .login-secondary { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
+        [data-login-theme="light"] .login-secondary { background: #e8edf7 !important; border-color: #d8e1ef !important; color: #304c80 !important; }
         [data-login-theme="light"] .login-badge { background: #ecfdf5 !important; border-color: #d1fae5 !important; color: #047857 !important; }
-        [data-login-theme="light"] .login-accent { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
-        [data-login-theme="light"] .login-link { color: #4f46e5 !important; }
+        [data-login-theme="light"] .login-accent { background: #e8edf7 !important; border-color: #d8e1ef !important; color: #304c80 !important; }
+        [data-login-theme="light"] .login-link { color: #315d9f !important; }
         @media print {
           html, body { background: #0a1224 !important; }
           body * { visibility: hidden !important; }
@@ -667,7 +658,7 @@ export default function LoginPage() {
       </div>
 
       <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[1180px] items-stretch p-0 sm:items-center sm:px-6 sm:py-8 lg:px-8">
-        <div className="login-card grid min-h-[100dvh] w-full overflow-hidden bg-[#0c1629]/92 shadow-[0_40px_140px_rgba(0,0,0,.48)] backdrop-blur-2xl sm:min-h-0 sm:rounded-[32px] sm:border sm:border-white/[.08] sm:ring-1 sm:ring-white/[.02] lg:grid-cols-[1.05fr_.95fr]">
+        <div className="login-card grid min-h-[100dvh] w-full overflow-hidden bg-[#0c1629]/92 shadow-[0_40px_140px_rgba(0,0,0,.48)] backdrop-blur-2xl sm:min-h-0 sm:rounded-[20px] sm:border sm:border-white/[.08] sm:ring-1 sm:ring-white/[.02] lg:grid-cols-[1.05fr_.95fr]">
           <section className="login-showcase relative hidden min-h-[680px] overflow-hidden border-r border-white/[.07] p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
             <div className="login-showcase-bg absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(79,70,229,.18),transparent_34%),linear-gradient(145deg,#111e38_0%,#0d172b_52%,#0a1426_100%)]" />
             <div className="absolute -right-24 top-24 size-72 rounded-full border border-white/[.035]" />
@@ -686,7 +677,7 @@ export default function LoginPage() {
                 <ShieldCheck className="size-3.5" />
                 {copy.secureAccess}
               </div>
-              <h2 className="login-heading max-w-[470px] text-[41px] font-black leading-[1.02] tracking-[-.055em] text-white xl:text-[48px]">
+              <h2 className="login-heading max-w-[470px] text-[36px] font-semibold leading-[1.12] tracking-[-.04em] text-white xl:text-[42px]">
                 {copy.heroTitle}
               </h2>
               <p className="login-muted mt-5 max-w-[455px] text-[13px] leading-6 text-slate-400">
@@ -738,7 +729,7 @@ export default function LoginPage() {
                   {copy.authorizedOnly}
                 </div>
                 <h1
-                  className={`login-heading font-black leading-[1.02] tracking-[-.05em] text-white ${view === "mfa" ? "text-[30px] sm:text-[34px]" : "text-[34px] sm:text-[38px]"}`}
+                  className={`login-heading font-semibold leading-[1.12] tracking-[-.04em] text-white ${view === "mfa" ? "text-[30px] sm:text-[34px]" : "text-[34px] sm:text-[38px]"}`}
                 >
                   {t(title)}
                 </h1>

@@ -1,0 +1,114 @@
+/* Visual refresh for the administration workspace. Business behavior is unchanged. */
+.dashboard-theme-scope {
+  --dashboard-panel-radius: 0.875rem;
+  --dashboard-accent: #315dca;
+}
+.dashboard-theme-scope .dashboard-sidebar.sidebar-polished {
+  --sc-side-line: rgba(255,255,255,.09);
+  --sc-side-hover: rgba(255,255,255,.075);
+  background: #151c29;
+  border-inline-end: 1px solid #293342;
+  box-shadow: none;
+}
+.dashboard-theme-scope .sidebar-polished .dashboard-sidebar-brand {
+  min-height: 72px;
+  background: transparent;
+}
+.dashboard-theme-scope .sidebar-polished .dashboard-brand-mark {
+  background: #eef3ff;
+  color: #243b74;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.dashboard-theme-scope .sidebar-polished .dashboard-sidebar-section {
+  color: #aab7c9;
+  letter-spacing: .025em;
+}
+.dashboard-theme-scope .sidebar-polished .dashboard-sidebar-action {
+  min-height: 39px;
+  border-radius: 8px;
+  color: #d2dae6;
+}
+.dashboard-theme-scope .sidebar-polished .dashboard-sidebar-action[aria-current="page"] {
+  color: #fff;
+  background: #344d76;
+  border-color: transparent;
+  box-shadow: none;
+}
+[dir="rtl"] .dashboard-theme-scope .sidebar-polished .dashboard-sidebar-action[aria-current="page"] { box-shadow: none; }
+.dashboard-theme-scope .sidebar-polished .dashboard-sidebar-new-product {
+  background: #e8eefb;
+  color: #1e355c;
+  border-color: transparent;
+  box-shadow: none;
+}
+.dashboard-theme-scope .sidebar-polished .dashboard-sidebar-footer { background: #151c29; }
+.dashboard-theme-scope .dashboard-header {
+  min-height: 68px;
+  box-shadow: none;
+  border-block-end: 1px solid var(--color-border);
+}
+.dashboard-theme-scope .dashboard-command-trigger {
+  border-radius: 9px;
+  box-shadow: none;
+}
+.dashboard-theme-scope .dashboard-main {
+  width: min(100%, 1600px);
+  padding-inline: clamp(1rem, 3vw, 3rem);
+}
+.dashboard-theme-scope .dashboard-page-title,
+.dashboard-theme-scope .dashboard-main h1 {
+  letter-spacing: -.04em;
+  line-height: 1.15;
+}
+.dashboard-theme-scope .dashboard-page-eyebrow {
+  letter-spacing: .09em;
+}
+.dashboard-theme-scope .dashboard-panel,
+.dashboard-theme-scope .dashboard-editor-panel,
+.dashboard-theme-scope .dashboard-filter-panel,
+.dashboard-theme-scope .dashboard-catalog-panel,
+.dashboard-theme-scope .dashboard-metric-card {
+  border-radius: var(--dashboard-panel-radius);
+  box-shadow: 0 1px 2px rgb(15 23 42 / .035);
+}
+.dashboard-theme-scope .dashboard-panel-heading,
+.dashboard-theme-scope .dashboard-editor-panel-heading {
+  background: transparent;
+  padding: 1.1rem 1.25rem;
+}
+.dashboard-theme-scope .dashboard-kpi {
+  min-height: 8.5rem;
+  background: var(--color-card);
+  padding: 1.15rem 1.25rem;
+}
+.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi:first-child {
+  background: var(--color-card);
+}
+.dashboard-theme-scope .dashboard-kpi-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: .65rem;
+}
+.dashboard-theme-scope .dashboard-kpi-value {
+  margin-block-start: .8rem;
+  font-size: clamp(1.6rem, 2.3vw, 2.1rem);
+  letter-spacing: -.04em;
+}
+.dashboard-theme-scope .dashboard-button { border-radius: .6rem; }
+.dashboard-theme-scope .dashboard-main :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
+  border-radius: .6rem;
+}
+.dashboard-theme-scope .dashboard-main :where(th) {
+  font-size: .7rem;
+  letter-spacing: .035em;
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-main { padding-inline: 1rem; }
+  .dashboard-theme-scope .dashboard-kpi { min-height: 7.6rem; padding: 1rem; }
+  .dashboard-theme-scope .dashboard-kpi-value { font-size: 1.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-theme-scope .sidebar-polished :is(.dashboard-sidebar-action, .dashboard-sidebar-section) { transition: none; }
+}
