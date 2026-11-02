@@ -1527,6 +1527,12 @@
   grid-template-columns: none;
   align-items: stretch;
   min-inline-size: 0;
+  block-size: auto;
+  max-block-size: calc(100dvh - 24px);
+}
+.dashboard-theme-scope.dashboard-ai-dialog > :nth-child(2) {
+  min-block-size: 0;
+  overflow-y: auto;
 }
 
 /* Field geometry follows the actual panel width after the integrated sidebar. */
