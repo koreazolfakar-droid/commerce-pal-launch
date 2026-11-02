@@ -3,6 +3,7 @@ import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { createEphemeralPasskeyClient, supabase } from "@/integrations/supabase/client";
 import { looseSupabase } from "@/integrations/supabase/looseClient";
 import { assertDashboardPasswordNotPwned } from "@/dashboard/security/pwnedPassword";
+import { parseDashboardThrottleDecision, type DashboardThrottleDecision } from "@/dashboard/security/loginThrottleDecision";
 import type { User } from "@supabase/supabase-js";
 import type { Tables } from "@/integrations/supabase/types";
 import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
@@ -425,48 +426,39 @@ export async function getDashboardRole(): Promise<DashboardRole | null> {
   }
 }
 
-type DashboardThrottleDecision = {
-  allowed: boolean;
-  retryAfter: number;
-  remainingBeforeBlock?: number;
-};
-
 async function dashboardLoginThrottle(
   email: string,
   outcome: "attempt" | "success",
 ): Promise<DashboardThrottleDecision> {
   const normalizedEmail = email.trim().toLowerCase();
-  // The throttle endpoint rejects malformed emails with 400; such sign-ins fail
-  // at the auth step anyway, so skip the call instead of surfacing an error.
   if (
     !normalizedEmail ||
     normalizedEmail.length > 320 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
   ) {
+    if (outcome === "attempt") throw new Error("Enter a valid dashboard email address.");
     return { allowed: true, retryAfter: 0 };
   }
 
-  const { data, error } = await supabase.functions.invoke("dashboard-auth-throttle", {
-    body: { email: normalizedEmail, outcome },
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke("dashboard-auth-throttle", {
+      body: { email: normalizedEmail, outcome },
+    });
+    if (error) throw error;
 
-  if (error) {
-    console.warn("[dashboard-security] login throttle unavailable", error.message);
-    return { allowed: true, retryAfter: 0 };
+    const decision = parseDashboardThrottleDecision(data);
+    if (!decision) throw new Error("invalid_throttle_response");
+    return decision;
+  } catch {
+    // Never permit password authentication when the pre-auth check cannot be
+    // verified. A post-auth cleanup failure must not revoke a valid login.
+    if (outcome === "success") {
+      console.warn("[dashboard-security] throttle cleanup unavailable");
+      return { allowed: true, retryAfter: 0 };
+    }
+    console.warn("[dashboard-security] pre-auth throttle unavailable");
+    throw new Error("Sign-in security check is temporarily unavailable. Try again shortly.");
   }
-
-  const payload = data as Partial<DashboardThrottleDecision> | null;
-  return {
-    allowed: payload?.allowed !== false,
-    retryAfter:
-      typeof payload?.retryAfter === "number" && Number.isFinite(payload.retryAfter)
-        ? Math.max(0, payload.retryAfter)
-        : 0,
-    remainingBeforeBlock:
-      typeof payload?.remainingBeforeBlock === "number"
-        ? Math.max(0, payload.remainingBeforeBlock)
-        : undefined,
-  };
 }
 
 function throttleMessage(retryAfter: number) {

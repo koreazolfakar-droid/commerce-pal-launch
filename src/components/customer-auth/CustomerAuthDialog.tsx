@@ -13,6 +13,7 @@ import {
 
 import { useCustomerAccount } from "@/components/customer-account/CustomerAccountProvider";
 import { useCustomerAuth } from "@/components/customer-auth/CustomerAuthProvider";
+import CustomerTurnstile, { customerTurnstileSiteKey } from "@/components/customer-auth/CustomerTurnstile";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -112,6 +113,8 @@ export function CustomerAuthDialog() {
   const [pending, setPending] = useState<"google" | "phone" | "verify" | "signout" | null>(null);
   const [message, setMessage] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
 
   const ar = language === "ar";
   const copy = useMemo(
@@ -145,6 +148,7 @@ export function CustomerAuthDialog() {
             invalidPhone: "أدخل رقم هاتف صحيحًا مع رمز الدولة.",
             invalidCode: "أدخل رمز التحقق المكوّن من 6 أرقام.",
             sent: "تم إرسال رمز التحقق.",
+            captchaRequired: "أكمل التحقق الأمني قبل إرسال الرمز.",
           }
         : {
             welcome: `Welcome to ${STORE_NAME}`,
@@ -174,6 +178,7 @@ export function CustomerAuthDialog() {
             invalidPhone: "Enter a valid phone number with country code.",
             invalidCode: "Enter the 6-digit verification code.",
             sent: "Verification code sent.",
+            captchaRequired: "Complete the security check before requesting an SMS code.",
           },
     [ar],
   );
@@ -190,6 +195,7 @@ export function CustomerAuthDialog() {
     if (!authOpen) {
       setMessage("");
       setOtp("");
+      setCaptchaToken(null);
       if (!user) setStep("sign-in");
     }
   }, [authOpen, user]);
@@ -236,13 +242,21 @@ export function CustomerAuthDialog() {
       return;
     }
 
+    if (customerTurnstileSiteKey && !captchaToken) {
+      setMessage(copy.captchaRequired);
+      return;
+    }
+
     setPending("phone");
     setMessage("");
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
         phone,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          ...(captchaToken ? { captchaToken } : {}),
+        },
       });
       if (error) throw error;
       setVerifiedPhone(phone);
@@ -252,6 +266,8 @@ export function CustomerAuthDialog() {
     } catch {
       setMessage(copy.genericError);
     } finally {
+      setCaptchaToken(null);
+      setCaptchaResetNonce((value) => value + 1);
       setPending(null);
     }
   }
@@ -461,6 +477,8 @@ export function CustomerAuthDialog() {
                     </div>
                   </label>
 
+                  <CustomerTurnstile onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
+
                   <Button
                     type="button"
                     className="h-12 w-full rounded-2xl font-bold"
@@ -521,6 +539,10 @@ export function CustomerAuthDialog() {
                     ) : null}
                     {copy.verify}
                   </Button>
+
+                  {cooldown === 0 ? (
+                    <CustomerTurnstile onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
+                  ) : null}
 
                   <button
                     type="button"
