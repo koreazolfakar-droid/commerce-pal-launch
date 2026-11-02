@@ -18,11 +18,11 @@
 
 ## Execution
 
-- [ ] Audit all sections, field/database mappings, recent PRs, baseline unit/browser results and screenshots.
-- [ ] Write failing save reconciliation and expanded browser geometry/interaction tests. Repair verified races and layout defects.
-- [ ] Compare official Shopify documentation; implement compatible organization/translation fields, SEO preview and media accessibility with real persistence.
-- [ ] Test safe migrations against isolated PostgreSQL and preserve authorization and inventory behavior.
-- [ ] Run typecheck, lint, full unit/regression suites, browser matrix, production build and SSR checks.
+- [x] Audit all sections, field/database mappings, recent PRs, baseline unit/browser results and screenshots.
+- [x] Write failing save reconciliation and expanded browser geometry/interaction tests. Repair verified races and layout defects.
+- [x] Compare official Shopify documentation; implement compatible organization/translation fields, SEO preview and media accessibility with real persistence.
+- [x] Test safe migrations against isolated PostgreSQL and preserve authorization and inventory behavior.
+- [x] Run typecheck, lint, full unit/regression suites, browser matrix, production build and SSR checks.
 - [ ] Review diff, publish a PR, merge only after required verification passes; independently verify deployment status.
 
 ## Execution ledger
@@ -30,3 +30,7 @@
 - Source downloaded through authorized GitHub connector because direct Git clone lacks credentials. Local Git is a verification snapshot; remote branch starts at the real upstream commit. Never push local snapshot history.
 - Read-only production schema inspection confirms existing tags, product_type, title_ar, description_ar and weighted average_cost columns. No production product data changed.
 - Baseline browser run initially blocked by missing Playwright browser; installing its matching Chromium.
+- Final local checks: 674/674 tests; production-artifact browser suites passed; TypeScript/build/SSR/security passed; lint 0 errors and 27 pre-existing warnings.
+- Independent review: three Important findings reproduced and fixed (partial-create recovery, stale-media resurrection, newer alt draft loss); no Critical finding. Unicode limit mismatch remains a documented conservative client limitation.
+- Live additive migration applied at 20261102002445; invoker/anonymous/staff grants/RLS verified. No production product records changed.
+- Delivery in PR #474. Preview-token configuration repaired by selecting an existing stored build token; preview deployment then succeeded. Main merge and production verification remain gated on final GitHub results.

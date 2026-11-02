@@ -117,6 +117,12 @@ Actual RED→GREEN cases include missing organization RPC, custom-alt overwrite,
 
 The final executed commands, counts, browser outcomes and deployment state are recorded in the PR. Any unsuccessful/interrupted run is not a pass. Browser sessions intercept dashboard writes; no synthetic session is sent to production. Real-device keyboard, Android browser UI scaling, camera/file pickers and arbitrary third-party AI responses need device/staging verification beyond viewport simulation.
 
+Final local verification: **674/674 unit/PostgreSQL tests passed**, TypeScript passed, ESLint reported **0 errors / 27 existing warnings**, production build and repository security gate passed, and SSR smoke passed on eight paths. The production-artifact browser runner passed creation/editing, validation, failed-save recovery, translation/tag reload, default variant options, alternative-text failure/retry, publication, archive cancellation, thirteen widths, all twelve section destinations, AI Validate/SEO/long warnings, reduced-height footer, 46-field research, cancellation and Arabic/RTL/dark mode. No page runtime errors were recorded in those browser suites. Browser transport is intercepted; SQL tests execute the actual migrations in isolated PostgreSQL.
+
+The additive RPC was applied to the real Supabase project as migration **20261102002445_product_editor_details.sql**. Live catalog metadata confirms `SECURITY INVOKER`, fixed search path, anonymous execution denied, authenticated execution granted, and RLS still enabled on products/images. The pre/post security advisor results were identical (one existing leaked-password-protection warning; no new findings). The repository migration filename matches the server-generated applied version.
+
+Cloudflare preview initially failed with token authentication errors 10000/9109 after a successful build. The feature preview trigger was rebound to an existing Workers Builds token already stored in the same account; a subsequent preview build succeeded. No credential value was retrieved or exposed, no new token was created and the production deploy command was not substituted for the preview command.
+
 ## Delivery gates and limitations
 
 - Apply the additive migration before deploying code that calls the new RPC.
