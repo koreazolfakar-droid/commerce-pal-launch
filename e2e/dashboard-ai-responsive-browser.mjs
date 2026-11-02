@@ -39,6 +39,7 @@ try {
     assert.ok(metrics.footerTop >= metrics.bodyTop - 2, `footer is not below content at ${width}px`);
     assert.ok(metrics.left >= -1 && metrics.right <= width + 1, `dialog outside ${width}px viewport`);
     assert.ok(metrics.top >= -1 && metrics.bottom <= 741, `dialog too tall at ${width}px`);
+    assert.ok(metrics.bottom - metrics.top < 716, `short dialog should not fill the whole viewport at ${width}px`);
     assert.ok(metrics.dialogScrollWidth <= metrics.dialogClientWidth + 1, `horizontal overflow at ${width}px`);
     assert.ok(metrics.footerLeft >= -1 && metrics.footerRight <= width + 1);
     assert.ok(metrics.footerBottom <= 741, `footer hidden at ${width}px`);
