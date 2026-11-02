@@ -50,13 +50,28 @@ a clear service configuration error.
 
 ## Intentional limitations
 
-Unlike the Gemini provider, Cloudflare GLM does **not** automatically get
-Google Search or URL Context tools. Passing a product URL alone **does
-not mean the model visited the page**. The provider warns that live web
-verification is unavailable and sets all model suggestions to
-`verified=false`. Unsupported specification fields are blocked; literal
-specifications in user-provided source text require review. Descriptions
-and SEO text can still be drafted from known information.
+Unlike Gemini, the Cloudflare model has **no built-in web-search tool**.
+The Supabase backend now performs bounded HTTPS retrieval of explicitly supplied
+official-manufacturer product pages (if the page title matches the exact model),
+and sends their extracted content to Cloudflare with source URLs. Product
+specifications are only independently verified when the proposed value occurs
+literally in the fetched page and the model cites that page. Manufacturer
+site requests do not follow redirects and are capped in size and time.
+
+For optional automatic name-only product discovery, configure
+`BRAVE_SEARCH_API_KEY` as a **server-side Supabase Edge Function secret**
+with a provider plan/usage allowance you understand. Without it, the
+`Samsung A57` search still requires pasting the official product URL in
+Advanced AI options. There is **no invisible paid fallback** and no secret in
+the browser. Search results alone never count as verified without a successful
+official-page fetch.
+
+When independent evidence is missing the backend preserves the merchant's exact
+model identifier, rejects wrong-model suggestions (for example A55 for A57),
+does not claim the product is nonexistent, and offers the entered product name
+only as an **unverified draft**. Price, cost, stock and barcode protections
+remain unchanged. The modal also shrinks to its content on small screens, while
+retaining a scrollable body and always-visible Apply button.
 
 To restore independent research, integrate a separate **permissioned,
 rate-limited search/retrieval** provider later and keep provenance per
