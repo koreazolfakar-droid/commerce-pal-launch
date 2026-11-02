@@ -435,7 +435,7 @@ export default function AiAssistPanel({
                 aria-labelledby={dialogTitleId}
                 tabIndex={-1}
                 dir={lang === "ar" ? "rtl" : "ltr"}
-                className="dashboard-theme-scope dashboard-ai-dialog flex min-h-0 min-w-0 w-[calc(100vw-24px)] max-w-[720px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl [height:calc(100dvh-24px)] [max-height:calc(100dvh-24px)]"
+                className="dashboard-theme-scope dashboard-ai-dialog flex min-h-0 min-w-0 w-[calc(100vw-24px)] max-w-[720px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl [max-height:calc(100dvh-24px)]"
               >
                 <div className="flex min-w-0 shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
                   <div className="min-w-0 flex-1">
@@ -1032,7 +1032,7 @@ export default function AiAssistPanel({
                 </div>
 
                 <div className="flex min-w-0 shrink-0 flex-col items-stretch gap-2 border-t border-slate-100 bg-white px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:flex-row md:items-center md:justify-between md:px-5">
-                  <div className="min-w-0 w-full break-words text-[10px] leading-4 text-slate-500 [overflow-wrap:anywhere] md:flex-1 md:text-[11px] md:leading-5">
+                  <div className="hidden min-w-0 w-full break-words text-[10px] leading-4 text-slate-500 [overflow-wrap:anywhere] sm:block md:flex-1 md:text-[11px] md:leading-5">
                     {t(
                       "Apply selected changes draft fields only. Save remains manual; stock, price, permissions, and order state stay protected.",
                     )}
