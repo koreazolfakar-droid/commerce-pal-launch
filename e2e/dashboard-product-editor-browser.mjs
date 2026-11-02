@@ -108,7 +108,8 @@ try{
   await page.getByLabel("Search engine preview",{exact:true}).getByText("QA Phone | Space Call",{exact:true}).waitFor();
   failSave=true;
   await page.getByRole("button",{name:"Save as Draft",exact:true}).first().click();
-  await page.getByText("Saving product failed: Save unavailable. Retry.",{exact:true}).waitFor();
+  await page.getByText("Saving product failed: Save unavailable. Retry.",{exact:true}).first().waitFor();
+  assert.equal(await page.getByText("Saving product failed: Save unavailable. Retry.",{exact:true}).count(),1,"dashboard feedback must not be duplicated by the storefront toaster");
   assert.equal(await page.getByLabel("Title",{exact:true}).inputValue(),"QA Phone");
   failSave=false;
   await page.getByRole("button",{name:"Save as Draft",exact:true}).first().click();
@@ -124,11 +125,11 @@ try{
   failAlt=true;
   await page.getByLabel("Alternative text",{exact:true}).fill("Rear view");
   await page.getByRole("button",{name:"Save alternative text",exact:true}).click();
-  await page.getByText("Saving alternative text failed: Alternative text denied. Retry.",{exact:true}).waitFor();
+  await page.getByText("Saving alternative text failed: Alternative text denied. Retry.",{exact:true}).first().waitFor();
   assert.equal(await page.getByLabel("Alternative text",{exact:true}).inputValue(),"Rear view");
   failAlt=false;
   await page.getByRole("button",{name:"Save alternative text",exact:true}).click();
-  await page.getByText("Alternative text saved.",{exact:true}).waitFor();
+  await page.getByText("Alternative text saved.",{exact:true}).first().waitFor();
   assert.equal(images[0].alt_text,"Rear view");
   await page.getByLabel("Description",{exact:true}).fill("Updated description");
   await page.getByRole("button",{name:"Save changes",exact:true}).first().click();

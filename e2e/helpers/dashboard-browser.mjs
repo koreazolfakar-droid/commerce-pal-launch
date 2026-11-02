@@ -107,6 +107,8 @@ export async function createDashboardBrowser() {
       return route.fulfill({ json: [], headers: { "content-range": "0-0/0" } });
     if (url.pathname.includes("/auth/v1/") || url.pathname.includes("/functions/v1/"))
       return route.fulfill({ json: {} });
+    if (url.pathname.includes("/storage/v1/"))
+      return route.fulfill({ status: 501, json: { message: "Storage must be explicitly mocked by this browser suite." } });
     return route.continue();
   });
 

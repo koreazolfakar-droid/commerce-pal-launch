@@ -44,6 +44,8 @@ Inspected all form panels, expanded collections/specification/SEO content, varia
 9. Media fetch failures appeared as an empty gallery. Added an explicit error and Retry state.
 10. Section overview omitted collections, organization and publishing destinations. All twelve actual destinations are now represented.
 11. Save response reconciliation protects newer specification/status state. PR #473's explicit vertical portal flex override is retained unchanged.
+12. Field validation messages changed implicit accessible names (for example, "Title" became "Title Product title is required"). Explicit input labels now keep field names stable while error details remain linked with `aria-describedby`.
+13. Storefront and dashboard toaster hosts both displayed the same success/error message. The root now defers to the dashboard's existing themed host on dashboard routes; storefront feedback stays unchanged.
 
 ## Added capabilities
 

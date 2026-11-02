@@ -1278,6 +1278,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   {t("Description")}
                 </span>
                 <textarea
+                  aria-label={t("Description")}
                   value={form.description}
                   onChange={(event) => update("description", event.target.value)}
                   rows={6}
@@ -1299,6 +1300,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   <label className="block text-sm font-semibold">
                     {t("Arabic description")}
                     <textarea
+                      aria-label={t("Arabic description")}
                       value={form.descriptionAr}
                       rows={4}
                       maxLength={5000}
@@ -1687,6 +1689,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   {t("SEO description")}
                 </span>
                 <textarea
+                  aria-label={t("SEO description")}
                   value={form.seoDescription}
                   onChange={(event) => update("seoDescription", event.target.value)}
                   rows={4}
@@ -2057,6 +2060,7 @@ function Field({
       <input
         value={value}
         type={type}
+        aria-label={t(label)}
         disabled={disabled}
         data-product-field={fieldKey}
         aria-invalid={Boolean(error)}
