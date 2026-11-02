@@ -3,7 +3,7 @@ import { createDashboardBrowser } from "./helpers/dashboard-browser.mjs";
 
 const { browser, context } = await createDashboardBrowser();
 const origin = process.env.SPACE_CALL_DASHBOARD_ORIGIN || "http://127.0.0.1:5173";
-const widths = [320, 360, 375, 390, 430, 768, 980, 1024, 1440];
+const widths = [320, 360, 375, 390, 430, 600, 768, 980, 1024, 1280, 1440, 1600, 1920];
 const page = await context.newPage();
 
 try {
@@ -62,6 +62,40 @@ try {
   assert.ok(await dialog.getByRole("button", { name: /Apply selected/ }).isVisible());
   const height = await dialog.evaluate((element) => element.getBoundingClientRect().height);
   assert.ok(height <= 436, "dialog must fit reduced viewport height");
+  await dialog.getByRole("button", { name: "Close AI assistant" }).click();
+
+  const actions = [];
+  await context.route("**/functions/v1/dashboard-ai-assist", async route => {
+    const body = route.request().postDataJSON();
+    actions.push(body.action);
+    return route.fulfill({ json: {
+      entity: "product", action: body.action, model: "fixture", grounded: false,
+      entityMatch: { status: "exact", canonicalName: body.query, reason: "Supplied exact model" },
+      summary: "Review long content", sources: [],
+      warnings: ["Evidence requires review. ".repeat(100)],
+      suggestions: [{ field: "description", value: "A product description. ".repeat(150), confidence: 0.8,
+        decision: "review", verified: false, risk: "medium", reason: "Manual review", checks: [], sourceUrls: [] }],
+      missingFields: [],
+    } });
+  });
+  await page.setViewportSize({ width: 320, height: 460 });
+  await page.getByRole("button", { name: "AI Assist", exact: true }).click();
+  await dialog.getByLabel("Product name / exact model").fill("QA exact model");
+  await dialog.locator("summary").first().click();
+  for (const name of ["Validate", "Improve SEO"]) {
+    await dialog.getByRole("button", { name, exact: true }).click();
+    await dialog.getByRole("button", { name: "Select all for review", exact: true }).waitFor();
+  }
+  assert.deepEqual(actions, ["validate", "seo"]);
+  await dialog.locator("details").filter({ hasText: "Review warnings" }).locator("summary").click();
+  await dialog.getByRole("button", { name: "Select all for review", exact: true }).click();
+  const apply = dialog.getByRole("button", { name: /Apply selected/ });
+  const bounds = await apply.boundingBox();
+  assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 460, "long results hide footer");
+  assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth + 1), "long results overflow");
+  await apply.click();
+  assert.equal((await page.getByLabel("Description", { exact: true }).inputValue()).trim(), "A product description. ".repeat(150).trim());
+  console.log(JSON.stringify({ passed: ["AI portal geometry at 13 widths", "reduced viewport height", "Validate", "Improve SEO", "long warnings and suggestions", "review and draft-only apply"] }));
 } finally {
   await browser.close();
 }

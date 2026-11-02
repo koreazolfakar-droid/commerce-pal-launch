@@ -2,7 +2,12 @@ import { chromium } from "@playwright/test";
 
 // Synthetic session and intercepted fixtures. Never sends dashboard writes to a real backend.
 export async function createDashboardBrowser() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    ...(process.env.SPACE_CALL_CHROMIUM_EXECUTABLE
+      ? { executablePath: process.env.SPACE_CALL_CHROMIUM_EXECUTABLE }
+      : {}),
+  });
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const id = "00000000-0000-4000-8000-000000000001";
   const user = {
@@ -102,6 +107,8 @@ export async function createDashboardBrowser() {
       return route.fulfill({ json: [], headers: { "content-range": "0-0/0" } });
     if (url.pathname.includes("/auth/v1/") || url.pathname.includes("/functions/v1/"))
       return route.fulfill({ json: {} });
+    if (url.pathname.includes("/storage/v1/"))
+      return route.fulfill({ status: 501, json: { message: "Storage must be explicitly mocked by this browser suite." } });
     return route.continue();
   });
 

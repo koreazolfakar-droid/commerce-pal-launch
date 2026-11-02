@@ -4,6 +4,10 @@ export type ProductDraft = {
   compareAt?: string;
   sku: string;
   stock: string;
+  productType?: string;
+  tags?: string;
+  titleAr?: string;
+  descriptionAr?: string;
 };
 
 export function validateProductDraft(draft: ProductDraft) {
@@ -39,6 +43,19 @@ export function validateProductDraft(draft: ProductDraft) {
   ) {
     errors.stock = "Stock must be a non-negative whole number";
   }
+
+  if ((draft.productType?.trim().length ?? 0) > 120)
+    errors.productType = "Product type must be 120 characters or fewer";
+  if ((draft.titleAr?.trim().length ?? 0) > 180)
+    errors.titleAr = "Product title must be 180 characters or fewer";
+  if ((draft.descriptionAr?.trim().length ?? 0) > 5000)
+    errors.descriptionAr = "Arabic description must be 5000 characters or fewer";
+  const tags = (draft.tags ?? "")
+    .split(/[,،\n]/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  if (tags.length > 250 || tags.some((tag) => tag.length > 255))
+    errors.tags = "Use at most 250 tags of 255 characters each";
 
   return { valid: Object.keys(errors).length === 0, errors };
 }

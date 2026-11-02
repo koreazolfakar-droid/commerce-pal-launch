@@ -36,6 +36,8 @@ import {
   type DashboardProductVariant,
 } from "@/dashboard/data/productManagement";
 import { validateProductDraft } from "@/dashboard/lib/validation";
+import { reconcileSavedFields } from "@/dashboard/lib/productSave";
+import { SITE_URL } from "@/lib/storeConfig";
 import { createDashboardBrand, normalizeBrandSlug } from "@/dashboard/data/brands";
 import { createDashboardCollection } from "@/dashboard/data/collections";
 import { getProductImageResolution } from "@/dashboard/lib/imageProcessing";
@@ -64,6 +66,10 @@ type ProductDraft = {
   imageUrl: string;
   seoTitle: string;
   seoDescription: string;
+  productType: string;
+  tags: string;
+  titleAr: string;
+  descriptionAr: string;
 };
 
 const EMPTY: ProductDraft = {
@@ -80,6 +86,10 @@ const EMPTY: ProductDraft = {
   imageUrl: "",
   seoTitle: "",
   seoDescription: "",
+  productType: "",
+  tags: "",
+  titleAr: "",
+  descriptionAr: "",
 };
 
 export default function ProductFormPage({ id }: { id?: string }) {
@@ -110,6 +120,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [loadError, setLoadError] = useState("");
   const [loadRevision, setLoadRevision] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
+  const [variantsBusy, setVariantsBusy] = useState(false);
   const [pendingAction, setPendingAction] = useState<"duplicate" | "archive" | "delete" | null>(
     null,
   );
@@ -138,10 +150,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
 
   const stageProductImages = (files: File[]) => {
-    if (partialDraftIdRef.current) {
-      toast.info(t("Finish saving the product before adding more images."));
-      return;
-    }
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
     const validFiles = files.filter(
       (file) => allowedTypes.has(file.type) && file.size <= 20 * 1024 * 1024,
@@ -181,7 +189,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const removePendingImage = (index: number) => {
-    if (partialDraftIdRef.current) {
+    if (uploadedPreviewsRef.current.has(pendingImages[index]?.preview)) {
       toast.info(t("Finish saving the product before removing uploaded images."));
       return;
     }
@@ -242,6 +250,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
               imageUrl: product.image,
               seoTitle: product.seoTitle,
               seoDescription: product.seoDescription,
+              productType: product.organization?.productType ?? "",
+              tags: product.organization?.tags.join(", ") ?? "",
+              titleAr: product.organization?.titleAr ?? "",
+              descriptionAr: product.organization?.descriptionAr ?? "",
             });
           } else {
             setForm(EMPTY);
@@ -251,7 +263,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
         },
       )
       .catch((cause) => {
-        if (!cancelled) setLoadError(cause instanceof Error ? cause.message : "Unable to load product.");
+        if (!cancelled)
+          setLoadError(cause instanceof Error ? cause.message : "Unable to load product.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -513,6 +526,19 @@ export default function ProductFormPage({ id }: { id?: string }) {
       form.imageUrl.trim() !== existing.image ||
       form.seoTitle.trim() !== existing.seoTitle ||
       form.seoDescription.trim() !== existing.seoDescription ||
+      form.productType.trim() !== (existing.organization?.productType ?? "") ||
+      form.titleAr.trim() !== (existing.organization?.titleAr ?? "") ||
+      form.descriptionAr.trim() !== (existing.organization?.descriptionAr ?? "") ||
+      JSON.stringify(
+        [
+          ...new Set(
+            form.tags
+              .split(/[,،\n]/)
+              .map((tag) => tag.trim())
+              .filter(Boolean),
+          ),
+        ].sort(),
+      ) !== JSON.stringify([...(existing.organization?.tags ?? [])].sort()) ||
       (!variantLocked &&
         (Number(form.price) !== existing.price ||
           (form.compareAt.trim() ? Number(form.compareAt) : null) !== existing.compareAt ||
@@ -570,6 +596,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const saveLockRef = useRef(false);
   const submitProduct = (statusOverride?: ProductStatus) => {
     if (saveLockRef.current) return;
+    if (mediaBusy || variantsBusy) return;
     saveLockRef.current = true;
     void handleSave(statusOverride).finally(() => {
       saveLockRef.current = false;
@@ -583,6 +610,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
       compareAt: form.compareAt,
       sku: form.sku,
       stock: form.stock,
+      productType: form.productType,
+      tags: form.tags,
+      titleAr: form.titleAr,
+      descriptionAr: form.descriptionAr,
     });
     setFieldErrors(validation.errors);
     if (!validation.valid) {
@@ -663,6 +694,19 @@ export default function ProductFormPage({ id }: { id?: string }) {
         seoDescription: form.seoDescription,
         specifications: cleanSpecifications,
         collectionIds: nextCollectionIds,
+        organization: {
+          productType: form.productType?.trim() ?? "",
+          tags: [
+            ...new Set(
+              (form.tags ?? "")
+                .split(/[,،\n]/)
+                .map((tag) => tag.trim())
+                .filter(Boolean),
+            ),
+          ].sort(),
+          titleAr: form.titleAr?.trim() ?? "",
+          descriptionAr: form.descriptionAr?.trim() ?? "",
+        },
       };
       const savedProduct = await saveDashboardProduct(productInput);
       if (createAsDraft) {
@@ -760,15 +804,21 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 seoTitle: form.seoTitle.trim(),
                 seoDescription: form.seoDescription.trim(),
                 specifications: cleanSpecifications,
+                organization: productInput.organization,
               }
             : current,
         );
       }
 
-      setSpecifications(cleanSpecifications);
+      setSpecifications((current) =>
+        reconcileSavedFields(current, specifications, cleanSpecifications),
+      );
       // Status buttons override the selector. Synchronize the single draft value
       // only after the server confirms the requested status was persisted.
-      setForm((current) => ({ ...current, status }));
+      setForm((current) => ({
+        ...current,
+        status: current.status === form.status ? status : current.status,
+      }));
       setAiSpecificationKeys(new Set());
       setSaved(true);
       if (shouldRefreshVariantManager) {
@@ -792,7 +842,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
       if (createdDraftId) {
         // The server draft exists; keep the unsaved form and queued File objects
         // on screen. Retrying updates the same product instead of inserting another.
-        toast.error(`${t("Product remains a draft because setup did not finish.")} ${message} ${t("Retry saving to finish setup.")}`);
+        toast.error(
+          `${t("Product remains a draft because setup did not finish.")} ${message} ${t("Retry saving to finish setup.")}`,
+        );
       } else {
         toast.error(message);
       }
@@ -869,7 +921,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       <button
         type="button"
         onClick={() => submitProduct("Draft")}
-        disabled={saving || pendingAction !== null}
+        disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
         aria-busy={saving}
         className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:cursor-wait disabled:opacity-60 sm:flex-none"
       >
@@ -877,17 +929,27 @@ export default function ProductFormPage({ id }: { id?: string }) {
         {t("Save as Draft")}
       </button>
       {id ? (
-        <button type="button" onClick={() => submitProduct()}
-          disabled={saving || pendingAction !== null} aria-busy={saving}
-          className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60 sm:flex-none">
-          {saving ? <Loader2 className="size-4 animate-spin" /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
+        <button
+          type="button"
+          onClick={() => submitProduct()}
+          disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+          aria-busy={saving}
+          className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60 sm:flex-none"
+        >
+          {saving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : saved ? (
+            <Check className="size-4" />
+          ) : (
+            <Save className="size-4" />
+          )}
           {t("Save changes")}
         </button>
       ) : null}
       <button
         type="button"
         onClick={() => submitProduct("Active")}
-        disabled={saving || pendingAction !== null}
+        disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
         aria-busy={saving}
         className="dashboard-button dashboard-button-primary inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-wait disabled:opacity-60 sm:flex-none"
       >
@@ -910,8 +972,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
       <div role="alert" className="rounded-2xl border border-destructive/30 bg-card p-6">
         <p className="text-sm font-semibold text-destructive">{t("Unable to load product.")}</p>
         <p className="mt-2 break-words text-sm text-muted-foreground">{loadError}</p>
-        <button type="button" onClick={() => setLoadRevision((value) => value + 1)}
-          className="dashboard-button mt-4 min-h-11 rounded-lg border border-border px-4 text-sm">
+        <button
+          type="button"
+          onClick={() => setLoadRevision((value) => value + 1)}
+          className="dashboard-button mt-4 min-h-11 rounded-lg border border-border px-4 text-sm"
+        >
           {t("Retry")}
         </button>
       </div>
@@ -920,7 +985,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
 
   if (id && !existing) {
     return (
-      <div role="alert" className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
+      <div
+        role="alert"
+        className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700"
+      >
         {t("Product not found.")}
       </div>
     );
@@ -952,56 +1020,65 @@ export default function ProductFormPage({ id }: { id?: string }) {
         <div className="flex flex-wrap gap-2">
           {id ? (
             <details className="dashboard-product-more">
-              <summary className="dashboard-button flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold">
+              <summary
+                className="dashboard-button flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-semibold"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    const details = event.currentTarget.closest("details");
+                    if (details) details.open = false;
+                  }
+                }}
+              >
                 {t("More Actions")}
               </summary>
               <div className="dashboard-product-more-menu">
                 <button
-                type="button"
-                onClick={() => navigate("/dashboard/products/new")}
-                disabled={saving || pendingAction !== null}
-                className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-700 disabled:opacity-50"
-              >
-                {t("Add another product")}
-              </button>
-              {existing?.status === "Active" ? (
-                <a
-                  href={`/product/${encodeURIComponent(existing.handle)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-10 items-center rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 text-[10px] font-bold text-indigo-700"
+                  type="button"
+                  onClick={() => navigate("/dashboard/products/new")}
+                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+                  className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-700 disabled:opacity-50"
                 >
-                  {t("View product")}
-                </a>
-              ) : null}
-              <button
-                onClick={() => void duplicate()}
-                disabled={saving || pendingAction !== null}
-                className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
-              >
-                {pendingAction === "duplicate" ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Copy className="size-3.5" />
-                )}
-                {pendingAction === "duplicate" ? t("Duplicating...") : t("Duplicate")}
-              </button>
-              <button
-                onClick={() => setConfirmAction("archive")}
-                disabled={saving || pendingAction !== null || form.status === "Archived"}
-                className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-[10px] font-bold text-amber-700 disabled:opacity-40"
-              >
-                <Archive className="size-3.5" /> {t("Archive")}
-              </button>
-              {role === "admin" ? (
-                <button
-                  onClick={() => setConfirmAction("delete")}
-                  disabled={saving || pendingAction !== null}
-                  className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 text-[10px] font-bold text-rose-700 disabled:opacity-50"
-                >
-                  <Trash2 className="size-3.5" /> {t("Delete")}
+                  {t("Add another product")}
                 </button>
-              ) : null}
+                {existing?.status === "Active" ? (
+                  <a
+                    href={`/product/${encodeURIComponent(existing.handle)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-10 items-center rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 text-[10px] font-bold text-indigo-700"
+                  >
+                    {t("View product")}
+                  </a>
+                ) : null}
+                <button
+                  onClick={() => void duplicate()}
+                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+                  className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
+                >
+                  {pendingAction === "duplicate" ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Copy className="size-3.5" />
+                  )}
+                  {pendingAction === "duplicate" ? t("Duplicating...") : t("Duplicate")}
+                </button>
+                <button
+                  onClick={() => setConfirmAction("archive")}
+                  disabled={saving || pendingAction !== null || form.status === "Archived"}
+                  className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-[10px] font-bold text-amber-700 disabled:opacity-40"
+                >
+                  <Archive className="size-3.5" /> {t("Archive")}
+                </button>
+                {role === "admin" ? (
+                  <button
+                    onClick={() => setConfirmAction("delete")}
+                    disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+                    className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 text-[10px] font-bold text-rose-700 disabled:opacity-50"
+                  >
+                    <Trash2 className="size-3.5" /> {t("Delete")}
+                  </button>
+                ) : null}
               </div>
             </details>
           ) : null}
@@ -1136,13 +1213,44 @@ export default function ProductFormPage({ id }: { id?: string }) {
         dirty={dirty}
         sections={[
           { id: "product-information", label: "General", complete: Boolean(form.title.trim()) },
-          { id: "product-variants", label: "Variants", complete: Boolean(variantCount || newVariantColor || newVariantStorage) },
-          { id: "product-inventory", label: "Inventory", complete: !variantLocked && form.stock.trim() !== "" },
-          { id: "product-media", label: "Media", complete: Boolean(form.imageUrl || pendingImages.length || existing?.image) },
-          { id: "product-specifications", label: "Specifications", complete: Object.keys(specifications).length > 0 },
-          { id: "product-seo", label: "SEO", complete: Boolean(form.seoTitle.trim() && form.seoDescription.trim()) },
+          {
+            id: "product-variants",
+            label: "Variants",
+            complete: Boolean(variantCount || newVariantColor || newVariantStorage),
+          },
+          {
+            id: "product-inventory",
+            label: "Inventory",
+            complete: !variantLocked && form.stock.trim() !== "",
+          },
+          {
+            id: "product-media",
+            label: "Media",
+            complete: Boolean(form.imageUrl || pendingImages.length || existing?.image),
+          },
+          { id: "product-collections", label: "Collections", complete: collectionIds.length > 0 },
+          {
+            id: "product-organization",
+            label: "Product organization",
+            complete: Boolean(form.productType || form.tags),
+          },
+          { id: "product-publishing", label: "Publishing", complete: Boolean(id) },
+          {
+            id: "product-specifications",
+            label: "Specifications",
+            complete: Object.keys(specifications).length > 0,
+          },
+          {
+            id: "product-seo",
+            label: "SEO",
+            complete: Boolean(form.seoTitle.trim() && form.seoDescription.trim()),
+          },
           { id: "product-shipping", label: "Shipping", complete: true },
-          { id: "product-pricing", label: "Pricing", complete: variantLocked || validateProductDraft(form).valid },
+          {
+            id: "product-pricing",
+            label: "Pricing",
+            complete: variantLocked || validateProductDraft(form).valid,
+          },
           { id: "product-advanced", label: "Advanced", complete: Boolean(id) },
         ]}
       />
@@ -1170,12 +1278,38 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   {t("Description")}
                 </span>
                 <textarea
+                  aria-label={t("Description")}
                   value={form.description}
                   onChange={(event) => update("description", event.target.value)}
                   rows={6}
                   className="w-full resize-none rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
                 />
               </label>
+              <details className="rounded-lg border border-border p-3">
+                <summary className="min-h-8 cursor-pointer text-sm font-semibold">
+                  {t("Arabic translation")}
+                </summary>
+                <div className="mt-3 space-y-4" dir="rtl">
+                  <Field
+                    label={t("Arabic title")}
+                    value={form.titleAr}
+                    onChange={(value) => update("titleAr", value)}
+                    fieldKey="titleAr"
+                    error={fieldErrors.titleAr}
+                  />
+                  <label className="block text-sm font-semibold">
+                    {t("Arabic description")}
+                    <textarea
+                      aria-label={t("Arabic description")}
+                      value={form.descriptionAr}
+                      rows={4}
+                      maxLength={5000}
+                      onChange={(event) => update("descriptionAr", event.target.value)}
+                      className="mt-2 w-full resize-y rounded-lg border border-border bg-card p-3 text-base font-normal"
+                    />
+                  </label>
+                </div>
+              </details>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <input
@@ -1254,7 +1388,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     ))}
                   </SelectField>
                 </div>
-
               </div>
             </div>
           </Panel>
@@ -1268,6 +1401,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
               <ProductMediaManager
                 productId={id}
                 productTitle={form.title}
+                onBusyChange={setMediaBusy}
                 onPrimaryChange={(url) => {
                   // Media Manager already persists primary-image changes independently.
                   // Keep the baseline in sync so the unsaved-changes guard does not
@@ -1327,21 +1461,35 @@ export default function ProductFormPage({ id }: { id?: string }) {
                           <button
                             type="button"
                             onClick={() => removePendingImage(index)}
-                            disabled={saving || Boolean(partialDraftIdRef.current)}
+                            disabled={saving || uploadedPreviewsRef.current.has(pending.preview)}
                             aria-label={t("Remove image")}
                             className="absolute end-1 top-1 grid size-6 place-items-center rounded-full bg-rose-600 text-white disabled:opacity-50"
                           >
                             <Trash2 className="size-3" />
                           </button>
                           <div className="absolute bottom-1 end-1 flex gap-1">
-                            <button type="button" disabled={saving || Boolean(partialDraftIdRef.current) || index === 0}
+                            <button
+                              type="button"
+                              disabled={saving || Boolean(partialDraftIdRef.current) || index === 0}
                               aria-label={t("Move image earlier")}
                               onClick={() => reorderPendingImage(index, -1)}
-                              className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40">←</button>
-                            <button type="button" disabled={saving || Boolean(partialDraftIdRef.current) || index === pendingImages.length - 1}
+                              className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40"
+                            >
+                              ←
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                saving ||
+                                Boolean(partialDraftIdRef.current) ||
+                                index === pendingImages.length - 1
+                              }
                               aria-label={t("Move image later")}
                               onClick={() => reorderPendingImage(index, 1)}
-                              className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40">→</button>
+                              className="rounded bg-white/95 px-2 py-1 text-xs font-bold text-foreground shadow-sm disabled:opacity-40"
+                            >
+                              →
+                            </button>
                           </div>
                           {index === 0 ? (
                             <span className="absolute bottom-1 start-1 rounded bg-indigo-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
@@ -1487,6 +1635,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 productId={id}
                 onCountChange={setVariantCount}
                 onSingleVariantChange={handleSingleVariantChange}
+                onBusyChange={setVariantsBusy}
               />
             ) : (
               <div className="p-8 text-center text-[11px] text-slate-400">
@@ -1540,42 +1689,106 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   {t("SEO description")}
                 </span>
                 <textarea
+                  aria-label={t("SEO description")}
                   value={form.seoDescription}
                   onChange={(event) => update("seoDescription", event.target.value)}
                   rows={4}
                   className="w-full resize-none rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
                 />
               </label>
+              <div
+                aria-label={t("Search engine preview")}
+                className="min-w-0 rounded-lg border border-border bg-muted/30 p-4"
+              >
+                <p
+                  className="break-words text-xs text-muted-foreground [overflow-wrap:anywhere]"
+                  dir="ltr"
+                >
+                  {SITE_URL}/product/
+                  {existing?.handle ??
+                    (form.title
+                      .toLowerCase()
+                      .trim()
+                      .replace(/[^a-z0-9]+/g, "-")
+                      .replace(/^-|-$/g, "") ||
+                      "product")}
+                </p>
+                <p className="mt-1 break-words text-base font-semibold text-primary">
+                  {form.seoTitle.trim() || form.title.trim() || t("Product name")}
+                </p>
+                <p className="mt-1 break-words text-sm leading-6 text-muted-foreground">
+                  {form.seoDescription.trim() ||
+                    form.description.trim() ||
+                    t("Add a description to preview the search listing.")}
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {t("SEO title")}: {form.seoTitle.length}/70 · {t("SEO description")}:{" "}
+                  {form.seoDescription.length}/180
+                </p>
+              </div>
             </div>
           </OptionalPanel>
-
         </div>
         <aside className="dashboard-product-aside space-y-4">
-          <Panel id="product-publishing" title={t("Publishing")} subtitle={t("Storefront visibility")}>
+          <Panel id="product-organization" title={t("Product organization")}>
             <div className="space-y-4 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm text-muted-foreground">{t("Current status")}</span>
-                <span role="status" className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground">
-                  {t(existing?.status ?? "Draft")}
-                </span>
-              </div>
-                {id ? (
-                  <SelectField
-                    label={t("Status")}
-                    value={form.status}
-                    onChange={(value) => update("status", value as ProductStatus)}
-                  >
-                    <option value="Active">{t("Active")}</option>
-                    <option value="Draft">{t("Draft")}</option>
-                    <option value="Archived">{t("Archived")}</option>
-                  </SelectField>
-                ) : null}
+              <Field
+                label={t("Product type")}
+                value={form.productType}
+                onChange={(value) => update("productType", value)}
+                fieldKey="productType"
+                error={fieldErrors.productType}
+              />
+              <Field
+                label={t("Tags")}
+                value={form.tags}
+                onChange={(value) => update("tags", value)}
+                fieldKey="tags"
+                error={fieldErrors.tags}
+              />
               <p className="text-xs leading-5 text-muted-foreground">
-                {t("Only published products appear in the public catalog. Saving a draft keeps it hidden.")}
+                {t("Separate tags with commas. Tags are used by storefront search.")}
               </p>
             </div>
           </Panel>
-          <Panel id="product-pricing" title={t("Pricing")} subtitle={variantLocked ? t("Managed per variant") : t("Default / single variant")}>
+          <Panel
+            id="product-publishing"
+            title={t("Publishing")}
+            subtitle={t("Storefront visibility")}
+          >
+            <div className="space-y-4 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">{t("Current status")}</span>
+                <span
+                  role="status"
+                  className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground"
+                >
+                  {t(existing?.status ?? "Draft")}
+                </span>
+              </div>
+              {id ? (
+                <SelectField
+                  label={t("Status")}
+                  value={form.status}
+                  onChange={(value) => update("status", value as ProductStatus)}
+                >
+                  <option value="Active">{t("Active")}</option>
+                  <option value="Draft">{t("Draft")}</option>
+                  <option value="Archived">{t("Archived")}</option>
+                </SelectField>
+              ) : null}
+              <p className="text-xs leading-5 text-muted-foreground">
+                {t(
+                  "Only published products appear in the public catalog. Saving a draft keeps it hidden.",
+                )}
+              </p>
+            </div>
+          </Panel>
+          <Panel
+            id="product-pricing"
+            title={t("Pricing")}
+            subtitle={variantLocked ? t("Managed per variant") : t("Default / single variant")}
+          >
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <Field
                 label={t("Price")}
@@ -1596,8 +1809,37 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 error={fieldErrors.compareAt}
               />
             </div>
+            {!variantLocked && existing?.averageCost && existing.averageCost > 0 ? (
+              <dl className="mx-5 mb-5 space-y-2 rounded-lg border border-border bg-muted/30 p-3 text-xs">
+                <div className="flex flex-wrap justify-between gap-2">
+                  <dt>{t("Average unit cost")}</dt>
+                  <dd>${existing.averageCost.toFixed(2)}</dd>
+                </div>
+                {Number.isFinite(Number(form.price)) && Number(form.price) > 0 ? (
+                  <>
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <dt>{t("Estimated gross profit")}</dt>
+                      <dd>${(Number(form.price) - existing.averageCost).toFixed(2)}</dd>
+                    </div>
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <dt>{t("Gross margin")}</dt>
+                      <dd>{((1 - existing.averageCost / Number(form.price)) * 100).toFixed(1)}%</dd>
+                    </div>
+                  </>
+                ) : null}
+                <p className="text-muted-foreground">
+                  {t(
+                    "Cost is maintained by receiving and inventory accounting. Shipping and taxes are excluded.",
+                  )}
+                </p>
+              </dl>
+            ) : null}
           </Panel>
-          <Panel id="product-inventory" title={t("Inventory")} subtitle={variantLocked ? t("Managed per variant") : t("SKU · barcode · stock")}>
+          <Panel
+            id="product-inventory"
+            title={t("Inventory")}
+            subtitle={variantLocked ? t("Managed per variant") : t("SKU · barcode · stock")}
+          >
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <Field
                 label={t("SKU")}
@@ -1630,15 +1872,24 @@ export default function ProductFormPage({ id }: { id?: string }) {
               </div>
             ) : null}
           </Panel>
-          <Panel id="product-shipping" title={t("Shipping")} subtitle={t("Store-wide delivery configuration")}>
+          <Panel
+            id="product-shipping"
+            title={t("Shipping")}
+            subtitle={t("Store-wide delivery configuration")}
+          >
             <div className="space-y-3 p-5 text-sm text-muted-foreground">
-              <p>{t("Delivery fees are configured for the store, not individually per product.")}</p>
-              <a href="/dashboard/settings" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+              <p>
+                {t("Delivery fees are configured for the store, not individually per product.")}
+              </p>
+              <a
+                href="/dashboard/settings"
+                className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+              >
                 {t("Manage delivery settings")}
               </a>
             </div>
           </Panel>
-          {!id ? (
+          {
             <ProductCreatePreview
               title={form.title}
               brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
@@ -1648,8 +1899,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
               imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
               color={newVariantColor}
               storage={newVariantStorage}
+              status={form.status}
             />
-          ) : null}
+          }
           {existing ? (
             <Panel id="product-advanced" title={t("Product settings")}>
               <div className="space-y-2 p-5 text-[10px] text-slate-500">
@@ -1673,7 +1925,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
             </Panel>
           ) : null}
           {!existing ? (
-            <Panel id="product-advanced" title={t("Product settings")} subtitle={t("Saved product details")}>
+            <Panel
+              id="product-advanced"
+              title={t("Product settings")}
+              subtitle={t("Saved product details")}
+            >
               <p className="p-5 text-sm leading-6 text-muted-foreground">
                 {t("Save the product to view its permanent handle and record details.")}
               </p>
@@ -1683,10 +1939,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
       </fieldset>
 
       <div className="dashboard-product-footer mt-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-3 text-sm font-bold text-slate-700">
-            {t("Save as Draft")} / {t("Publish Product")}
-          </div>
-          {renderCreateActions("footer")}
+        <div className="mb-3 text-sm font-bold text-slate-700">
+          {t("Save as Draft")} / {t("Publish Product")}
+        </div>
+        {renderCreateActions("footer")}
       </div>
 
       <DashboardConfirmDialog
@@ -1804,6 +2060,7 @@ function Field({
       <input
         value={value}
         type={type}
+        aria-label={t(label)}
         disabled={disabled}
         data-product-field={fieldKey}
         aria-invalid={Boolean(error)}

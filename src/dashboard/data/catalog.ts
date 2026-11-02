@@ -42,7 +42,8 @@ type ProductListRow = Pick<
   | "seo_title"
   | "seo_description"
 >;
-type ProductDetailRow = ProductListRow & Pick<ProductRow, "specifications">;
+type ProductDetailRow = ProductListRow &
+  Pick<ProductRow, "specifications" | "tags" | "title_ar" | "description_ar" | "average_cost">;
 type VariantListRow = Pick<
   VariantRow,
   "product_id" | "price" | "compare_at_price" | "sku" | "barcode" | "sort_order"
@@ -130,6 +131,13 @@ export type DashboardCollection = {
   active: boolean;
 };
 
+export type ProductOrganization = {
+  productType: string;
+  tags: string[];
+  titleAr: string;
+  descriptionAr: string;
+};
+
 export type DashboardProduct = {
   id: string;
   handle: string;
@@ -150,6 +158,8 @@ export type DashboardProduct = {
   seoDescription: string;
   specifications: ProductSpecificationValues;
   variantCount: number;
+  organization?: ProductOrganization;
+  averageCost?: number;
 };
 
 export type DashboardProductSearchItem = {
@@ -178,6 +188,7 @@ export type DashboardProductInput = {
   seoDescription: string;
   specifications: ProductSpecificationValues;
   collectionIds: string[];
+  organization?: ProductOrganization;
 };
 
 function throwIfError(error: { message: string } | null, label: string) {
@@ -1261,7 +1272,7 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
   const productResult = await supabase
     .from("store_products")
     .select(
-      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description,specifications",
+      "id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description,specifications,tags,title_ar,description_ar,average_cost",
     )
     .eq("id", id)
     .maybeSingle();
@@ -1326,6 +1337,13 @@ export async function getDashboardProduct(id: string): Promise<DashboardProduct 
     seoDescription: row.seo_description ?? "",
     specifications: normalizeProductSpecifications(row.specifications),
     variantCount: variants.length,
+    organization: {
+      productType: row.product_type ?? "",
+      tags: row.tags ?? [],
+      titleAr: row.title_ar ?? "",
+      descriptionAr: row.description_ar ?? "",
+    },
+    averageCost: Number(row.average_cost ?? 0),
   };
 }
 
@@ -1354,29 +1372,32 @@ async function uniqueHandle(title: string, existingId?: string) {
 export async function saveDashboardProduct(input: DashboardProductInput) {
   await requireDashboardRole();
 
+  const editorArgs = {
+    p_product_id: input.id ?? null,
+    p_title: input.title.trim(),
+    p_description: input.description.trim(),
+    p_brand_id: input.brandId,
+    p_category_id: input.categoryId,
+    p_status: statusToDb(input.status),
+    p_price: input.price,
+    p_compare_at_price: input.compareAt,
+    p_sku: input.sku.trim(),
+    p_barcode: input.barcode.trim(),
+    p_stock: input.stock,
+    p_expected_stock: input.expectedStock,
+    p_image_url: input.imageUrl.trim(),
+    p_seo_title: input.seoTitle.trim(),
+    p_seo_description: input.seoDescription.trim(),
+    p_specifications: productSpecificationsToJson(
+      normalizeProductSpecifications(input.specifications),
+    ),
+    p_collection_ids: [...new Set(input.collectionIds)],
+  };
   const { data, error } = await looseSupabase.rpc(
-    "save_store_product_editor",
-    rpcArgs({
-      p_product_id: input.id ?? null,
-      p_title: input.title.trim(),
-      p_description: input.description.trim(),
-      p_brand_id: input.brandId,
-      p_category_id: input.categoryId,
-      p_status: statusToDb(input.status),
-      p_price: input.price,
-      p_compare_at_price: input.compareAt,
-      p_sku: input.sku.trim(),
-      p_barcode: input.barcode.trim(),
-      p_stock: input.stock,
-      p_expected_stock: input.expectedStock,
-      p_image_url: input.imageUrl.trim(),
-      p_seo_title: input.seoTitle.trim(),
-      p_seo_description: input.seoDescription.trim(),
-      p_specifications: productSpecificationsToJson(
-        normalizeProductSpecifications(input.specifications),
-      ),
-      p_collection_ids: [...new Set(input.collectionIds)],
-    }),
+    input.organization ? "save_store_product_editor_details" : "save_store_product_editor",
+    rpcArgs(
+      input.organization ? { p_editor: editorArgs, p_details: input.organization } : editorArgs,
+    ),
   );
   if (error?.message.includes("product_editor_stock_conflict")) {
     throw new Error(
@@ -1604,6 +1625,27 @@ export async function replaceDashboardProductImage(
       .remove([uploaded.objectPath, uploaded.thumbnailObjectPath]);
     throw error;
   }
+}
+
+export async function updateDashboardProductImageAlt(
+  productId: string,
+  imageId: string,
+  altText: string,
+): Promise<DashboardProductImage> {
+  await requireDashboardRole();
+  if (altText.length > 500) throw new Error("Alternative text must be 500 characters or fewer.");
+  const { data, error } = await supabase
+    .from("store_product_images")
+    .update({ alt_text: altText.trim() })
+    .eq("id", imageId)
+    .eq("product_id", productId)
+    .select("*")
+    .single();
+  throwIfError(error, "Saving alternative text failed");
+  if (!data) throw new Error("Image no longer exists or cannot be edited.");
+  invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
+  return mapProductImage(data as ImageRow);
 }
 
 export async function setDashboardPrimaryProductImage(

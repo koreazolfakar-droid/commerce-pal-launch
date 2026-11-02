@@ -81,7 +81,8 @@ test("product save is one atomic editor mutation and avoids redundant catalog re
     "export type DashboardProductImage",
   );
 
-  assert.match(saveFlow, /looseSupabase\.rpc\(\s*"save_store_product_editor"/);
+  assert.match(saveFlow, /looseSupabase\.rpc\(/);
+  assert.match(saveFlow, /input\.organization \? "save_store_product_editor_details" : "save_store_product_editor"/);
   assert.match(saveFlow, /p_collection_ids: \[\.\.\.new Set\(input\.collectionIds\)\]/);
   assert.doesNotMatch(saveFlow, /from\("store_products"\)\.(?:insert|update)/);
   assert.doesNotMatch(saveFlow, /create_store_product_variant|update_store_product_variant/);

@@ -2830,6 +2830,10 @@ export type Database = {
         Args: { p_receiving_item_id: string; p_serials: Json }
         Returns: number
       }
+      save_store_product_editor_details: {
+        Args: { p_editor: Json; p_details: Json }
+        Returns: Json
+      }
       save_store_product_editor:
         | {
             Args: {

@@ -1,5 +1,7 @@
 import { useLanguage } from "@/dashboard/i18n";
-import { useEffect, useRef, useState } from "react";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { reconcileSavedFields } from "@/dashboard/lib/productSave";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -21,6 +23,7 @@ import {
   replaceDashboardProductImage,
   setDashboardPrimaryProductImage,
   uploadDashboardProductImage,
+  updateDashboardProductImageAlt,
   type DashboardProductImage,
 } from "@/dashboard/data/catalog";
 import {
@@ -37,10 +40,12 @@ export default function ProductMediaManager({
   productId,
   productTitle,
   onPrimaryChange,
+  onBusyChange,
 }: {
   productId: string;
   productTitle: string;
   onPrimaryChange: (url: string) => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLanguage();
   const uploadRef = useRef<HTMLInputElement>(null);
@@ -50,8 +55,19 @@ export default function ProductMediaManager({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [altDrafts, setAltDrafts] = useState<Record<string, string>>({});
+  useDashboardUnsavedChanges(
+    images.some(
+      (image) => altDrafts[image.id] !== undefined && altDrafts[image.id] !== image.altText,
+    ),
+  );
   const [deleteTarget, setDeleteTarget] = useState<DashboardProductImage | null>(null);
   const [replaceTarget, setReplaceTarget] = useState<DashboardProductImage | null>(null);
+  useLayoutEffect(() => {
+    onBusyChange?.(loading || uploading || busyId !== null);
+    return () => onBusyChange?.(false);
+  }, [onBusyChange, loading, uploading, busyId]);
   const [resolution, setResolution] = useState<ProductImageResolution>(() =>
     getProductImageResolution(),
   );
@@ -71,10 +87,11 @@ export default function ProductMediaManager({
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       sync(await listDashboardProductImages(productId));
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load product images.");
+      setLoadError(cause instanceof Error ? cause.message : "Unable to load product images.");
     } finally {
       setLoading(false);
     }
@@ -175,7 +192,7 @@ export default function ProductMediaManager({
   };
 
   const makePrimary = async (image: DashboardProductImage) => {
-    if (image.isPrimary) return;
+    if (image.isPrimary || busyId || uploading) return;
     setBusyId(image.id);
     try {
       await setDashboardPrimaryProductImage(productId, image.id);
@@ -189,6 +206,7 @@ export default function ProductMediaManager({
   };
 
   const move = async (index: number, direction: -1 | 1) => {
+    if (busyId || uploading) return;
     const target = index + direction;
     if (target < 0 || target >= images.length) return;
 
@@ -206,6 +224,22 @@ export default function ProductMediaManager({
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Image order update failed.");
       await load();
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const saveAlt = async (image: DashboardProductImage) => {
+    if (busyId || uploading) return;
+    const submitted = altDrafts[image.id] ?? image.altText;
+    setBusyId(image.id);
+    try {
+      const updated = await updateDashboardProductImageAlt(productId, image.id, submitted);
+      setImages((current) => current.map((row) => (row.id === updated.id ? updated : row)));
+      setAltDrafts((current) => reconcileSavedFields(current, { [image.id]: submitted }, {}));
+      toast.success(t("Alternative text saved."));
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : t("Saving alternative text failed."));
     } finally {
       setBusyId(null);
     }
@@ -480,6 +514,17 @@ export default function ProductMediaManager({
         <div className="grid min-h-40 place-items-center rounded-2xl border border-slate-200 bg-slate-50">
           <Loader2 className="size-5 animate-spin text-[#5968ea]" />
         </div>
+      ) : loadError ? (
+        <div role="alert" className="rounded-lg border border-destructive/30 p-4 text-sm">
+          <p className="break-words">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="dashboard-button mt-3 min-h-11 px-4"
+          >
+            {t("Retry")}
+          </button>
+        </div>
       ) : images.length ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {images.map((image, index) => (
@@ -519,6 +564,30 @@ export default function ProductMediaManager({
               </div>
 
               <div className="space-y-2 border-t border-slate-100 p-2.5">
+                <label className="block text-xs font-semibold text-foreground">
+                  {t("Alternative text")}
+                  <input
+                    value={altDrafts[image.id] ?? image.altText}
+                    maxLength={500}
+                    onChange={(event) =>
+                      setAltDrafts((current) => ({ ...current, [image.id]: event.target.value }))
+                    }
+                    className="mt-1 h-11 w-full rounded-lg border border-border bg-card px-3 text-sm font-normal"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void saveAlt(image)}
+                  disabled={
+                    busyId !== null ||
+                    uploading ||
+                    altDrafts[image.id] === undefined ||
+                    altDrafts[image.id] === image.altText
+                  }
+                  className="dashboard-button min-h-11 px-3 text-xs disabled:opacity-40"
+                >
+                  {t("Save alternative text")}
+                </button>
                 <div className="rounded-lg bg-slate-50 px-2 py-1.5 text-[9px] font-semibold text-slate-500">
                   {t("Actual:")}{" "}
                   {storedMeta[image.id]?.width
@@ -532,7 +601,7 @@ export default function ProductMediaManager({
                   <button
                     type="button"
                     onClick={() => void makePrimary(image)}
-                    disabled={image.isPrimary || busyId === image.id}
+                    disabled={image.isPrimary || uploading || busyId !== null}
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2 text-[9px] font-bold text-slate-600 disabled:opacity-40"
                   >
                     <Star className="size-3" /> {t("Primary")}
@@ -558,7 +627,7 @@ export default function ProductMediaManager({
                           );
                         });
                     }}
-                    disabled={busyId === image.id}
+                    disabled={uploading || busyId !== null}
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-indigo-200 px-2 text-[9px] font-bold text-indigo-600 disabled:opacity-40"
                   >
                     {t("Adjust")}
@@ -569,7 +638,7 @@ export default function ProductMediaManager({
                       setReplaceTarget(image);
                       requestAnimationFrame(() => replaceRef.current?.click());
                     }}
-                    disabled={busyId === image.id}
+                    disabled={uploading || busyId !== null}
                     className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 px-2 text-[9px] font-bold text-slate-600 disabled:opacity-40"
                   >
                     <RefreshCw className="size-3" /> {t("Replace")}
@@ -593,7 +662,7 @@ export default function ProductMediaManager({
                     <button
                       type="button"
                       onClick={() => void move(index, -1)}
-                      disabled={index === 0 || busyId === image.id}
+                      disabled={index === 0 || uploading || busyId !== null}
                       className="grid size-7 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"
                       aria-label={t("Move image left")}
                     >
@@ -602,7 +671,7 @@ export default function ProductMediaManager({
                     <button
                       type="button"
                       onClick={() => void move(index, 1)}
-                      disabled={index === images.length - 1 || busyId === image.id}
+                      disabled={index === images.length - 1 || uploading || busyId !== null}
                       className="grid size-7 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"
                       aria-label={t("Move image right")}
                     >
