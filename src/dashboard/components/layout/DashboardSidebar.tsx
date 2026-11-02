@@ -166,7 +166,7 @@ export default function Sidebar({
         aria-modal={mobileOpen ? true : undefined}
         aria-label={t("Navigation")}
         tabIndex={-1}
-        className={`dashboard-sidebar fixed inset-y-0 start-0 z-50 flex w-[min(90vw,336px)] flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white transition-transform duration-200 ${mobileOpen ? "max-md:translate-x-0" : lang === "ar" ? "max-md:translate-x-full" : "max-md:-translate-x-full"}`}
+        className={`dashboard-sidebar sidebar-polished fixed inset-y-0 start-0 z-50 flex w-[min(90vw,336px)] flex-col overscroll-contain pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-white transition-transform duration-200 ${mobileOpen ? "max-md:translate-x-0" : lang === "ar" ? "max-md:translate-x-full" : "max-md:-translate-x-full"}`}
       >
         <div className="dashboard-sidebar-brand flex min-h-[88px] items-center justify-between gap-3 px-5">
           <Logo />
@@ -181,7 +181,8 @@ export default function Sidebar({
         </div>
         <nav aria-label={t("Workspace navigation")} className="dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-3 py-4 scrollbar-none lg:py-5">
           {navSections.map((section) => (
-            <section key={section.label} className="dashboard-sidebar-group mb-5">
+            <section key={section.label} className="dashboard-sidebar-group mb-5"
+              data-active-section={section.items.some((item) => isActive(item.href)) ? "true" : undefined}>
               <button
                   type="button"
                   onClick={() => toggleSection(section.label)}
@@ -194,7 +195,7 @@ export default function Sidebar({
                     className={`size-3.5 transition-transform duration-150 ${closedSections.includes(section.label) ? "-rotate-90" : ""}`}
                   />
                 </button>
-              <div className="dashboard-sidebar-items space-y-1">
+              <div className="dashboard-sidebar-items">
                 {section.items
                   .filter((item) => !unavailableDashboardRoutes.has(item.href))
                   .filter((item) => !closedSections.includes(section.label) || item.href === activeHref)
@@ -206,6 +207,7 @@ export default function Sidebar({
                       <button
                         key={item.href}
                         aria-label={t(item.label)}
+                        title={t(item.label)}
                         aria-current={active ? "page" : undefined}
                         onMouseEnter={() => void preloadDashboardRoute(item.href)}
                         onFocus={() => void preloadDashboardRoute(item.href)}
@@ -242,7 +244,7 @@ export default function Sidebar({
           ))}
         </nav>
         <div className="dashboard-sidebar-footer p-3">
-          <div className="dashboard-sidebar-shortcuts mb-3 space-y-1">
+          <div className="dashboard-sidebar-shortcuts mb-3">
               <button
                 type="button"
                 onClick={() => {

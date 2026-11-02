@@ -6,6 +6,7 @@ import Header from "@/dashboard/components/layout/DashboardHeader";
 import MobileBottomNav from "@/dashboard/components/layout/DashboardMobileNav";
 import DashboardRouteFallback from "@/dashboard/components/layout/DashboardRouteFallback";
 import "@/dashboard/workspace.css";
+import "@/dashboard/components/layout/SidebarPolish.css";
 import { DashboardIdentityProvider } from "@/dashboard/contexts/DashboardIdentityContext";
 import { installDashboardNavigationGuard } from "@/dashboard/lib/unsavedChanges";
 import { readPreference, writePreference } from "@/dashboard/lib/preferenceStorage";
