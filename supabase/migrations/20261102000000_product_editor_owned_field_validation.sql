@@ -1,0 +1,468 @@
+-- Validate price, compare-at and stock only when the compact editor owns them.
+-- Multi-variant metadata saves preserve variant values, even for free variants.
+-- Existing create/single-variant rules, security invoker, grants, row locks,
+-- stock concurrency, specification shape and inventory movement logic are retained.
+-- No product rows are modified by applying this migration.
+
+create or replace function public.save_store_product_editor(
+  p_product_id uuid,
+  p_title text,
+  p_description text,
+  p_brand_id uuid,
+  p_category_id uuid,
+  p_status text,
+  p_price numeric,
+  p_compare_at_price numeric,
+  p_sku text,
+  p_barcode text,
+  p_stock integer,
+  p_image_url text,
+  p_seo_title text,
+  p_seo_description text,
+  p_specifications jsonb,
+  p_collection_ids uuid[],
+  p_expected_stock integer
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public, private, pg_temp
+as $$
+declare
+  v_product public.store_products%rowtype;
+  v_variant public.store_product_variants%rowtype;
+  v_product_id uuid;
+  v_category_name text;
+  v_spec_template jsonb := '{"sections":[]}'::jsonb;
+  v_specifications jsonb := coalesce(p_specifications, '{}'::jsonb);
+  v_stored_specifications jsonb;
+  v_variant_count integer := 0;
+  v_variant_delta integer := 0;
+  v_base_handle text;
+  v_handle text;
+  v_suffix integer := 2;
+  v_image_id uuid;
+  v_normalized_image_url text;
+begin
+  if auth.uid() is null or not private.is_dashboard_staff() then
+    raise exception 'dashboard staff required';
+  end if;
+
+  if nullif(btrim(coalesce(p_title, '')), '') is null then
+    raise exception 'product title is required';
+  end if;
+  if char_length(btrim(p_title)) > 180 then
+    raise exception 'product title is too long';
+  end if;
+  if p_status not in ('active', 'draft', 'archived') then
+    raise exception 'invalid product status';
+  end if;
+
+
+  if p_brand_id is not null
+     and not exists (select 1 from public.cms_brands where id = p_brand_id) then
+    raise exception 'selected brand no longer exists';
+  end if;
+
+  if p_category_id is not null then
+    select category.name, category.spec_template
+      into v_category_name, v_spec_template
+    from public.store_categories as category
+    where category.id = p_category_id;
+
+    if v_category_name is null then
+      raise exception 'selected category no longer exists';
+    end if;
+  end if;
+
+  if jsonb_typeof(v_specifications) <> 'object' then
+    raise exception 'product specifications must be an object';
+  end if;
+  if pg_column_size(v_specifications) > 65536 then
+    raise exception 'product specifications are too large';
+  end if;
+  if p_category_id is null and v_specifications <> '{}'::jsonb then
+    raise exception 'product specifications require a category';
+  end if;
+  if exists (
+    select 1
+    from jsonb_each(v_specifications) as entry(key, value)
+    where jsonb_typeof(entry.value) not in ('string', 'number', 'boolean')
+  ) then
+    raise exception 'product specification values must be scalar';
+  end if;
+  if exists (
+    select 1
+    from jsonb_object_keys(v_specifications) as supplied(key)
+    where not exists (
+      select 1
+      from jsonb_array_elements(coalesce(v_spec_template -> 'sections', '[]'::jsonb)) as section(value)
+      cross join lateral jsonb_array_elements(
+        coalesce(section.value -> 'fields', '[]'::jsonb)
+      ) as field(value)
+      where field.value ->> 'key' = supplied.key
+    )
+  ) then
+    raise exception 'product specification field is not allowed for this category';
+  end if;
+
+  if p_product_id is not null then
+    select *
+      into v_product
+    from public.store_products
+    where id = p_product_id
+    for update;
+
+    if not found then
+      raise exception 'product not found';
+    end if;
+
+    v_product_id := v_product.id;
+
+    -- Keep previously selected key specification IDs when they still exist
+    -- in the newly edited set of category-validated specification values.
+    v_stored_specifications := jsonb_build_object(
+      'values', v_specifications,
+      'keySpecs', coalesce((
+        select jsonb_agg(prior_key.key_name order by prior_key.position)
+        from jsonb_array_elements_text(
+          coalesce(v_product.specifications -> 'keySpecs', '[]'::jsonb)
+        ) with ordinality as prior_key(key_name, position)
+        where v_specifications ? prior_key.key_name
+      ), '[]'::jsonb)
+    );
+
+    select count(*)
+      into v_variant_count
+    from public.store_product_variants
+    where product_id = v_product_id;
+
+    if v_variant_count <= 1 then
+    if p_price is null or p_price <= 0 then
+      raise exception 'price must be greater than zero';
+    end if;
+    if p_compare_at_price is not null and p_compare_at_price < p_price then
+      raise exception 'compare-at price cannot be lower than price';
+    end if;
+    if p_stock is null or p_stock < 0 then
+      raise exception 'stock cannot be negative';
+    end if;
+    end if;
+
+    update public.store_products
+    set
+      title = btrim(p_title),
+      description = btrim(coalesce(p_description, '')),
+      brand_id = p_brand_id,
+      category_id = p_category_id,
+      product_type = v_category_name,
+      status = p_status,
+      currency = 'USD',
+      track_inventory = v_product.track_inventory,
+      sku = case
+        when v_variant_count <= 1 then nullif(btrim(coalesce(p_sku, '')), '')
+        else v_product.sku
+      end,
+      barcode = case
+        when v_variant_count <= 1 then nullif(btrim(coalesce(p_barcode, '')), '')
+        else v_product.barcode
+      end,
+      seo_title = nullif(btrim(coalesce(p_seo_title, '')), ''),
+      seo_description = nullif(btrim(coalesce(p_seo_description, '')), ''),
+      specifications = v_stored_specifications,
+      published_at = case
+        when p_status = 'active' then coalesce(v_product.published_at, now())
+        else null
+      end
+    where id = v_product_id
+    returning * into v_product;
+  else
+    if p_price is null or p_price <= 0 then
+      raise exception 'price must be greater than zero';
+    end if;
+    if p_compare_at_price is not null and p_compare_at_price < p_price then
+      raise exception 'compare-at price cannot be lower than price';
+    end if;
+    if p_stock is null or p_stock < 0 then
+      raise exception 'stock cannot be negative';
+    end if;
+
+    v_product_id := gen_random_uuid();
+
+    -- The browser sends flat values, but the live catalog CHECK and trigger
+    -- require a JSON document with values:{} and keySpecs:[].
+    v_stored_specifications := jsonb_build_object(
+      'values', v_specifications,
+      'keySpecs', '[]'::jsonb
+    );
+
+    v_base_handle := lower(btrim(p_title));
+    v_base_handle := regexp_replace(v_base_handle, '[^a-z0-9]+', '-', 'g');
+    v_base_handle := btrim(v_base_handle, '-');
+    if v_base_handle = '' then
+      v_base_handle := 'product';
+    end if;
+
+    -- Serialize handle allocation for the same base slug so two simultaneous
+    -- creates cannot both choose the same unique handle.
+    perform pg_advisory_xact_lock(hashtextextended(v_base_handle, 0));
+
+    v_handle := v_base_handle;
+    while exists (
+      select 1
+      from public.store_products
+      where handle = v_handle
+    ) loop
+      v_handle := left(v_base_handle, 170) || '-' || v_suffix::text;
+      v_suffix := v_suffix + 1;
+    end loop;
+
+    insert into public.store_products (
+      id,
+      title,
+      handle,
+      description,
+      brand_id,
+      category_id,
+      product_type,
+      status,
+      currency,
+      base_price,
+      compare_at_price,
+      sku,
+      barcode,
+      stock_quantity,
+      track_inventory,
+      seo_title,
+      seo_description,
+      specifications,
+      published_at
+    ) values (
+      v_product_id,
+      btrim(p_title),
+      v_handle,
+      btrim(coalesce(p_description, '')),
+      p_brand_id,
+      p_category_id,
+      v_category_name,
+      p_status,
+      'USD',
+      p_price,
+      p_compare_at_price,
+      nullif(btrim(coalesce(p_sku, '')), ''),
+      nullif(btrim(coalesce(p_barcode, '')), ''),
+      p_stock,
+      true,
+      nullif(btrim(coalesce(p_seo_title, '')), ''),
+      nullif(btrim(coalesce(p_seo_description, '')), ''),
+      v_stored_specifications,
+      case when p_status = 'active' then now() else null end
+    )
+    returning * into v_product;
+
+    v_variant_count := 0;
+  end if;
+
+  -- The compact product editor owns pricing/inventory only while the product has
+  -- zero or one variant. Multi-variant products stay fully managed by Variant Manager.
+  if v_variant_count <= 1 then
+    select *
+      into v_variant
+    from public.store_product_variants
+    where product_id = v_product_id
+    order by sort_order, created_at
+    limit 1
+    for update;
+
+    -- NULL means that this save did not request an inventory change. Preserve
+    -- the locked, current stock even when the editor was opened before a sale.
+    -- A requested adjustment must match the snapshot the user actually edited.
+    if p_product_id is not null then
+      if p_expected_stock is null then
+        p_stock := coalesce(v_variant.stock_quantity, v_product.stock_quantity);
+      elsif coalesce(v_variant.stock_quantity, v_product.stock_quantity)
+            is distinct from p_expected_stock then
+        raise exception 'product_editor_stock_conflict';
+      end if;
+    end if;
+
+    if v_variant.id is null then
+      insert into public.store_product_variants (
+        product_id,
+        title,
+        sku,
+        barcode,
+        price,
+        compare_at_price,
+        stock_quantity,
+        track_inventory,
+        allow_backorder,
+        options,
+        image_url,
+        sort_order,
+        is_active
+      ) values (
+        v_product_id,
+        'Default',
+        nullif(btrim(coalesce(p_sku, '')), ''),
+        nullif(btrim(coalesce(p_barcode, '')), ''),
+        p_price,
+        p_compare_at_price,
+        p_stock,
+        true,
+        false,
+        '{}'::jsonb,
+        null,
+        0,
+        true
+      )
+      returning * into v_variant;
+
+      if v_variant.stock_quantity <> 0 then
+        insert into public.store_inventory_movements (
+          product_id,
+          variant_id,
+          movement_type,
+          quantity_delta,
+          reference_type,
+          note,
+          created_by
+        ) values (
+          v_product_id,
+          v_variant.id,
+          'adjustment',
+          v_variant.stock_quantity,
+          'product_editor',
+          'Initial product-editor stock',
+          auth.uid()
+        );
+      end if;
+    else
+      v_variant_delta := p_stock - v_variant.stock_quantity;
+
+      update public.store_product_variants
+      set
+        title = coalesce(nullif(btrim(v_variant.title), ''), 'Default'),
+        sku = nullif(btrim(coalesce(p_sku, '')), ''),
+        barcode = nullif(btrim(coalesce(p_barcode, '')), ''),
+        price = p_price,
+        compare_at_price = p_compare_at_price,
+        stock_quantity = p_stock,
+        track_inventory = v_variant.track_inventory,
+        allow_backorder = v_variant.allow_backorder,
+        options = v_variant.options,
+        image_url = v_variant.image_url,
+        sort_order = v_variant.sort_order,
+        is_active = v_variant.is_active,
+        updated_at = now()
+      where id = v_variant.id
+      returning * into v_variant;
+
+      if v_variant_delta <> 0 then
+        insert into public.store_inventory_movements (
+          product_id,
+          variant_id,
+          movement_type,
+          quantity_delta,
+          reference_type,
+          note,
+          created_by
+        ) values (
+          v_product_id,
+          v_variant.id,
+          'adjustment',
+          v_variant_delta,
+          'product_editor',
+          'Product editor stock change',
+          auth.uid()
+        );
+      end if;
+    end if;
+  end if;
+
+  -- Collection membership is part of the same SQL transaction. Any invalid
+  -- collection raises inside this call and rolls the product/variant changes back.
+  perform public.set_store_product_collections(
+    v_product_id,
+    coalesce(p_collection_ids, '{}'::uuid[])
+  );
+
+  -- Product media files are uploaded separately, but the primary image database
+  -- metadata can still be committed atomically with the editor save.
+  v_normalized_image_url := nullif(btrim(coalesce(p_image_url, '')), '');
+  if v_normalized_image_url is not null then
+    select image.id
+      into v_image_id
+    from public.store_product_images as image
+    where image.product_id = v_product_id
+      and image.url = v_normalized_image_url
+    order by image.is_primary desc, image.sort_order, image.created_at
+    limit 1
+    for update;
+
+    if v_image_id is null then
+      select image.id
+        into v_image_id
+      from public.store_product_images as image
+      where image.product_id = v_product_id
+      order by image.is_primary desc, image.sort_order, image.created_at
+      limit 1
+      for update;
+    end if;
+
+    update public.store_product_images
+    set is_primary = false
+    where product_id = v_product_id
+      and is_primary = true
+      and (v_image_id is null or id <> v_image_id);
+
+    if v_image_id is null then
+      insert into public.store_product_images (
+        product_id,
+        url,
+        alt_text,
+        sort_order,
+        is_primary
+      ) values (
+        v_product_id,
+        v_normalized_image_url,
+        btrim(p_title),
+        0,
+        true
+      )
+      returning id into v_image_id;
+    else
+      update public.store_product_images
+      set
+        url = v_normalized_image_url,
+        is_primary = true
+      where id = v_image_id;
+    end if;
+  end if;
+
+  select *
+    into v_product
+  from public.store_products
+  where id = v_product_id;
+
+  return jsonb_build_object(
+    'id', v_product.id,
+    'handle', v_product.handle,
+    'variant_managed_separately', v_variant_count > 1,
+    'stock', case when v_variant_count <= 1 then v_variant.stock_quantity else v_product.stock_quantity end
+  );
+end;
+$$;
+
+revoke all on function public.save_store_product_editor(
+  uuid,text,text,uuid,uuid,text,numeric,numeric,text,text,integer,text,text,text,jsonb,uuid[],integer
+) from public, anon;
+
+grant execute on function public.save_store_product_editor(
+  uuid,text,text,uuid,uuid,text,numeric,numeric,text,text,integer,text,text,text,jsonb,uuid[],integer
+) to authenticated;
+
+comment on function public.save_store_product_editor(
+  uuid,text,text,uuid,uuid,text,numeric,numeric,text,text,integer,text,text,text,jsonb,uuid[],integer
+) is
+  'Atomically saves product details and memberships, preserves unedited stock, and rejects stale intentional stock adjustments.';

@@ -85,7 +85,7 @@ export default function ProductSpecificationEditor({
           query={query}
           currentData={currentData}
           fields={template.sections.flatMap((section) =>
-            section.fields.map((field) => aiField(field, section.title, section.titleAr))
+            section.fields.map((field) => aiField(field, section.title, section.titleAr)),
           )}
           context={context}
           onApply={onAiApply}
@@ -95,22 +95,34 @@ export default function ProductSpecificationEditor({
         />
       </div>
 
-      <details className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60" onToggle={(event) => setShowScopedAi(event.currentTarget.open)}>
+      <details
+        className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60"
+        onToggle={(event) => setShowScopedAi(event.currentTarget.open)}
+      >
         <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-slate-600">
-          {ar ? "خيارات AI متقدمة للأقسام والحقول" : "Advanced AI tools for sections and individual fields"}
+          {ar
+            ? "خيارات AI متقدمة للأقسام والحقول"
+            : "Advanced AI tools for sections and individual fields"}
         </summary>
         {showScopedAi ? (
           <div className="space-y-4 border-t border-slate-200 p-3">
             {template.sections.map((section) => (
               <div key={section.title} className="space-y-2">
-                <p className="text-xs font-semibold text-slate-600">{ar ? section.titleAr || section.title : section.title}</p>
+                <p className="text-xs font-semibold text-slate-600">
+                  {ar ? section.titleAr || section.title : section.title}
+                </p>
                 <AiAssistPanel
                   entity="product"
                   query={query}
-                  currentData={Object.fromEntries(section.fields.map((field) => [
-                    aiSpecificationFieldKey(field.key), values[field.key] ?? "",
-                  ]))}
-                  fields={section.fields.map((field) => aiField(field, section.title, section.titleAr))}
+                  currentData={Object.fromEntries(
+                    section.fields.map((field) => [
+                      aiSpecificationFieldKey(field.key),
+                      values[field.key] ?? "",
+                    ]),
+                  )}
+                  fields={section.fields.map((field) =>
+                    aiField(field, section.title, section.titleAr),
+                  )}
                   context={{ ...aiContext, specKeys: section.fields.map((field) => field.key) }}
                   onApply={onAiApply}
                   triggerLabel={ar ? "AI للقسم" : "AI Section"}
@@ -123,7 +135,9 @@ export default function ProductSpecificationEditor({
                       key={field.key}
                       entity="product"
                       query={query}
-                      currentData={{ [aiSpecificationFieldKey(field.key)]: values[field.key] ?? "" }}
+                      currentData={{
+                        [aiSpecificationFieldKey(field.key)]: values[field.key] ?? "",
+                      }}
                       fields={[aiField(field, section.title, section.titleAr)]}
                       context={{ ...aiContext, specKeys: [field.key] }}
                       onApply={onAiApply}
@@ -141,7 +155,6 @@ export default function ProductSpecificationEditor({
 
       <div className="space-y-4">
         {template.sections.map((section) => {
-
           return (
             <section
               key={section.title}
@@ -168,15 +181,14 @@ export default function ProductSpecificationEditor({
                         <span className="flex items-center gap-1.5">
                           {generated ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[8px] font-black text-amber-700">
-
                               {ar ? "AI · مراجعة" : "AI · review"}
                             </span>
                           ) : null}
-
                         </span>
                       </span>
                       <input
                         aria-label={field.label}
+                        data-specification-key={field.key}
                         value={values[field.key] ?? ""}
                         onChange={(event) => onChange(field.key, event.target.value)}
                         placeholder={

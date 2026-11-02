@@ -3,13 +3,13 @@ import { createDashboardBrowser } from "./helpers/dashboard-browser.mjs";
 
 const { browser, context } = await createDashboardBrowser();
 const origin = process.env.SPACE_CALL_DASHBOARD_ORIGIN || "http://127.0.0.1:5173";
-const widths = [320, 360, 375, 390, 430, 768, 980, 1024, 1440];
+const widths = [320, 360, 375, 390, 430, 600, 768, 980, 1024, 1280, 1440, 1600, 1920];
 const page = await context.newPage();
 
 try {
   for (const width of widths) {
     await page.setViewportSize({ width, height: 740 });
-    await page.goto(`${origin}/dashboard/products/new`);
+    await page.goto(`${origin}/dashboard/products/new`, { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "AI Assist", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Research, fill and improve" });
     await dialog.waitFor();
@@ -52,6 +52,7 @@ try {
     await dialog.locator("details").first().locator("summary").click();
     await dialog.getByRole("button", { name: "Validate" }).waitFor();
     await dialog.getByRole("button", { name: "Close AI assistant" }).click();
+    console.log(`AI dialog geometry and controls passed at ${width}px`);
   }
 
   await page.setViewportSize({ width: 360, height: 460 });

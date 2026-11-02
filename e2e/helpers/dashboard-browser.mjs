@@ -2,7 +2,15 @@ import { chromium } from "@playwright/test";
 
 // Synthetic session and intercepted fixtures. Never sends dashboard writes to a real backend.
 export async function createDashboardBrowser() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : {}),
+    ...(process.env.PLAYWRIGHT_CHROMIUM_ARGS
+      ? { args: JSON.parse(process.env.PLAYWRIGHT_CHROMIUM_ARGS) }
+      : {}),
+  });
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const id = "00000000-0000-4000-8000-000000000001";
   const user = {
@@ -35,6 +43,9 @@ export async function createDashboardBrowser() {
   await context.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
+    // Keep fixture runs deterministic when external font endpoints are unavailable.
+    if (url.hostname === "fonts.googleapis.com")
+      return route.fulfill({ contentType: "text/css", body: "" });
     if (url.pathname.includes("/auth/v1/user")) return route.fulfill({ json: user });
     if (url.pathname.includes("/rest/v1/user_roles"))
       return route.fulfill({

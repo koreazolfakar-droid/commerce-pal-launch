@@ -51,6 +51,8 @@ jobs:
       - name: Dashboard behavior and safety checks
         run: node --test e2e/dashboard-professional-workflows.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-release-readiness-regressions.test.mjs e2e/dashboard-ai-form-fill.test.mjs e2e/dashboard-ai-assist.test.mjs e2e/dashboard-product-specifications.test.mjs e2e/dashboard-mutation-flow.test.mjs e2e/dashboard-edge-cors-security.test.mjs
       - run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Product editor validation and PostgreSQL regressions
+        run: node --test e2e/dashboard-product-editor-repair.test.mjs e2e/dashboard-product-media-alt.test.mjs e2e/dashboard-product-metadata-ownership.test.mjs e2e/dashboard-product-stock-concurrency.test.mjs
       - run: bun run build
       - name: Desktop, mobile, Arabic and workflow checks
         env:
@@ -67,3 +69,4 @@ jobs:
           bun run test:dashboard:professional
           node e2e/dashboard-ai-form-fill-browser.mjs
           node e2e/dashboard-ai-responsive-browser.mjs
+          node e2e/dashboard-product-editor-repair-browser.mjs

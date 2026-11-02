@@ -1,4 +1,32 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Image alternative text": "النص البديل للصورة",
+  "Save alternative text": "حفظ النص البديل",
+  "Image alternative text saved.": "تم حفظ النص البديل للصورة.",
+  "Saving image alternative text failed": "تعذر حفظ النص البديل للصورة",
+  "Search engine preview": "معاينة محركات البحث",
+  "The product URL is generated when you save.": "يتم إنشاء رابط المنتج عند الحفظ.",
+  "Recommended search title length": "الطول المقترح لعنوان البحث",
+  "Recommended search description length": "الطول المقترح لوصف البحث",
+  "Local preview": "معاينة محلية",
+  "Additional options": "خيارات إضافية",
+  "Add option": "إضافة خيار",
+  "Option name": "اسم الخيار",
+  "Option value": "قيمة الخيار",
+  "Remove option": "حذف الخيار",
+  "Add RAM, size, material or another option. Each variant represents one combination.":
+    "أضف الذاكرة أو الحجم أو المادة أو خيارًا آخر. تمثل كل نسخة مجموعة خيارات واحدة.",
+  "Close variant editor": "إغلاق محرر النسخة",
+  "Cancel research": "إلغاء البحث",
+  "Retry AI request": "إعادة محاولة الطلب",
+  "Research cancelled. Your draft has not changed.": "تم إلغاء البحث. لم تتغير مسودتك.",
+  "Enter an option name between 1 and 40 characters.": "أدخل اسم خيار من حرف واحد إلى ٤٠ حرفًا.",
+  "Use the dedicated color or storage field for this option.":
+    "استخدم حقل اللون أو السعة المخصص لهذا الخيار.",
+  "Option names must be unique.": "يجب أن تكون أسماء الخيارات مختلفة.",
+  "Enter an option value between 1 and 120 characters.":
+    "أدخل قيمة خيار من حرف واحد إلى ١٢٠ حرفًا.",
+  "SKU must be 80 characters or fewer": "يجب ألا يتجاوز رمز SKU ثمانين حرفًا",
+  "Barcode must be 80 characters or fewer": "يجب ألا يتجاوز الباركود ثمانين حرفًا",
   Commerce: "المبيعات والعمليات",
   Administration: "الإدارة والإعدادات",
   "Open store": "فتح المتجر",
@@ -58,7 +86,8 @@ export const dashboardUiArabic: Record<string, string> = {
   "Complete form": "إكمال النموذج",
   "Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.":
     "اكتب اسم المنتج والموديل والنسخة بدقّة. المساعد بيقترح تعبئة الخانات، وبيوضح المعلومات اللي ما إلها مصدر موثوق.",
-  "Advanced AI options (sources, mode and validation)": "خيارات متقدمة: مصادر وطريقة التعبئة والتحقق",
+  "Advanced AI options (sources, mode and validation)":
+    "خيارات متقدمة: مصادر وطريقة التعبئة والتحقق",
   "Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.":
     "اختياري: أضف نص المواصفات الرسمية لدقّة أعلى. الرابط وحده مش إثبات إذا البحث المباشر غير متاح.",
   "Reference text improves factual accuracy. Live web lookup depends on your AI provider.":

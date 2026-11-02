@@ -154,6 +154,7 @@ export default function AiAssistPanel({
   const panelRef = useDashboardModal(() => setOpen(false), open);
   const queryInputRef = useRef<HTMLInputElement>(null);
   const requestIdRef = useRef(0);
+  const lastActionRef = useRef<DashboardAiAction>("research_fill");
   const lastOpenedQueryRef = useRef(query);
   const dialogTitleId = useId();
 
@@ -253,7 +254,11 @@ export default function AiAssistPanel({
 
   const run = async (action: DashboardAiAction) => {
     if (loadingAction) return;
-    const referenceUrls = referenceUrlText.split(/\r?\n/).map((url) => url.trim()).filter(Boolean);
+    lastActionRef.current = action;
+    const referenceUrls = referenceUrlText
+      .split(/\r?\n/)
+      .map((url) => url.trim())
+      .filter(Boolean);
     if (
       referenceUrls.length > 3 ||
       referenceUrls.some((value) => {
@@ -377,6 +382,14 @@ export default function AiAssistPanel({
     }
   };
 
+  const cancelRequest = () => {
+    requestIdRef.current += 1;
+    requestController.current?.abort();
+    setLoadingAction(null);
+    setProgress({ completed: 0, total: 0 });
+    setRequestError(t("Research cancelled. Your draft has not changed."));
+  };
+
   const applySelected = () => {
     if (!result) return;
     const patch: Record<string, string> = {};
@@ -386,7 +399,8 @@ export default function AiAssistPanel({
         suggestion.field.startsWith("spec__") &&
         !(currentData.categoryName ?? "").trim() &&
         !selected.has("categoryName")
-      ) continue;
+      )
+        continue;
       const definition = fieldMap.get(suggestion.field);
       if (!definition) continue;
       const issue = localIssue(suggestion, definition);
@@ -468,7 +482,11 @@ export default function AiAssistPanel({
                 <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 py-3 sm:px-5 sm:py-5">
                   <label className="block">
                     <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                      {t(entity === "product" ? "Product name / exact model" : "What should AI research?")}
+                      {t(
+                        entity === "product"
+                          ? "Product name / exact model"
+                          : "What should AI research?",
+                      )}
                     </span>
                     <input
                       ref={queryInputRef}
@@ -482,14 +500,20 @@ export default function AiAssistPanel({
                         setResult(null);
                         setSelected(new Set());
                       }}
-                      placeholder={t(entity === "product" ? "e.g. HONOR Play20C 4GB / 128GB" : "Exact name or subject of the form")}
+                      placeholder={t(
+                        entity === "product"
+                          ? "e.g. HONOR Play20C 4GB / 128GB"
+                          : "Exact name or subject of the form",
+                      )}
                       className="h-11 w-full rounded-xl border border-slate-200 px-3 text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                     />
                   </label>
 
                   {entity === "product" ? (
                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                      {t("Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.")}
+                      {t(
+                        "Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.",
+                      )}
                     </p>
                   ) : null}
                   <button
@@ -498,9 +522,11 @@ export default function AiAssistPanel({
                     onClick={() => void run("research_fill")}
                     className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4858d8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {loadingAction === "research_fill"
-                      ? <Loader2 className="size-4 animate-spin" />
-                      : <Search className="size-4" />}
+                    {loadingAction === "research_fill" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Search className="size-4" />
+                    )}
                     {t("Complete form")}
                   </button>
                   <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/60">
@@ -509,162 +535,185 @@ export default function AiAssistPanel({
                     </summary>
                     <div className="border-t border-slate-200 px-3 pb-3">
                       <p className="mt-3 text-xs leading-5 text-slate-500">
-                        {t("Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.")}
+                        {t(
+                          "Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.",
+                        )}
                       </p>
-                  <label className="mt-4 block">
-                    <span className="mb-1.5 block text-xs font-bold text-foreground">
-                      {t("Source information and specifications")}
-                    </span>
-                    <textarea
-                      aria-label={t("Source information and specifications")}
-                      value={sourceText}
-                      maxLength={12000}
-                      disabled={Boolean(loadingAction)}
-                      onChange={(event) => {
-                        setSourceText(event.target.value);
-                        setResult(null);
-                        setSelected(new Set());
-                      }}
-                      placeholder={t(
-                        "Paste the product sheet, model details, specifications, or a brief describing what to fill.",
-                      )}
-                      className="min-h-32 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground"
-                    />
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      {t("Reference text improves factual accuracy. Live web lookup depends on your AI provider.")}{" "}
-                      <bdi dir="ltr" className="whitespace-nowrap">
-                        {sourceText.length.toLocaleString(lang)} / 12,000
-                      </bdi>{" "}
-                      · {t("Supplied information is shown separately from verified web sources.")}
-                    </span>
-                  </label>
-
-                  <label className="mt-4 block">
-                    <span className="mb-1.5 block text-xs font-bold text-foreground">
-                      {t("Product research pages (optional)")}
-                    </span>
-                    <textarea
-                      aria-label={t("Product research pages (optional)")}
-                      dir="ltr"
-                      rows={2}
-                      maxLength={4500}
-                      value={referenceUrlText}
-                      disabled={Boolean(loadingAction)}
-                      onChange={(event) => {
-                        setReferenceUrlText(event.target.value);
-                        setResult(null);
-                        setSelected(new Set());
-                      }}
-                      placeholder="https://www.hihonor.com/..."
-                      className="w-full resize-y rounded-xl border border-border bg-card p-3 text-left text-xs text-foreground outline-none focus:border-indigo-400"
-                    />
-                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                      {t("Up to 3 HTTPS links. The Cloudflare model cannot open them; paste relevant product-sheet text above for factual extraction.")}
-                    </span>
-                  </label>
-                  <fieldset className="mt-4 rounded-xl border border-border p-3">
-                    <legend className="px-1 text-xs font-bold text-foreground">
-                      {t("Research & Fill behavior")}
-                    </legend>
-                    <div className="flex flex-wrap gap-4">
-                      {(["empty", "all"] as const).map((mode) => (
-                        <label
-                          key={mode}
-                          className="flex items-center gap-2 text-xs text-foreground"
-                        >
-                          <input
-                            type="radio"
-                            name={`${dialogTitleId}-fill-mode`}
-                            value={mode}
-                            checked={fillMode === mode}
-                            disabled={Boolean(loadingAction)}
-                            onChange={() => {
-                              setFillMode(mode);
-                              setResult(null);
-                              setSelected(new Set());
-                            }}
-                          />
-                          {t(
-                            mode === "empty"
-                              ? "Fill empty fields only"
-                              : "Also improve existing fields",
+                      <label className="mt-4 block">
+                        <span className="mb-1.5 block text-xs font-bold text-foreground">
+                          {t("Source information and specifications")}
+                        </span>
+                        <textarea
+                          aria-label={t("Source information and specifications")}
+                          value={sourceText}
+                          maxLength={12000}
+                          disabled={Boolean(loadingAction)}
+                          onChange={(event) => {
+                            setSourceText(event.target.value);
+                            setResult(null);
+                            setSelected(new Set());
+                          }}
+                          placeholder={t(
+                            "Paste the product sheet, model details, specifications, or a brief describing what to fill.",
                           )}
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <div
-                    className="mt-4 rounded-xl border border-border bg-card p-3"
-                    aria-label={t("Form completeness")}
-                  >
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <strong>{t("Form completeness")}</strong>
-                      <span role="status">
-                        <bdi dir="ltr">
-                          {completion.completed} / {completion.total}
-                        </bdi>{" "}
-                        {t("fields ready")}
-                      </span>
-                    </div>
-                    <progress
-                      max={Math.max(1, completion.total)}
-                      value={completion.completed}
-                      className="mt-2 h-2 w-full accent-indigo-500"
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {t(
-                        "Counts include current values and selected suggestions. Review factual values before saving.",
-                      )}{" "}
-                      {t("Tracks the content fields supported by this assistant.")}
-                    </p>
-                  </div>
-                  {entity === "product" && !fields.some((field) => field.key.startsWith("spec__")) ? (
-                    <p className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
-                      {t("Choose a product category first to let AI fill all matching specification fields.")}
-                    </p>
-                  ) : null}
-                  <div
-                    className={`mt-3 grid min-w-0 grid-cols-1 gap-2 ${showSeoAction ? "md:grid-cols-2" : ""}`}
-                  >
-                    {showSeoAction ? (
-                      <ActionButton
-                        label={t("Improve SEO")}
-                        icon={<WandSparkles className="size-3.5" />}
-                        active={loadingAction === "seo"}
-                        disabled={Boolean(loadingAction)}
-                        onClick={() => void run("seo")}
-                      />
-                    ) : null}
-                    <ActionButton
-                      label={t("Validate")}
-                      icon={<ShieldCheck className="size-3.5" />}
-                      active={loadingAction === "validate"}
-                      disabled={Boolean(loadingAction)}
-                      onClick={() => void run("validate")}
-                    />
-                  </div>
+                          className="min-h-32 w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground"
+                        />
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {t(
+                            "Reference text improves factual accuracy. Live web lookup depends on your AI provider.",
+                          )}{" "}
+                          <bdi dir="ltr" className="whitespace-nowrap">
+                            {sourceText.length.toLocaleString(lang)} / 12,000
+                          </bdi>{" "}
+                          ·{" "}
+                          {t("Supplied information is shown separately from verified web sources.")}
+                        </span>
+                      </label>
+
+                      <label className="mt-4 block">
+                        <span className="mb-1.5 block text-xs font-bold text-foreground">
+                          {t("Product research pages (optional)")}
+                        </span>
+                        <textarea
+                          aria-label={t("Product research pages (optional)")}
+                          dir="ltr"
+                          rows={2}
+                          maxLength={4500}
+                          value={referenceUrlText}
+                          disabled={Boolean(loadingAction)}
+                          onChange={(event) => {
+                            setReferenceUrlText(event.target.value);
+                            setResult(null);
+                            setSelected(new Set());
+                          }}
+                          placeholder="https://www.hihonor.com/..."
+                          className="w-full resize-y rounded-xl border border-border bg-card p-3 text-left text-xs text-foreground outline-none focus:border-indigo-400"
+                        />
+                        <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                          {t(
+                            "Up to 3 HTTPS links. The Cloudflare model cannot open them; paste relevant product-sheet text above for factual extraction.",
+                          )}
+                        </span>
+                      </label>
+                      <fieldset className="mt-4 rounded-xl border border-border p-3">
+                        <legend className="px-1 text-xs font-bold text-foreground">
+                          {t("Research & Fill behavior")}
+                        </legend>
+                        <div className="flex flex-wrap gap-4">
+                          {(["empty", "all"] as const).map((mode) => (
+                            <label
+                              key={mode}
+                              className="flex items-center gap-2 text-xs text-foreground"
+                            >
+                              <input
+                                type="radio"
+                                name={`${dialogTitleId}-fill-mode`}
+                                value={mode}
+                                checked={fillMode === mode}
+                                disabled={Boolean(loadingAction)}
+                                onChange={() => {
+                                  setFillMode(mode);
+                                  setResult(null);
+                                  setSelected(new Set());
+                                }}
+                              />
+                              {t(
+                                mode === "empty"
+                                  ? "Fill empty fields only"
+                                  : "Also improve existing fields",
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <div
+                        className="mt-4 rounded-xl border border-border bg-card p-3"
+                        aria-label={t("Form completeness")}
+                      >
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <strong>{t("Form completeness")}</strong>
+                          <span role="status">
+                            <bdi dir="ltr">
+                              {completion.completed} / {completion.total}
+                            </bdi>{" "}
+                            {t("fields ready")}
+                          </span>
+                        </div>
+                        <progress
+                          max={Math.max(1, completion.total)}
+                          value={completion.completed}
+                          className="mt-2 h-2 w-full accent-indigo-500"
+                        />
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {t(
+                            "Counts include current values and selected suggestions. Review factual values before saving.",
+                          )}{" "}
+                          {t("Tracks the content fields supported by this assistant.")}
+                        </p>
+                      </div>
+                      {entity === "product" &&
+                      !fields.some((field) => field.key.startsWith("spec__")) ? (
+                        <p className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-900">
+                          {t(
+                            "Choose a product category first to let AI fill all matching specification fields.",
+                          )}
+                        </p>
+                      ) : null}
+                      <div
+                        className={`mt-3 grid min-w-0 grid-cols-1 gap-2 ${showSeoAction ? "md:grid-cols-2" : ""}`}
+                      >
+                        {showSeoAction ? (
+                          <ActionButton
+                            label={t("Improve SEO")}
+                            icon={<WandSparkles className="size-3.5" />}
+                            active={loadingAction === "seo"}
+                            disabled={Boolean(loadingAction)}
+                            onClick={() => void run("seo")}
+                          />
+                        ) : null}
+                        <ActionButton
+                          label={t("Validate")}
+                          icon={<ShieldCheck className="size-3.5" />}
+                          active={loadingAction === "validate"}
+                          disabled={Boolean(loadingAction)}
+                          onClick={() => void run("validate")}
+                        />
+                      </div>
                     </div>
                   </details>
                   {requestError && (
                     <div
                       role="alert"
-                      className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                      className="mt-4 break-words rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 [overflow-wrap:anywhere]"
                     >
                       {t(requestError)}
+                      <button
+                        type="button"
+                        disabled={Boolean(loadingAction) || researchQuery.trim().length < 2}
+                        onClick={() => void run(lastActionRef.current)}
+                        className="mt-2 flex min-h-11 items-center rounded-lg border border-rose-200 bg-white px-3 text-xs font-semibold disabled:opacity-50"
+                      >
+                        {t("Retry AI request")}
+                      </button>
                     </div>
                   )}
                   {loadingAction && (
                     <div
                       role="status"
-                      className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"
+                      className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
                     >
                       <Loader2 className="size-4 animate-spin" />
                       {t("Completing all requested fields…")}{" "}
                       {progress.total > 1 ? `${progress.completed} / ${progress.total}` : ""}
+                      <button
+                        type="button"
+                        onClick={cancelRequest}
+                        className="min-h-11 rounded-lg border border-border px-3 text-xs font-semibold"
+                      >
+                        {t("Cancel research")}
+                      </button>
                     </div>
                   )}
-
-
 
                   {result ? (
                     <div className="mt-5 space-y-4">
@@ -710,12 +759,14 @@ export default function AiAssistPanel({
                             ? t("Identity not web-verified")
                             : result.entityMatch.status === "exact"
                               ? t("Exact entity verified")
-                            : result.entityMatch.status === "partial"
-                              ? t("Partial entity match")
-                              : t("Entity uncertain")}
+                              : result.entityMatch.status === "partial"
+                                ? t("Partial entity match")
+                                : t("Entity uncertain")}
                         </div>
                         {result.entityMatch.canonicalName ? (
-                          <p className="mt-1 break-words font-bold">{result.entityMatch.canonicalName}</p>
+                          <p className="mt-1 break-words font-bold">
+                            {result.entityMatch.canonicalName}
+                          </p>
                         ) : null}
                         {result.entityMatch.reason ? (
                           <details className="mt-1">
@@ -744,20 +795,28 @@ export default function AiAssistPanel({
 
                       {extraFields.length ? (
                         <p className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs leading-5 text-indigo-900">
-                          {t("AI located a matching category template. Review the category selection together with its specifications before applying.")}
+                          {t(
+                            "AI located a matching category template. Review the category selection together with its specifications before applying.",
+                          )}
                         </p>
                       ) : null}
                       <div className="grid min-w-0 grid-cols-1 gap-2 text-center text-[10px] min-[375px]:grid-cols-3 sm:text-xs">
                         <div className="rounded-xl border border-slate-200 p-2">
-                          <strong className="block text-base text-slate-800">{result.suggestions.filter((item) => item.decision !== "block").length}</strong>
+                          <strong className="block text-base text-slate-800">
+                            {result.suggestions.filter((item) => item.decision !== "block").length}
+                          </strong>
                           {t("Suggested fields")}
                         </div>
                         <div className="rounded-xl border border-slate-200 p-2">
-                          <strong className="block text-base text-amber-700">{result.suggestions.filter((item) => item.decision === "review").length}</strong>
+                          <strong className="block text-base text-amber-700">
+                            {result.suggestions.filter((item) => item.decision === "review").length}
+                          </strong>
                           {t("Manual review")}
                         </div>
                         <div className="rounded-xl border border-slate-200 p-2">
-                          <strong className="block text-base text-rose-700">{result.suggestions.filter((item) => item.decision === "block").length}</strong>
+                          <strong className="block text-base text-rose-700">
+                            {result.suggestions.filter((item) => item.decision === "block").length}
+                          </strong>
                           {t("Blocked")}
                         </div>
                       </div>
@@ -843,11 +902,18 @@ export default function AiAssistPanel({
                           const evidenceSources = result.sources.filter((source) =>
                             suggestion.sourceUrls.includes(source.url),
                           );
-                          const section = lang === "ar" ? definition.sectionAr || definition.section : definition.section;
-                          const previousDefinition = index > 0 ? fieldMap.get(orderedSuggestions[index - 1].field) : undefined;
-                          const previousSection = lang === "ar"
-                            ? previousDefinition?.sectionAr || previousDefinition?.section
-                            : previousDefinition?.section;
+                          const section =
+                            lang === "ar"
+                              ? definition.sectionAr || definition.section
+                              : definition.section;
+                          const previousDefinition =
+                            index > 0
+                              ? fieldMap.get(orderedSuggestions[index - 1].field)
+                              : undefined;
+                          const previousSection =
+                            lang === "ar"
+                              ? previousDefinition?.sectionAr || previousDefinition?.section
+                              : previousDefinition?.section;
                           return (
                             <div key={suggestion.field}>
                               {section && section !== previousSection ? (
@@ -855,135 +921,137 @@ export default function AiAssistPanel({
                                   {section}
                                 </h3>
                               ) : null}
-                            <label
-                              data-ai-field={suggestion.field}
-                              className={
-                                "block rounded-xl border p-3 transition " +
-                                (blocked
-                                  ? "cursor-default border-slate-200 bg-slate-50/70"
-                                  : checked
-                                    ? "cursor-pointer border-indigo-200 bg-indigo-50/60"
-                                    : "cursor-pointer border-slate-200 bg-white hover:border-slate-300")
-                              }
-                            >
-                              <div className="flex items-start gap-3">
-                                <input
-                                  type="checkbox"
-                                  aria-label={t(definition.label)}
-                                  checked={checked}
-                                  disabled={blocked}
-                                  onChange={() =>
-                                    setSelected((before) => {
-                                      const next = new Set(before);
-                                      if (next.has(suggestion.field)) next.delete(suggestion.field);
-                                      else next.add(suggestion.field);
-                                      return next;
-                                    })
-                                  }
-                                  className="mt-1 disabled:opacity-40"
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-[11px] font-black text-slate-700">
-                                      {t(definition.label)}
-                                    </span>
-                                    <span
-                                      className={
-                                        "rounded-full px-2 py-0.5 text-[8px] font-black " +
-                                        (noChange
-                                          ? "bg-slate-200 text-slate-600"
-                                          : suggestion.decision === "allow"
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : suggestion.decision === "block"
-                                              ? "bg-rose-100 text-rose-700"
-                                              : "bg-amber-100 text-amber-700")
-                                      }
-                                    >
-                                      {noChange
-                                        ? t("No meaningful change")
-                                        : suggestion.decision === "allow"
-                                          ? t("Safe to apply")
-                                          : suggestion.decision === "block"
-                                            ? t("Blocked")
-                                            : t("Review")}
-                                    </span>
-                                    <span
-                                      className={
-                                        "rounded-full px-2 py-0.5 text-[8px] font-black " +
-                                        (suggestion.risk === "high"
-                                          ? "bg-rose-50 text-rose-600"
-                                          : suggestion.risk === "medium"
-                                            ? "bg-amber-50 text-amber-600"
-                                            : "bg-slate-100 text-slate-500")
-                                      }
-                                    >
-                                      {suggestion.risk} {t("risk")}
-                                    </span>
-                                    {!noChange ? (
-                                      <span className="text-[9px] font-bold text-slate-400">
-                                        {Math.round(suggestion.confidence * 100)}%
+                              <label
+                                data-ai-field={suggestion.field}
+                                className={
+                                  "block rounded-xl border p-3 transition " +
+                                  (blocked
+                                    ? "cursor-default border-slate-200 bg-slate-50/70"
+                                    : checked
+                                      ? "cursor-pointer border-indigo-200 bg-indigo-50/60"
+                                      : "cursor-pointer border-slate-200 bg-white hover:border-slate-300")
+                                }
+                              >
+                                <div className="flex items-start gap-3">
+                                  <input
+                                    type="checkbox"
+                                    aria-label={t(definition.label)}
+                                    checked={checked}
+                                    disabled={blocked}
+                                    onChange={() =>
+                                      setSelected((before) => {
+                                        const next = new Set(before);
+                                        if (next.has(suggestion.field))
+                                          next.delete(suggestion.field);
+                                        else next.add(suggestion.field);
+                                        return next;
+                                      })
+                                    }
+                                    className="mt-1 disabled:opacity-40"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="text-[11px] font-black text-slate-700">
+                                        {t(definition.label)}
                                       </span>
+                                      <span
+                                        className={
+                                          "rounded-full px-2 py-0.5 text-[8px] font-black " +
+                                          (noChange
+                                            ? "bg-slate-200 text-slate-600"
+                                            : suggestion.decision === "allow"
+                                              ? "bg-emerald-100 text-emerald-700"
+                                              : suggestion.decision === "block"
+                                                ? "bg-rose-100 text-rose-700"
+                                                : "bg-amber-100 text-amber-700")
+                                        }
+                                      >
+                                        {noChange
+                                          ? t("No meaningful change")
+                                          : suggestion.decision === "allow"
+                                            ? t("Safe to apply")
+                                            : suggestion.decision === "block"
+                                              ? t("Blocked")
+                                              : t("Review")}
+                                      </span>
+                                      <span
+                                        className={
+                                          "rounded-full px-2 py-0.5 text-[8px] font-black " +
+                                          (suggestion.risk === "high"
+                                            ? "bg-rose-50 text-rose-600"
+                                            : suggestion.risk === "medium"
+                                              ? "bg-amber-50 text-amber-600"
+                                              : "bg-slate-100 text-slate-500")
+                                        }
+                                      >
+                                        {suggestion.risk} {t("risk")}
+                                      </span>
+                                      {!noChange ? (
+                                        <span className="text-[9px] font-bold text-slate-400">
+                                          {Math.round(suggestion.confidence * 100)}%
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    {current ? (
+                                      <div className="mt-1.5 text-[9px] text-slate-400">
+                                        {t("Current:")}
+                                        <span className="font-semibold">{current}</span>
+                                      </div>
+                                    ) : null}
+                                    <div className="mt-1.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[11px] font-semibold leading-5 text-slate-700">
+                                      {suggestion.value}
+                                    </div>
+                                    {suggestion.inputQuote && (
+                                      <blockquote className="mt-2 border-s-2 border-indigo-300 ps-2 text-xs text-muted-foreground">
+                                        <strong>{t("From supplied information")}</strong>
+                                        <p className="mt-1 whitespace-pre-wrap break-words">
+                                          {suggestion.inputQuote}
+                                        </p>
+                                      </blockquote>
+                                    )}
+                                    {suggestion.reason ? (
+                                      <div className="mt-1 text-[9px] leading-4 text-slate-400">
+                                        {suggestion.reason}
+                                      </div>
+                                    ) : null}
+                                    {evidenceSources.length ? (
+                                      <div className="mt-1.5 flex min-w-0 flex-wrap gap-1.5">
+                                        {evidenceSources.map((source) => (
+                                          <a
+                                            key={source.url}
+                                            href={source.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            onClick={(event) => event.stopPropagation()}
+                                            className="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-1.5 py-1 text-[8px] font-bold text-emerald-700"
+                                          >
+                                            {t("Evidence")}{" "}
+                                            {source.official ? t(" · Official") : ""}
+                                            <ExternalLink className="size-2.5" />
+                                          </a>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                    {suggestion.checks.length ? (
+                                      <ul className="mt-1.5 space-y-0.5 text-[9px] leading-4 text-slate-500">
+                                        {suggestion.checks.map((check, index) => (
+                                          <li key={index}>• {check}</li>
+                                        ))}
+                                      </ul>
+                                    ) : null}
+                                    {issue && !noChange ? (
+                                      <div className="mt-1 text-[9px] font-bold text-rose-600">
+                                        {issue} {t(". This suggestion cannot be applied.")}
+                                      </div>
+                                    ) : null}
+                                    {definition.review ? (
+                                      <div className="mt-1 text-[9px] font-bold text-amber-600">
+                                        {t("This field always requires manual review.")}
+                                      </div>
                                     ) : null}
                                   </div>
-                                  {current ? (
-                                    <div className="mt-1.5 text-[9px] text-slate-400">
-                                      {t("Current:")}
-                                      <span className="font-semibold">{current}</span>
-                                    </div>
-                                  ) : null}
-                                  <div className="mt-1.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[11px] font-semibold leading-5 text-slate-700">
-                                    {suggestion.value}
-                                  </div>
-                                  {suggestion.inputQuote && (
-                                    <blockquote className="mt-2 border-s-2 border-indigo-300 ps-2 text-xs text-muted-foreground">
-                                      <strong>{t("From supplied information")}</strong>
-                                      <p className="mt-1 whitespace-pre-wrap break-words">
-                                        {suggestion.inputQuote}
-                                      </p>
-                                    </blockquote>
-                                  )}
-                                  {suggestion.reason ? (
-                                    <div className="mt-1 text-[9px] leading-4 text-slate-400">
-                                      {suggestion.reason}
-                                    </div>
-                                  ) : null}
-                                  {evidenceSources.length ? (
-                                    <div className="mt-1.5 flex min-w-0 flex-wrap gap-1.5">
-                                      {evidenceSources.map((source) => (
-                                        <a
-                                          key={source.url}
-                                          href={source.url}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          onClick={(event) => event.stopPropagation()}
-                                          className="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-1.5 py-1 text-[8px] font-bold text-emerald-700"
-                                        >
-                                          {t("Evidence")} {source.official ? t(" · Official") : ""}
-                                          <ExternalLink className="size-2.5" />
-                                        </a>
-                                      ))}
-                                    </div>
-                                  ) : null}
-                                  {suggestion.checks.length ? (
-                                    <ul className="mt-1.5 space-y-0.5 text-[9px] leading-4 text-slate-500">
-                                      {suggestion.checks.map((check, index) => (
-                                        <li key={index}>• {check}</li>
-                                      ))}
-                                    </ul>
-                                  ) : null}
-                                  {issue && !noChange ? (
-                                    <div className="mt-1 text-[9px] font-bold text-rose-600">
-                                      {issue} {t(". This suggestion cannot be applied.")}
-                                    </div>
-                                  ) : null}
-                                  {definition.review ? (
-                                    <div className="mt-1 text-[9px] font-bold text-amber-600">
-                                      {t("This field always requires manual review.")}
-                                    </div>
-                                  ) : null}
                                 </div>
-                              </div>
-                            </label>
+                              </label>
                             </div>
                           );
                         })}

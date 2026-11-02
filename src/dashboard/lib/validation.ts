@@ -3,10 +3,11 @@ export type ProductDraft = {
   price: string;
   compareAt?: string;
   sku: string;
+  barcode?: string;
   stock: string;
 };
 
-export function validateProductDraft(draft: ProductDraft) {
+export function validateProductDraft(draft: ProductDraft, { variantManaged = false } = {}) {
   const errors: Partial<Record<keyof ProductDraft, string>> = {};
   const title = draft.title.trim();
   const price = Number(draft.price);
@@ -18,6 +19,12 @@ export function validateProductDraft(draft: ProductDraft) {
   } else if (title.length > 180) {
     errors.title = "Product title must be 180 characters or fewer";
   }
+
+  // Product metadata saves do not own pricing or stock on multi-variant products.
+  if (variantManaged) return { valid: Object.keys(errors).length === 0, errors };
+  if (draft.sku.trim().length > 80) errors.sku = "SKU must be 80 characters or fewer";
+  if ((draft.barcode ?? "").trim().length > 80)
+    errors.barcode = "Barcode must be 80 characters or fewer";
 
   if (!draft.price.trim() || !Number.isFinite(price) || price <= 0) {
     errors.price = "Price must be a finite number greater than zero";
