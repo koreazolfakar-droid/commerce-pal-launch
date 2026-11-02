@@ -540,7 +540,7 @@ html.dark .spacecall-ai-modal .spacecall-ai-apply {
   .spacecall-ai-overlay { padding: 8px; }
   .dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal {
     inline-size: calc(100vw - 16px);
-    max-block-size: calc(100dvh - 16px);
+    max-block-size: calc(100dvh - 24px);
     border-radius: 16px;
     font-size: 13px;
   }
