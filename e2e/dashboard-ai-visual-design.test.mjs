@@ -24,7 +24,7 @@ test("AI visual refresh is scoped to the assistant dialog, not global dashboard 
 });
 
 test("small screens keep a scrollable body, selection controls, and accessible minimum targets", () => {
-  assert.match(styles, /max-block-size: calc\(100dvh - 16px\)/);
+  assert.match(styles, /max-block-size: calc\(100dvh - 24px\)/);
   assert.match(styles, /overflow-y: auto/);
   assert.match(styles, /min-block-size: 44px/);
   assert.match(styles, /max-width: 639px/);
