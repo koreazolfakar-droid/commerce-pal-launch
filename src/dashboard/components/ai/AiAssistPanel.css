@@ -1,0 +1,545 @@
+/*
+ * Space Call AI — research assistant visual language.
+ * Design reference: Shopify's light transactional UI + Linear's restrained
+ * typography, single accent and hairline borders (not a brand replica).
+ * Presentation only. Research, review, selection and save logic are untouched.
+ */
+.dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal {
+  --ai-ink: #202633;
+  --ai-muted: #626c7e;
+  --ai-subtle: #7e8796;
+  --ai-border: #e3e7ee;
+  --ai-canvas: #ffffff;
+  --ai-tint: #f7f8fb;
+  --ai-accent: #535dcc;
+  --ai-accent-hover: #414aad;
+  --ai-accent-soft: #eef0ff;
+  background: var(--ai-canvas);
+  color: var(--ai-ink);
+  border: 1px solid rgba(207, 214, 225, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 24px 75px rgba(22, 32, 55, 0.19), 0 3px 12px rgba(22, 32, 55, 0.07);
+  max-inline-size: 760px;
+  max-block-size: calc(100dvh - 32px);
+  block-size: auto;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  isolation: isolate;
+}
+
+.spacecall-ai-overlay {
+  background: rgba(19, 28, 47, 0.49);
+  backdrop-filter: blur(3px);
+}
+
+.spacecall-ai-modal .spacecall-ai-header {
+  padding: 21px 24px 19px;
+  background: var(--ai-canvas);
+  border-bottom: 1px solid var(--ai-border);
+  gap: 20px;
+}
+.spacecall-ai-modal .spacecall-ai-eyebrow {
+  color: var(--ai-accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
+}
+.spacecall-ai-modal .spacecall-ai-header h2 {
+  margin-block-start: 6px;
+  color: var(--ai-ink);
+  font-size: clamp(18px, 2.6vw, 21px);
+  font-weight: 660;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+.spacecall-ai-modal .spacecall-ai-header p {
+  margin-block-start: 7px;
+  max-inline-size: 57ch;
+  color: var(--ai-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.spacecall-ai-modal .spacecall-ai-close {
+  border: 1px solid var(--ai-border);
+  border-radius: 10px;
+  background: var(--ai-canvas);
+  color: #687387;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.spacecall-ai-modal .spacecall-ai-close:hover {
+  background: var(--ai-tint);
+  color: var(--ai-ink);
+}
+
+.dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal > .spacecall-ai-body {
+  flex: 0 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 20px 24px 24px;
+  scrollbar-gutter: stable;
+}
+.spacecall-ai-modal .spacecall-ai-setup {
+  border: 1px solid var(--ai-border);
+  background: var(--ai-tint);
+  padding: 18px;
+  border-radius: 14px;
+}
+.spacecall-ai-modal .spacecall-ai-setup label > span:first-child {
+  display: block;
+  margin-block-end: 8px;
+  color: #384457;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.spacecall-ai-modal :is(input:not([type="checkbox"]):not([type="radio"]), textarea) {
+  min-inline-size: 0;
+  border: 1px solid #d6dde8;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ai-ink);
+  line-height: 1.45;
+  box-shadow: 0 1px 1px rgba(14, 24, 42, 0.025);
+}
+.spacecall-ai-modal input:not([type="checkbox"]):not([type="radio"]) {
+  min-block-size: 46px;
+  padding-inline: 13px;
+  font-size: 14px;
+}
+.spacecall-ai-modal textarea {
+  padding: 12px;
+  font-size: 13px;
+}
+.spacecall-ai-modal :is(input:not([type="checkbox"]):not([type="radio"]), textarea)::placeholder {
+  color: #929bae;
+}
+.spacecall-ai-modal :is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus-visible {
+  outline: 2px solid rgba(83, 93, 204, 0.35);
+  outline-offset: 1px;
+  border-color: var(--ai-accent);
+}
+.spacecall-ai-modal :is(input[type="radio"], input[type="checkbox"], progress) {
+  accent-color: var(--ai-accent);
+}
+.spacecall-ai-modal :is(button, summary, a):focus-visible {
+  outline: 2px solid var(--ai-accent);
+  outline-offset: 2px;
+}
+.spacecall-ai-modal .spacecall-ai-helper {
+  color: var(--ai-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.spacecall-ai-modal .spacecall-ai-primary {
+  margin-block-start: 15px;
+  min-block-size: 46px;
+  border-radius: 10px;
+  background: var(--ai-accent);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  box-shadow: 0 2px 3px rgba(45, 55, 134, 0.12);
+  transition: background-color 130ms ease, transform 130ms ease;
+}
+.spacecall-ai-modal .spacecall-ai-primary:hover:not(:disabled) {
+  background: var(--ai-accent-hover);
+}
+.spacecall-ai-modal .spacecall-ai-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.spacecall-ai-modal .spacecall-ai-advanced {
+  margin-block-start: 12px;
+  overflow: hidden;
+  border: 1px solid var(--ai-border);
+  border-radius: 12px;
+  background: #fff;
+}
+.spacecall-ai-modal .spacecall-ai-advanced > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 15px;
+  color: #4c5668;
+  font-size: 12px;
+  font-weight: 590;
+  list-style: none;
+  cursor: pointer;
+}
+.spacecall-ai-modal .spacecall-ai-advanced > summary::-webkit-details-marker { display: none; }
+.spacecall-ai-modal .spacecall-ai-advanced > summary::after {
+  content: "";
+  display: block;
+  block-size: 7px;
+  inline-size: 7px;
+  flex: 0 0 auto;
+  border-inline-end: 1.7px solid #7d8797;
+  border-block-end: 1.7px solid #7d8797;
+  transform: rotate(45deg);
+  transition: transform 140ms ease;
+}
+.spacecall-ai-modal .spacecall-ai-advanced[open] > summary::after {
+  transform: rotate(225deg);
+}
+.spacecall-ai-modal .spacecall-ai-advanced > div {
+  padding: 0 15px 16px;
+  border-color: var(--ai-border);
+}
+.spacecall-ai-modal .spacecall-ai-advanced :is(label > span:first-child, legend) {
+  color: #384457;
+  font-size: 12px;
+  font-weight: 650;
+}
+.spacecall-ai-modal .spacecall-ai-advanced label {
+  line-height: 1.5;
+}
+
+.spacecall-ai-modal .spacecall-ai-loading,
+.spacecall-ai-modal .spacecall-ai-error {
+  margin-block-start: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--ai-border);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--ai-ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.spacecall-ai-modal .spacecall-ai-error {
+  border-color: #efcdd1;
+  color: #9b303e;
+  background: #fff9fa;
+}
+
+.spacecall-ai-modal .spacecall-ai-results {
+  margin-block-start: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.spacecall-ai-modal .spacecall-ai-status-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.spacecall-ai-modal .spacecall-ai-status {
+  min-inline-size: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--ai-border);
+  border-inline-start: 3px solid #c2a35a;
+  border-radius: 11px;
+  background: #fff;
+  color: var(--ai-ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.spacecall-ai-modal .spacecall-ai-status[data-level="success"] {
+  border-inline-start-color: #3b9775;
+}
+.spacecall-ai-modal .spacecall-ai-status[data-level="error"] {
+  border-inline-start-color: #be5867;
+}
+.spacecall-ai-modal .spacecall-ai-status > div:first-child {
+  color: #384457;
+  font-size: 12px;
+  font-weight: 680;
+}
+.spacecall-ai-modal .spacecall-ai-status > p {
+  margin-block-start: 6px;
+  color: #606c7d;
+  font-size: 12px;
+  font-weight: 430;
+  line-height: 1.52;
+}
+.spacecall-ai-modal .spacecall-ai-status > details {
+  margin-block-start: 7px;
+  color: #525d70;
+}
+.spacecall-ai-modal .spacecall-ai-status details summary {
+  color: var(--ai-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.spacecall-ai-modal .spacecall-ai-status details p {
+  color: #5b6575;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.spacecall-ai-modal .spacecall-ai-warnings,
+.spacecall-ai-modal .spacecall-ai-missing {
+  overflow: hidden;
+  border: 1px solid var(--ai-border);
+  border-radius: 11px;
+  background: #fff;
+  padding: 0;
+}
+.spacecall-ai-modal :is(.spacecall-ai-warnings, .spacecall-ai-missing) > summary {
+  padding: 10px 14px;
+  color: #394457;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 650;
+  list-style-position: inside;
+}
+.spacecall-ai-modal :is(.spacecall-ai-warnings, .spacecall-ai-missing)[open] > summary {
+  border-block-end: 1px solid var(--ai-border);
+  background: var(--ai-tint);
+}
+.spacecall-ai-modal :is(.spacecall-ai-warnings, .spacecall-ai-missing) > ul {
+  max-block-size: 230px;
+  overflow-y: auto;
+  padding: 12px 15px 14px;
+  margin: 0;
+  background: #fff;
+  color: #596477;
+  font-size: 12px;
+  line-height: 1.56;
+}
+.spacecall-ai-modal .spacecall-ai-missing li + li {
+  margin-block-start: 12px;
+  padding-block-start: 11px;
+  border-block-start: 1px solid #edf0f5;
+}
+.spacecall-ai-modal .spacecall-ai-missing li strong {
+  color: #30394b;
+  font-size: 12px;
+  font-weight: 660;
+}
+.spacecall-ai-modal .spacecall-ai-missing li span {
+  margin-block-start: 4px;
+  color: var(--ai-muted);
+}
+
+.spacecall-ai-modal .spacecall-ai-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.spacecall-ai-modal .spacecall-ai-metric {
+  min-inline-size: 0;
+  min-block-size: 75px;
+  padding: 12px 6px 10px;
+  border: 1px solid var(--ai-border);
+  border-radius: 11px;
+  background: var(--ai-tint);
+  color: #5c6878;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+}
+.spacecall-ai-modal .spacecall-ai-metric strong {
+  margin-block-end: 3px;
+  color: var(--ai-ink);
+  font-size: 22px;
+  font-weight: 665;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.spacecall-ai-modal .spacecall-ai-selection {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.spacecall-ai-modal .spacecall-ai-selection button {
+  border: 1px solid var(--ai-border);
+  border-radius: 9px;
+  background: #fff;
+  color: #3c4656;
+  padding-inline: 12px;
+  font-size: 12px;
+  font-weight: 580;
+  line-height: 1.25;
+  transition: background-color 130ms ease, border-color 130ms ease;
+}
+.spacecall-ai-modal .spacecall-ai-selection button:hover {
+  border-color: #c1c9d9;
+  background: var(--ai-tint);
+}
+.spacecall-ai-modal .spacecall-ai-selection > span:last-child {
+  color: var(--ai-subtle);
+  font-size: 11px;
+  margin-inline-start: auto;
+}
+
+.spacecall-ai-modal .spacecall-ai-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.spacecall-ai-modal .spacecall-ai-suggestions h3 {
+  color: #4e5766;
+  font-size: 12px;
+  font-weight: 670;
+  letter-spacing: 0;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion {
+  border: 1px solid var(--ai-border);
+  border-radius: 12px;
+  padding: 13px 14px;
+  background: #fff;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion:not([data-disabled="true"]):hover {
+  border-color: #c6ccdd;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion[data-selected="true"] {
+  border-color: #adb7f0;
+  background: #f7f8ff;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion[data-disabled="true"] {
+  background: #fafbfd;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion input[type="checkbox"] {
+  inline-size: 17px;
+  block-size: 17px;
+  margin-block-start: 2px;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion-heading {
+  color: #283347;
+  font-size: 13px;
+  font-weight: 680;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion-value {
+  margin-block-start: 9px;
+  color: #323e50;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1.6;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion .rounded-full {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.spacecall-ai-modal .spacecall-ai-suggestion .text-\[9px\],
+.spacecall-ai-modal .spacecall-ai-suggestion .text-\[8px\] {
+  font-size: 11px;
+  line-height: 1.45;
+}
+.spacecall-ai-modal .spacecall-ai-empty {
+  border-radius: 11px;
+  border-color: var(--ai-border);
+  background: var(--ai-tint);
+  color: var(--ai-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.spacecall-ai-modal .spacecall-ai-sources > div:first-child {
+  color: #5b6575;
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.035em;
+}
+.spacecall-ai-modal .spacecall-ai-sources a {
+  min-block-size: 42px;
+  border: 1px solid var(--ai-border);
+  border-radius: 10px;
+  color: #394457;
+  background: #fff;
+  font-size: 12px;
+}
+.spacecall-ai-modal .spacecall-ai-sources a:hover {
+  border-color: #c8cce4;
+  background: var(--ai-tint);
+}
+
+.spacecall-ai-modal .spacecall-ai-footer {
+  gap: 12px;
+  padding: 14px 24px max(14px, env(safe-area-inset-bottom));
+  border-block-start: 1px solid var(--ai-border);
+  background: #fff;
+}
+.spacecall-ai-modal .spacecall-ai-footer > div {
+  color: var(--ai-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.spacecall-ai-modal .spacecall-ai-apply {
+  min-block-size: 44px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--ai-accent);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  box-shadow: 0 1px 3px rgba(46, 51, 115, 0.11);
+  transition: background-color 130ms ease;
+}
+.spacecall-ai-modal .spacecall-ai-apply:hover:not(:disabled) {
+  background: var(--ai-accent-hover);
+}
+.spacecall-ai-modal .spacecall-ai-apply:disabled {
+  color: #5e6979;
+  background: #e6eaf2;
+  border-color: #e1e5ed;
+  box-shadow: none;
+  opacity: 1;
+}
+
+@media (max-width: 639px) {
+  .spacecall-ai-overlay { padding: 8px; }
+  .dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal {
+    inline-size: calc(100vw - 16px);
+    max-block-size: calc(100dvh - 16px);
+    border-radius: 16px;
+    font-size: 13px;
+  }
+  .spacecall-ai-modal .spacecall-ai-header { padding: 16px 16px 14px; gap: 12px; }
+  .spacecall-ai-modal .spacecall-ai-header h2 { font-size: 18px; }
+  .spacecall-ai-modal .spacecall-ai-header p { font-size: 12px; }
+  .dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal > .spacecall-ai-body {
+    padding: 14px 14px 16px;
+    scrollbar-gutter: auto;
+  }
+  .spacecall-ai-modal .spacecall-ai-setup { padding: 13px; border-radius: 12px; }
+  .spacecall-ai-modal .spacecall-ai-status-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .spacecall-ai-modal .spacecall-ai-results { gap: 10px; margin-block-start: 14px; }
+  .spacecall-ai-modal .spacecall-ai-metric { min-block-size: 69px; font-size: 10px; }
+  .spacecall-ai-modal .spacecall-ai-metric strong { font-size: 20px; }
+  .spacecall-ai-modal .spacecall-ai-selection {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px;
+  }
+  .spacecall-ai-modal .spacecall-ai-selection button {
+    min-inline-size: 0;
+    inline-size: 100%;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+  .spacecall-ai-modal .spacecall-ai-selection > span:last-child {
+    text-align: end;
+    margin-inline-start: 0;
+    align-self: center;
+  }
+  .spacecall-ai-modal .spacecall-ai-footer {
+    padding: 11px 14px max(11px, env(safe-area-inset-bottom));
+  }
+  .spacecall-ai-modal .spacecall-ai-apply { font-size: 13px; }
+}
+@media (max-width: 359px) {
+  .spacecall-ai-modal .spacecall-ai-header p { font-size: 11px; }
+  .spacecall-ai-modal .spacecall-ai-metric { font-size: 9px; }
+}
+@media (max-height: 530px) {
+  .spacecall-ai-modal .spacecall-ai-header { padding-block: 11px; }
+  .dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal > .spacecall-ai-body { padding-block: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spacecall-ai-modal *,
+  .spacecall-ai-modal *::before,
+  .spacecall-ai-modal *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
