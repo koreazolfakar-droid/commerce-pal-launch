@@ -1528,3 +1528,35 @@
   align-items: stretch;
   min-inline-size: 0;
 }
+
+/* Field geometry follows the actual panel width after the integrated sidebar. */
+.dashboard-theme-scope .dashboard-product-editor :is(#product-pricing, #product-inventory) > .grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel label > span:first-child {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel textarea {
+  resize: vertical;
+  min-block-size: 6rem;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel button {
+  min-block-size: 2.75rem;
+  min-inline-size: 2.75rem;
+}
+.dashboard-theme-scope .dashboard-product-editor #product-media img {
+  max-inline-size: 100%;
+}
+.dashboard-theme-scope .dashboard-product-editor :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope.dashboard-ai-dialog :is(button, summary) {
+  min-block-size: 2.75rem;
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope.dashboard-ai-dialog :is(input:not([type="checkbox"]):not([type="radio"]), textarea) {
+    font-size: 1rem;
+  }
+}

@@ -9,6 +9,7 @@ type Props = {
   imageUrl: string;
   color?: string;
   storage?: string;
+  status?: string;
 };
 
 function money(value: number) {
@@ -25,6 +26,7 @@ export default function ProductCreatePreview({
   imageUrl,
   color,
   storage,
+  status,
 }: Props) {
   const { t } = useLanguage();
   const priceValue = Number(price);
@@ -43,7 +45,7 @@ export default function ProductCreatePreview({
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
         <h2 className="text-[13px] font-bold text-[#14203a]">{t("Live preview")}</h2>
         <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-          {t("Unpublished")}
+          {t(status ?? "Unpublished")}
         </span>
       </div>
       <div className="p-5">

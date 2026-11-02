@@ -46,7 +46,7 @@ test("create, edit, save draft and publish retain guarded atomic RPC flow", () =
   assert.match(form, /const savedProduct = await saveDashboardProduct\(productInput\)/);
   assert.match(form, /status: createAsDraft \? \("Draft" as const\) : status/);
   assert.match(form, /createAsDraft && status === "Active"/);
-  assert.match(form, /setForm\(\(current\) => \(\{ \.\.\.current, status \}\)\)/);
+  assert.match(form, /status: current.status === form.status \? status : current.status/);
   assert.match(catalog, /"save_store_product_editor"/);
   assert.match(catalog, /invalidateNativeStoreCache\(\)/);
   assert.match(catalog, /broadcastStorefrontRefresh\(\)/);

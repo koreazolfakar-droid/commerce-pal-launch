@@ -1,4 +1,25 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Average unit cost": "متوسط تكلفة الوحدة",
+  "Estimated gross profit": "الربح الإجمالي المقدّر",
+  "Gross margin": "هامش الربح الإجمالي",
+  "Cost is maintained by receiving and inventory accounting. Shipping and taxes are excluded.":
+    "تُحدّث التكلفة عبر الاستلام ومحاسبة المخزون. لا يشمل التقدير الشحن والضرائب.",
+  "Product organization": "تنظيم المنتج",
+  "Product type": "نوع المنتج",
+  "Separate tags with commas. Tags are used by storefront search.":
+    "افصل الوسوم بفواصل. تُستخدم الوسوم في البحث داخل المتجر.",
+  "Arabic translation": "الترجمة العربية",
+  "Arabic description": "الوصف بالعربية",
+  "Alternative text": "النص البديل للصورة",
+  "Save alternative text": "حفظ النص البديل",
+  "Alternative text saved.": "تم حفظ النص البديل.",
+  "Saving alternative text failed.": "تعذّر حفظ النص البديل.",
+  "Search engine preview": "معاينة نتائج البحث",
+  "Add a description to preview the search listing.": "أضف وصفًا لمعاينة ظهور المنتج في البحث.",
+  "Product type must be 120 characters or fewer": "يجب ألا يتجاوز نوع المنتج ١٢٠ حرفًا",
+  "Arabic description must be 5000 characters or fewer": "يجب ألا يتجاوز الوصف العربي ٥٠٠٠ حرف",
+  "Use at most 250 tags of 255 characters each":
+    "أدخل ٢٥٠ وسمًا كحد أقصى، وبحد أقصى ٢٥٥ حرفًا لكل وسم",
   Commerce: "المبيعات والعمليات",
   Administration: "الإدارة والإعدادات",
   "Open store": "فتح المتجر",
@@ -58,7 +79,8 @@ export const dashboardUiArabic: Record<string, string> = {
   "Complete form": "إكمال النموذج",
   "Start with the exact product name, model and variant. The assistant will draft matching fields and flag anything without reliable evidence.":
     "اكتب اسم المنتج والموديل والنسخة بدقّة. المساعد بيقترح تعبئة الخانات، وبيوضح المعلومات اللي ما إلها مصدر موثوق.",
-  "Advanced AI options (sources, mode and validation)": "خيارات متقدمة: مصادر وطريقة التعبئة والتحقق",
+  "Advanced AI options (sources, mode and validation)":
+    "خيارات متقدمة: مصادر وطريقة التعبئة والتحقق",
   "Optional: add an official specification sheet or source text for precise facts. A URL alone is not proof when live web retrieval is unavailable.":
     "اختياري: أضف نص المواصفات الرسمية لدقّة أعلى. الرابط وحده مش إثبات إذا البحث المباشر غير متاح.",
   "Reference text improves factual accuracy. Live web lookup depends on your AI provider.":

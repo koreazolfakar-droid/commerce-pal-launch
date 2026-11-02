@@ -15,6 +15,7 @@
     "check": "bun run typecheck && bun run lint && bun run test:unit && bun run build && bun run test:ssr",
     "format": "prettier --write .",
     "test:e2e": "playwright test",
+    "test:product-editor:browser": "node e2e/product-editor-production-qa.mjs",
     "test:dashboard:browser": "node e2e/dashboard-audit-browser.mjs && node e2e/dashboard-workspace-flows.mjs",
     "test:commerce:setup": "node e2e/helpers/prepare-commerce-stack.mjs",
     "test:commerce": "node e2e/dashboard-commerce-acceptance.mjs",

@@ -10,7 +10,7 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import ProductColorPicker from "@/dashboard/components/products/ProductColorPicker";
@@ -139,10 +139,12 @@ export default function ProductVariantManager({
   productId,
   onCountChange,
   onSingleVariantChange,
+  onBusyChange,
 }: {
   productId: string;
   onCountChange?: (count: number) => void;
   onSingleVariantChange?: (variant: DashboardProductVariant | null) => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLanguage();
   const [variants, setVariants] = useState<DashboardProductVariant[]>([]);
@@ -160,6 +162,10 @@ export default function ProductVariantManager({
   const [editing, setEditing] = useState<DashboardProductVariant | null>(null);
   const [draft, setDraft] = useState<VariantDraft>(EMPTY_DRAFT);
   const [open, setOpen] = useState(false);
+  useLayoutEffect(() => {
+    onBusyChange?.(loading || saving || uploading || deletingVariantId !== null);
+    return () => onBusyChange?.(false);
+  }, [onBusyChange, loading, saving, uploading, deletingVariantId]);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
   const onCountChangeRef = useRef(onCountChange);
