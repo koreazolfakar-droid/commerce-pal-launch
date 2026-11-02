@@ -1,7 +1,7 @@
 /*
  * Space Call AI — research assistant visual language.
- * Design reference: Shopify's light transactional UI + Linear's restrained
- * typography, single accent and hairline borders (not a brand replica).
+ * Design reference: quiet, light transactional surfaces with restrained
+ * typography, a single accent and thin dividers (not a brand replica).
  * Presentation only. Research, review, selection and save logic are untouched.
  */
 .dashboard-theme-scope.dashboard-ai-dialog.spacecall-ai-modal {
