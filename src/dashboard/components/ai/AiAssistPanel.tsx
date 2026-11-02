@@ -670,7 +670,7 @@ export default function AiAssistPanel({
 
 
                   {result ? (
-                    <div className="spacecall-ai-results mt-5 space-y-4">
+                    <div className="spacecall-ai-results mt-5">
                       <div className="spacecall-ai-status-grid">
                       <div
                         data-level={result.grounded ? "success" : "warning"}
@@ -829,7 +829,7 @@ export default function AiAssistPanel({
                           </ul>
                         </details>
                       )}
-                      <div className="spacecall-ai-suggestions space-y-2">
+                      <div className="spacecall-ai-suggestions">
                         {orderedSuggestions.map((suggestion, index) => {
                           const definition = fieldMap.get(suggestion.field);
                           if (!definition) return null;
