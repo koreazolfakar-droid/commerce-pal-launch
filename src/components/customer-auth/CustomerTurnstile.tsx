@@ -76,8 +76,9 @@ export default function CustomerTurnstile({
 
     void ensureScript()
       .then(() => {
-        if (cancelled || !containerRef.current || !turnstileApi()) return;
-        widgetIdRef.current = turnstileApi().render(containerRef.current, {
+        const api = turnstileApi();
+        if (cancelled || !containerRef.current || !api) return;
+        widgetIdRef.current = api.render(containerRef.current, {
           sitekey: customerTurnstileSiteKey,
           theme: "auto",
           size: "flexible",
@@ -91,8 +92,9 @@ export default function CustomerTurnstile({
 
     return () => {
       cancelled = true;
-      if (widgetIdRef.current && turnstileApi()) {
-        turnstileApi().remove(widgetIdRef.current);
+      const api = turnstileApi();
+      if (widgetIdRef.current && api) {
+        api.remove(widgetIdRef.current);
         widgetIdRef.current = null;
       }
       onTokenChange(null);
@@ -102,8 +104,9 @@ export default function CustomerTurnstile({
   useEffect(() => {
     if (!customerTurnstileSiteKey) return;
     onTokenChange(null);
-    if (widgetIdRef.current && turnstileApi()) {
-      turnstileApi().reset(widgetIdRef.current);
+    const api = turnstileApi();
+    if (widgetIdRef.current && api) {
+      api.reset(widgetIdRef.current);
     }
   }, [resetNonce, onTokenChange]);
 
