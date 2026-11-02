@@ -5,7 +5,9 @@ import { useEffect, useRef } from "react";
  * as the staff login screen. The secret stays exclusively in Supabase Auth.
  */
 export const customerTurnstileSiteKey =
-  (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "").trim();
+  import.meta.env.VITE_CUSTOMER_TURNSTILE_ENABLED === "true"
+    ? (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "").trim()
+    : "";
 
 type TurnstileApi = {
   render: (
