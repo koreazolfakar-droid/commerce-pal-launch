@@ -1706,7 +1706,13 @@ export default function HomepageBuilderPage() {
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-bold text-slate-700">{t("Homepage order — top to bottom")}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                {t("This list follows the website order. Drag, move or insert a section where you want it.")}
+              </p>
+            </div>
             {sections.map((section) => (
               <SectionCard
                 key={section.id}
@@ -1731,7 +1737,27 @@ export default function HomepageBuilderPage() {
               />
             ))}
           </div>
-          <div>
+          <div className="min-w-0">
+            {selected && (
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-indigo-900">
+                    {t("Homepage position")} {selectedIndex + 1} / {sections.length}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
+                    {previousSection ? t("After") + " " + previousSection.name : t("Start of homepage")}
+                    {" · "}
+                    {nextSection ? t("Before") + " " + nextSection.name : t("End of homepage")}
+                  </p>
+                  <p className="mt-1 text-[11px] text-indigo-700">
+                    {t("This is the planned order. Only published and visible sections appear on the live storefront after saving.")}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setPreviewOpen(true)} className="inline-flex min-h-9 items-center gap-2 rounded-xl bg-indigo-700 px-3 text-xs font-semibold text-white">
+                  <Monitor className="size-4" /> {t("Preview this position")}
+                </button>
+              </div>
+            )}
             {selected ? (
               <Editor
                 brands={brands}
@@ -1776,7 +1802,36 @@ export default function HomepageBuilderPage() {
                 <X className="size-4" />
               </button>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mb-5 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4">
+              <label htmlFor="homepage-insert-position" className="mb-2 block text-sm font-bold text-slate-800">
+                {t("Choose where the new section appears")}
+              </label>
+              <select
+                id="homepage-insert-position"
+                value={insertAfterId ?? "__start__"}
+                onChange={(event) => setInsertAfterId(event.target.value === "__start__" ? null : event.target.value)}
+                className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="__start__">{t("At the top of the homepage")}</option>
+                {sections.map((section, index) => (
+                  <option key={section.id} value={section.id}>
+                    {index + 1}. {t("After")} {section.name}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-indigo-800" role="status">
+                <span className="rounded-lg bg-white px-2 py-1">{insertAfter ? insertAfter.name : t("Start of homepage")}</span>
+                <ArrowRight className="size-4 shrink-0 rtl:rotate-180" />
+                <strong className="rounded-lg border border-indigo-300 bg-indigo-100 px-2 py-1">{t("New section goes here")}</strong>
+                <ArrowRight className="size-4 shrink-0 rtl:rotate-180" />
+                <span className="rounded-lg bg-white px-2 py-1">{insertBefore ? insertBefore.name : t("End of homepage")}</span>
+              </div>
+              <p className="mt-3 text-[11px] text-indigo-700">
+                {t("New sections remain drafts and do not appear live until you publish them.")}
+              </p>
+            </div>
+            <p className="mb-3 text-sm font-bold text-slate-800">{t("Choose the kind of section to insert")}</p>
+            <div className="grid max-h-[55vh] gap-3 overflow-y-auto pe-1 sm:grid-cols-2 lg:grid-cols-3">
               {(Object.keys(sectionTypeLabels) as SectionType[]).map((type) => (
                 <button
                   key={type}
@@ -1856,7 +1911,14 @@ export default function HomepageBuilderPage() {
               } space-y-3`}
             >
               {visibleSections.map((section) => (
-                <HomepageSectionRenderer key={section.id} section={section} mode={mode} />
+                <div key={section.id} className={selected?.id === section.id ? "rounded-2xl ring-2 ring-indigo-500 ring-offset-4" : ""}>
+                  {selected?.id === section.id && (
+                    <div className="mb-2 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-bold text-white">
+                      {t("Selected section — position")} {section.order} · {section.name}
+                    </div>
+                  )}
+                  <HomepageSectionRenderer section={section} mode={mode} />
+                </div>
               ))}
               {!visibleSections.length && (
                 <div className="rounded-2xl bg-white p-16 text-center text-sm text-slate-400">
