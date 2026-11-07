@@ -188,6 +188,23 @@ function RichTextField({
   );
 }
 
+function homepageSectionStatus(section: HomepageSection) {
+  if (section.status === "draft") return "Draft — not live";
+  if (
+    !section.enabled ||
+    !section.showOnStorefront ||
+    (!section.showOnDesktop && !section.showOnTablet && !section.showOnMobile)
+  ) return "Hidden from the store";
+  if (!isSectionWithinSchedule(section)) return "Outside display dates";
+  return "Published — visible on selected devices";
+}
+
+const SECTION_TYPE_GROUPS: { label: string; types: SectionType[] }[] = [
+  { label: "Banners and promotions", types: ["hero", "banner", "promo", "announcement", "countdown"] },
+  { label: "Products and categories", types: ["product-carousel", "featured-products", "collection", "collection-grid", "brands", "categories"] },
+  { label: "Content and information", types: ["text", "image-text", "trust", "faq", "newsletter", "video", "custom"] },
+];
+
 function SectionCard({
   section,
   selected,
@@ -233,14 +250,12 @@ function SectionCard({
         <button onClick={onSelect} className="min-w-0 flex-1 text-start">
           <div className="truncate text-[12px] font-bold text-slate-700">{section.name}</div>
           <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
-            <span>{sectionTypeLabels[section.type]}</span>
+            <span>{t(sectionTypeLabels[section.type])}</span>
             <span>·</span>
             <span>#{section.order}</span>
-            {section.status === "published" && (
-              <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 font-bold text-emerald-600">
-                {t("Published")}
-              </span>
-            )}
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600">
+              {t(homepageSectionStatus(section))}
+            </span>
           </div>
         </button>
         <div className="flex shrink-0 items-center gap-1">
@@ -1831,8 +1846,12 @@ export default function HomepageBuilderPage() {
               </p>
             </div>
             <p className="mb-3 text-sm font-bold text-slate-800">{t("Choose the kind of section to insert")}</p>
-            <div className="grid max-h-[55vh] gap-3 overflow-y-auto pe-1 sm:grid-cols-2 lg:grid-cols-3">
-              {(Object.keys(sectionTypeLabels) as SectionType[]).map((type) => (
+            <div className="max-h-[55vh] space-y-5 overflow-y-auto pe-1">
+              {SECTION_TYPE_GROUPS.map((group) => (
+                <section key={group.label}>
+                  <h3 className="mb-2 text-xs font-bold text-slate-700">{t(group.label)}</h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.types.map((type) => (
                 <button
                   key={type}
                   onClick={() => addSection(type)}
@@ -1845,12 +1864,15 @@ export default function HomepageBuilderPage() {
                     <Plus className="size-4 text-slate-300 group-hover:text-indigo-500" />
                   </div>
                   <div className="text-[12px] font-bold text-slate-700">
-                    {sectionTypeLabels[type]}
+                    {t(sectionTypeLabels[type])}
                   </div>
-                  <div className="mt-1 text-[10px] leading-4 text-slate-400">
-                    {sectionTypeDescriptions[type]}
+                  <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                    {t(sectionTypeDescriptions[type])}
                   </div>
                 </button>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </div>
