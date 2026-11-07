@@ -196,6 +196,7 @@ function SectionCard({
   onDuplicate,
   onDelete,
   onMove,
+  onInsertAfter,
 }: {
   section: HomepageSection;
   selected: boolean;
@@ -204,6 +205,7 @@ function SectionCard({
   onDuplicate: () => void;
   onDelete: () => void;
   onMove: (direction: "up" | "down") => void;
+  onInsertAfter: () => void;
 }) {
   const { t } = useLanguage();
   return (
@@ -273,9 +275,9 @@ function SectionCard({
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-        <span className="text-[10px] font-semibold text-slate-400">
-          {section.enabled ? t("Visible in preview") : t("Hidden from preview")}
-        </span>
+        <button type="button" onClick={onInsertAfter} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-indigo-100 px-2 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-50">
+          <Plus className="size-3.5" /> {t("Add immediately below")}
+        </button>
         <Toggle checked={section.enabled} onChange={onToggle} />
       </div>
     </div>
@@ -1331,6 +1333,7 @@ export default function HomepageBuilderPage() {
   useDashboardUnsavedChanges(dirty);
   const [mode, setMode] = useState<DisplayMode>("desktop");
   const [showAdd, setShowAdd] = useState(false);
+  const [insertAfterId, setInsertAfterId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const selected = sections.find((section) => section.id === selectedId) ?? sections[0];
@@ -1449,7 +1452,13 @@ export default function HomepageBuilderPage() {
       sectionId: createHomepageSectionKey(type),
       status: "draft",
     };
-    setSections((current) => [...current, item]);
+    setSections((current) => {
+      const referenceIndex = insertAfterId === null ? -1 : current.findIndex((section) => section.id === insertAfterId);
+      const insertIndex = insertAfterId === null ? 0 : referenceIndex === -1 ? current.length : referenceIndex + 1;
+      const next = [...current];
+      next.splice(insertIndex, 0, item);
+      return next.map((section, index) => ({ ...section, order: index + 1 }));
+    });
     setSelectedId(item.id);
     setShowAdd(false);
     setDirty(true);
@@ -1473,7 +1482,12 @@ export default function HomepageBuilderPage() {
       status: "draft",
       settings: { ...section.settings },
     };
-    setSections((current) => [...current, copy]);
+    setSections((current) => {
+      const next = [...current];
+      const sourceIndex = next.findIndex((item) => item.id === section.id);
+      next.splice(sourceIndex >= 0 ? sourceIndex + 1 : next.length, 0, copy);
+      return next.map((item, index) => ({ ...item, order: index + 1 }));
+    });
     setSelectedId(copy.id);
     setDirty(true);
     toast.success("Section duplicated locally. Save changes to persist it.");
@@ -1572,6 +1586,14 @@ export default function HomepageBuilderPage() {
     [sections, mode],
   );
 
+  const selectedIndex = selected ? sections.findIndex((section) => section.id === selected.id) : -1;
+  const previousSection = selectedIndex > 0 ? sections[selectedIndex - 1] : null;
+  const nextSection = selectedIndex >= 0 ? sections[selectedIndex + 1] : null;
+  const referenceIndex = insertAfterId === null ? -1 : sections.findIndex((section) => section.id === insertAfterId);
+  const insertIndex = insertAfterId === null ? 0 : referenceIndex < 0 ? sections.length : referenceIndex + 1;
+  const insertBefore = sections[insertIndex];
+  const insertAfter = insertIndex > 0 ? sections[insertIndex - 1] : null;
+
   if (loadError)
     return (
       <div role="alert" className="rounded-2xl border bg-white p-6">
@@ -1641,7 +1663,10 @@ export default function HomepageBuilderPage() {
             {t("Publish all")}
           </button>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => {
+              setInsertAfterId(sections[sections.length - 1]?.id ?? null);
+              setShowAdd(true);
+            }}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
           >
             <Plus className="size-4" /> {t("Add section")}
@@ -1670,7 +1695,10 @@ export default function HomepageBuilderPage() {
             {t("No homepage CMS sections found.")}
           </div>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => {
+              setInsertAfterId(null);
+              setShowAdd(true);
+            }}
             className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
           >
             <Plus className="size-4" /> {t("Add first section")}
@@ -1696,6 +1724,10 @@ export default function HomepageBuilderPage() {
                 onDuplicate={() => duplicate(section)}
                 onDelete={() => void deleteSection(section.id)}
                 onMove={(direction) => move(section.id, direction)}
+                onInsertAfter={() => {
+                  setInsertAfterId(section.id);
+                  setShowAdd(true);
+                }}
               />
             ))}
           </div>
