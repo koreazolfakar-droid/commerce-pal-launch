@@ -141,6 +141,9 @@ const STOREFRONT_CATEGORY_SELECT = "id,spec_template" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT = "id,title,handle,brand_id,product_type,tags" as const;
 const RUST_CATALOG_BASE_URL = "https://space-call-rust-backend-production.up.railway.app";
 const RUST_CATALOG_TIMEOUT_MS = 1_800;
+// The Rust catalogue is a canary only. Keep the public Supabase catalogue as
+// the reliable default until the optional backend has production coverage.
+const RUST_CATALOG_CANARY_ENABLED = import.meta.env.VITE_STOREFRONT_RUST_CATALOG_CANARY === "true";
 
 type NativeProduct = {
   product: StoreProduct;
@@ -844,29 +847,48 @@ async function fetchRustCatalogCards(first: number): Promise<RustCatalogCardRow[
   }
 }
 
+async function fetchSupabaseCatalogPreview(first: number): Promise<StoreProduct[]> {
+  const result = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .eq("status", "active")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(Math.max(1, Math.trunc(first)));
+
+  return hydrateProductRows(assertResult(result, "catalog preview products"));
+}
+
 export async function fetchCatalogPreviewProducts(first = 24): Promise<StoreProduct[]> {
   if (first <= 0) return [];
 
-  try {
-    const rows = await fetchRustCatalogCards(first);
-    return rows.map(buildPreviewProduct);
-  } catch (error) {
-    console.warn("Rust catalog card read failed; using hydrated catalog fallback.", error);
-    return fetchCatalogProducts(first);
+  if (RUST_CATALOG_CANARY_ENABLED) {
+    try {
+      const rows = await fetchRustCatalogCards(first);
+      return rows.map(buildPreviewProduct);
+    } catch (error) {
+      console.warn("Rust catalog card canary failed; using Supabase.", error);
+    }
   }
+
+  return fetchSupabaseCatalogPreview(first);
 }
 
 export async function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
   if (first <= 0) return [];
 
-  try {
-    const rows = await fetchRustCatalogRows(first);
-    return hydrateProductRows(rows);
-  } catch (error) {
-    console.warn("Rust catalog read failed; falling back to Supabase.", error);
-    const products = publicProducts(await loadSnapshot());
-    return products.slice(0, Math.max(0, first));
+  if (RUST_CATALOG_CANARY_ENABLED) {
+    try {
+      const rows = await fetchRustCatalogRows(first);
+      return hydrateProductRows(rows);
+    } catch (error) {
+      console.warn("Rust catalog canary failed; using Supabase.", error);
+    }
   }
+
+  // Match the direct Supabase snapshot used by storefront search so every
+  // publicly visible active product appears in /shop as well.
+  return publicProducts(await loadSnapshot()).slice(0, Math.trunc(first));
 }
 
 export async function fetchHomepageProducts(first = 48): Promise<StoreProduct[]> {
