@@ -99,7 +99,12 @@ function ShopPage() {
     return () => window.clearTimeout(timer);
   }, [hasImmediateCatalogIntent]);
 
-  const { data: fullCatalog } = useQuery({
+  const {
+    data: fullCatalog,
+    isError: fullCatalogError,
+    isFetching: fullCatalogFetching,
+    refetch: refetchFullCatalog,
+  } = useQuery({
     ...catalogQueryOptions(),
     enabled: fullCatalogEnabled || hasImmediateCatalogIntent,
   });
@@ -112,6 +117,36 @@ function ShopPage() {
   return (
     <StoreLayout>
       <CatalogView
+        topContent={
+          !fullCatalog ? (
+            <div
+              data-testid="shop-catalog-load-state"
+              role={fullCatalogError ? "alert" : "status"}
+              aria-live="polite"
+              className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-sm text-foreground"
+            >
+              <span>
+                {fullCatalogError
+                  ? language === "ar"
+                    ? "تعذّر تحميل بقية المنتجات. المعروض حاليًا جزء من الكتالوج فقط."
+                    : "Could not load the full catalog. Only a portion of products is shown."
+                  : language === "ar"
+                    ? "جارٍ تحميل بقية منتجات المتجر…"
+                    : "Loading the rest of the store catalog…"}
+              </span>
+              {fullCatalogError ? (
+                <button
+                  type="button"
+                  onClick={() => void refetchFullCatalog()}
+                  disabled={fullCatalogFetching}
+                  className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+                >
+                  {language === "ar" ? "إعادة المحاولة" : "Retry loading"}
+                </button>
+              ) : null}
+            </div>
+          ) : undefined
+        }
         title={language === "ar" ? "تصفّح كل المنتجات" : "Shop all products"}
         description={
           language === "ar"
