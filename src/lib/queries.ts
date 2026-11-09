@@ -102,7 +102,11 @@ async function fetchCatalogIndexSafely(first = 500, useSessionFallback = true) {
   try {
     const [products, vendors] = await Promise.all([
       fetchCatalogProducts(first),
-      fetchBrandVendors(),
+      fetchBrandVendors().catch((error) => {
+        // Brand labels are optional metadata, not a prerequisite for seeing products.
+        console.warn("Catalog brand metadata unavailable; showing products without it.", error);
+        return [] as string[];
+      }),
     ]);
     if (useSessionFallback) writeCatalogRefreshFallback(products, vendors);
     return buildCatalogFromSource(products, vendors);

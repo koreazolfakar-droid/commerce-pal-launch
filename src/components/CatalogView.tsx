@@ -1,5 +1,5 @@
 import { SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ProductGrid } from "@/components/ProductGrid";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
@@ -234,6 +234,7 @@ export function CatalogView({
   const activeCount = activeFilterCount(filters);
   const [viewMode, setViewMode] = useProductViewMode("grid", "space-call-catalog-view-mode");
   const [visibleCount, setVisibleCount] = useState(CATALOG_RENDER_PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const filterSignature = JSON.stringify(filters);
 
   useEffect(() => {
@@ -242,6 +243,21 @@ export function CatalogView({
 
   const visibleProducts = products.slice(0, visibleCount);
   const hasMoreProducts = visibleProducts.length < products.length;
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!hasMoreProducts || !target || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setVisibleCount((count) => Math.min(products.length, count + CATALOG_RENDER_PAGE_SIZE));
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreProducts, products.length]);
 
   return (
     <div className="catalog-page mx-auto w-full max-w-[80rem] bg-white px-3 py-4 min-[390px]:px-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 dark:bg-background">
@@ -458,7 +474,7 @@ export function CatalogView({
           />
 
           {hasMoreProducts ? (
-            <div className="mt-6 flex justify-center sm:mt-8">
+            <div ref={loadMoreRef} className="mt-6 flex justify-center sm:mt-8">
               <Button
                 type="button"
                 variant="outline"
