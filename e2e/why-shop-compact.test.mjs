@@ -16,9 +16,9 @@ test("Why Shop stays compact and consolidates useful service actions", async () 
   assert.doesNotMatch(whyShop, /title:\s*\{\s*en:\s*"Direct support"/);
   assert.match(whyShop, /توفر مباشر، أسعار واضحة ودعم عند الحاجة/);
   assert.match(whyShop, /data-testid="why-shop-benefits"/);
-  assert.match(whyShop, /divide-y divide-border\\/70 lg:grid lg:grid-cols-3 lg:divide-y-0/);
+  assert.match(whyShop, /divide-y divide-border\/70 lg:grid lg:grid-cols-3 lg:divide-y-0/);
   assert.match(whyShop, /grid grid-cols-2 gap-2 md:grid-cols-3/);
-  assert.match(whyShop, /col-span-2 min-h-\\[72px\\] flex-row items-center/);
+  assert.match(whyShop, /col-span-2 min-h-\[72px\] flex-row items-center/);
   assert.match(whyShop, /focus-visible:ring-2/);
   assert.match(whyShop, /Quick links/);
   assert.match(whyShop, /روابط سريعة/);
