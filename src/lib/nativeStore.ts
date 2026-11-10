@@ -531,56 +531,115 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
     .filter((product): product is StoreProduct => Boolean(product));
 }
 
+/**
+ * Supabase's per-response row limit must not silently hide products at the end
+ * of the catalog (or leave their variants, images and category links behind).
+ * Use stable ordering across every page for deterministic snapshots.
+ */
+async function fetchAllSnapshotPages<T>(
+  page: (start: number, end: number) => PromiseLike<{
+    data: T[] | null;
+    error: { message: string } | null;
+  }>,
+  label: string,
+): Promise<T[]> {
+  const pageSize = 500;
+  const results: T[] = [];
+  for (let start = 0; ; start += pageSize) {
+    const batch = assertResult(await page(start, start + pageSize - 1), label);
+    results.push(...batch);
+    if (batch.length < pageSize) return results;
+  }
+}
+
 async function fetchSnapshot(): Promise<NativeSnapshot> {
   const [
-    productResult,
-    variantResult,
-    imageResult,
-    collectionResult,
-    linkResult,
-    brandResult,
-    categoryResult,
+    productRows,
+    variantRows,
+    imageRows,
+    collectionRows,
+    links,
+    brands,
+    categories,
   ] = await Promise.all([
-    publicSupabase
-      .from("store_products")
-      .select(STOREFRONT_PRODUCT_SELECT)
-      .eq("status", "active")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false }),
-    publicSupabase
-      .from("store_product_variants")
-      .select(STOREFRONT_VARIANT_SELECT)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_product_images")
-      .select(STOREFRONT_IMAGE_SELECT)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("title", { ascending: true }),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT)
-      .eq("is_visible", true)
-      .order("sort_order", { ascending: true }),
-    publicSupabase.from("store_categories").select(STOREFRONT_CATEGORY_SELECT),
+    fetchAllSnapshotPages<StorefrontProductRow>(
+      (from, to) => publicSupabase
+        .from("store_products")
+        .select(STOREFRONT_PRODUCT_SELECT)
+        .eq("status", "active")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+      "products",
+    ),
+    fetchAllSnapshotPages<StorefrontVariantRow>(
+      (from, to) => publicSupabase
+        .from("store_product_variants")
+        .select(STOREFRONT_VARIANT_SELECT)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+      "variants",
+    ),
+    fetchAllSnapshotPages<StorefrontImageRow>(
+      (from, to) => publicSupabase
+        .from("store_product_images")
+        .select(STOREFRONT_IMAGE_SELECT)
+        .order("sort_order", { ascending: true })
+        .order("product_id", { ascending: true })
+        .order("url", { ascending: true })
+        .range(from, to),
+      "images",
+    ),
+    fetchAllSnapshotPages<StorefrontCollectionRow>(
+      (from, to) => publicSupabase
+        .from("store_collections")
+        .select(STOREFRONT_COLLECTION_SELECT)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("title", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+      "collections",
+    ),
+    fetchAllSnapshotPages<StorefrontCollectionLinkRow>(
+      (from, to) => publicSupabase
+        .from("store_collection_products")
+        .select(STOREFRONT_COLLECTION_LINK_SELECT)
+        .order("sort_order", { ascending: true })
+        .order("collection_id", { ascending: true })
+        .order("product_id", { ascending: true })
+        .range(from, to),
+      "collection links",
+    ),
+    fetchAllSnapshotPages<StorefrontBrandRow>(
+      (from, to) => publicSupabase
+        .from("cms_brands")
+        .select(STOREFRONT_BRAND_SELECT)
+        .eq("is_visible", true)
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+      "brands",
+    ),
+    fetchAllSnapshotPages<StorefrontCategoryRow>(
+      async (from, to) => {
+        const result = await publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .order("id", { ascending: true })
+          .range(from, to);
+        if (isMissingCategorySpecTemplate(result.error)) {
+          console.warn("Supabase category templates unavailable; continuing without category metadata.");
+          return { data: [] as StorefrontCategoryRow[], error: null };
+        }
+        return result;
+      },
+      "categories",
+    ),
   ]);
-
-  const productRows = assertResult(productResult, "products");
-  const variantRows = assertResult(variantResult, "variants");
-  const imageRows = assertResult(imageResult, "images");
-  const collectionRows = assertResult(collectionResult, "collections");
-  const links = assertResult(linkResult, "collection links");
-  const brands = assertResult(brandResult, "brands");
-  const categories = categoryRowsOrEmpty(categoryResult, "categories");
 
   const variantsByProduct = groupByProduct(variantRows);
   const imagesByProduct = groupByProduct(imageRows);
@@ -885,7 +944,7 @@ export async function fetchCatalogPreviewProducts(first = 24): Promise<StoreProd
 export async function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
   if (first <= 0) return [];
 
-  if (RUST_CATALOG_CANARY_ENABLED) {
+  if (RUST_CATALOG_CANARY_ENABLED && first <= 500) {
     try {
       const rows = await fetchRustCatalogRows(first);
       return hydrateProductRows(rows);
