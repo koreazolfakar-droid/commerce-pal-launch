@@ -31,8 +31,17 @@ export function isUsedPhone(product: StoreProduct) {
     .toLowerCase();
 
   // Resolve the item itself: a brand or compatibility mention is not a phone.
-  const category = primaryCategory(product)?.slug;
-  if (category && category !== "smartphones") return false;
+  const category = primaryCategory(product);
+  // Managed categories preserve their merchant slug (e.g. "smartphone"),
+  // while legacy taxonomy uses "smartphones" for the same product kind.
+  const phoneCategory =
+    category &&
+    [category.slug, category.label].some((value) =>
+      /^(?:smart[ -]?phones?|phones?|used-phones|هاتف(?: ذكي)?|هواتف(?: ذكية)?)$/iu.test(
+        value.trim(),
+      ),
+    );
+  if (category && !phoneCategory) return false;
   if (
     !category &&
     !/(?:^|[^\p{L}\p{N}])(?:smartphones?|phones?|iphone|galaxy|pixel|هاتف|هواتف|جوال)(?:$|[^\p{L}\p{N}])/u.test(

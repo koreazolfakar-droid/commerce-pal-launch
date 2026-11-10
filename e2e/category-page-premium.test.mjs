@@ -14,7 +14,7 @@ const catalog = await readFile(
 test("category detail keeps Dashboard-managed description without a custom hero", () => {
   assert.match(
     category,
-    /select\("name,name_ar,slug,description,image_url,seo_title,seo_description"\)/,
+    /select\("id,name,name_ar,slug,description,image_url,seo_title,seo_description"\)/,
   );
   assert.match(category, /loaderData\.description/);
   assert.match(category, /description=\{loaderData\.description\?\.trim\(\) \|\| undefined\}/);
