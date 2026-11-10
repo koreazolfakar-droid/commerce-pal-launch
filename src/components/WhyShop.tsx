@@ -24,8 +24,8 @@ const REASONS = [
       ar: "مخزون وأسعار مباشرة",
     },
     detail: {
-      en: "Check current prices and availability before adding a product to your bag.",
-      ar: "تحقّق من الأسعار والتوفّر قبل إضافة المنتج إلى حقيبتك.",
+      en: "See current prices and availability before ordering.",
+      ar: "اطّلع على الأسعار والتوفّر قبل الطلب.",
     },
   },
   {
@@ -35,8 +35,8 @@ const REASONS = [
       ar: "تصفّح أسهل للمنتجات",
     },
     detail: {
-      en: "Categories, brands and available options make it easier to find the right product.",
-      ar: "تساعدك الفئات والعلامات التجارية والخيارات المتاحة في الوصول إلى المنتج المناسب.",
+      en: "Browse by category, brand and available options.",
+      ar: "تصفّح حسب الفئة والعلامة التجارية والخيارات المتاحة.",
     },
   },
   {
@@ -46,7 +46,7 @@ const REASONS = [
       ar: "طلب واضح قبل التأكيد",
     },
     detail: {
-      en: "Review products, options and totals before placing your order.",
+      en: "Review items, options and totals before placing an order.",
       ar: "راجع المنتجات والخيارات والإجمالي قبل تأكيد الطلب.",
     },
   },
@@ -105,75 +105,95 @@ export function WhyShop() {
         <p className="mt-1 text-[13px] leading-6 text-muted-foreground sm:text-sm">{subtitle}</p>
       </div>
 
-      <div className="mt-3 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
-        {REASONS.map((reason) => {
-          const Icon = reason.icon;
-          return (
-            <article
-              key={reason.title.en}
-              className="group flex min-w-0 items-start gap-2.5 rounded-xl border border-border/65 bg-card px-3.5 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.035)] transition-[border-color,background-color] duration-150 hover:border-primary/20 hover:bg-card/95 sm:gap-3 sm:px-4 sm:py-4"
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/[0.08] text-primary">
-                <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
-              <div className="min-w-0 pt-0.5">
-                <h3 className="text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-foreground sm:text-sm">
-                  {reason.title[language]}
-                </h3>
-                <p className="mt-0.5 text-[12px] leading-[1.55] text-muted-foreground sm:text-[13px]">
-                  {reason.detail[language]}
-                </p>
-              </div>
-            </article>
-          );
-        })}
+      <div
+        className="mt-3 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+        data-testid="why-shop-benefits"
+      >
+        <div className="divide-y divide-border/70 lg:grid lg:grid-cols-3 lg:divide-y-0">
+          {REASONS.map((reason, index) => {
+            const Icon = reason.icon;
+            return (
+              <article
+                key={reason.title.en}
+                className={`flex min-w-0 items-start gap-3 px-3.5 py-3 sm:px-4 sm:py-3.5 ${index > 0 ? "lg:border-s lg:border-border/70" : ""}`}
+              >
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/[0.08] text-primary">
+                  <Icon className="size-[18px]" strokeWidth={1.8} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold leading-5 tracking-[-0.01em] text-foreground">
+                    {reason.title[language]}
+                  </h3>
+                  <p className="mt-0.5 text-[13px] leading-5 text-muted-foreground">
+                    {reason.detail[language]}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </div>
 
       <nav
-        aria-label={t("storeServices")}
-        className="mt-3 grid gap-2 min-[420px]:grid-cols-3"
+        aria-labelledby="why-shop-quick-links"
+        className="mt-4"
         data-testid="home-quick-actions"
       >
-        {QUICK_ACTIONS.map((action) => {
-          const Icon = action.icon;
-          const className =
-            "group flex min-h-11 min-w-0 items-center gap-2.5 rounded-xl border border-border/65 bg-card px-3 py-2.5 text-start transition-colors hover:border-primary/25";
-          const content = (
-            <>
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-primary">
-                <Icon className="size-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] font-semibold">{t(action.title)}</span>
-                <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium text-primary">
-                  {t(action.cta)}
-                  <ArrowRight className="size-3 rtl:rotate-180" aria-hidden="true" />
+        <h3
+          id="why-shop-quick-links"
+          className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground"
+        >
+          {language === "ar" ? "روابط سريعة" : "Quick links"}
+        </h3>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+          {QUICK_ACTIONS.map((action) => {
+            const Icon = action.icon;
+            const isSupport = !action.to;
+            const className = [
+              "group flex min-h-[104px] min-w-0 flex-col items-start justify-between gap-2.5 rounded-xl border border-border/70 bg-card p-3 text-start motion-safe:transition-colors hover:border-primary/30 hover:bg-primary/[0.025] active:bg-primary/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:p-3.5",
+              isSupport
+                ? "col-span-2 min-h-[72px] flex-row items-center md:col-span-1 md:min-h-[104px] md:flex-col md:items-start"
+                : "",
+            ].join(" ");
+            const content = (
+              <>
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/[0.07] text-primary">
+                    <Icon className="size-[18px]" strokeWidth={1.8} aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 text-[13px] font-semibold leading-5 text-foreground">
+                    {t(action.title)}
+                  </span>
                 </span>
-              </span>
-            </>
-          );
+                <span className="inline-flex shrink-0 items-center gap-1 text-[12px] font-medium text-primary">
+                  {t(action.cta)}
+                  <ArrowRight className="size-3.5 rtl:rotate-180" aria-hidden="true" />
+                </span>
+              </>
+            );
 
-          return action.to ? (
-            <Link
-              key={action.title}
-              to={action.to}
-              search={action.title === "serviceDeals" ? { availability: "on-sale" } : undefined}
-              className={className}
-            >
-              {content}
-            </Link>
-          ) : (
-            <a
-              key={action.title}
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={className}
-            >
-              {content}
-            </a>
-          );
-        })}
+            return action.to ? (
+              <Link
+                key={action.title}
+                to={action.to}
+                search={action.title === "serviceDeals" ? { availability: "on-sale" } : undefined}
+                className={className}
+              >
+                {content}
+              </Link>
+            ) : (
+              <a
+                key={action.title}
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={className}
+              >
+                {content}
+              </a>
+            );
+          })}
+        </div>
       </nav>
     </section>
   );
