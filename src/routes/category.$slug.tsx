@@ -8,11 +8,13 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
+import { productsInManagedCategory } from "@/lib/categoryAssignments";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
 import type { CatalogIndex } from "@/lib/taxonomy";
 
 type ManagedStoreCategory = {
+  id: string;
   name: string;
   name_ar: string | null;
   slug: string;
@@ -22,21 +24,10 @@ type ManagedStoreCategory = {
   seo_description: string | null;
 };
 
-function normalizeCategoryName(value: string | undefined) {
-  return value?.trim().toLocaleLowerCase() ?? "";
-}
-
-function productsInManagedCategory(catalog: CatalogIndex, categoryName: string) {
-  const normalized = normalizeCategoryName(categoryName);
-  return catalog.products.filter(
-    (product) => normalizeCategoryName(product.node.productType) === normalized,
-  );
-}
-
 async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory | null> {
   const { data, error } = await publicSupabase
     .from("store_categories")
-    .select("name,name_ar,slug,description,image_url,seo_title,seo_description")
+    .select("id,name,name_ar,slug,description,image_url,seo_title,seo_description")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -77,12 +68,13 @@ export const Route = createFileRoute("/category/$slug")({
     ]);
 
     if (managedCategory) {
-      const products = productsInManagedCategory(catalog, managedCategory.name);
+      const products = productsInManagedCategory(catalog.products, managedCategory);
 
       void context.queryClient.prefetchQuery(collectionsQueryOptions());
       return {
         label: managedCategory.name,
         labelAr: managedCategory.name_ar,
+        managedCategoryId: managedCategory.id,
         managedCategoryName: managedCategory.name,
         description: managedCategory.description,
         imageUrl: managedCategory.image_url,
@@ -104,6 +96,7 @@ export const Route = createFileRoute("/category/$slug")({
     return {
       label: definition.label,
       labelAr: null,
+      managedCategoryId: null,
       managedCategoryName: null,
       description: null,
       imageUrl: null,
@@ -168,8 +161,11 @@ function CategoryPage() {
     : definition
       ? categoryLabel(definition, language)
       : loaderData.label;
-  const inCategory = loaderData.managedCategoryName
-    ? productsInManagedCategory(catalog, loaderData.managedCategoryName)
+  const inCategory = loaderData.managedCategoryId
+    ? productsInManagedCategory(catalog.products, {
+        id: loaderData.managedCategoryId,
+        name: loaderData.managedCategoryName ?? "",
+      })
     : productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
 
