@@ -11,7 +11,6 @@ import { categoryDefinition, displayCollections, productsInCategory } from "@/li
 import { productsInManagedCategory } from "@/lib/categoryAssignments";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
-import type { CatalogIndex } from "@/lib/taxonomy";
 
 type ManagedStoreCategory = {
   id: string;
