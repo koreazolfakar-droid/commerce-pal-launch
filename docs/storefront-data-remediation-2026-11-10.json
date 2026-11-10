@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-10",
+  "project": "rtwyankpxtffqqrasyzw",
+  "before": [
+    {
+      "id": "6e413740-e9fa-4d78-9ddf-75ddec856b38",
+      "title": "ACEFAST 30W GaN USB-C Fast Charger with LED Display & Cable – Black",
+      "handle": "acefast-30w-gan-usb-c-fast-charger-with-led-display-cable-black",
+      "brand_id": "cb493a08-f19c-4526-9918-94e786c6499e",
+      "category_id": null,
+      "product_type": null,
+      "brand": "ACEFAST",
+      "category": null
+    },
+    {
+      "id": "7a04597f-0c92-401e-a517-138c924c4599",
+      "title": "ACEFAST C24-03 USB-C to USB-C Fast Charging Data Cable (60W, 1.2m) - White",
+      "handle": "acefast-c24-03-usb-c-to-usb-c-fast-charging-data-cable-60w-1-2m-white",
+      "brand_id": "cb493a08-f19c-4526-9918-94e786c6499e",
+      "category_id": null,
+      "product_type": null,
+      "brand": "ACEFAST",
+      "category": null
+    },
+    {
+      "id": "9445ac9b-e96d-47e1-ab76-c828a02b2f46",
+      "title": "BANGE 6625 Super-Light Genuine Leather 15.6-inch Waterproof Laptop Backpack",
+      "handle": "bange-6625-super-light-genuine-leather-15-6-inch-waterproof-laptop-backpack",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "e18d943b-5f23-4724-8f33-7182fd4349eb",
+      "title": "BANGE 7700 Large Capacity 15.6-inch Waterproof Laptop Backpack",
+      "handle": "bange-7700-large-capacity-15-6-inch-waterproof-laptop-backpack",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "f2e866f9-dcc3-4da6-9f48-fa9cc677dc42",
+      "title": "CMF Watch 3 Pro",
+      "handle": "cmf-watch-3-pro",
+      "brand_id": null,
+      "category_id": "f23c5f47-0e11-473a-a2b3-2e24d0e6e461",
+      "product_type": "Smart Watch",
+      "brand": null,
+      "category": "Smart Watch"
+    },
+    {
+      "id": "b418ea0d-25da-4858-9a63-6e8e79d1c95f",
+      "title": "Mark Ryden AeroShield 15.6-inch Waterproof Backpack with USB Charging Port - MR6886",
+      "handle": "mark-ryden-aeroshield-15-6-inch-waterproof-backpack-with-usb-charging-port-mr6886",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "9bb16e9b-5053-4613-8e54-88335564c7b6",
+      "title": "Mark Ryden Coast Laptop Backpack – Waterproof & Anti-Theft",
+      "handle": "mark-ryden-coast-laptop-backpack-waterproof-anti-theft",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "129acf47-6626-48e4-b94e-52d72c726e5a",
+      "title": "Mark Ryden Compilo Oxford Anti-Theft Waterproof Laptop Backpack with USB Port",
+      "handle": "mark-ryden-compilo-oxford-anti-theft-waterproof-laptop-backpack-with-usb-port",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "4bc82d15-522f-40e6-a9f2-1c58bf8144fc",
+      "title": "Mark Ryden Expandos MR9299 17.6\" Expandable 2-in-1 Travel Backpack",
+      "handle": "mark-ryden-expandos-mr9299-17-6-expandable-2-in-1-travel-backpack",
+      "brand_id": null,
+      "category_id": null,
+      "product_type": null,
+      "brand": null,
+      "category": null
+    },
+    {
+      "id": "46d44603-2326-4341-b4f7-e6daa785ca97",
+      "title": "Mark Ryden Mist Backpack - L_MR1106_00",
+      "handle": "mark-ryden-mist-backpack-l_mr1106_00",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "aa49d323-cd43-4259-9b97-1342733c4a2b",
+      "title": "Mark Ryden Muke I MR1611 Laptop Backpack – Waterproof & Anti-Theft",
+      "handle": "mark-ryden-muke-i-mr1611-laptop-backpack-waterproof-anti-theft",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    },
+    {
+      "id": "4694dff5-b133-42b7-a76f-083b44826224",
+      "title": "WiWU 14-inch Ora Waterproof Backpack",
+      "handle": "wiwu-14-inch-ora-waterproof-backpack",
+      "brand_id": null,
+      "category_id": "5a758865-6bf5-4dd7-9847-497089220d80",
+      "product_type": "Backpack",
+      "brand": null,
+      "category": "Backpack"
+    }
+  ],
+  "images": [
+    {
+      "id": "129acf47-6626-48e4-b94e-52d72c726e5a",
+      "title": "Compilo: Quality & High-Capacity Oxford Anti-Theft Laptop Backpack with USB Port",
+      "sourcePage": "https://markrydenglobal.com/products/mr9000",
+      "source": "https://cdn.shopify.com/s/files/1/0785/2575/9800/files/9000-1.png?v=1710989137",
+      "storedUrl": "https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/products/129acf47-6626-48e4-b94e-52d72c726e5a/audit-recovery-20261110.png"
+    },
+    {
+      "id": "4bc82d15-522f-40e6-a9f2-1c58bf8144fc",
+      "title": "Expandos: Versatile Expandable Laptop Backpack For All-day Traveling",
+      "sourcePage": "https://markrydenglobal.com/products/expandos-mr9299",
+      "source": "https://cdn.shopify.com/s/files/1/0785/2575/9800/files/MARKRYDENExpandosMR9299_00ProductMainPhotoBlack_1.webp?v=1780648829",
+      "storedUrl": "https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/products/4bc82d15-522f-40e6-a9f2-1c58bf8144fc/audit-recovery-20261110.jpg"
+    },
+    {
+      "id": "aa49d323-cd43-4259-9b97-1342733c4a2b",
+      "title": "MUKE I: School Style Classic Business Work Black Oxford Backpack",
+      "sourcePage": "https://markrydenglobal.com/products/muke-1new-release",
+      "source": "https://cdn.shopify.com/s/files/1/0785/2575/9800/files/MARKRYDENMR1611ProductMainPhotoBlack_1.webp?v=1780387707",
+      "storedUrl": "https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/products/aa49d323-cd43-4259-9b97-1342733c4a2b/audit-recovery-20261110.jpg"
+    },
+    {
+      "id": "6f7f11ba-7c12-4030-99ed-8090f851fc4f",
+      "title": "Black Shark Run",
+      "sourcePage": "https://blackshark.pk/products/black-shark-run-smart-watch",
+      "source": "https://cdn.shopify.com/s/files/1/0939/0715/7291/files/01_bbfa478e-2fcb-4e49-8d0d-17a380c8a541.png?v=1783501988",
+      "storedUrl": "https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/products/6f7f11ba-7c12-4030-99ed-8090f851fc4f/audit-recovery-20261110.png"
+    },
+    {
+      "id": "9bb16e9b-5053-4613-8e54-88335564c7b6",
+      "title": "Mark Ryden Coast MR9103SJ",
+      "sourcePage": "https://markrydencanada.com/products/coast",
+      "source": "https://markrydencanada.com/cdn/shop/products/9103sj_5.jpg?v=1639142410",
+      "storedUrl": "https://rtwyankpxtffqqrasyzw.supabase.co/storage/v1/object/public/cms-media/products/9bb16e9b-5053-4613-8e54-88335564c7b6/audit-recovery-20261110.jpg"
+    }
+  ],
+  "verification": {
+    "existingImageUrlsChecked": 218,
+    "existingImageUrlFailures": 0,
+    "temporaryRecoveryFunction": "catalog-image-recovery-20261110: disabled after upload; version 2 returns 410 and requires JWT"
+  }
+}

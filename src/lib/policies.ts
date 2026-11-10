@@ -11,6 +11,7 @@ export type ShopPolicies = {
   refundPolicy: ShopPolicy | null;
   termsOfService: ShopPolicy | null;
   shippingPolicy: ShopPolicy | null;
+  warrantyPolicy?: ShopPolicy | null;
 };
 export type PolicyKey = keyof ShopPolicies;
 
@@ -54,6 +55,7 @@ export const fetchShopPolicies = createServerFn({ method: "GET" }).handler(
       refundPolicy: await policyFromCms(settings, "refund_policy"),
       termsOfService: await policyFromCms(settings, "terms_of_service"),
       shippingPolicy: await policyFromCms(settings, "shipping_policy"),
+      warrantyPolicy: await policyFromCms(settings, "warranty_policy"),
     };
   },
 );

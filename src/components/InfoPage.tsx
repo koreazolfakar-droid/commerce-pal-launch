@@ -25,6 +25,7 @@ import {
 import { INFO_PAGES, POLICY_PAGES, POLICY_LINKS, type InfoPageName } from "@/lib/infoPages";
 import { useLanguage, type Language } from "@/lib/i18n";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import type { ShopPolicies } from "@/lib/policies";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
 import { STORE_NAME } from "@/lib/storeConfig";
 import { generalWhatsAppUrl } from "@/lib/whatsapp";
@@ -64,7 +65,6 @@ const SHOP_DISCOVERY_LINKS: RelatedLink[] = [
   { to: "/shop", en: "Shop electronics", ar: "تصفّح الإلكترونيات" },
   { to: "/categories", en: "Browse categories", ar: "تصفّح الفئات" },
   { to: "/brands", en: "Browse brands", ar: "تصفّح العلامات التجارية" },
-  { to: "/used-phones", en: "Used phones", ar: "الهواتف المستعملة" },
 ];
 
 const SUPPORT_DISCOVERY_LINKS: RelatedLink[] = [
@@ -397,9 +397,18 @@ function GuideSection({ guide, language }: { guide: PageGuide; language: Languag
   );
 }
 
-export function InfoPage({ page }: { page: InfoPageName }) {
+export function InfoPage({
+  page,
+  initialPolicies,
+}: {
+  page: InfoPageName;
+  initialPolicies?: ShopPolicies;
+}) {
   const { t, direction, language } = useLanguage();
-  const { data: policies, isPending } = useQuery(shopPoliciesQueryOptions());
+  const { data: policies, isPending } = useQuery({
+    ...shopPoliciesQueryOptions(),
+    initialData: initialPolicies,
+  });
   const { data: cms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
   const cmsWhatsApp = cms?.settings["whatsapp_number"];

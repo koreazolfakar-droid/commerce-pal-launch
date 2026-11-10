@@ -4,8 +4,13 @@ import { infoPageHead } from "@/lib/infoPages";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
 export const Route = createFileRoute("/returns")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(shopPoliciesQueryOptions());
+    return context.queryClient.ensureQueryData(shopPoliciesQueryOptions());
   },
   head: () => infoPageHead("returns"),
-  component: () => <InfoPage page="returns" />,
+  component: PolicyPage,
 });
+
+function PolicyPage() {
+  const policies = Route.useLoaderData();
+  return <InfoPage page="returns" initialPolicies={policies} />;
+}

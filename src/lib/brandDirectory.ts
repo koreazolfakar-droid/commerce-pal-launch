@@ -17,6 +17,9 @@ export interface StoreBrand extends CatalogFacet {
 const GENERIC_VENDOR_LABELS = new Set([
   STORE_NAME.toLowerCase(),
   STORE_NAME.toLowerCase().replace(/\s+/g, ""),
+  "brand",
+  "no brand",
+  "unbranded",
   "default",
   "generic",
   "unknown",

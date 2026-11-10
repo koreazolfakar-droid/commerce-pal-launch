@@ -1,3 +1,4 @@
+import { usedPhoneProducts } from "@/lib/usedPhones";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
@@ -143,7 +144,8 @@ const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" 
 const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
 const STOREFRONT_CATEGORY_SELECT = "id,name,slug,is_active,spec_template" as const;
 const STOREFRONT_NAVIGATION_CATEGORY_SELECT = "id,name,slug,sort_order" as const;
-const STOREFRONT_NAVIGATION_PRODUCT_SELECT = "id,title,handle,brand_id,category_id,product_type,tags" as const;
+const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
+  "id,title,handle,brand_id,category_id,product_type,tags" as const;
 const RUST_CATALOG_BASE_URL = "https://space-call-rust-backend-production.up.railway.app";
 const RUST_CATALOG_TIMEOUT_MS = 1_800;
 // The Rust catalogue is a canary only. Keep the public Supabase catalogue as
@@ -537,7 +539,10 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
  * Use stable ordering across every page for deterministic snapshots.
  */
 async function fetchAllSnapshotPages<T>(
-  page: (start: number, end: number) => PromiseLike<{
+  page: (
+    start: number,
+    end: number,
+  ) => PromiseLike<{
     data: T[] | null;
     error: { message: string } | null;
   }>,
@@ -553,93 +558,91 @@ async function fetchAllSnapshotPages<T>(
 }
 
 async function fetchSnapshot(): Promise<NativeSnapshot> {
-  const [
-    productRows,
-    variantRows,
-    imageRows,
-    collectionRows,
-    links,
-    brands,
-    categories,
-  ] = await Promise.all([
-    fetchAllSnapshotPages<StorefrontProductRow>(
-      (from, to) => publicSupabase
-        .from("store_products")
-        .select(STOREFRONT_PRODUCT_SELECT)
-        .eq("status", "active")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: true })
-        .range(from, to),
-      "products",
-    ),
-    fetchAllSnapshotPages<StorefrontVariantRow>(
-      (from, to) => publicSupabase
-        .from("store_product_variants")
-        .select(STOREFRONT_VARIANT_SELECT)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .order("id", { ascending: true })
-        .range(from, to),
-      "variants",
-    ),
-    fetchAllSnapshotPages<StorefrontImageRow>(
-      (from, to) => publicSupabase
-        .from("store_product_images")
-        .select(STOREFRONT_IMAGE_SELECT)
-        .order("sort_order", { ascending: true })
-        .order("product_id", { ascending: true })
-        .order("url", { ascending: true })
-        .range(from, to),
-      "images",
-    ),
-    fetchAllSnapshotPages<StorefrontCollectionRow>(
-      (from, to) => publicSupabase
-        .from("store_collections")
-        .select(STOREFRONT_COLLECTION_SELECT)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .order("title", { ascending: true })
-        .order("id", { ascending: true })
-        .range(from, to),
-      "collections",
-    ),
-    fetchAllSnapshotPages<StorefrontCollectionLinkRow>(
-      (from, to) => publicSupabase
-        .from("store_collection_products")
-        .select(STOREFRONT_COLLECTION_LINK_SELECT)
-        .order("sort_order", { ascending: true })
-        .order("collection_id", { ascending: true })
-        .order("product_id", { ascending: true })
-        .range(from, to),
-      "collection links",
-    ),
-    fetchAllSnapshotPages<StorefrontBrandRow>(
-      (from, to) => publicSupabase
-        .from("cms_brands")
-        .select(STOREFRONT_BRAND_SELECT)
-        .eq("is_visible", true)
-        .order("sort_order", { ascending: true })
-        .order("id", { ascending: true })
-        .range(from, to),
-      "brands",
-    ),
-    fetchAllSnapshotPages<StorefrontCategoryRow>(
-      async (from, to) => {
+  const [productRows, variantRows, imageRows, collectionRows, links, brands, categories] =
+    await Promise.all([
+      fetchAllSnapshotPages<StorefrontProductRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_products")
+            .select(STOREFRONT_PRODUCT_SELECT)
+            .eq("status", "active")
+            .order("sort_order", { ascending: true })
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "products",
+      ),
+      fetchAllSnapshotPages<StorefrontVariantRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_product_variants")
+            .select(STOREFRONT_VARIANT_SELECT)
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "variants",
+      ),
+      fetchAllSnapshotPages<StorefrontImageRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_product_images")
+            .select(STOREFRONT_IMAGE_SELECT)
+            .order("sort_order", { ascending: true })
+            .order("product_id", { ascending: true })
+            .order("url", { ascending: true })
+            .range(from, to),
+        "images",
+      ),
+      fetchAllSnapshotPages<StorefrontCollectionRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_collections")
+            .select(STOREFRONT_COLLECTION_SELECT)
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .order("title", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "collections",
+      ),
+      fetchAllSnapshotPages<StorefrontCollectionLinkRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_collection_products")
+            .select(STOREFRONT_COLLECTION_LINK_SELECT)
+            .order("sort_order", { ascending: true })
+            .order("collection_id", { ascending: true })
+            .order("product_id", { ascending: true })
+            .range(from, to),
+        "collection links",
+      ),
+      fetchAllSnapshotPages<StorefrontBrandRow>(
+        (from, to) =>
+          publicSupabase
+            .from("cms_brands")
+            .select(STOREFRONT_BRAND_SELECT)
+            .eq("is_visible", true)
+            .order("sort_order", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "brands",
+      ),
+      fetchAllSnapshotPages<StorefrontCategoryRow>(async (from, to) => {
         const result = await publicSupabase
           .from("store_categories")
           .select(STOREFRONT_CATEGORY_SELECT)
           .order("id", { ascending: true })
           .range(from, to);
         if (isMissingCategorySpecTemplate(result.error)) {
-          console.warn("Supabase category templates unavailable; continuing without category metadata.");
+          console.warn(
+            "Supabase category templates unavailable; continuing without category metadata.",
+          );
           return { data: [] as StorefrontCategoryRow[], error: null };
         }
         return result;
-      },
-      "categories",
-    ),
-  ]);
+      }, "categories"),
+    ]);
 
   const variantsByProduct = groupByProduct(variantRows);
   const imagesByProduct = groupByProduct(imageRows);
@@ -1005,32 +1008,33 @@ export async function fetchBrandVendors(): Promise<string[]> {
  * variant or image tables merely to render navigation.
  */
 export async function fetchNavigationCatalogFacets() {
-  const [productResult, collectionResult, linkResult, brandResult, categoryResult] = await Promise.all([
-    publicSupabase
-      .from("store_products")
-      .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
-      .eq("status", "active")
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .eq("is_active", true),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT)
-      .eq("is_visible", true)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_categories")
-      .select(STOREFRONT_NAVIGATION_CATEGORY_SELECT)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true }),
-  ]);
+  const [productResult, collectionResult, linkResult, brandResult, categoryResult] =
+    await Promise.all([
+      publicSupabase
+        .from("store_products")
+        .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
+        .eq("status", "active")
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_collections")
+        .select(STOREFRONT_COLLECTION_SELECT)
+        .eq("is_active", true),
+      publicSupabase
+        .from("store_collection_products")
+        .select(STOREFRONT_COLLECTION_LINK_SELECT)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("cms_brands")
+        .select(STOREFRONT_BRAND_SELECT)
+        .eq("is_visible", true)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_categories")
+        .select(STOREFRONT_NAVIGATION_CATEGORY_SELECT)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true }),
+    ]);
 
   const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
   const collectionRows = assertResult(collectionResult, "navigation collections");
@@ -1060,8 +1064,12 @@ export async function fetchNavigationCatalogFacets() {
         description: "",
         handle: row.handle,
         categoryId: row.category_id,
-        categorySlug: row.category_id ? managedCategoriesById.get(row.category_id)?.slug : undefined,
-        categoryName: row.category_id ? managedCategoriesById.get(row.category_id)?.name : undefined,
+        categorySlug: row.category_id
+          ? managedCategoriesById.get(row.category_id)?.slug
+          : undefined,
+        categoryName: row.category_id
+          ? managedCategoriesById.get(row.category_id)?.name
+          : undefined,
         vendor: row.brand_id ? brandsById.get(row.brand_id)?.name : undefined,
         vendorSlug: row.brand_id ? brandsById.get(row.brand_id)?.slug : undefined,
         vendorHidden: Boolean(row.brand_id && !brandsById.get(row.brand_id)),
@@ -1095,7 +1103,7 @@ export async function fetchNavigationCatalogFacets() {
         icon: categoryDefinition(category.slug)?.icon,
       }))
     : catalog.categories;
-  return { categories, brands: catalog.brands };
+  return { categories, brands: catalog.brands, usedPhoneCount: usedPhoneProducts(products).length };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {

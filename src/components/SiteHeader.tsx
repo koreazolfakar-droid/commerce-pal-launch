@@ -348,12 +348,14 @@ export function SiteHeader() {
               </Link>
             )}
 
-            <Link
-              to="/used-phones"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
-            >
-              {t("usedPhones")}
-            </Link>
+            {hydrated && (catalog?.usedPhoneCount ?? 0) > 0 ? (
+              <Link
+                to="/used-phones"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-[13px] font-semibold transition-colors hover:bg-surface"
+              >
+                {t("usedPhones")}
+              </Link>
+            ) : null}
 
             <Link
               to="/shop"

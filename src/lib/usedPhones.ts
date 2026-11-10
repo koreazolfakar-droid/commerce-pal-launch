@@ -1,4 +1,5 @@
 import type { StoreProduct } from "@/lib/storeTypes";
+import { primaryCategory } from "@/lib/taxonomy";
 
 const USED_TERMS = [
   "used",
@@ -29,11 +30,29 @@ export function isUsedPhone(product: StoreProduct) {
     .join(" ")
     .toLowerCase();
 
-  const phoneSignal =
-    /phone|smartphone|iphone|galaxy|pixel|redmi|xiaomi|oneplus|oppo|vivo|honor|huawei|هاتف|هواتف|جوال/.test(
-      text,
+  // Resolve the item itself: a brand or compatibility mention is not a phone.
+  const category = primaryCategory(product);
+  // Managed categories preserve their merchant slug (e.g. "smartphone"),
+  // while legacy taxonomy uses "smartphones" for the same product kind.
+  const phoneCategory =
+    category &&
+    [category.slug, category.label].some((value) =>
+      /^(?:smart[ -]?phones?|phones?|used-phones|هاتف(?: ذكي)?|هواتف(?: ذكية)?)$/iu.test(
+        value.trim(),
+      ),
     );
-  return phoneSignal && USED_TERMS.some((term) => text.includes(term));
+  if (category && !phoneCategory) return false;
+  if (
+    !category &&
+    !/(?:^|[^\p{L}\p{N}])(?:smartphones?|phones?|iphone|galaxy|pixel|هاتف|هواتف|جوال)(?:$|[^\p{L}\p{N}])/u.test(
+      text,
+    )
+  )
+    return false;
+  return USED_TERMS.some((term) => {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`, "u").test(text);
+  });
 }
 
 export function usedPhoneProducts(products: StoreProduct[]) {

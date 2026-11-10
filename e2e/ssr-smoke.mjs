@@ -27,6 +27,11 @@ async function request(path) {
   return { response, body };
 }
 
+// Zustand omits its persist API on the server when browser storage is absent.
+// Checkout must still render its pending shell without aborting the React stream.
+const checkout = await request("/checkout");
+assert.match(checkout.body, /aria-label="Loading cart"/);
+
 const home = await request("/");
 assert.equal((home.body.match(/<h1\b/g) ?? []).length, 1, "Homepage keeps exactly one H1");
 assert.match(home.body, /data-testid="home-hero"/);
@@ -98,6 +103,7 @@ console.log(
     passed: true,
     source: process.env.SPACE_CALL_VISUAL_FIXTURES === "1" ? "supabase-fixture" : "supabase-native",
     paths: [
+      "/checkout",
       "/",
       "/help",
       "/privacy",
