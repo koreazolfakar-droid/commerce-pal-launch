@@ -453,6 +453,9 @@ export interface BrandRef {
 const GENERIC_VENDORS = new Set([
   STORE_NAME.toLowerCase(),
   STORE_NAME.toLowerCase().replace(/\s+/g, ""),
+  "brand",
+  "no brand",
+  "unbranded",
   "default",
   "generic",
   "unknown",
@@ -486,7 +489,8 @@ export function resolveBrand(
 
   for (const tag of product.node.tags ?? []) {
     const match = /^(?:brand|vendor|make):\s*(.+)$/i.exec(tag.trim());
-    if (match?.[1] && identity(match[1])) return identity(match[1]);
+    if (match?.[1] && !GENERIC_VENDORS.has(match[1].trim().toLowerCase()) && identity(match[1]))
+      return identity(match[1]);
   }
 
   if (

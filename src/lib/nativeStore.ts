@@ -1,3 +1,4 @@
+import { usedPhoneProducts } from "@/lib/usedPhones";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
@@ -999,7 +1000,11 @@ export async function fetchNavigationCatalogFacets() {
   });
 
   const catalog = buildCatalogIndex(products);
-  return { categories: catalog.categories, brands: catalog.brands };
+  return {
+    categories: catalog.categories,
+    brands: catalog.brands,
+    usedPhoneCount: usedPhoneProducts(products).length,
+  };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {
