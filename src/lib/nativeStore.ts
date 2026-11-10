@@ -1,7 +1,7 @@
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
-import { buildCatalogIndex } from "@/lib/taxonomy";
+import { buildCatalogIndex, categoryDefinition } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
 import { specificationGroups } from "@/lib/productSpecifications";
 
@@ -71,10 +71,14 @@ type StorefrontCollectionLinkRow = Pick<
 >;
 type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
 type StorefrontBrandUsageRow = Pick<ProductRow, "brand_id">;
-type StorefrontCategoryRow = Pick<CategoryRow, "id" | "spec_template">;
+type StorefrontCategoryRow = Pick<
+  CategoryRow,
+  "id" | "name" | "slug" | "is_active" | "spec_template"
+>;
+type StorefrontNavigationCategoryRow = Pick<CategoryRow, "id" | "name" | "slug" | "sort_order">;
 type NavigationProductRow = Pick<
   ProductRow,
-  "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
+  "id" | "title" | "handle" | "brand_id" | "category_id" | "product_type" | "tags"
 >;
 
 type RustCatalogCardBrand = {
@@ -137,8 +141,9 @@ const STOREFRONT_COLLECTION_SELECT =
   "id,handle,title,description,image_url,seo_title,seo_description" as const;
 const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
 const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
-const STOREFRONT_CATEGORY_SELECT = "id,spec_template" as const;
-const STOREFRONT_NAVIGATION_PRODUCT_SELECT = "id,title,handle,brand_id,product_type,tags" as const;
+const STOREFRONT_CATEGORY_SELECT = "id,name,slug,is_active,spec_template" as const;
+const STOREFRONT_NAVIGATION_CATEGORY_SELECT = "id,name,slug,sort_order" as const;
+const STOREFRONT_NAVIGATION_PRODUCT_SELECT = "id,title,handle,brand_id,category_id,product_type,tags" as const;
 const RUST_CATALOG_BASE_URL = "https://space-call-rust-backend-production.up.railway.app";
 const RUST_CATALOG_TIMEOUT_MS = 1_800;
 // The Rust catalogue is a canary only. Keep the public Supabase catalogue as
@@ -380,6 +385,9 @@ function buildProduct(
       descriptionAr: row.description_ar?.trim() || undefined,
       descriptionHtml: row.description_html ?? undefined,
       handle: row.handle,
+      categoryId: row.category_id,
+      categorySlug: category?.is_active ? category.slug : undefined,
+      categoryName: category?.is_active ? category.name : undefined,
       vendor: brand?.name,
       vendorSlug: brand?.slug,
       vendorHidden: Boolean(row.brand_id && !brand),
@@ -938,7 +946,7 @@ export async function fetchBrandVendors(): Promise<string[]> {
  * variant or image tables merely to render navigation.
  */
 export async function fetchNavigationCatalogFacets() {
-  const [productResult, collectionResult, linkResult, brandResult] = await Promise.all([
+  const [productResult, collectionResult, linkResult, brandResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_products")
       .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
@@ -957,12 +965,25 @@ export async function fetchNavigationCatalogFacets() {
       .select(STOREFRONT_BRAND_SELECT)
       .eq("is_visible", true)
       .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_categories")
+      .select(STOREFRONT_NAVIGATION_CATEGORY_SELECT)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
   ]);
 
   const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
   const collectionRows = assertResult(collectionResult, "navigation collections");
   const links = assertResult(linkResult, "navigation collection links");
   const brands = assertResult(brandResult, "navigation brands");
+  // Managed categories are authoritative when the public read succeeds.
+  const managedCategories = categoryResult.error
+    ? null
+    : ((categoryResult.data ?? []) as StorefrontNavigationCategoryRow[]);
+  const managedCategoriesById = new Map(
+    (managedCategories ?? []).map((category) => [category.id, category]),
+  );
 
   const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
   const linksByProduct = groupByProduct(links);
@@ -979,6 +1000,9 @@ export async function fetchNavigationCatalogFacets() {
         title: row.title,
         description: "",
         handle: row.handle,
+        categoryId: row.category_id,
+        categorySlug: row.category_id ? managedCategoriesById.get(row.category_id)?.slug : undefined,
+        categoryName: row.category_id ? managedCategoriesById.get(row.category_id)?.name : undefined,
         vendor: row.brand_id ? brandsById.get(row.brand_id)?.name : undefined,
         vendorSlug: row.brand_id ? brandsById.get(row.brand_id)?.slug : undefined,
         vendorHidden: Boolean(row.brand_id && !brandsById.get(row.brand_id)),
@@ -999,7 +1023,20 @@ export async function fetchNavigationCatalogFacets() {
   });
 
   const catalog = buildCatalogIndex(products);
-  return { categories: catalog.categories, brands: catalog.brands };
+  const categoryCounts = new Map<string, number>();
+  for (const row of productRows) {
+    if (!row.category_id) continue;
+    categoryCounts.set(row.category_id, (categoryCounts.get(row.category_id) ?? 0) + 1);
+  }
+  const categories = managedCategories
+    ? managedCategories.map((category) => ({
+        slug: category.slug,
+        label: category.name,
+        count: categoryCounts.get(category.id) ?? 0,
+        icon: categoryDefinition(category.slug)?.icon,
+      }))
+    : catalog.categories;
+  return { categories, brands: catalog.brands };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {
