@@ -113,7 +113,8 @@ test("homepage hero refresh never replays stale local fallback", async () => {
 
   assert.doesNotMatch(hero, /space-call-home-hero-refresh-fallback-v1/);
   assert.doesNotMatch(hero, /readStoredHero|storeHero|sessionStorage/);
-  assert.match(cms, /cache:\s*"default"/);
+  // Native default caching is implicit; Workers rejects an explicit default mode.
+  assert.doesNotMatch(cms, /cache:\s*"(?:default|no-store)"/);
 });
 
 test("storefront disables decorative motion and continuous auto-play", async () => {
