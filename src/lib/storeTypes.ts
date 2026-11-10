@@ -15,6 +15,11 @@ export interface StoreProductNode {
   vendor?: string;
   vendorSlug?: string;
   vendorHidden?: boolean;
+  /** Immutable Dashboard category assignment; productType is a separate, editable label. */
+  categoryId?: string | null;
+  /** Slug of the active managed category, resolved through the category ID. */
+  categorySlug?: string;
+  categoryName?: string;
   productType?: string;
   seoTitle?: string;
   seoDescription?: string;

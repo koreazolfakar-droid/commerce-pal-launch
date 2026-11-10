@@ -395,11 +395,23 @@ function inferredCategory(text: string): CategoryDefinition | undefined {
 }
 
 /**
- * Explicit category tags > product type > exact category collection > title.
+ * Managed category UUID/slug > explicit tags > product type > collection > title.
  * Brand campaigns, compatibility tags and variant option names are not categories.
  */
 export function resolveCategories(product: StoreProduct): CategoryDefinition[] {
   const node = product.node;
+  // Dashboard assignments win over editorial Product Type and inferred keywords.
+  // Preserve the exact managed slug, even when it resembles a legacy keyword.
+  const managedSlug = node.categorySlug?.trim();
+  if (managedSlug) {
+    const known = categoryDefinition(managedSlug);
+    return [known ?? {
+      slug: managedSlug,
+      label: node.categoryName?.trim() || managedSlug,
+      icon: Package,
+      keywords: [],
+    }];
+  }
   const explicit = new Map<string, CategoryDefinition>();
   for (const tag of node.tags ?? []) {
     const match = /^(?:category|cat|section):\s*(.+)$/i.exec(tag.trim());

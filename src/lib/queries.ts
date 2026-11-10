@@ -140,7 +140,7 @@ export const catalogPreviewQueryOptions = () =>
 export const catalogQueryOptions = () =>
   queryOptions({
     queryKey: ["supabase", "catalog"],
-    queryFn: () => fetchCatalogIndexSafely(500, true),
+    queryFn: () => fetchCatalogIndexSafely(Number.MAX_SAFE_INTEGER, true),
     staleTime: CATALOG_STALE_TIME,
     retry: QUERY_RETRY_COUNT,
     retryDelay,

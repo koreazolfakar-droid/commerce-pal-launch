@@ -322,3 +322,37 @@ test("catalog q results are ordered by relevance when no explicit sort is select
     ["search-exact", "search-accessory"],
   );
 });
+
+
+test("managed category assignment outranks product type and misleading tags", () => {
+  const item = product({
+    categoryId: "managed-gaming",
+    categorySlug: "gaming",
+    categoryName: "Gaming",
+    productType: "Smartphone",
+    tags: ["category:accessories"],
+    title: "iPhone gaming controller",
+  });
+  assert.deepEqual(taxonomy.resolveCategories(item).map((category) => category.slug), ["gaming"]);
+  const catalog = taxonomy.buildCatalogIndex([item]);
+  assert.deepEqual(catalog.categories.map((category) => category.slug), ["gaming"]);
+  assert.deepEqual(
+    applyFilters([item], catalog, { category: ["gaming"] }).map((entry) => entry.node.handle),
+    [item.node.handle],
+  );
+});
+
+test("brand-new managed category slugs are not coerced into legacy category names", () => {
+  const assigned = product({
+    categoryId: "new-custom-category-id",
+    categorySlug: "game",
+    categoryName: "Game",
+    productType: "Other",
+    tags: ["category:smartphones"],
+  });
+  const catalog = taxonomy.buildCatalogIndex([assigned]);
+  assert.deepEqual(catalog.categories.map((category) => category.slug), ["game"]);
+  assert.equal(catalog.categories[0].label, "Game");
+  assert.equal(applyFilters([assigned], catalog, { category: ["game"] }).length, 1);
+  assert.equal(applyFilters([assigned], catalog, { category: ["smartphones"] }).length, 0);
+});
