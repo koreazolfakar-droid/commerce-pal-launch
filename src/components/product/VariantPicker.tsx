@@ -185,16 +185,11 @@ export function VariantPicker({
             </div>
           );
         return (
-          <div key={option.name}>
-            <div className="mb-1.5 flex items-baseline gap-2 sm:mb-2">
-              <h2 className="text-[11px] font-medium text-muted-foreground">{label}</h2>
-              {selected[option.name] && (
-                <span className="min-w-0 truncate text-xs font-semibold text-foreground">
-                  <bdi>{productOptionValue(option.name, selected[option.name])}</bdi>
-                </span>
-              )}
-            </div>
-            <div className={cn("flex flex-wrap", color ? "gap-2" : "gap-2")}>
+          <fieldset key={option.name} className="min-w-0">
+            <legend className="mb-2 flex items-baseline gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{label}</span>
+            </legend>
+            <div className="flex flex-wrap gap-2">
               {option.values.map((value) => {
                 const active = selected[option.name] === value;
                 const available = isAvailable(option.name, value);
@@ -210,9 +205,9 @@ export function VariantPicker({
                       disabled={!available}
                       onClick={() => onSelect(option.name, value)}
                       className={cn(
-                        "press relative grid h-11 w-11 place-items-center rounded-full border-2 bg-card transition-colors",
+                        "press relative inline-flex min-h-12 min-w-0 max-w-full flex-1 basis-24 items-center justify-center gap-2 rounded-xl border bg-background px-3 py-2 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                         active
-                          ? "border-primary ring-2 ring-primary/15"
+                          ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
                           : "border-border hover:border-primary/50",
                         !available && "opacity-40",
                       )}
@@ -220,21 +215,17 @@ export function VariantPicker({
                       {hex ? (
                         <span
                           aria-hidden
-                          className="h-5.5 w-5.5 rounded-full border border-border/60 sm:h-6 sm:w-6"
+                          className="h-5.5 w-5.5 shrink-0 rounded-full border border-border/60 sm:h-6 sm:w-6"
                           style={{ backgroundColor: hex }}
                         />
                       ) : (
                         <span
                           aria-hidden
-                          className="h-5.5 w-5.5 rounded-full border border-dashed border-muted-foreground/50 bg-gradient-to-br from-surface to-background sm:h-6 sm:w-6"
+                          className="h-5.5 w-5.5 shrink-0 rounded-full border border-dashed border-muted-foreground/50 bg-gradient-to-br from-surface to-background sm:h-6 sm:w-6"
                         />
                       )}
-                      {active && (
-                        <Check
-                          aria-hidden
-                          className="absolute h-3.5 w-3.5 text-primary-foreground mix-blend-difference"
-                        />
-                      )}
+                      <bdi className="min-w-0 break-words">{value}</bdi>
+                      {active && <Check aria-hidden className="h-3.5 w-3.5 shrink-0" />}
                     </button>
                   );
                 }
@@ -247,9 +238,9 @@ export function VariantPicker({
                     disabled={!available}
                     onClick={() => onSelect(option.name, value)}
                     className={cn(
-                      "press min-h-11 min-w-16 rounded-xl border px-3.5 py-2 text-[13px] font-semibold transition-colors",
+                      "press min-h-12 min-w-16 flex-1 rounded-xl border px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                       active
-                        ? "border-primary bg-accent text-primary"
+                        ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
                         : "border-border bg-card hover:border-primary/60",
                       !available && "opacity-40 line-through",
                     )}
@@ -259,7 +250,7 @@ export function VariantPicker({
                 );
               })}
             </div>
-          </div>
+          </fieldset>
         );
       })}
     </div>

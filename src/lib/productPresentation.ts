@@ -56,9 +56,24 @@ export interface ProductHighlight {
 
 const HIGHLIGHT_RULES = [
   { key: "power", match: /power|watt|charging speed/i, label: "Power", labelAr: "القدرة" },
-  { key: "technology", match: /\bgan\b|technology|charging protocol|التقنية/i, label: "Technology", labelAr: "التقنية" },
-  { key: "processor", match: /processor|chipset|المعالج/i, label: "Processor", labelAr: "المعالج" },
-  { key: "port", match: /\bports?\b|connector|usb|interface|\bconnection\b|الاتصال|التوصيل|المنفذ/i, label: "Connection", labelAr: "الاتصال" },
+  {
+    key: "technology",
+    match: /\bgan\b|technology|charging protocol|التقنية/i,
+    label: "Technology",
+    labelAr: "التقنية",
+  },
+  {
+    key: "processor",
+    match: /processor|chipset|\bchip\b|المعالج/i,
+    label: "Processor",
+    labelAr: "المعالج",
+  },
+  {
+    key: "port",
+    match: /\bports?\b|connector|usb|interface|\bconnection\b|الاتصال|التوصيل|المنفذ/i,
+    label: "Connection",
+    labelAr: "الاتصال",
+  },
   { key: "display", match: /display|screen|panel|الشاشة/i, label: "Display", labelAr: "الشاشة" },
   { key: "cable", match: /cable|box contents|included/i, label: "Included", labelAr: "المرفقات" },
   { key: "battery", match: /battery|\bmah\b|البطارية/i, label: "Battery", labelAr: "البطارية" },
@@ -69,7 +84,11 @@ const HIGHLIGHT_RULES = [
 ] as const;
 
 /** Highlights are extracted exclusively from merchant specifications or the product title. */
-export function buildProductHighlights(groups: SpecGroup[], title: string, limit = 5): ProductHighlight[] {
+export function buildProductHighlights(
+  groups: SpecGroup[],
+  title: string,
+  limit = 5,
+): ProductHighlight[] {
   const values = new Map<string, ProductHighlight>();
   const max = Math.max(0, Math.min(6, Math.trunc(limit)));
 
@@ -77,14 +96,24 @@ export function buildProductHighlights(groups: SpecGroup[], title: string, limit
     for (const row of group.rows) {
       const rule = HIGHLIGHT_RULES.find((entry) => entry.match.test(row.label));
       const value = row.value?.trim();
-      if (!rule || !value || value.length > 64 || /^(?:n\/a|unknown|not specified|غير محدد|غير متوفر)$/i.test(value)) continue;
+      if (
+        !rule ||
+        !value ||
+        value.length > 180 ||
+        /^(?:n\/a|unknown|not specified|غير محدد|غير متوفر)$/i.test(value)
+      )
+        continue;
       if (!values.has(rule.key)) {
         values.set(rule.key, { key: rule.key, label: rule.label, labelAr: rule.labelAr, value });
       }
     }
   }
 
-  const addFromTitle = (key: string, match: RegExp, value: string | ((result: RegExpMatchArray) => string)) => {
+  const addFromTitle = (
+    key: string,
+    match: RegExp,
+    value: string | ((result: RegExpMatchArray) => string),
+  ) => {
     if (values.has(key)) return;
     const found = title.match(match);
     if (!found) return;
@@ -102,6 +131,17 @@ export function buildProductHighlights(groups: SpecGroup[], title: string, limit
   addFromTitle("technology", /\bGaN\b/i, "GaN");
   addFromTitle("port", /\bUSB[ -]?C\b/i, "USB-C");
   addFromTitle("display", /\bLED\s+display\b/i, "LED display");
-  addFromTitle("cable", /(?:\bwith\s+(?:(?:a|an)\s+)?(?:USB[ -]?C\s+)?|&\s*(?:USB[ -]?C\s+)?)cable\b/i, "Cable");
+  addFromTitle(
+    "cable",
+    /(?:\bwith\s+(?:(?:a|an)\s+)?(?:USB[ -]?C\s+)?|&\s*(?:USB[ -]?C\s+)?)cable\b/i,
+    "Cable",
+  );
   return [...values.values()].slice(0, max);
+}
+
+/** A complete first clause is a compact preview; full merchant values stay in Specifications. */
+export function productHighlightSummary(value: string): string {
+  if (value.length <= 64) return value;
+  const firstClause = value.split(/[,;،؛]/, 1)[0].trim();
+  return firstClause.length >= 8 && firstClause.length <= 64 ? firstClause : value;
 }

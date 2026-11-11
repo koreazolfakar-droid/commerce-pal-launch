@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInformation } from "@/components/product/ProductInformation";
 import "@/components/product/product-page.css";
@@ -39,7 +38,11 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { productOptionKind } from "@/lib/productOptionDisplay";
-import { buildProductHighlights, buildProductSuggestions } from "@/lib/productPresentation";
+import {
+  buildProductHighlights,
+  buildProductSuggestions,
+  productHighlightSummary,
+} from "@/lib/productPresentation";
 import {
   buildDisplayOverview,
   buildDisplaySpecificationGroups,
@@ -307,7 +310,6 @@ function ProductPage() {
   const brand = resolveBrand(product);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
-  const isPhone = category?.slug === "smartphone" || category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
     title: displayTitle,
     url: absoluteUrl(`/product/${node.handle}`),
@@ -383,6 +385,10 @@ function ProductPage() {
     );
     return buildProductHighlights(specGroups, node.title, 6)
       .filter((highlight) => !optionKeys.has(highlight.key === "ram" ? "memory" : highlight.key))
+      .sort((a, b) => {
+        const order: Record<string, number> = { display: 0, processor: 1, camera: 2, battery: 3 };
+        return (order[a.key] ?? 4) - (order[b.key] ?? 4);
+      })
       .slice(0, 4);
   }, [specGroups, node.title, node.options]);
 
@@ -451,47 +457,59 @@ function ProductPage() {
             }
           />
 
-          <div
-            data-testid="product-buy-box"
-            className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2"
-          >
+          <div data-testid="product-buy-box" className="flex min-w-0 flex-col gap-5 lg:py-2">
             <div className="min-w-0">
-              {brand && (
-                <Link
-                  to="/brand/$slug"
-                  params={{ slug: brand.slug }}
-                  className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
+              <div className="flex min-h-11 items-center justify-between gap-3">
+                {brand && (
+                  <Link
+                    to="/brand/$slug"
+                    params={{ slug: brand.slug }}
+                    className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {brand.label}
+                  </Link>
+                )}
+                <div
+                  className="ms-auto flex shrink-0 gap-2"
+                  aria-label={language === "ar" ? "إجراءات المنتج" : "Product actions"}
                 >
-                  {brand.label}
-                </Link>
-              )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => toggleWishlist(node.handle)}
+                    aria-pressed={wishlisted}
+                    aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
+                    className="h-11 w-11 rounded-full border border-border/60 bg-background text-muted-foreground hover:text-primary"
+                  >
+                    <Heart
+                      className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")}
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleShare}
+                    aria-label={t("shareProduct")}
+                    className="h-11 w-11 rounded-full border border-border/60 bg-background text-muted-foreground hover:text-primary"
+                  >
+                    <Share2 aria-hidden className="h-4 w-4 shrink-0" />
+                  </Button>
+                </div>
+              </div>
               <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
                 {displayTitle}
               </h1>
-              <p
-                className={cn(
-                  "mt-2 inline-flex items-center gap-2 text-xs font-medium",
-                  inStock ? "text-success" : "text-muted-foreground",
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    inStock ? "bg-success" : "bg-muted-foreground",
-                  )}
-                />
-                {t(inStock ? "inStock" : "outOfStock")}
-              </p>
             </div>
 
             <div
               data-testid="product-price"
-              className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-border/60 pb-4"
+              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
+              aria-live="polite"
+              aria-atomic="true"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                  <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground sm:text-2xl">
+                  <span className="text-[1.75rem] font-semibold tabular-nums tracking-[-0.035em] text-foreground sm:text-3xl">
                     {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
                   </span>
                   {discount !== null && compareAt && (
@@ -506,105 +524,146 @@ function ProductPage() {
                   )}
                 </div>
               </div>
+              <p
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium",
+                  inStock ? "bg-success/10 text-success" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    inStock ? "bg-success" : "bg-muted-foreground",
+                  )}
+                />
+                {t(inStock ? "inStock" : "outOfStock")}
+              </p>
             </div>
 
-            <VariantPicker
-              compactSingleValues
-              options={node.options ?? []}
-              variants={variants}
-              selected={selectedOptions}
-              onSelect={handleOptionSelect}
-            />
+            <div
+              data-testid="product-configuration"
+              className="grid gap-5 rounded-2xl border border-border/70 bg-card p-4 sm:p-5"
+            >
+              <VariantPicker
+                compactSingleValues
+                options={node.options ?? []}
+                variants={variants}
+                selected={selectedOptions}
+                onSelect={handleOptionSelect}
+              />
 
-            <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
-              <span className="text-sm font-medium text-foreground">
-                {language === "ar" ? "الكمية" : "Quantity"}
-              </span>
-              <div
-                data-testid="product-quantity"
-                className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
-                aria-label={language === "ar" ? "الكمية" : "Quantity"}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 rounded-xl"
-                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  disabled={busy || quantity <= 1}
-                  aria-label={t("decreaseQuantity")}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span
-                  className="w-8 text-center text-sm font-semibold tabular-nums"
-                  aria-live="polite"
-                >
-                  {quantity}
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm font-medium text-foreground">
+                  {language === "ar" ? "الكمية" : "Quantity"}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 rounded-xl"
-                  onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
-                  disabled={busy || !inStock || quantity >= maxQuantity}
-                  aria-label={t("increaseQuantity")}
+                <div
+                  data-testid="product-quantity"
+                  className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
+                  aria-label={language === "ar" ? "الكمية" : "Quantity"}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 rounded-xl"
+                    onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                    disabled={busy || quantity <= 1}
+                    aria-label={t("decreaseQuantity")}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span
+                    className="w-8 text-center text-sm font-semibold tabular-nums"
+                    aria-live="polite"
+                  >
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 rounded-xl"
+                    onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+                    disabled={busy || !inStock || quantity >= maxQuantity}
+                    aria-label={t("increaseQuantity")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="hidden gap-2 sm:flex">
+                <Button
+                  size="lg"
+                  onClick={() => handleAddToCart()}
+                  disabled={busy || !inStock}
+                  className="press flex-1 rounded-xl"
+                >
+                  {pending === "cart" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShoppingBag className="h-4 w-4" />
+                  )}
+                  {t(inStock ? "addToCart" : "soldOut")}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => handleAddToCart(true)}
+                  disabled={busy || !inStock}
+                  className="press rounded-xl"
+                >
+                  {pending === "buy" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
+                  {language === "ar" ? "اشترِ الآن" : "Buy now"}
                 </Button>
               </div>
-            </div>
-
-            <div className="hidden gap-2 sm:flex">
-              <Button
-                size="lg"
-                onClick={() => handleAddToCart()}
-                disabled={busy || !inStock}
-                className="press flex-1 rounded-xl"
-              >
-                {pending === "cart" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ShoppingBag className="h-4 w-4" />
-                )}
-                {t(inStock ? "addToCart" : "soldOut")}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => handleAddToCart(true)}
-                disabled={busy || !inStock}
-                className="press rounded-xl"
-              >
-                {pending === "buy" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Zap className="h-4 w-4" />
-                )}
-                {language === "ar" ? "اشترِ الآن" : "Buy now"}
-              </Button>
             </div>
 
             {highlights.length > 0 && (
               <section
                 data-testid="product-key-features"
                 aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
-                className="min-w-0 border-t border-border/60 pt-4"
+                className="min-w-0"
               >
-                <h2 className="mb-3 text-base font-semibold tracking-tight text-foreground">
-                  {language === "ar" ? "أبرز المميزات" : "Key features"}
-                </h2>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3">
+                  <h2 className="text-base font-semibold tracking-tight text-foreground">
+                    {language === "ar" ? "نظرة سريعة" : "At a glance"}
+                  </h2>
+                  <button
+                    type="button"
+                    data-testid="product-view-specs"
+                    className="min-h-11 text-xs font-medium text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                    onClick={() => {
+                      const details = document.querySelector<HTMLDetailsElement>(
+                        '[data-product-detail="specifications"]',
+                      );
+                      if (!details) return;
+                      details.open = true;
+                      details.querySelector("summary")?.focus({ preventScroll: true });
+                      details.scrollIntoView({ block: "start", behavior: "instant" });
+                    }}
+                  >
+                    {language === "ar" ? "كل المواصفات" : "All specifications"}
+                  </button>
+                </div>
+                <div className={cn("grid gap-2", highlights.length > 1 && "grid-cols-2")}>
                   {highlights.map((highlight) => {
                     const HighlightIcon =
                       FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
                     return (
-                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 py-1">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/[0.06] text-primary">
+                      <div
+                        key={highlight.key}
+                        className="flex min-w-0 items-start gap-2.5 rounded-xl bg-muted/45 p-3"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-primary">
                           <HighlightIcon aria-hidden className="h-[18px] w-[18px]" />
                         </span>
                         <div className="min-w-0">
                           <strong className="block break-words text-sm font-semibold leading-snug text-foreground">
-                            {highlight.value}
+                            {productHighlightSummary(highlight.value)}
                           </strong>
                           <span className="mt-1 block break-words text-[11px] leading-snug text-muted-foreground">
                             {language === "ar" ? highlight.labelAr : highlight.label}
@@ -617,66 +676,28 @@ function ProductPage() {
               </section>
             )}
 
-            <div
-              className="grid grid-cols-3 border-y border-border/60 py-1"
-              aria-label="Product actions"
+            <a
+              data-testid="product-question"
+              href={whatsappOrderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-success/40 hover:bg-success/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleWishlist(node.handle)}
-                aria-pressed={wishlisted}
-                aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
-                className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
-              >
-                <Heart
-                  className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")}
-                />
-                <span className="truncate sm:hidden">
-                  {t(wishlisted ? "saved" : "wishlistShort")}
-                </span>
-                <span className="hidden truncate sm:inline">
-                  {t(wishlisted ? "saved" : "saveWishlist")}
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleShare}
-                aria-label={t("shareProduct")}
-                className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
-              >
-                <Share2 aria-hidden className="h-4 w-4 shrink-0" />
-                <span className="truncate sm:hidden">{t("shareShort")}</span>
-                <span className="hidden truncate sm:inline">{t("shareProduct")}</span>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="h-11 min-w-0 rounded-lg px-2 text-xs text-success hover:bg-success/10 hover:text-success sm:text-sm"
-              >
-                <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="truncate">
-                    {language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
-                  </span>
-                </a>
-              </Button>
-            </div>
+              <MessageCircle aria-hidden className="h-5 w-5 shrink-0 text-success" />
+              <span>
+                {language === "ar" ? "اسألنا عن هذا المنتج" : "Ask us about this product"}
+              </span>
+              <span className="ms-auto hidden text-xs text-muted-foreground min-[360px]:inline">
+                WhatsApp
+              </span>
+            </a>
 
-            {isPhone && (
-              <div className="-mt-2 flex justify-start">
-                <CompareButton handle={node.handle} />
-              </div>
-            )}
-
-            <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs text-muted-foreground">
+            <ul
+              data-testid="product-assurances"
+              className="grid grid-cols-3 gap-2 text-center text-[11px] leading-4 text-muted-foreground"
+            >
               {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
-                <li
-                  key={item.title}
-                  className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5"
-                >
+                <li key={item.title} className="flex min-w-0 flex-col items-center gap-2 px-1 py-2">
                   <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
                   <span className="font-medium text-foreground">
                     {language === "ar"

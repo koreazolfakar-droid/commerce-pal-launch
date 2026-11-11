@@ -1,5 +1,5 @@
 import { Check, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import type { ContentSection } from "@/lib/productContent";
 import { cn } from "@/lib/utils";
@@ -37,17 +37,32 @@ function DescriptionSection({
   language: "ar" | "en";
 }) {
   const [expanded, setExpanded] = useState(false);
-  const long = section.paragraphs.length > 2 || section.bullets.length > 6;
+  const contentId = useId();
+  const long =
+    section.paragraphs.join(" ").length > 320 ||
+    section.paragraphs.length > 2 ||
+    section.bullets.length > 6;
   return (
-    <section className={cn("min-w-0 max-w-4xl", !plain && "rounded-2xl border border-border/70 bg-card p-4 sm:p-5")}>
+    <section
+      className={cn(
+        "min-w-0 max-w-4xl",
+        !plain && "rounded-2xl border border-border/70 bg-card p-4 sm:p-5",
+      )}
+    >
       {section.title && (
         <h3 className="mb-3 text-base font-semibold tracking-tight text-foreground">
           {section.title}
         </h3>
       )}
-      <div className={cn("relative min-w-0 overflow-hidden", long && !expanded ? "max-h-52" : "")}>
+      <div
+        id={contentId}
+        className={cn("relative min-w-0 overflow-hidden", long && !expanded ? "max-h-32" : "")}
+      >
         {section.paragraphs.map((paragraph, index) => (
-          <p key={index} className="mb-3 break-words text-sm leading-7 text-foreground/80 last:mb-0 sm:text-[15px]">
+          <p
+            key={index}
+            className="mb-3 break-words text-sm leading-7 text-foreground/80 last:mb-0 sm:text-[15px]"
+          >
             {paragraph}
           </p>
         ))}
@@ -70,11 +85,16 @@ function DescriptionSection({
           type="button"
           onClick={() => setExpanded((value) => !value)}
           aria-expanded={expanded}
-          className="mt-3 inline-flex min-h-10 items-center gap-1.5 text-xs font-semibold text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          aria-controls={contentId}
+          className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {expanded
-            ? language === "ar" ? "عرض أقل" : "Show less"
-            : language === "ar" ? "قراءة الوصف بالكامل" : "Read full description"}
+            ? language === "ar"
+              ? "عرض أقل"
+              : "Show less"
+            : language === "ar"
+              ? "قراءة الوصف بالكامل"
+              : "Read full description"}
           <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
         </button>
       )}
