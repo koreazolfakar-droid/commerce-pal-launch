@@ -1,12 +1,12 @@
 import type { InventoryRow } from "@/dashboard/data/inventory";
 
 /**
- * Group *only the variants returned on this server-paginated page* by their
- * canonical product ID. Do not group by title, SKU, or option names: those
- * fields are not guaranteed unique.
+ * Groups variant rows supplied by the current server-paginated page using
+ * canonical product IDs, never names or SKUs.
  *
- * Totals here deliberately describe visible variants, never the entire product
- * or catalog. The dashboard_inventory_page RPC still paginates variants.
+ * The new product-level RPC returns *all* variants for each matching product.
+ * The legacy RPC fallback may still return only a portion of a product when
+ * variants cross a page boundary. The caller must label that mode accordingly.
  */
 export type InventoryProductGroup = {
   productId: string;

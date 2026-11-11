@@ -78,7 +78,7 @@ test("grouping a paginated result never manufactures missing variants or a full-
   ], 5);
   assert.equal(group.visibleTrackedUnits, 4);
   assert.deepEqual(group.variants.map((row) => row.variantId), ["visible"]);
-  assert.match(groupSource, /this server-paginated page/);
+  assert.match(groupSource, /current server-paginated page/);
   assert.match(groupComponent, /Variants on this page/);
   assert.match(groupComponent, /On hand · this page/);
 });
