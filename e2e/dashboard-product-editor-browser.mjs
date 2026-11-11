@@ -139,7 +139,7 @@ try{
   await discardDialog.waitFor();
   await discardDialog.getByRole("button",{name:"Cancel",exact:true}).click();
   assert.equal(await variantDialog.getByLabel("Variant title",{exact:true}).inputValue(),"Temporary unsaved name");
-  await variantDialog.getByRole("button",{name:"Cancel",exact:true}).click();
+  await page.keyboard.press("Escape");
   await discardDialog.waitFor();
   await discardDialog.getByRole("button",{name:"Discard changes",exact:true}).click();
   assert.equal(await variantDialog.count(),0);
