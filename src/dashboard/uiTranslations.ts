@@ -1,4 +1,11 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Inventory products": "منتجات المخزون",
+  "Products are grouped by ID. Counts apply to variants on this page.": "المنتجات مجمّعة حسب معرّف المنتج. الأعداد المعروضة تخص متغيّرات هذه الصفحة فقط.",
+  "Inventory stock views": "عروض حالة المخزون",
+  "Advanced inventory filters": "فلاتر المخزون المتقدمة",
+  "Low stock threshold": "حد المخزون المنخفض",
+  "Variants on this page": "متغيّرات في هذه الصفحة",
+  "On hand · this page": "المتوفر في هذه الصفحة",
   "Average unit cost": "متوسط تكلفة الوحدة",
   "Estimated gross profit": "الربح الإجمالي المقدّر",
   "Gross margin": "هامش الربح الإجمالي",
