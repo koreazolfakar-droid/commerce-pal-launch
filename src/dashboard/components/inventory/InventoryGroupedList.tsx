@@ -8,6 +8,8 @@ import { groupInventoryRows } from "./groupInventoryRows";
 type Props = {
   rows: InventoryRow[];
   threshold: number;
+  /** True when server pagination includes every variant for a parent product. */
+  completeGroups: boolean;
   savingId: string | null;
   draftStocks: Record<string, string>;
   movementLoading: boolean;
@@ -52,7 +54,7 @@ function VariantEditor({
   onHistory,
   movementLoading,
   threshold,
-}: Omit<Props, "rows"> & { row: InventoryRow }) {
+}: Omit<Props, "rows" | "completeGroups"> & { row: InventoryRow }) {
   const { t } = useLanguage();
   const saving = savingId === row.variantId;
   const blocked = Boolean(savingId) || !row.trackInventory;
@@ -164,7 +166,7 @@ export default function InventoryGroupedList(props: Props) {
                   </span>
                   <span className="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
                     <span className="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-600">
-                      {group.variants.length} {t("Variants on this page")}
+                      {group.variants.length} {t(props.completeGroups ? "Variants" : "Variants on this page")}
                     </span>
                     {group.outCount > 0 && (
                       <span className="rounded-md bg-rose-50 px-2 py-1 font-semibold text-rose-700">
@@ -179,7 +181,7 @@ export default function InventoryGroupedList(props: Props) {
                   </span>
                 </span>
                 <span className="hidden shrink-0 text-end sm:block">
-                  <span className="block text-xs text-slate-500">{t("On hand · this page")}</span>
+                  <span className="block text-xs text-slate-500">{t(props.completeGroups ? "On hand" : "On hand · this page")}</span>
                   <span className="block text-lg font-bold tabular-nums text-slate-800">
                     {group.trackedCount ? group.visibleTrackedUnits : "—"}
                   </span>
