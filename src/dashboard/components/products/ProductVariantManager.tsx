@@ -165,6 +165,7 @@ export default function ProductVariantManager({
   const imageLockRef = useRef(false);
   const reorderLockRef = useRef(false);
   const savedDraftRef = useRef<VariantDraft>(EMPTY_DRAFT);
+  const imageEditGenerationRef = useRef(0);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [imageResolution, setImageResolution] = useState<ProductImageResolution>(() =>
     getProductImageResolution(),
@@ -218,6 +219,7 @@ export default function ProductVariantManager({
 
   const openCreate = () => {
     if (saving || uploading || imageBusy || reordering || deletingVariantId) return;
+    imageEditGenerationRef.current += 1;
     const next = { ...EMPTY_DRAFT, baseOptions: {}, sortOrder: variants.length * 10 };
     savedDraftRef.current = next;
     setPendingImageFile(null);
@@ -228,6 +230,7 @@ export default function ProductVariantManager({
 
   const openEdit = (variant: DashboardProductVariant) => {
     if (saving || uploading || imageBusy || reordering || deletingVariantId) return;
+    imageEditGenerationRef.current += 1;
     const next = draftFromVariant(variant);
     savedDraftRef.current = next;
     setPendingImageFile(null);
@@ -242,6 +245,7 @@ export default function ProductVariantManager({
       setConfirmDiscard(true);
       return;
     }
+    imageEditGenerationRef.current += 1;
     setPendingImageFile(null);
     setOpen(false);
   };
@@ -339,6 +343,7 @@ export default function ProductVariantManager({
       publishState(next);
       const updated = next.find((row) => row.id === editing.id) ?? editing;
       setEditing(updated);
+      savedDraftRef.current = { ...savedDraftRef.current, imageUrl: result.url };
       setDraft((current) => ({ ...current, imageUrl: result.url }));
       toast.success(
         successMessage ??
@@ -364,6 +369,7 @@ export default function ProductVariantManager({
       publishState(next);
       const updated = next.find((row) => row.id === editing.id) ?? editing;
       setEditing(updated);
+      savedDraftRef.current = { ...savedDraftRef.current, imageUrl: "" };
       setDraft((current) => ({ ...current, imageUrl: "" }));
       toast.success("Variant image cleared.");
     } catch (cause) {
@@ -418,6 +424,7 @@ export default function ProductVariantManager({
         <button
           type="button"
           onClick={openCreate}
+          disabled={saving || uploading || imageBusy || reordering || deletingVariantId !== null}
           className="flex h-9 items-center justify-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700"
         >
           <Plus className="size-3.5" /> {t("Add variant")}
@@ -484,7 +491,7 @@ export default function ProductVariantManager({
                 <button
                   type="button"
                   onClick={() => void move(variant, -1)}
-                  disabled={index === 0}
+                  disabled={index === 0 || reordering || saving || uploading || imageBusy || deletingVariantId !== null}
                   className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
                   aria-label={t("Move variant up")}
                 >
@@ -493,7 +500,7 @@ export default function ProductVariantManager({
                 <button
                   type="button"
                   onClick={() => void move(variant, 1)}
-                  disabled={index === variants.length - 1}
+                  disabled={index === variants.length - 1 || reordering || saving || uploading || imageBusy || deletingVariantId !== null}
                   className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
                   aria-label={t("Move variant down")}
                 >
@@ -502,6 +509,7 @@ export default function ProductVariantManager({
                 <button
                   type="button"
                   onClick={() => openEdit(variant)}
+                  disabled={reordering || saving || uploading || imageBusy || deletingVariantId !== null}
                   className="grid size-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50"
                   aria-label={`Edit ${variant.title}`}
                 >
@@ -511,7 +519,7 @@ export default function ProductVariantManager({
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(variant)}
-                    disabled={deletingVariantId !== null}
+                    disabled={deletingVariantId !== null || reordering || saving || uploading || imageBusy}
                     className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`Delete ${variant.title}`}
                   >
@@ -534,11 +542,23 @@ export default function ProductVariantManager({
       {open ? (
         <div
           className="fixed inset-0 z-[80] overflow-y-auto bg-slate-950/40 p-4 sm:p-8"
-          onClick={() => setOpen(false)}
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) requestCloseVariant();
+          }
         >
           <div
             className="mx-auto w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t(editing ? "Edit variant" : "Add variant")}
             onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation();
+                requestCloseVariant();
+              }
+            }
           >
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -553,7 +573,9 @@ export default function ProductVariantManager({
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={requestCloseVariant}
+                disabled={saving || uploading || imageBusy}
+                aria-label={t("Close variant editor")}
                 className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
               >
                 <X className="size-4" />
@@ -751,7 +773,8 @@ export default function ProductVariantManager({
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={requestCloseVariant}
+                disabled={saving || uploading || imageBusy}
                 className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
               >
                 {t("Cancel")}
@@ -759,7 +782,7 @@ export default function ProductVariantManager({
               <button
                 type="button"
                 onClick={() => void save()}
-                disabled={saving}
+                disabled={saving || uploading || imageBusy || reordering}
                 className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50"
               >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : null} {t("Save variant")}
@@ -769,6 +792,20 @@ export default function ProductVariantManager({
         </div>
       ) : null}
 
+      <DashboardConfirmDialog
+        open={confirmDiscard}
+        title="Discard unsaved variant changes?"
+        description="Changes to this variant have not been saved. Discard them and close the editor?"
+        confirmLabel="Discard changes"
+        destructive
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => {
+          imageEditGenerationRef.current += 1;
+          setConfirmDiscard(false);
+          setPendingImageFile(null);
+          setOpen(false);
+        }}
+      />
       <DashboardConfirmDialog
         open={deleteTarget !== null}
         title={t("Delete this variant permanently?")}
