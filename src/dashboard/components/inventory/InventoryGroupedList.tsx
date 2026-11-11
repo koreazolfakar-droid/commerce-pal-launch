@@ -92,10 +92,6 @@ function VariantEditor({
           onBlur={() => onCommit(row)}
           onKeyDown={(event) => {
             if (event.key === "Enter") event.currentTarget.blur();
-            if (event.key === "Escape") {
-              onDraftChange(row.variantId, String(row.stock));
-              event.currentTarget.blur();
-            }
           }}
           disabled={blocked}
           aria-label={`Set stock for ${label}`}
