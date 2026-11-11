@@ -150,7 +150,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
 
   const stageProductImages = (files: File[]) => {
-    if (saving || creatingReference) return;
     const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
     const validFiles = files.filter(
       (file) => allowedTypes.has(file.type) && file.size <= 20 * 1024 * 1024,
@@ -1428,7 +1427,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   accept="image/jpeg,image/png,image/webp,image/avif"
                   className="hidden"
                   onChange={(event) => {
-                    stageProductImages(Array.from(event.target.files ?? []));
+                    if (!saving && !creatingReference)
+                      stageProductImages(Array.from(event.target.files ?? []));
                     event.target.value = "";
                   }}
                 />
