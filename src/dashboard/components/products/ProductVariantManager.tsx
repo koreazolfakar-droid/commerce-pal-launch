@@ -559,7 +559,7 @@ export default function ProductVariantManager({
                 event.stopPropagation();
                 requestCloseVariant();
               }
-            }
+            }}
           >
             <div className="mb-5 flex items-center justify-between">
               <div>
