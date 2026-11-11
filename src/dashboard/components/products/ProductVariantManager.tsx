@@ -178,9 +178,9 @@ export default function ProductVariantManager({
   );
   useDashboardUnsavedChanges(dirtyVariant);
   useLayoutEffect(() => {
-    onBusyChange?.(loading || saving || uploading || imageBusy || reordering || deletingVariantId !== null);
+    onBusyChange?.(loading || saving || uploading || imageBusy || reordering || deletingVariantId !== null || dirtyVariant);
     return () => onBusyChange?.(false);
-  }, [onBusyChange, loading, saving, uploading, imageBusy, reordering, deletingVariantId]);
+  }, [onBusyChange, loading, saving, uploading, imageBusy, reordering, deletingVariantId, dirtyVariant]);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
   const onCountChangeRef = useRef(onCountChange);
@@ -554,7 +554,8 @@ export default function ProductVariantManager({
             aria-label={t(editing ? "Edit variant" : "Add variant")}
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => {
-              if (event.key === "Escape") {
+              if (event.key === "Escape" && !confirmDiscard) {
+                event.preventDefault();
                 event.stopPropagation();
                 requestCloseVariant();
               }
@@ -582,6 +583,7 @@ export default function ProductVariantManager({
               </button>
             </div>
 
+            <fieldset disabled={saving || uploading || imageBusy || reordering} className="min-w-0">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label={t("Variant title")}
@@ -774,6 +776,7 @@ export default function ProductVariantManager({
               ) : null}
             </div>
 
+            </fieldset>
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
