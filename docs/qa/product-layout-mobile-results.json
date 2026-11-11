@@ -1,0 +1,34 @@
+{
+  "httpStatus": 200,
+  "result": {
+    "pass": true,
+    "width": 430,
+    "height": 932,
+    "language": "ar",
+    "fixture": false,
+    "checks": [
+      "purchase panel rendered",
+      "quantity controls have accessible names",
+      "quantity updates after hydration",
+      "quantity cannot fall below one",
+      "single color and storage are facts instead of redundant buttons",
+      "storage has a readable unit",
+      "selected storage is not repeated as a feature",
+      "technical details expand",
+      "technical details collapse",
+      "delivery, warranty and returns remain accessible",
+      "gallery thumbnails switch images",
+      "only one mobile bottom bar",
+      "purchase bar sits at the viewport bottom",
+      "mobile cart remains reachable",
+      "mobile purchase button meets touch target",
+      "no horizontal overflow",
+      "correct writing direction",
+      "purchase action is enabled",
+      "cart stores exact requested quantity",
+      "cart opener remains accessible",
+      "cart drawer displays the correct total"
+    ],
+    "cartTotal": "238.00"
+  }
+}

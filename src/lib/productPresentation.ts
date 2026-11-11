@@ -56,15 +56,16 @@ export interface ProductHighlight {
 
 const HIGHLIGHT_RULES = [
   { key: "power", match: /power|watt|charging speed/i, label: "Power", labelAr: "القدرة" },
-  { key: "technology", match: /\bgan\b|technology|charging protocol/i, label: "Technology", labelAr: "التقنية" },
-  { key: "port", match: /port|connector|usb|interface/i, label: "Connection", labelAr: "الاتصال" },
-  { key: "display", match: /display|screen|panel/i, label: "Display", labelAr: "الشاشة" },
+  { key: "technology", match: /\bgan\b|technology|charging protocol|التقنية/i, label: "Technology", labelAr: "التقنية" },
+  { key: "processor", match: /processor|chipset|المعالج/i, label: "Processor", labelAr: "المعالج" },
+  { key: "port", match: /\bports?\b|connector|usb|interface|\bconnection\b|الاتصال|التوصيل|المنفذ/i, label: "Connection", labelAr: "الاتصال" },
+  { key: "display", match: /display|screen|panel|الشاشة/i, label: "Display", labelAr: "الشاشة" },
   { key: "cable", match: /cable|box contents|included/i, label: "Included", labelAr: "المرفقات" },
-  { key: "storage", match: /storage|capacity/i, label: "Storage", labelAr: "التخزين" },
-  { key: "ram", match: /\bram\b|memory/i, label: "Memory", labelAr: "الذاكرة" },
-  { key: "battery", match: /battery|\bmah\b/i, label: "Battery", labelAr: "البطارية" },
-  { key: "camera", match: /camera/i, label: "Camera", labelAr: "الكاميرا" },
-  { key: "bluetooth", match: /bluetooth/i, label: "Bluetooth", labelAr: "بلوتوث" },
+  { key: "battery", match: /battery|\bmah\b|البطارية/i, label: "Battery", labelAr: "البطارية" },
+  { key: "storage", match: /storage|capacity|التخزين/i, label: "Storage", labelAr: "التخزين" },
+  { key: "ram", match: /\bram\b|memory|الذاكرة/i, label: "Memory", labelAr: "الذاكرة" },
+  { key: "camera", match: /camera|الكاميرا/i, label: "Camera", labelAr: "الكاميرا" },
+  { key: "bluetooth", match: /bluetooth|بلوتوث/i, label: "Bluetooth", labelAr: "بلوتوث" },
 ] as const;
 
 /** Highlights are extracted exclusively from merchant specifications or the product title. */
@@ -76,9 +77,9 @@ export function buildProductHighlights(groups: SpecGroup[], title: string, limit
     for (const row of group.rows) {
       const rule = HIGHLIGHT_RULES.find((entry) => entry.match.test(row.label));
       const value = row.value?.trim();
-      if (!rule || !value || value.length > 64 || /^(?:n\/a|unknown|not specified)$/i.test(value)) continue;
+      if (!rule || !value || value.length > 64 || /^(?:n\/a|unknown|not specified|غير محدد|غير متوفر)$/i.test(value)) continue;
       if (!values.has(rule.key)) {
-        values.set(rule.key, { key: rule.key, label: row.label, labelAr: rule.labelAr, value });
+        values.set(rule.key, { key: rule.key, label: rule.label, labelAr: rule.labelAr, value });
       }
     }
   }

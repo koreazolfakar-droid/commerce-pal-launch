@@ -33,13 +33,10 @@ try {
     );
     await section.locator("h2").first().getByText(expectedTitle, { exact: true })
       .waitFor({ state: "visible", timeout: 10000 });
-    const tabs = section.getByRole("tab");
-    assert.ok(await tabs.count() >= 2, "Expected both product information tabs");
-    assert.ok(await section.getByRole("tabpanel").first().isVisible(), "Description should be visible first");
-    const specsTab = section.getByRole("tab", {
-      name: item.language === "ar" ? "المواصفات التقنية" : "Specifications",
-    });
-    await specsTab.click();
+    const description = section.locator('details[data-product-detail="description"]');
+    assert.equal(await description.getAttribute("open"), "", "Description should be expanded first");
+    const specs = section.locator('details[data-product-detail="specifications"]');
+    await specs.locator('summary').click();
     await page.getByTestId("product-specification-sheet").waitFor({ state: "visible" });
     const grid = page.getByTestId("product-specification-sheet");
     assert.ok((await grid.innerText()).includes("Samsung"), "Real brand spec is missing");
@@ -53,9 +50,10 @@ try {
     assert.ok((metrics.tabsWidth ?? 0) <= metrics.width + 1);
     if (item.width < 640) {
       const purchase = await page.getByTestId("product-purchase-bar").boundingBox();
-      const nav = await page.getByTestId("bottom-nav").boundingBox();
-      assert.ok(purchase && nav && purchase.y + purchase.height <= nav.y + 1,
-        "Sticky purchase bar overlaps navigation at " + item.width);
+      assert.ok(purchase && Math.abs(purchase.y + purchase.height - item.height) <= 1,
+        "Purchase bar must sit at the viewport bottom at " + item.width);
+      assert.equal(await page.getByTestId("bottom-nav").isVisible(), false,
+        "Product page must have only one bottom bar on mobile");
     }
     const recommendationHandles = new Set();
     for (const id of ["similar-products", "more-from-brand"]) {

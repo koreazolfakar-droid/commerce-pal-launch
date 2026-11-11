@@ -49,7 +49,7 @@ test("quick view selects a variant and quantity and restores focus on Escape", a
 });
 
 
-test("mobile product purchase bar stays separate from navigation across narrow widths", async ({
+test("mobile product purchase bar replaces navigation across narrow widths", async ({
   page,
 }) => {
   for (const viewport of [
@@ -66,22 +66,21 @@ test("mobile product purchase bar stays separate from navigation across narrow w
 
     await expect(canvas).toBeVisible();
     await expect(purchaseBar).toBeVisible();
-    await expect(bottomNav).toBeVisible();
+    await expect(bottomNav).toBeHidden();
     await expect(
       purchaseBar.getByRole("button", { name: "Add to cart", exact: true }),
     ).toBeVisible();
     await expect(purchaseBar.getByRole("button", { name: /wish|save/i })).toHaveCount(0);
 
-    const [canvasBox, purchaseBox, navBox] = await Promise.all([
+    const [canvasBox, purchaseBox] = await Promise.all([
       canvas.boundingBox(),
       purchaseBar.boundingBox(),
-      bottomNav.boundingBox(),
     ]);
     expect(canvasBox).not.toBeNull();
     expect(purchaseBox).not.toBeNull();
-    expect(navBox).not.toBeNull();
     expect(canvasBox!.x).toBeGreaterThanOrEqual(0);
     expect(canvasBox!.x + canvasBox!.width).toBeLessThanOrEqual(viewport.width + 1);
-    expect(purchaseBox!.y + purchaseBox!.height).toBeLessThanOrEqual(navBox!.y + 1);
+    expect(Math.abs(purchaseBox!.y + purchaseBox!.height - viewport.height)).toBeLessThanOrEqual(1);
+    await expect(purchaseBar.getByTestId("product-open-bag")).toBeVisible();
   }
 });

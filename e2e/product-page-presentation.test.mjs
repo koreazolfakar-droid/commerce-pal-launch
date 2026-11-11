@@ -68,3 +68,20 @@ test("product page uses unique suggestions and no generic catalogue SEO filler",
   assert.match(route, /<VariantPicker/);
   assert.match(route, /productWhatsAppUrl/);
 });
+
+test("battery capacity remains a battery fact and Arabic merchant specs keep their values", () => {
+  const result = buildProductHighlights([{ title: "Specs", rows: [
+    { label: "Battery capacity", value: "6000mAh" },
+    { label: "Storage", value: "128GB" },
+    { label: "الشاشة", value: "6.78 inches" },
+    { label: "المعالج", value: "Merchant chipset" },
+    { label: "Camera", value: "غير محدد" },
+    { label: "Supported formats", value: "MP3, FLAC" },
+  ] }], "Ordinary phone");
+  assert.deepEqual(result.map(({ key, value }) => ({ key, value })), [
+    { key: "battery", value: "6000mAh" },
+    { key: "storage", value: "128GB" },
+    { key: "display", value: "6.78 inches" },
+    { key: "processor", value: "Merchant chipset" },
+  ]);
+});

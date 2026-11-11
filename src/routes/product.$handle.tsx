@@ -29,18 +29,22 @@ import { toast } from "sonner";
 
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
-import { ProseSections } from "@/components/product/ProseSection";
-import { SpecSheet } from "@/components/product/SpecSheet";
+import { ProductInformation } from "@/components/product/ProductInformation";
+import "@/components/product/product-page.css";
 import { VariantPicker } from "@/components/product/VariantPicker";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
 import { useProductViewMode } from "@/hooks/useProductViewMode";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
+import { productOptionKind } from "@/lib/productOptionDisplay";
 import { buildProductHighlights, buildProductSuggestions } from "@/lib/productPresentation";
-import { buildDisplayOverview, buildDisplaySpecificationGroups, inferredBoxContents } from "@/lib/productDetailDisplay";
+import {
+  buildDisplayOverview,
+  buildDisplaySpecificationGroups,
+  inferredBoxContents,
+} from "@/lib/productDetailDisplay";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
@@ -126,9 +130,18 @@ function ProductPending() {
   const { language } = useLanguage();
   return (
     <StoreLayout>
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-4 sm:px-5 lg:grid-cols-2 lg:gap-12 lg:px-6 lg:py-10" role="status" aria-live="polite">
-        <span className="sr-only">{language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}</span>
-        <div className="shimmer aspect-[4/3] rounded-xl bg-surface sm:aspect-square" aria-hidden="true" />
+      <div
+        className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-4 sm:px-5 lg:grid-cols-2 lg:gap-12 lg:px-6 lg:py-10"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">
+          {language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}
+        </span>
+        <div
+          className="shimmer aspect-[4/3] rounded-xl bg-surface sm:aspect-square"
+          aria-hidden="true"
+        />
         <div className="space-y-4" aria-hidden="true">
           <div className="shimmer h-3 w-20 rounded bg-surface" />
           <div className="shimmer h-7 w-4/5 rounded bg-surface" />
@@ -142,9 +155,18 @@ function ProductPending() {
 }
 
 const FEATURE_ICONS = {
-  power: Zap, technology: Cpu, port: Plug, display: Monitor, cable: Cable,
-  storage: HardDrive, ram: Cpu, battery: Battery, camera: Camera,
-  bluetooth: Bluetooth, color: Palette,
+  power: Zap,
+  technology: Cpu,
+  processor: Cpu,
+  port: Plug,
+  display: Monitor,
+  cable: Cable,
+  storage: HardDrive,
+  ram: Cpu,
+  battery: Battery,
+  camera: Camera,
+  bluetooth: Bluetooth,
+  color: Palette,
 } as const;
 
 function ProductPage() {
@@ -185,13 +207,18 @@ function ProductPage() {
   const [pending, setPending] = useState<"cart" | "buy" | null>(null);
 
   const selectedVariant = useMemo(
-    () => variants.find((variant) => variant.id === selectedVariantId) ?? productPrimaryVariant(product),
+    () =>
+      variants.find((variant) => variant.id === selectedVariantId) ??
+      productPrimaryVariant(product),
     [variants, selectedVariantId, product],
   );
   const selectedOptions = useMemo(() => optionsForVariant(selectedVariant), [selectedVariant]);
 
   const addItem = useCartStore((state) => state.addItem);
   const cartLoading = useCartStore((state) => state.isLoading);
+  const cartCount = useCartStore((state) =>
+    state.items.reduce((total, item) => total + item.quantity, 0),
+  );
   const wishlisted = useWishlistStore((state) => state.handles.includes(node.handle));
   const toggleWishlist = useWishlistToggle();
   const addRecentlyViewed = useRecentlyViewedStore((state) => state.add);
@@ -209,8 +236,12 @@ function ProductPage() {
   // Dashboard edits invalidate the native cache and re-run this route's direct
   // Supabase loader, including changes made in another tab of this browser.
   useEffect(() => {
-    const unsubscribe = subscribeStorefrontRefresh(() => { void router.invalidate(); });
-    return () => { unsubscribe(); };
+    const unsubscribe = subscribeStorefrontRefresh(() => {
+      void router.invalidate();
+    });
+    return () => {
+      unsubscribe();
+    };
   }, [router]);
 
   useEffect(() => {
@@ -287,10 +318,13 @@ function ProductPage() {
   });
 
   const content = useMemo(
-    () => splitSections(parseDescription(
-      language === "ar" && node.descriptionAr?.trim() ? undefined : node.descriptionHtml,
-      language === "ar" && node.descriptionAr?.trim() ? node.descriptionAr : node.description,
-    )),
+    () =>
+      splitSections(
+        parseDescription(
+          language === "ar" && node.descriptionAr?.trim() ? undefined : node.descriptionHtml,
+          language === "ar" && node.descriptionAr?.trim() ? node.descriptionAr : node.description,
+        ),
+      ),
     [language, node.descriptionHtml, node.description, node.descriptionAr],
   );
 
@@ -323,7 +357,11 @@ function ProductPage() {
         : []),
     ].filter((row) => !structuredLabels.has(row.label.trim().toLocaleLowerCase()));
 
-    return buildDisplaySpecificationGroups([...structuredGroups, ...groupSpecs(fallbackRows)], node.title, language);
+    return buildDisplaySpecificationGroups(
+      [...structuredGroups, ...groupSpecs(fallbackRows)],
+      node.title,
+      language,
+    );
   }, [
     content.specs,
     selectedVariant,
@@ -335,31 +373,27 @@ function ProductPage() {
   ]);
 
   const { similar, sameVendor } = useMemo(
-    () => buildProductSuggestions({ current: product, recommendations: recommended, vendorProducts }),
+    () =>
+      buildProductSuggestions({ current: product, recommendations: recommended, vendorProducts }),
     [product, recommended, vendorProducts],
   );
-  const highlights = useMemo(
-    () => buildProductHighlights(specGroups, node.title),
-    [specGroups, node.title],
-  );
+  const highlights = useMemo(() => {
+    const optionKeys = new Set<string>(
+      (node.options ?? []).map((option) => productOptionKind(option.name)),
+    );
+    return buildProductHighlights(specGroups, node.title, 6)
+      .filter((highlight) => !optionKeys.has(highlight.key === "ram" ? "memory" : highlight.key))
+      .slice(0, 4);
+  }, [specGroups, node.title, node.options]);
 
   const displayOverview = useMemo(
     () => buildDisplayOverview(content.overview, node.title, node.vendor, language),
     [content.overview, node.title, node.vendor, language],
   );
   const displayBox = useMemo(
-    () => content.box.length ? content.box : inferredBoxContents(node.title, language),
+    () => (content.box.length ? content.box : inferredBoxContents(node.title, language)),
     [content.box, node.title, language],
   );
-  const hasOverview = displayOverview.length > 0;
-  const hasBox = displayBox.length > 0;
-  const hasShipping = content.shipping.length > 0;
-  const hasSpecs = specGroups.length > 0;
-  const defaultTab = hasOverview ? "overview" : "specifications";
-  const selectedOptionSummary = (selectedVariant?.selectedOptions ?? [])
-    .filter((option) => option.value !== "Default Title")
-    .map((option) => option.value)
-    .join(" · ");
   const maxQuantity =
     selectedVariant?.trackInventory && !selectedVariant.allowBackorder
       ? Math.max(0, Math.min(99, Math.trunc(selectedVariant.stockQuantity ?? 0)))
@@ -417,7 +451,10 @@ function ProductPage() {
             }
           />
 
-          <div className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2">
+          <div
+            data-testid="product-buy-box"
+            className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2"
+          >
             <div className="min-w-0">
               {brand && (
                 <Link
@@ -431,9 +468,6 @@ function ProductPage() {
               <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
                 {displayTitle}
               </h1>
-              {selectedOptionSummary && (
-                <p className="mt-2 text-sm text-muted-foreground">{selectedOptionSummary}</p>
-              )}
               <p
                 className={cn(
                   "mt-2 inline-flex items-center gap-2 text-xs font-medium",
@@ -451,14 +485,10 @@ function ProductPage() {
               </p>
             </div>
 
-            <VariantPicker
-              options={node.options ?? []}
-              variants={variants}
-              selected={selectedOptions}
-              onSelect={handleOptionSelect}
-            />
-
-            <div className="flex items-end justify-between gap-4">
+            <div
+              data-testid="product-price"
+              className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-border/60 pb-4"
+            >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                   <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground sm:text-2xl">
@@ -469,13 +499,29 @@ function ProductPage() {
                       {formatPrice(compareAt, currency)}
                     </span>
                   )}
+                  {discount !== null && (
+                    <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                      {language === "ar" ? "خصم" : "Save"} {discount}%
+                    </span>
+                  )}
                 </div>
-                {discount !== null && (
-                  <p className="mt-1 text-[11px] font-medium text-primary">{language === "ar" ? "وفّر" : "Save"} {discount}%</p>
-                )}
               </div>
+            </div>
 
+            <VariantPicker
+              compactSingleValues
+              options={node.options ?? []}
+              variants={variants}
+              selected={selectedOptions}
+              onSelect={handleOptionSelect}
+            />
+
+            <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+              <span className="text-sm font-medium text-foreground">
+                {language === "ar" ? "الكمية" : "Quantity"}
+              </span>
               <div
+                data-testid="product-quantity"
                 className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
                 aria-label={language === "ar" ? "الكمية" : "Quantity"}
               >
@@ -489,7 +535,10 @@ function ProductPage() {
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="w-8 text-center text-sm font-semibold tabular-nums" aria-live="polite">
+                <span
+                  className="w-8 text-center text-sm font-semibold tabular-nums"
+                  aria-live="polite"
+                >
                   {quantity}
                 </span>
                 <Button
@@ -539,17 +588,18 @@ function ProductPage() {
               <section
                 data-testid="product-key-features"
                 aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
-                className="min-w-0"
+                className="min-w-0 border-t border-border/60 pt-4"
               >
                 <h2 className="mb-3 text-base font-semibold tracking-tight text-foreground">
                   {language === "ar" ? "أبرز المميزات" : "Key features"}
                 </h2>
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                   {highlights.map((highlight) => {
-                    const HighlightIcon = FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
+                    const HighlightIcon =
+                      FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
                     return (
-                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 rounded-2xl border border-primary/10 bg-primary/[0.05] p-3.5">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 py-1">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/[0.06] text-primary">
                           <HighlightIcon aria-hidden className="h-[18px] w-[18px]" />
                         </span>
                         <div className="min-w-0">
@@ -579,9 +629,15 @@ function ProductPage() {
                 aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
                 className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
-                <Heart className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")} />
-                <span className="truncate sm:hidden">{t(wishlisted ? "saved" : "wishlistShort")}</span>
-                <span className="hidden truncate sm:inline">{t(wishlisted ? "saved" : "saveWishlist")}</span>
+                <Heart
+                  className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")}
+                />
+                <span className="truncate sm:hidden">
+                  {t(wishlisted ? "saved" : "wishlistShort")}
+                </span>
+                <span className="hidden truncate sm:inline">
+                  {t(wishlisted ? "saved" : "saveWishlist")}
+                </span>
               </Button>
               <Button
                 variant="ghost"
@@ -602,112 +658,51 @@ function ProductPage() {
               >
                 <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="h-4 w-4" />
-                  <span className="truncate">WhatsApp</span>
+                  <span className="truncate">
+                    {language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
+                  </span>
                 </a>
               </Button>
             </div>
 
-            {isPhone && <div className="-mt-2 flex justify-start"><CompareButton handle={node.handle} /></div>}
+            {isPhone && (
+              <div className="-mt-2 flex justify-start">
+                <CompareButton handle={node.handle} />
+              </div>
+            )}
 
             <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs text-muted-foreground">
-              {PURCHASE_ASSURANCES.slice(0, 3).map((item) => (
-                <li key={item.title} className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5">
+              {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
+                <li
+                  key={item.title}
+                  className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5"
+                >
                   <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="font-medium text-foreground">{item.title}</span>
+                  <span className="font-medium text-foreground">
+                    {language === "ar"
+                      ? ["منتجات أصلية", "توصيل سريع", "سهولة الإرجاع"][index]
+                      : item.title}
+                  </span>
                 </li>
               ))}
             </ul>
-
           </div>
         </div>
 
-        {(hasOverview || hasSpecs) && (
-          <section
-            data-testid="product-information"
-            className="mt-9 min-w-0 border-t border-border/60 pt-7 sm:mt-11"
-            aria-label={language === "ar" ? "معلومات المنتج" : "Product details"}
-          >
-            <div className="mb-5">
-              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                {language === "ar" ? "معلومات المنتج" : "Product information"}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {language === "ar" ? "الوصف والمواصفات المتوفرة لهذا المنتج" : "Description and confirmed technical details"}
-              </p>
-            </div>
-            <Tabs defaultValue={defaultTab} className="w-full min-w-0">
-              <TabsList className="mb-5 h-auto w-full justify-start gap-7 rounded-none border-b border-border/70 bg-transparent p-0">
-                {hasOverview && (
-                  <TabsTrigger
-                    value="overview"
-                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none sm:text-base"
-                  >
-                    {language === "ar" ? "الوصف" : "Description"}
-                  </TabsTrigger>
-                )}
-                {hasSpecs && (
-                  <TabsTrigger
-                    value="specifications"
-                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none sm:text-base"
-                  >
-                    {language === "ar" ? "المواصفات التقنية" : "Specifications"}
-                  </TabsTrigger>
-                )}
-              </TabsList>
-              {hasOverview && (
-                <TabsContent value="overview" className="mt-0 min-w-0">
-                  <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6">
-                    <h3 className="mb-3 text-base font-semibold text-foreground">
-                      {language === "ar" ? "نظرة عامة" : "Product overview"}
-                    </h3>
-                    <ProseSections sections={displayOverview} plain language={language} />
-                  </div>
-                </TabsContent>
-              )}
-              {hasSpecs && (
-                <TabsContent value="specifications" className="mt-0 min-w-0">
-                  <SpecSheet groups={specGroups} language={language} />
-                </TabsContent>
-              )}
-            </Tabs>
-          </section>
-        )}
-
-        {(hasBox || hasShipping) && (
-          <section className="mt-7 grid min-w-0 gap-4 sm:grid-cols-2" aria-label={language === "ar" ? "محتويات المنتج والتوصيل" : "Product contents and delivery"}>
-            {hasBox && (
-              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
-                <h2 className="mb-3 text-base font-semibold">
-                  {language === "ar" ? "محتويات العلبة" : "What's in the box"}
-                </h2>
-                <ProseSections sections={displayBox} plain language={language} />
-              </div>
-            )}
-            {hasShipping && (
-              <div className="min-w-0 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
-                <h2 className="mb-3 text-base font-semibold">
-                  {language === "ar" ? "الشحن والإرجاع" : "Shipping & returns"}
-                </h2>
-                <ProseSections sections={content.shipping} plain language={language} />
-              </div>
-            )}
-          </section>
-        )}
-
-        <nav
-          aria-label={language === "ar" ? "سياسات المتجر" : "Store policies"}
-          className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 pt-5 text-sm font-medium"
-        >
-          <p className="w-full text-xs font-normal text-muted-foreground">
-            {language === "ar" ? "اطّلع على تفاصيل التوصيل والضمان والإرجاع في سياسات المتجر." : "Review our delivery, warranty and returns policies for details."}
-          </p>
-          <Link to="/shipping" className="text-primary hover:underline">{t("shippingTitle")}</Link>
-          <Link to="/warranty" className="text-primary hover:underline">{t("warrantyTitle")}</Link>
-          <Link to="/returns" className="text-primary hover:underline">{t("returnsTitle")}</Link>
-        </nav>
+        <ProductInformation
+          key={node.handle}
+          overview={displayOverview}
+          specifications={specGroups}
+          box={displayBox}
+          shipping={content.shipping}
+          language={language}
+        />
 
         {similar.length > 0 && (
-          <section className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8" aria-labelledby="similar-products">
+          <section
+            className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
+            aria-labelledby="similar-products"
+          >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 sm:mb-5">
               <div className="min-w-0">
                 <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
@@ -727,15 +722,26 @@ function ProductPage() {
                     {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
                   </Link>
                 )}
-                <ProductViewToggle mode={recommendationViewMode} onChange={setRecommendationViewMode} />
+                <ProductViewToggle
+                  mode={recommendationViewMode}
+                  onChange={setRecommendationViewMode}
+                />
               </div>
             </div>
-            <ProductGrid products={similar} viewMode={recommendationViewMode} onViewModeChange={setRecommendationViewMode} showViewToggle={false} />
+            <ProductGrid
+              products={similar}
+              viewMode={recommendationViewMode}
+              onViewModeChange={setRecommendationViewMode}
+              showViewToggle={false}
+            />
           </section>
         )}
 
         {sameVendor.length > 0 && (
-          <section className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8" aria-labelledby="more-from-brand">
+          <section
+            className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
+            aria-labelledby="more-from-brand"
+          >
             <div className="home-section-header">
               <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
                 {t("moreFromBrand")} {brand?.label}
@@ -757,9 +763,9 @@ function ProductPage() {
 
       <div
         data-testid="product-purchase-bar"
-        className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
       >
-        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-4 px-4 py-2.5">
+        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-4 px-4 pt-2.5 pb-[calc(.625rem+env(safe-area-inset-bottom,0px))]">
           <div className="min-w-0 shrink-0">
             <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
               {language === "ar" ? "السعر" : "Price"}
@@ -782,6 +788,24 @@ function ProductPage() {
               </>
             ) : (
               t("soldOut")
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            data-testid="product-open-bag"
+            aria-label={`${t("openBag")}, ${cartCount}`}
+            onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
+            className="relative h-11 w-11 shrink-0 rounded-xl"
+          >
+            <ShoppingBag aria-hidden className="h-4 w-4" />
+            {cartCount > 0 && (
+              <span
+                aria-hidden
+                className="absolute -end-1 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
+              >
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
             )}
           </Button>
         </div>

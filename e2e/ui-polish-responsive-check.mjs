@@ -423,20 +423,13 @@ async function runRoutes(browser) {
         );
 
         const purchaseBar = page.locator('[data-testid="product-purchase-bar"]:visible');
-        const bottomNav = page.locator('[data-testid="bottom-nav"]:visible');
         await purchaseBar.waitFor({ state: "visible", timeout: 5000 });
-        await bottomNav.waitFor({ state: "visible", timeout: 5000 });
-
-        const [purchaseBox, navBox] = await Promise.all([
-          purchaseBar.boundingBox(),
-          bottomNav.boundingBox(),
-        ]);
+        const purchaseBox = await purchaseBar.boundingBox();
         assert.ok(purchaseBox, `${engineName} ${testCase.width}px: purchase bar has no box`);
-        assert.ok(navBox, `${engineName} ${testCase.width}px: bottom nav has no box`);
-        assert.ok(
-          (purchaseBox?.y ?? 0) + (purchaseBox?.height ?? 0) <= (navBox?.y ?? 0) + 1,
-          `${engineName} ${testCase.width}px: purchase bar overlaps bottom navigation`,
-        );
+        assert.equal(await page.getByTestId("bottom-nav").isVisible(), false,
+          `${engineName} ${testCase.width}px: product page shows duplicate bottom bars`);
+        assert.ok(Math.abs(purchaseBox.y + purchaseBox.height - testCase.height) <= 1,
+          `${engineName} ${testCase.width}px: purchase bar must sit at the viewport bottom`);
       }
     }
   }
