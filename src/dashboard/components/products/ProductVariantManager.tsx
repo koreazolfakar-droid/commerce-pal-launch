@@ -1,4 +1,6 @@
 import { useLanguage } from "@/dashboard/i18n";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 import {
   ArrowDown,
   ArrowUp,
@@ -106,11 +108,13 @@ function buildInput(draft: VariantDraft): DashboardProductVariantInput {
   const price = Number(draft.price);
   const compareAt = draft.compareAt.trim() ? Number(draft.compareAt) : null;
   const stock = Number(draft.stock);
-  if (!Number.isFinite(price) || price < 0) throw new Error("Enter a valid variant price.");
-  if (compareAt != null && (!Number.isFinite(compareAt) || compareAt < 0)) {
-    throw new Error("Enter a valid compare-at price.");
+  // An empty input is not an intentional free product: Number("") becomes 0.
+  if (!draft.price.trim() || !Number.isFinite(price) || price < 0)
+    throw new Error("Enter a valid variant price.");
+  if (compareAt != null && (!Number.isFinite(compareAt) || compareAt < price)) {
+    throw new Error("Compare-at price cannot be below the variant selling price.");
   }
-  if (!Number.isInteger(stock) || stock < 0) {
+  if (!draft.stock.trim() || !Number.isInteger(stock) || stock < 0) {
     throw new Error("Stock must be a non-negative whole number.");
   }
 
@@ -155,6 +159,14 @@ export default function ProductVariantManager({
   const [deletingVariantId, setDeletingVariantId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DashboardProductVariant | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const mutationLockRef = useRef(false);
+  const imageLockRef = useRef(false);
+  const reorderLockRef = useRef(false);
+  const savedDraftRef = useRef<VariantDraft>(EMPTY_DRAFT);
+  const imageEditGenerationRef = useRef(0);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [imageResolution, setImageResolution] = useState<ProductImageResolution>(() =>
     getProductImageResolution(),
@@ -162,10 +174,14 @@ export default function ProductVariantManager({
   const [editing, setEditing] = useState<DashboardProductVariant | null>(null);
   const [draft, setDraft] = useState<VariantDraft>(EMPTY_DRAFT);
   const [open, setOpen] = useState(false);
+  const dirtyVariant = open && (
+    JSON.stringify(draft) !== JSON.stringify(savedDraftRef.current) || pendingImageFile !== null
+  );
+  useDashboardUnsavedChanges(dirtyVariant);
   useLayoutEffect(() => {
-    onBusyChange?.(loading || saving || uploading || deletingVariantId !== null);
+    onBusyChange?.(loading || saving || uploading || imageBusy || reordering || deletingVariantId !== null || dirtyVariant);
     return () => onBusyChange?.(false);
-  }, [onBusyChange, loading, saving, uploading, deletingVariantId]);
+  }, [onBusyChange, loading, saving, uploading, imageBusy, reordering, deletingVariantId, dirtyVariant]);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
   const onCountChangeRef = useRef(onCountChange);
@@ -203,19 +219,42 @@ export default function ProductVariantManager({
   }, [load]);
 
   const openCreate = () => {
+    if (saving || uploading || imageBusy || reordering || deletingVariantId) return;
+    imageEditGenerationRef.current += 1;
+    const next = { ...EMPTY_DRAFT, baseOptions: {}, sortOrder: variants.length * 10 };
+    savedDraftRef.current = next;
+    setPendingImageFile(null);
     setEditing(null);
-    setDraft({ ...EMPTY_DRAFT, sortOrder: variants.length * 10 });
+    setDraft(next);
     setOpen(true);
   };
 
   const openEdit = (variant: DashboardProductVariant) => {
+    if (saving || uploading || imageBusy || reordering || deletingVariantId) return;
+    imageEditGenerationRef.current += 1;
+    const next = draftFromVariant(variant);
+    savedDraftRef.current = next;
+    setPendingImageFile(null);
     setEditing(variant);
-    setDraft(draftFromVariant(variant));
+    setDraft(next);
     setOpen(true);
   };
 
+  const requestCloseVariant = () => {
+    if (saving || uploading || imageBusy) return;
+    if (dirtyVariant) {
+      setConfirmDiscard(true);
+      return;
+    }
+    imageEditGenerationRef.current += 1;
+    setPendingImageFile(null);
+    setOpen(false);
+  };
+
+  const variantDialogRef = useDashboardModal(requestCloseVariant, open);
+
   const save = async () => {
-    if (saving) return;
+    if (saving || mutationLockRef.current || uploading || imageBusy || reordering || deletingVariantId) return;
     let input: DashboardProductVariantInput;
     try {
       input = buildInput(draft);
@@ -224,6 +263,12 @@ export default function ProductVariantManager({
       return;
     }
 
+    if (pendingImageFile) {
+      toast.error(t("Upload or cancel the selected variant image before saving."));
+      return;
+    }
+
+    mutationLockRef.current = true;
     setSaving(true);
     try {
       const saved = editing
@@ -234,18 +279,22 @@ export default function ProductVariantManager({
       );
       publishState(next);
       setEditing(saved);
-      setDraft(draftFromVariant(saved));
+      const nextDraft = draftFromVariant(saved);
+      savedDraftRef.current = nextDraft;
+      setDraft(nextDraft);
+      setPendingImageFile(null);
       toast.success(editing ? "Variant updated." : "Variant created.");
       if (!editing) setOpen(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Variant save failed.");
     } finally {
+      mutationLockRef.current = false;
       setSaving(false);
     }
   };
 
   const remove = async () => {
-    if (!deleteTarget || deletingVariantId) return;
+    if (!deleteTarget || deletingVariantId || saving || uploading || imageBusy || reordering) return;
     if (!canDelete) {
       toast.error("Only admins can permanently delete variants.");
       setDeleteTarget(null);
@@ -267,12 +316,15 @@ export default function ProductVariantManager({
   };
 
   const move = async (variant: DashboardProductVariant, direction: -1 | 1) => {
+    if (reorderLockRef.current || saving || uploading || imageBusy || deletingVariantId) return;
     const index = variants.findIndex((row) => row.id === variant.id);
     const target = index + direction;
     if (index < 0 || target < 0 || target >= variants.length) return;
     const next = [...variants];
     [next[index], next[target]] = [next[target], next[index]];
     const normalized = next.map((row, position) => ({ ...row, sortOrder: position * 10 }));
+    reorderLockRef.current = true;
+    setReordering(true);
     publishState(normalized);
     try {
       await reorderDashboardProductVariants(
@@ -280,12 +332,16 @@ export default function ProductVariantManager({
       );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Variant reorder failed.");
-      void load();
+      await load();
+    } finally {
+      reorderLockRef.current = false;
+      setReordering(false);
     }
   };
 
   const upload = async (file?: File, successMessage?: string) => {
-    if (!file || !editing || uploading) return;
+    if (!file || !editing || imageLockRef.current || uploading || saving || reordering || deletingVariantId) return;
+    imageLockRef.current = true;
     setUploading(true);
     try {
       const result = await uploadDashboardVariantImage(productId, editing.id, file);
@@ -295,7 +351,9 @@ export default function ProductVariantManager({
       publishState(next);
       const updated = next.find((row) => row.id === editing.id) ?? editing;
       setEditing(updated);
+      savedDraftRef.current = { ...savedDraftRef.current, imageUrl: result.url };
       setDraft((current) => ({ ...current, imageUrl: result.url }));
+      setPendingImageFile(null);
       toast.success(
         successMessage ??
           `Variant image optimized to ${result.conversion.output.width}×${result.conversion.output.height} WebP.`,
@@ -303,24 +361,32 @@ export default function ProductVariantManager({
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Variant image upload failed.");
     } finally {
+      imageLockRef.current = false;
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
-      setPendingImageFile(null);
+      // Keep the staged edited file when upload fails so Retry does not
+      // force the user through the picker and image editor again.
     }
   };
 
   const clearImage = async () => {
-    if (!editing) return;
+    if (!editing || imageLockRef.current || uploading || saving || reordering || deletingVariantId) return;
+    imageLockRef.current = true;
+    setImageBusy(true);
     try {
       await clearDashboardVariantImage(productId, editing.id);
       const next = variants.map((row) => (row.id === editing.id ? { ...row, imageUrl: "" } : row));
       publishState(next);
       const updated = next.find((row) => row.id === editing.id) ?? editing;
       setEditing(updated);
+      savedDraftRef.current = { ...savedDraftRef.current, imageUrl: "" };
       setDraft((current) => ({ ...current, imageUrl: "" }));
       toast.success("Variant image cleared.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Unable to clear variant image.");
+    } finally {
+      imageLockRef.current = false;
+      setImageBusy(false);
     }
   };
 
@@ -368,6 +434,7 @@ export default function ProductVariantManager({
         <button
           type="button"
           onClick={openCreate}
+          disabled={saving || uploading || imageBusy || reordering || deletingVariantId !== null}
           className="flex h-9 items-center justify-center gap-2 rounded-xl bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700"
         >
           <Plus className="size-3.5" /> {t("Add variant")}
@@ -434,7 +501,7 @@ export default function ProductVariantManager({
                 <button
                   type="button"
                   onClick={() => void move(variant, -1)}
-                  disabled={index === 0}
+                  disabled={index === 0 || reordering || saving || uploading || imageBusy || deletingVariantId !== null}
                   className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
                   aria-label={t("Move variant up")}
                 >
@@ -443,7 +510,7 @@ export default function ProductVariantManager({
                 <button
                   type="button"
                   onClick={() => void move(variant, 1)}
-                  disabled={index === variants.length - 1}
+                  disabled={index === variants.length - 1 || reordering || saving || uploading || imageBusy || deletingVariantId !== null}
                   className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
                   aria-label={t("Move variant down")}
                 >
@@ -452,6 +519,7 @@ export default function ProductVariantManager({
                 <button
                   type="button"
                   onClick={() => openEdit(variant)}
+                  disabled={reordering || saving || uploading || imageBusy || deletingVariantId !== null}
                   className="grid size-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50"
                   aria-label={`Edit ${variant.title}`}
                 >
@@ -461,7 +529,7 @@ export default function ProductVariantManager({
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(variant)}
-                    disabled={deletingVariantId !== null}
+                    disabled={deletingVariantId !== null || reordering || saving || uploading || imageBusy}
                     className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`Delete ${variant.title}`}
                   >
@@ -484,10 +552,18 @@ export default function ProductVariantManager({
       {open ? (
         <div
           className="fixed inset-0 z-[80] overflow-y-auto bg-slate-950/40 p-4 sm:p-8"
-          onClick={() => setOpen(false)}
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) requestCloseVariant();
+          }}
         >
           <div
             className="mx-auto w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl"
+            ref={variantDialogRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t(editing ? "Edit variant" : "Add variant")}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-5 flex items-center justify-between">
@@ -503,13 +579,16 @@ export default function ProductVariantManager({
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={requestCloseVariant}
+                disabled={saving || uploading || imageBusy}
+                aria-label={t("Close variant editor")}
                 className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
               >
                 <X className="size-4" />
               </button>
             </div>
 
+            <fieldset disabled={saving || uploading || imageBusy || reordering} className="min-w-0">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label={t("Variant title")}
@@ -601,6 +680,7 @@ export default function ProductVariantManager({
                       const file = event.target.files?.[0] ?? null;
                       event.currentTarget.value = "";
                       if (!file) return;
+                      const generation = imageEditGenerationRef.current;
                       void imageEditor
                         .editFile(file, {
                           title: "Adjust variant image",
@@ -610,14 +690,15 @@ export default function ProductVariantManager({
                           previewContext: "product",
                         })
                         .then((edited) => {
-                          if (edited) setPendingImageFile(edited);
+                          if (edited && generation === imageEditGenerationRef.current)
+                            setPendingImageFile(edited);
                         });
                     }}
                   />
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    disabled={!editing || uploading}
+                    disabled={!editing || uploading || imageBusy || saving || reordering}
                     className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {uploading ? (
@@ -632,6 +713,7 @@ export default function ProductVariantManager({
                       <button
                         type="button"
                         onClick={() => {
+                          const generation = imageEditGenerationRef.current;
                           void imageEditor
                             .editUrl(draft.imageUrl, {
                               title: "Adjust existing variant image",
@@ -641,14 +723,14 @@ export default function ProductVariantManager({
                               previewContext: "product",
                             })
                             .then((edited) => {
-                              if (!edited) return;
+                              if (!edited || generation !== imageEditGenerationRef.current) return;
                               void upload(
                                 edited,
                                 "Variant image adjustment saved. Storefront refresh requested.",
                               );
                             });
                         }}
-                        disabled={uploading}
+                        disabled={uploading || imageBusy || saving || reordering}
                         className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
                       >
                         {t("Adjust")}
@@ -656,6 +738,7 @@ export default function ProductVariantManager({
                       <button
                         type="button"
                         onClick={() => void clearImage()}
+                        disabled={uploading || imageBusy || saving || reordering}
                         className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-600"
                       >
                         {t("Clear image")}
@@ -680,7 +763,7 @@ export default function ProductVariantManager({
                     <button
                       type="button"
                       onClick={() => setPendingImageFile(null)}
-                      disabled={uploading}
+                      disabled={uploading || imageBusy || saving || reordering}
                       className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
                     >
                       {t("Cancel")}
@@ -688,7 +771,7 @@ export default function ProductVariantManager({
                     <button
                       type="button"
                       onClick={() => void upload(pendingImageFile)}
-                      disabled={uploading}
+                      disabled={uploading || imageBusy || saving || reordering}
                       className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
                     >
                       {t("Confirm & upload")}
@@ -698,10 +781,12 @@ export default function ProductVariantManager({
               ) : null}
             </div>
 
+            </fieldset>
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={requestCloseVariant}
+                disabled={saving || uploading || imageBusy}
                 className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
               >
                 {t("Cancel")}
@@ -709,7 +794,7 @@ export default function ProductVariantManager({
               <button
                 type="button"
                 onClick={() => void save()}
-                disabled={saving}
+                disabled={saving || uploading || imageBusy || reordering}
                 className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-50"
               >
                 {saving ? <Loader2 className="size-4 animate-spin" /> : null} {t("Save variant")}
@@ -719,6 +804,20 @@ export default function ProductVariantManager({
         </div>
       ) : null}
 
+      <DashboardConfirmDialog
+        open={confirmDiscard}
+        title="Discard unsaved variant changes?"
+        description="Changes to this variant have not been saved. Discard them and close the editor?"
+        confirmLabel="Discard changes"
+        destructive
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => {
+          imageEditGenerationRef.current += 1;
+          setConfirmDiscard(false);
+          setPendingImageFile(null);
+          setOpen(false);
+        }}
+      />
       <DashboardConfirmDialog
         open={deleteTarget !== null}
         title={t("Delete this variant permanently?")}

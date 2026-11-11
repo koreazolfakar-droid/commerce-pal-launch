@@ -194,7 +194,10 @@ export default function ProductFormPage({ id }: { id?: string }) {
       return;
     }
     const removed = pendingImages[index];
-    if (removed) URL.revokeObjectURL(removed.preview);
+    if (!removed) return;
+    setSaved(false);
+    setPublishError("");
+    URL.revokeObjectURL(removed.preview);
     setPendingImages((current) => current.filter((_, position) => position !== index));
   };
   const [stockBaseline, setStockBaseline] = useState(0);
@@ -465,6 +468,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       (collection) => collection.title.toLocaleLowerCase() === title.toLocaleLowerCase(),
     );
     if (existingCollection) {
+      setSaved(false);
       setCollectionIds((current) =>
         current.includes(existingCollection.id) ? current : [...current, existingCollection.id],
       );
@@ -596,7 +600,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const saveLockRef = useRef(false);
   const submitProduct = (statusOverride?: ProductStatus) => {
     if (saveLockRef.current) return;
-    if (mediaBusy || variantsBusy) return;
+    if (mediaBusy || variantsBusy || creatingReference) return;
     saveLockRef.current = true;
     void handleSave(statusOverride).finally(() => {
       saveLockRef.current = false;
@@ -854,7 +858,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const duplicate = async () => {
-    if (!id || pendingAction || saving) return;
+    if (!id || pendingAction || saving || mediaBusy || variantsBusy || creatingReference) return;
     setPendingAction("duplicate");
     try {
       const newId = await duplicateDashboardProduct(id);
@@ -868,7 +872,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const archive = async () => {
-    if (!id || pendingAction || saving) return;
+    if (!id || pendingAction || saving || mediaBusy || variantsBusy || creatingReference) return;
     setPendingAction("archive");
     try {
       await setDashboardProductsStatus([id], "Archived");
@@ -884,7 +888,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const remove = async () => {
-    if (!id || pendingAction || saving || role !== "admin") return;
+    if (!id || pendingAction || saving || mediaBusy || variantsBusy || creatingReference || role !== "admin") return;
     setPendingAction("delete");
     try {
       await deleteDashboardProductSafe(id);
@@ -921,7 +925,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       <button
         type="button"
         onClick={() => submitProduct("Draft")}
-        disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+        disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
         aria-busy={saving}
         className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:cursor-wait disabled:opacity-60 sm:flex-none"
       >
@@ -932,7 +936,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         <button
           type="button"
           onClick={() => submitProduct()}
-          disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+          disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
           aria-busy={saving}
           className="dashboard-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60 sm:flex-none"
         >
@@ -949,7 +953,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       <button
         type="button"
         onClick={() => submitProduct("Active")}
-        disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+        disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
         aria-busy={saving}
         className="dashboard-button dashboard-button-primary inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-wait disabled:opacity-60 sm:flex-none"
       >
@@ -1036,7 +1040,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 <button
                   type="button"
                   onClick={() => navigate("/dashboard/products/new")}
-                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
                   className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-700 disabled:opacity-50"
                 >
                   {t("Add another product")}
@@ -1053,7 +1057,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 ) : null}
                 <button
                   onClick={() => void duplicate()}
-                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
                   className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[10px] font-bold text-slate-600 disabled:opacity-50"
                 >
                   {pendingAction === "duplicate" ? (
@@ -1065,7 +1069,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 </button>
                 <button
                   onClick={() => setConfirmAction("archive")}
-                  disabled={saving || pendingAction !== null || form.status === "Archived"}
+                  disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference || form.status === "Archived"}
                   className="flex h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 text-[10px] font-bold text-amber-700 disabled:opacity-40"
                 >
                   <Archive className="size-3.5" /> {t("Archive")}
@@ -1073,7 +1077,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 {role === "admin" ? (
                   <button
                     onClick={() => setConfirmAction("delete")}
-                    disabled={saving || pendingAction !== null || mediaBusy || variantsBusy}
+                    disabled={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
                     className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 text-[10px] font-bold text-rose-700 disabled:opacity-50"
                   >
                     <Trash2 className="size-3.5" /> {t("Delete")}
@@ -1089,7 +1093,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           ) : null}
           {renderCreateActions("header")}
           <AiAssistPanel
-            disabled={loading || saving || pendingAction !== null}
+            disabled={loading || saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
             entity="product"
             query={form.title}
             currentData={{
@@ -1256,7 +1260,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       />
 
       <fieldset
-        disabled={saving || pendingAction !== null}
+        disabled={saving || pendingAction !== null || creatingReference}
         className="dashboard-editor-grid grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]"
       >
         <div className="dashboard-product-main space-y-4">
@@ -1423,7 +1427,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   accept="image/jpeg,image/png,image/webp,image/avif"
                   className="hidden"
                   onChange={(event) => {
-                    stageProductImages(Array.from(event.target.files ?? []));
+                    if (!saving && !creatingReference)
+                      stageProductImages(Array.from(event.target.files ?? []));
                     event.target.value = "";
                   }}
                 />

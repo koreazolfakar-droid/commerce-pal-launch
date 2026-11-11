@@ -1,4 +1,10 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Discard unsaved variant changes?": "تجاهل تعديلات المتغيّر غير المحفوظة؟",
+  "Changes to this variant have not been saved. Discard them and close the editor?": "تعديلات هذا المتغيّر لم تُحفظ. هل تريد تجاهلها وإغلاق المحرّر؟",
+  "Discard changes": "تجاهل التعديلات",
+  "Close variant editor": "إغلاق محرّر المتغيّر",
+  "Compare-at price cannot be below the variant selling price.": "لا يجوز أن يكون سعر المقارنة أقل من سعر بيع المتغيّر.",
+  "Upload or cancel the selected variant image before saving.": "ارفع صورة المتغيّر المختارة أو ألغِها قبل الحفظ.",
   "Inventory products": "منتجات المخزون",
   "Products are grouped by ID. Counts apply to variants on this page.": "المنتجات مجمّعة حسب معرّف المنتج. الأعداد المعروضة تخص متغيّرات هذه الصفحة فقط.",
   "Inventory stock views": "عروض حالة المخزون",
