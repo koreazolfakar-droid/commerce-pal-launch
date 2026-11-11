@@ -1,7 +1,7 @@
 import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
 import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
-import { Link, useSearch } from "wouter";
+import { useSearch } from "wouter";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
@@ -10,11 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
-  History,
   Loader2,
-  Minus,
-  Package,
-  Plus,
   RefreshCw,
   Search,
   SlidersHorizontal,
@@ -23,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
+import InventoryGroupedList from "@/dashboard/components/inventory/InventoryGroupedList";
 import {
   adjustInventoryDelta,
   loadInventoryCategoryOptions,
@@ -34,30 +31,6 @@ import {
   type InventoryRow,
   type InventorySummary,
 } from "@/dashboard/data/inventory";
-
-type InventoryStatus = "In stock" | "Low stock" | "Out of stock" | "Not tracked";
-
-function statusFor(stock: number, threshold: number, tracked: boolean): InventoryStatus {
-  if (!tracked) return "Not tracked";
-  if (stock <= 0) return "Out of stock";
-  if (stock <= threshold) return "Low stock";
-  return "In stock";
-}
-
-function Badge({ status }: { status: InventoryStatus }) {
-  const { t } = useLanguage();
-  const styles =
-    status === "In stock"
-      ? "bg-emerald-50 text-emerald-700"
-      : status === "Low stock"
-        ? "bg-amber-50 text-amber-700"
-        : status === "Out of stock"
-          ? "bg-rose-50 text-rose-700"
-          : "bg-slate-100 text-slate-500";
-  return (
-    <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${styles}`}>{t(status)}</span>
-  );
-}
 
 type PaginationItem = number | "ellipsis-start" | "ellipsis-end";
 
@@ -84,12 +57,6 @@ function paginationItems(currentPage: number, totalPages: number): PaginationIte
   items.push(totalPages);
 
   return items;
-}
-
-function movementLabel(row: InventoryRow, loading: boolean) {
-  if (!row.lastMovementAt || row.lastMovementDelta == null) return loading ? "Loading…" : "—";
-  const prefix = row.lastMovementDelta > 0 ? "+" : "";
-  return `${prefix}${row.lastMovementDelta} · ${new Date(row.lastMovementAt).toLocaleString()}`;
 }
 
 export default function InventoryManagerPage() {
@@ -126,6 +93,7 @@ export default function InventoryManagerPage() {
   const movementRequestRef = useRef(0);
   const hasLoadedRef = useRef(false);
   const [movementVersion, setMovementVersion] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
@@ -383,7 +351,7 @@ export default function InventoryManagerPage() {
       {error && (
         <DashboardLoadError message={error} busy={refreshing} onRetry={() => void load(true)} />
       )}
-      <div className="dashboard-page-header mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <div className="dashboard-page-header mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <PageTitle
             eyebrow="Commerce / Operations"
@@ -410,92 +378,127 @@ export default function InventoryManagerPage() {
         ]}
       />
 
-      <div className="dashboard-summary-grid mb-4 grid gap-3 sm:grid-cols-3">
-        <div className="dashboard-metric-card rounded-2xl border border-border bg-card p-4">
-          <div className="text-[11px] text-slate-400">{t("Total units")}</div>
+      <div className="dashboard-summary-grid mb-4 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="dashboard-metric-card rounded-xl border border-border bg-card p-3 sm:p-4">
+          <div className="text-xs text-slate-500">{t("Total units")}</div>
           <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">{totalUnits}</div>
           <div className="mt-1 text-[10px] text-slate-400">
             {summary.variantCount} {t("variants")}
           </div>
         </div>
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+        <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3 sm:p-4">
           <div className="text-[11px] text-amber-700/70">{t("Low stock variants")}</div>
           <div className="mt-1 text-2xl font-bold text-amber-700">{low}</div>
         </div>
-        <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+        <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 sm:p-4">
           <div className="text-[11px] text-rose-700/70">{t("Out of stock variants")}</div>
           <div className="mt-1 text-2xl font-bold text-rose-700">{out}</div>
         </div>
       </div>
 
-      <div className="dashboard-filter-panel mb-4 rounded-2xl border border-border bg-card p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("Search product, variant, SKU, barcode, or brand")}
-              className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px] outline-none focus:border-indigo-400"
-            />
+      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label={t("Inventory stock views")}>
+        {[
+          { label: "All stock", selected: !onlyLow, low: false, limit: 10 },
+          { label: "Low stock", selected: onlyLow && threshold > 0, low: true, limit: 10 },
+          { label: "Out of stock", selected: onlyLow && threshold === 0, low: true, limit: 0 },
+        ].map((view) => (
+          <button
+            key={view.label}
+            type="button"
+            aria-pressed={view.selected}
+            onClick={() => {
+              setOnlyLow(view.low);
+              setThreshold(view.limit);
+              setPage(1);
+            }}
+            className={`min-h-10 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+              view.selected
+                ? "border-blue-600 bg-blue-50 text-blue-800"
+                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            {t(view.label)}
+          </button>
+        ))}
+      </div>
+      <div className="dashboard-filter-panel mb-4 rounded-xl border border-border bg-card p-3 sm:p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+              <input
+                value={query}
+                onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+                placeholder={t("Search product, variant, SKU, barcode, or brand")}
+                aria-label={t("Search product, variant, SKU, barcode, or brand")}
+                className="h-11 w-full rounded-lg border border-slate-200 bg-white ps-10 pe-3 text-sm outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100"
+              />
+            </div>
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((open) => !open)}
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:hidden"
+              aria-label={t("Advanced inventory filters")}
+            >
+              <SlidersHorizontal className="size-5" />
+            </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={`${filtersOpen ? "flex" : "hidden"} flex-wrap items-center gap-2 lg:flex`}>
             <select
               value={category}
-              onChange={(event) => {
-                setCategory(event.target.value);
-                setPage(1);
-              }}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600"
+              onChange={(event) => { setCategory(event.target.value); setPage(1); }}
+              aria-label={t("All categories")}
+              className="h-11 min-w-0 max-w-full flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex-none"
             >
               <option value="all">{t("All categories")}</option>
               {categories.items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
+                <option key={item.id} value={item.id}>{item.name}</option>
               ))}
               {categories.hasUncategorized && (
                 <option value="uncategorized">{t("Uncategorized")}</option>
               )}
             </select>
-            <label className="flex h-10 min-w-40 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[11px] font-semibold text-slate-600">
-              <SlidersHorizontal className="size-3.5" />
+            <label className="flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
+              <SlidersHorizontal className="size-4" />
               {t("Low ≤")}
               <input
                 value={threshold}
-                onChange={(event) => {
-                  setThreshold(Math.max(0, Number(event.target.value) || 0));
-                  setPage(1);
-                }}
+                onChange={(event) => { setThreshold(Math.max(0, Number(event.target.value) || 0)); setPage(1); }}
                 type="number"
                 min={0}
-                className="w-12 border-0 p-0 text-[11px] outline-none"
+                aria-label={t("Low stock threshold")}
+                className="w-14 bg-transparent text-sm outline-none"
               />
             </label>
             <button
-              onClick={() => {
-                setOnlyLow((current) => !current);
-                setPage(1);
-              }}
-              className={`flex h-10 items-center gap-2 rounded-xl border px-3 text-[11px] font-bold ${
-                onlyLow
-                  ? "border-amber-300 bg-amber-50 text-amber-700"
-                  : "border-slate-200 text-slate-600"
+              type="button"
+              onClick={() => { setOnlyLow((current) => !current); setPage(1); }}
+              aria-pressed={onlyLow}
+              className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
+                onlyLow ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 bg-white text-slate-700"
               }`}
             >
-              <Filter className="size-3.5" />
+              <Filter className="size-4" />
               {t("Low stock only")}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setQuery(""); setCategory("all"); setOnlyLow(false); setThreshold(10); setPage(1); }}
+              className="min-h-11 rounded-lg px-3 text-sm font-semibold text-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              {t("Reset filters")}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="dashboard-catalog-panel overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="dashboard-catalog-panel overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
           <div>
-            <div className="text-[15px] font-bold text-[#14203a]">{t("Inventory variants")}</div>
+            <div className="text-[15px] font-bold text-[#14203a]">{t("Inventory products")}</div>
             <div className="mt-1 text-[10px] text-slate-400">
-              {t("Products, variants, and live stock controls")}
+              {t("Products are grouped by ID. Counts apply to variants on this page.")}
             </div>
           </div>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
@@ -503,268 +506,19 @@ export default function InventoryManagerPage() {
           </span>
         </div>
 
-        <div className="divide-y divide-slate-100 lg:hidden">
-          {pageRows.map((row) => {
-            const status = statusFor(row.stock, threshold, row.trackInventory);
-            const saving = savingId === row.variantId;
-            return (
-              <article key={row.variantId} className="p-3.5">
-                <div className="flex items-start gap-3">
-                  <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
-                    {row.image ? (
-                      <img
-                        src={row.image}
-                        alt={row.productName}
-                        loading="lazy"
-                        className="size-full object-contain p-1"
-                      />
-                    ) : (
-                      <Package className="size-5 text-slate-400" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.35] text-slate-800">
-                          <Link
-                            href={`/dashboard/products/${row.productId}`}
-                            className="hover:text-indigo-600 hover:underline"
-                          >
-                            {row.productName}
-                          </Link>
-                        </h3>
-                        <div className="mt-1 truncate text-[10px] font-medium text-slate-400">
-                          {row.brand || t("No brand")} · {row.variantTitle || t("Default")}
-                        </div>
-                      </div>
-                      <Badge status={status} />
-                    </div>
-
-                    {row.optionsLabel && (
-                      <div className="mt-1.5 line-clamp-1 text-[10px] text-slate-500">
-                        {row.optionsLabel}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-                  <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-2">
-                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
-                      {t("SKU")}
-                    </div>
-                    <div className="mt-0.5 truncate font-mono text-[10px] font-semibold text-slate-600">
-                      {row.sku || "—"}
-                    </div>
-                  </div>
-                  <div className="min-w-[78px] rounded-xl bg-slate-50 px-3 py-2">
-                    <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">
-                      {t("On hand")}
-                    </div>
-                    <div className="mt-0.5 text-[18px] font-black leading-none text-slate-800">
-                      {row.stock}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
-                  <button
-                    onClick={() => void changeBy(row, -1)}
-                    disabled={saving || !row.trackInventory || row.stock <= 0}
-                    className="grid size-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
-                    aria-label={`Decrease stock for ${row.productName}`}
-                  >
-                    <Minus className="size-4" />
-                  </button>
-                  <input
-                    value={draftStocks[row.variantId] ?? String(row.stock)}
-                    onChange={(event) =>
-                      setDraftStocks((current) => ({
-                        ...current,
-                        [row.variantId]: event.target.value,
-                      }))
-                    }
-                    onBlur={() => void commitAbsolute(row)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") event.currentTarget.blur();
-                    }}
-                    disabled={saving || !row.trackInventory}
-                    className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-center text-[14px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
-                    type="number"
-                    min={0}
-                    step={1}
-                    inputMode="numeric"
-                    aria-label={`Set stock for ${row.productName}`}
-                  />
-                  <button
-                    onClick={() => void changeBy(row, 1)}
-                    disabled={saving || !row.trackInventory}
-                    className="grid size-10 shrink-0 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-35"
-                    aria-label={`Increase stock for ${row.productName}`}
-                  >
-                    {saving ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Plus className="size-4" />
-                    )}
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setHistoryRow(row)}
-                  className="mt-2 flex min-h-9 w-full items-center gap-2 rounded-lg px-2 text-start text-[9px] leading-4 text-slate-500 transition hover:bg-slate-50 active:scale-[.99]"
-                  aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
-                >
-                  <History className="size-3.5 shrink-0 text-indigo-500" />
-                  <span className="min-w-0 flex-1 truncate">
-                    {t("Last movement:")} {movementLabel(row, movementLoading)}
-                  </span>
-                  <span className="shrink-0 font-bold text-indigo-600">{t("History")}</span>
-                </button>
-              </article>
-            );
-          })}
-        </div>
-
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[1180px] text-start">
-            <thead className="bg-[#fafbfe]">
-              <tr className="border-y border-slate-100 text-[10px] uppercase tracking-[.12em] text-slate-400">
-                <th className="px-5 py-3">{t("Item")}</th>
-                <th className="px-3 py-3">{t("Variant")}</th>
-                <th className="px-3 py-3">{t("Category")}</th>
-                <th className="px-3 py-3">{t("SKU")}</th>
-                <th className="px-3 py-3">{t("Stock control")}</th>
-                <th className="px-3 py-3">{t("On hand")}</th>
-                <th className="px-3 py-3">{t("Last movement")}</th>
-                <th className="px-5 py-3">{t("Status")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageRows.map((row) => {
-                const status = statusFor(row.stock, threshold, row.trackInventory);
-                const saving = savingId === row.variantId;
-                return (
-                  <tr key={row.variantId} className="border-b border-slate-50 hover:bg-[#fafbff]">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3.5">
-                        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-                          {row.image ? (
-                            <img
-                              src={row.image}
-                              alt={row.productName}
-                              loading="lazy"
-                              className="size-full object-contain p-1"
-                            />
-                          ) : (
-                            <Package className="size-4 text-slate-400" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="max-w-[280px] truncate text-[13px] font-extrabold text-slate-800">
-                            <Link
-                              href={`/dashboard/products/${row.productId}`}
-                              className="hover:text-indigo-600 hover:underline"
-                            >
-                              {row.productName}
-                            </Link>
-                          </div>
-                          <div className="mt-1.5 text-[10px] font-medium text-slate-400">
-                            {row.brand || t("No brand")} · {row.productStatus}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <div className="max-w-[220px] text-[12px] font-bold text-slate-700">
-                        {row.variantTitle || t("Default")}
-                      </div>
-                      {row.optionsLabel && (
-                        <div className="mt-1 max-w-[220px] truncate text-[9px] text-slate-400">
-                          {row.optionsLabel}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <span className="rounded-lg bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700">
-                        {row.category || t("Uncategorized")}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3.5 font-mono text-[10px] text-slate-500">
-                      {row.sku || "—"}
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => void changeBy(row, -1)}
-                          disabled={saving || !row.trackInventory || row.stock <= 0}
-                          className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
-                          aria-label={`Decrease stock for ${row.productName}`}
-                        >
-                          <Minus className="size-3" />
-                        </button>
-                        <input
-                          value={draftStocks[row.variantId] ?? String(row.stock)}
-                          onChange={(event) =>
-                            setDraftStocks((current) => ({
-                              ...current,
-                              [row.variantId]: event.target.value,
-                            }))
-                          }
-                          onBlur={() => void commitAbsolute(row)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") event.currentTarget.blur();
-                          }}
-                          disabled={saving || !row.trackInventory}
-                          className="h-9 w-[72px] rounded-xl border border-slate-200 text-center text-[13px] font-black text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-50 disabled:text-slate-400"
-                          type="number"
-                          min={0}
-                          step={1}
-                        />
-                        <button
-                          onClick={() => void changeBy(row, 1)}
-                          disabled={saving || !row.trackInventory}
-                          className="grid size-9 place-items-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-35"
-                          aria-label={`Increase stock for ${row.productName}`}
-                        >
-                          {saving ? (
-                            <Loader2 className="size-3 animate-spin" />
-                          ) : (
-                            <Plus className="size-3" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-3 py-4">
-                      <span className="inline-flex min-w-12 items-center justify-center rounded-xl bg-slate-100 px-2.5 py-1.5 text-[14px] font-black text-slate-800">
-                        {row.stock}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => setHistoryRow(row)}
-                        className="flex max-w-[230px] items-start gap-1.5 rounded-lg px-2 py-1.5 text-start text-[9px] leading-4 text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-700"
-                        aria-label={`View inventory history for ${row.productName} ${row.variantTitle}`}
-                      >
-                        <History className="mt-0.5 size-3 shrink-0" />
-                        <span>
-                          <span className="block">{movementLabel(row, movementLoading)}</span>
-                          <span className="font-bold text-indigo-600">{t("View history")}</span>
-                        </span>
-                      </button>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge status={status} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <InventoryGroupedList
+          rows={pageRows}
+          threshold={threshold}
+          savingId={savingId}
+          draftStocks={draftStocks}
+          movementLoading={movementLoading}
+          onDraftChange={(id, value) =>
+            setDraftStocks((current) => ({ ...current, [id]: value }))
+          }
+          onCommit={(row) => void commitAbsolute(row)}
+          onChangeBy={(row, delta) => void changeBy(row, delta)}
+          onHistory={setHistoryRow}
+        />
         {!totalCount && (
           <div className="p-12 text-center text-sm text-slate-400">
             <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
