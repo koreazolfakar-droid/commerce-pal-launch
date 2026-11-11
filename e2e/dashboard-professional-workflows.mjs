@@ -91,7 +91,7 @@ await context.route("**/rest/v1/**", async (route) => {
     if (req.headers().accept?.includes("vnd.pgrst.object")) return json(order);
     return json([order], { "content-range": "0-0/1" });
   }
-  if (name === "dashboard_inventory_page") {
+  if (name === "dashboard_inventory_page" || name === "dashboard_inventory_products_page") {
     if (failInventory)
       return route.fulfill({ status: 503, json: { message: "Temporary inventory failure" } });
     return json([]);
