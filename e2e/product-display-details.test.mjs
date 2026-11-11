@@ -84,17 +84,18 @@ test("inferred included cable is not displayed for unrelated devices", () => {
 });
 
 test("product route renders the new product information hierarchy", async () => {
-  const [route, prose, sheet] = await Promise.all([
+  const [route, prose, sheet, information] = await Promise.all([
     read("src/routes/product.$handle.tsx"),
     read("src/components/product/ProseSection.tsx"),
     read("src/components/product/SpecSheet.tsx"),
+    read("src/components/product/ProductInformation.tsx"),
   ]);
   assert.match(route, /data-testid="product-key-features"/);
-  assert.match(route, /data-testid="product-information"/);
+  assert.match(information, /data-testid="product-information"/);
   assert.match(route, /buildDisplayOverview/);
   assert.match(route, /buildDisplaySpecificationGroups/);
-  assert.match(route, /<ProseSections sections=\{displayOverview\} plain language=\{language\}/);
-  assert.match(route, /<SpecSheet groups=\{specGroups\} language=\{language\}/);
+  assert.match(information, /<ProseSections\s+sections=\{overview\}\s+plain\s+language=\{language\}/);
+  assert.match(information, /<SpecSheet groups=\{specifications\} language=\{language\}/);
   assert.match(sheet, /grid-cols-\[minmax\(0,0\.88fr\)_minmax\(0,1\.12fr\)\]/);
   assert.match(prose, /Read full description/);
   assert.match(route, /data-testid="product-purchase-bar"/);

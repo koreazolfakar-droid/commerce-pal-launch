@@ -97,7 +97,7 @@ test("storefront hydrates category templates and renders structured specificatio
   assert.match(nativeStore, /specificationGroups\(category\?\.spec_template, row\.specifications\)/);
   assert.match(nativeStore, /categoriesById/);
   assert.match(productRoute, /node\.specificationGroups \?\? \[\]/);
-  assert.match(productRoute, /buildDisplaySpecificationGroups\(\[\.\.\.structuredGroups, \.\.\.groupSpecs\(fallbackRows\)\]/);
+  assert.match(productRoute, /buildDisplaySpecificationGroups\(\s*\[\.\.\.structuredGroups, \.\.\.groupSpecs\(fallbackRows\)\]/);
   assert.match(productRoute, /structuredLabels/);
 });
 

@@ -73,6 +73,7 @@ jobs:
           done
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/product-details-responsive-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/product-layout-acceptance.mjs
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/hero-responsive-check.mjs
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/bottom-nav-responsive-check.mjs
 

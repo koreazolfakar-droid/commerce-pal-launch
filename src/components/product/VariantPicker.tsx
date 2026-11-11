@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
+import { productOptionLabel, productOptionValue } from "@/lib/productOptionDisplay";
 
 export interface VariantLike {
   id: string;
@@ -82,10 +84,22 @@ const COLOR_WORDS: Record<string, string> = {
 };
 
 const ARABIC_COLORS: Record<string, string> = {
-  "أسود": "#111214", "اسود": "#111214", "أبيض": "#f7f7f8", "ابيض": "#f7f7f8",
-  "فضي": "#d8dade", "ذهبي": "#e2c48d", "أزرق": "#2f6fed", "ازرق": "#2f6fed",
-  "أحمر": "#e0303a", "احمر": "#e0303a", "أخضر": "#2e9e5b", "اخضر": "#2e9e5b",
-  "وردي": "#f0a7c0", "بنفسجي": "#a78bfa", "رمادي": "#8e8e93", "بيج": "#e4d8c6",
+  أسود: "#111214",
+  اسود: "#111214",
+  أبيض: "#f7f7f8",
+  ابيض: "#f7f7f8",
+  فضي: "#d8dade",
+  ذهبي: "#e2c48d",
+  أزرق: "#2f6fed",
+  ازرق: "#2f6fed",
+  أحمر: "#e0303a",
+  احمر: "#e0303a",
+  أخضر: "#2e9e5b",
+  اخضر: "#2e9e5b",
+  وردي: "#f0a7c0",
+  بنفسجي: "#a78bfa",
+  رمادي: "#8e8e93",
+  بيج: "#e4d8c6",
 };
 
 function swatchColor(value: string) {
@@ -117,12 +131,15 @@ export function VariantPicker({
   variants,
   selected,
   onSelect,
+  compactSingleValues = false,
 }: {
   options: Array<{ name: string; values: string[] }>;
   variants: VariantLike[];
   selected: Record<string, string>;
   onSelect: (name: string, value: string) => void;
+  compactSingleValues?: boolean;
 }) {
+  const { language } = useLanguage();
   const real = options.filter(
     (option) =>
       option.values.length > 0 &&
@@ -138,24 +155,42 @@ export function VariantPicker({
     variants.some(
       (variant) =>
         variant.availableForSale &&
-        variant.selectedOptions.some(
-          (option) => option.name === name && option.value === value,
-        ),
+        variant.selectedOptions.some((option) => option.name === name && option.value === value),
     );
 
   return (
     <div className="grid gap-3 sm:gap-4">
       {real.map((option) => {
         const color = isColorOption(option.name);
+        const label = productOptionLabel(option.name, language);
+        const single = compactSingleValues && option.values.length === 1;
+        if (single)
+          return (
+            <div
+              key={option.name}
+              data-testid="product-fixed-option"
+              className="flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+            >
+              <span className="text-muted-foreground">{label}</span>
+              {color && swatchColor(option.values[0]) && (
+                <span
+                  aria-hidden
+                  className="h-4 w-4 rounded-full border border-border"
+                  style={{ backgroundColor: swatchColor(option.values[0])! }}
+                />
+              )}
+              <span className="font-medium text-foreground">
+                <bdi>{productOptionValue(option.name, option.values[0])}</bdi>
+              </span>
+            </div>
+          );
         return (
           <div key={option.name}>
             <div className="mb-1.5 flex items-baseline gap-2 sm:mb-2">
-              <h2 className="text-[11px] font-medium text-muted-foreground">
-                {option.name}
-              </h2>
+              <h2 className="text-[11px] font-medium text-muted-foreground">{label}</h2>
               {selected[option.name] && (
                 <span className="min-w-0 truncate text-xs font-semibold text-foreground">
-                  {selected[option.name]}
+                  <bdi>{productOptionValue(option.name, selected[option.name])}</bdi>
                 </span>
               )}
             </div>
@@ -170,12 +205,12 @@ export function VariantPicker({
                       key={value}
                       type="button"
                       title={value}
-                      aria-label={`${option.name}: ${value}`}
+                      aria-label={`${label}: ${productOptionValue(option.name, value)}`}
                       aria-pressed={active}
                       disabled={!available}
                       onClick={() => onSelect(option.name, value)}
                       className={cn(
-                        "press relative grid h-9 w-9 place-items-center rounded-full border-2 bg-card transition-colors sm:h-10 sm:w-10",
+                        "press relative grid h-11 w-11 place-items-center rounded-full border-2 bg-card transition-colors",
                         active
                           ? "border-primary ring-2 ring-primary/15"
                           : "border-border hover:border-primary/50",
@@ -207,18 +242,19 @@ export function VariantPicker({
                   <button
                     key={value}
                     type="button"
+                    aria-label={`${label}: ${productOptionValue(option.name, value)}`}
                     aria-pressed={active}
                     disabled={!available}
                     onClick={() => onSelect(option.name, value)}
                     className={cn(
-                      "press min-w-16 rounded-xl border px-3.5 py-2 text-[13px] font-semibold transition-colors",
+                      "press min-h-11 min-w-16 rounded-xl border px-3.5 py-2 text-[13px] font-semibold transition-colors",
                       active
                         ? "border-primary bg-accent text-primary"
                         : "border-border bg-card hover:border-primary/60",
                       !available && "opacity-40 line-through",
                     )}
                   >
-                    {value}
+                    <bdi>{productOptionValue(option.name, value)}</bdi>
                   </button>
                 );
               })}

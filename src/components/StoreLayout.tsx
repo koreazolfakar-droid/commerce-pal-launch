@@ -25,7 +25,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`store-layout flex min-h-[100dvh] min-w-0 flex-col bg-background ${onProductPage ? "max-sm:pb-[calc(var(--mobile-nav-height)+4.75rem)]" : ""}`}
+      className={`store-layout flex min-h-[100dvh] min-w-0 flex-col bg-background ${onProductPage ? "max-sm:pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]" : ""}`}
       data-product-page={onProductPage}
       data-cart-page={onCartPage}
       style={mobileNavStyle}
@@ -40,7 +40,9 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <DeferredDesktopHeader />
       <MobileTopBar
         showSearch={!onOrdersPage}
-        showCategoryRail={!onHomePage && !onCartPage && !onShopPage && !onOrdersPage && !onProductPage}
+        showCategoryRail={
+          !onHomePage && !onCartPage && !onShopPage && !onOrdersPage && !onProductPage
+        }
       />
       <CmsNavigationStrip area="header" className="hidden lg:block" />
       <CmsNavigationStrip area="mobile_menu" className="lg:hidden" />

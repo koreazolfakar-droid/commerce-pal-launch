@@ -1,0 +1,9 @@
+/* Product pages reserve one mobile action bar; the header menu keeps navigation available. */
+@media (max-width: 639px) {
+  .store-layout[data-product-page="true"] [data-testid="bottom-nav"] {
+    display: none;
+  }
+  .store-layout[data-product-page="true"] {
+    --floating-offset: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}

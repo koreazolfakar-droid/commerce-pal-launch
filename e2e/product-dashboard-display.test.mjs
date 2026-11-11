@@ -92,5 +92,5 @@ test("product display reads localized Dashboard fields and variant images withou
   assert.match(quick, /item\.image\?\.url/);
   assert.match(picker, /selected\[option\.name\]/);
   assert.match(cards, /node\.titleAr/);
-  assert.match(layout, /showCategoryRail=\{!onHomePage[^}]+&& !onProductPage\}/);
+  assert.match(layout, /showCategoryRail=\{\s*!onHomePage[^}]+&& !onProductPage\s*\}/);
 });
