@@ -552,7 +552,7 @@ export default function ProductVariantManager({
           role="presentation"
           onClick={(event) => {
             if (event.target === event.currentTarget) requestCloseVariant();
-          }
+          }}
         >
           <div
             className="mx-auto w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl"
