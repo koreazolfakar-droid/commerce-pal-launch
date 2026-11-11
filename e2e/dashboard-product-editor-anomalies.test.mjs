@@ -77,6 +77,7 @@ test("modal has unsaved-draft protection, accessible close and safe mutation ser
   assert.match(variantSource, /open=\{confirmDiscard\}/);
   assert.match(variantSource, /role="dialog"/);
   assert.match(variantSource, /aria-modal="true"/);
+  assert.match(variantSource, /useDashboardModal\(requestCloseVariant, open\)/);
   assert.match(variantSource, /onClick=\{requestCloseVariant\}/);
   assert.match(variantSource, /mutationLockRef\.current = true/);
   assert.match(variantSource, /reorderLockRef\.current = true/);
