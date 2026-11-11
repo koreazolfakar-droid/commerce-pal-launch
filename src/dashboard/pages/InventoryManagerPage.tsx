@@ -86,6 +86,8 @@ export default function InventoryManagerPage() {
     outCount: 0,
   });
   const [totalCount, setTotalCount] = useState(0);
+  const [productCountOnPage, setProductCountOnPage] = useState(0);
+  const [paginationMode, setPaginationMode] = useState<"products" | "variants">("products");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [movementLoading, setMovementLoading] = useState(false);
@@ -143,6 +145,8 @@ export default function InventoryManagerPage() {
 
         setRows(pageResult.items);
         setTotalCount(pageResult.totalCount);
+        setProductCountOnPage(pageResult.productCountOnPage);
+        setPaginationMode(pageResult.paginationMode);
         setSummary(summaryResult);
         setError("");
         setMovementVersion((current) => current + 1);
@@ -198,7 +202,10 @@ export default function InventoryManagerPage() {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageStart = totalCount ? (safePage - 1) * pageSize : 0;
-  const pageEnd = Math.min(pageStart + rows.length, totalCount);
+  const pageEnd = Math.min(
+    pageStart + (paginationMode === "products" ? productCountOnPage : rows.length),
+    totalCount,
+  );
   const pageRows = rows;
   const pageVariantKey = pageRows.map((row) => row.variantId).join(",");
 
@@ -498,7 +505,7 @@ export default function InventoryManagerPage() {
           <div>
             <div className="text-[15px] font-bold text-[#14203a]">{t("Inventory products")}</div>
             <div className="mt-1 text-[10px] text-slate-400">
-              {t("Products are grouped by ID. Counts apply to variants on this page.")}
+              {t(paginationMode === "products" ? "All variants are included in each product group." : "Products are grouped by ID. Counts apply to variants on this page.")}
             </div>
           </div>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
@@ -508,6 +515,7 @@ export default function InventoryManagerPage() {
 
         <InventoryGroupedList
           rows={pageRows}
+          completeGroups={paginationMode === "products"}
           threshold={threshold}
           savingId={savingId}
           draftStocks={draftStocks}
@@ -529,8 +537,8 @@ export default function InventoryManagerPage() {
         {totalCount > 0 && (
           <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#fcfcfe] px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex items-center justify-between gap-3 sm:justify-start">
-              <span className="text-[10px] font-semibold text-slate-500">
-                {t("Showing")} {pageStart + 1}–{pageEnd} {t("of")} {totalCount}
+              <span className="text-xs font-semibold text-slate-500">
+                {t("Showing")} {pageStart + 1}–{pageEnd} {t("of")} {totalCount} {t(paginationMode === "products" ? "products" : "variants")}
               </span>
               <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
                 {t("Per page")}
