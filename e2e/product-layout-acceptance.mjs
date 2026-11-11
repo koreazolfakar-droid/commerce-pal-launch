@@ -5,6 +5,8 @@ import {createStorefrontPage} from './helpers/storefront-fixture-fetch.mjs';
 import {runProductLayoutChecks} from './product-layout-browser-check.mjs';
 const base=process.env.E2E_BASE_URL || 'http://127.0.0.1:4173';
 const live=process.env.PRODUCT_LAYOUT_LIVE === '1';
+const phone=live && process.env.PRODUCT_LAYOUT_PHONE === '1';
+const handle=phone?'apple-iphone-17-pro-max':'honor-play20c';
 const output=process.env.PRODUCT_LAYOUT_REPORT_DIR || '/tmp/spacecall-product-layout-qa';mkdirSync(output,{recursive:true});
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 const reports=[];
@@ -13,8 +15,8 @@ try {
   const page=live?await browser.newPage({viewport:{width,height}}):await createStorefrontPage(browser,{viewport:{width,height}});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(({language,theme})=>{localStorage.setItem('space-cell-language',language);localStorage.setItem('space-cell:theme',theme);localStorage.removeItem('space-call-cart');},{language,theme});
-  const response=await page.goto(base+(live?'/product/honor-play20c':'/product/fixture-phone-1'),{waitUntil:'load'});assert.ok(response?.ok());
-  const result=await page.evaluate(runProductLayoutChecks,{language,fixture:!live});assert.deepEqual(errors,[]);
+  const response=await page.goto(base+(live?'/product/'+handle:'/product/fixture-phone-1'),{waitUntil:'load'});assert.ok(response?.ok());
+  const result=await page.evaluate(runProductLayoutChecks,{language,fixture:!live,phone});assert.deepEqual(errors,[]);
   await page.screenshot({path:`${output}/${width}-${language}-${theme}.png`,fullPage:true});reports.push({...result,theme,errors});
   console.log(`PASS product layout ${width}px ${language}/${theme}: ${result.checks.length} real browser checks`);await page.close();
  }

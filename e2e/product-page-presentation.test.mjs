@@ -7,7 +7,7 @@ const helperSource = await readFile(new URL("../src/lib/productPresentation.ts",
 const compiled = ts.transpileModule(helperSource, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { buildProductSuggestions, buildProductHighlights } =
+const { buildProductSuggestions, buildProductHighlights, productHighlightSummary } =
   await import(`data:text/javascript,${encodeURIComponent(compiled)}`);
 const route = await readFile(new URL("../src/routes/product.$handle.tsx", import.meta.url), "utf8");
 const product = (handle, id, vendor = "ACEFAST") => ({ node: { id, handle, vendor } });
@@ -84,4 +84,20 @@ test("battery capacity remains a battery fact and Arabic merchant specs keep the
     { key: "display", value: "6.78 inches" },
     { key: "processor", value: "Merchant chipset" },
   ]);
+});
+
+
+test("long phone specifications and Chip labels produce truthful compact highlights", () => {
+  const display = "6.9-inch Super Retina XDR OLED, 2868×1320, 460 ppi, Always-On, ProMotion up to 120Hz";
+  const camera = "48MP Fusion Main, 48MP Fusion Ultra Wide, 48MP Fusion Telephoto; 18MP Center Stage front";
+  const result = buildProductHighlights([{title:"Specs", rows:[
+    {label:"Display",value:display}, {label:"Chip",value:"A19 Pro"}, {label:"Cameras",value:camera}
+  ]}], "Phone");
+  assert.deepEqual(result.map(h => h.key), ["display", "processor", "camera"]);
+  assert.equal(result[0].value, display);
+  assert.equal(productHighlightSummary(display), "6.9-inch Super Retina XDR OLED");
+  assert.equal(productHighlightSummary(camera), "48MP Fusion Main");
+  assert.equal(productHighlightSummary("up to 39 hours video playback"), "up to 39 hours video playback");
+  const undelimited = "Long merchant specification ".repeat(4);
+  assert.equal(productHighlightSummary(undelimited), undelimited);
 });
