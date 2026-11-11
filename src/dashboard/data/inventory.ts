@@ -324,18 +324,18 @@ export async function loadInventoryPage(input: {
   // The SQL RPC was introduced after the generated Supabase types snapshot.
   // It returns whole product groups (one JSON row per product) to avoid both
   // variant splitting across pages and the PostgREST max-row limit.
-  const productRpc = supabase.rpc.bind(supabase) as unknown as (
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     name: string,
     args: Record<string, unknown>,
-  ) => Promise<{ data: InventoryProductPageRow[] | null; error: unknown }>;
+  ) => Promise<{ data: unknown[] | null; error: unknown }>;
 
-  const { data: products, error: productsError } = await productRpc(
+  const { data: products, error: productsError } = await rpc(
     "dashboard_inventory_products_page",
     args,
   );
 
   if (!productsError) {
-    const productRows = products ?? [];
+    const productRows = (products ?? []) as InventoryProductPageRow[];
     return {
       items: productRows.flatMap((product): InventoryRow[] =>
         (Array.isArray(product.variants) ? product.variants : []).map((variant) => ({
@@ -378,14 +378,10 @@ export async function loadInventoryPage(input: {
 
   // The existing variant-level RPC remains a temporary deployment fallback.
   // It is intentionally NOT labelled as a complete product group.
-  const legacyRpc = supabase.rpc.bind(supabase) as unknown as (
-    name: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: InventoryPageRow[] | null; error: unknown }>;
-  const { data, error } = await legacyRpc("dashboard_inventory_page", args);
+  const { data, error } = await rpc("dashboard_inventory_page", args);
   throwIfError(error as never, "Loading inventory page failed");
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as InventoryPageRow[];
   const items: InventoryRow[] = rows.map((row) => ({
     productId: row.product_id,
     variantId: row.variant_id,
