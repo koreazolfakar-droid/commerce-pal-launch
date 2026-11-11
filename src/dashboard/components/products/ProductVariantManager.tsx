@@ -1,5 +1,6 @@
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { useDashboardModal } from "@/dashboard/hooks/useDashboardModal";
 import {
   ArrowDown,
   ArrowUp,
@@ -249,6 +250,8 @@ export default function ProductVariantManager({
     setPendingImageFile(null);
     setOpen(false);
   };
+
+  const variantDialogRef = useDashboardModal(requestCloseVariant, open);
 
   const save = async () => {
     if (saving || mutationLockRef.current || uploading || imageBusy || reordering || deletingVariantId) return;
@@ -556,17 +559,12 @@ export default function ProductVariantManager({
         >
           <div
             className="mx-auto w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl"
+            ref={variantDialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-label={t(editing ? "Edit variant" : "Add variant")}
             onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => {
-              if (event.key === "Escape" && !confirmDiscard) {
-                event.preventDefault();
-                event.stopPropagation();
-                requestCloseVariant();
-              }
-            }}
           >
             <div className="mb-5 flex items-center justify-between">
               <div>
