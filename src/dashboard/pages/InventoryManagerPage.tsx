@@ -517,7 +517,7 @@ export default function InventoryManagerPage() {
           }
           onCommit={(row) => void commitAbsolute(row)}
           onChangeBy={(row, delta) => void changeBy(row, delta)}
-          onHistory={setHistoryRow}
+          onHistory={(row) => setHistoryRow(row)}
         />
         {!totalCount && (
           <div className="p-12 text-center text-sm text-slate-400">
@@ -544,8 +544,8 @@ export default function InventoryManagerPage() {
                   aria-label={t("Inventory rows per page")}
                 >
                   <option value={20}>20</option>
-                  <option value={40}>40</option>
-                  <option value={60}>60</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
                 </select>
               </label>
             </div>
