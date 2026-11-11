@@ -260,6 +260,11 @@ export default function ProductVariantManager({
       return;
     }
 
+    if (pendingImageFile) {
+      toast.error(t("Upload or cancel the selected variant image before saving."));
+      return;
+    }
+
     mutationLockRef.current = true;
     setSaving(true);
     try {
@@ -345,6 +350,7 @@ export default function ProductVariantManager({
       setEditing(updated);
       savedDraftRef.current = { ...savedDraftRef.current, imageUrl: result.url };
       setDraft((current) => ({ ...current, imageUrl: result.url }));
+      setPendingImageFile(null);
       toast.success(
         successMessage ??
           `Variant image optimized to ${result.conversion.output.width}×${result.conversion.output.height} WebP.`,
@@ -355,7 +361,8 @@ export default function ProductVariantManager({
       imageLockRef.current = false;
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
-      setPendingImageFile(null);
+      // Keep the staged edited file when upload fails so Retry does not
+      // force the user through the picker and image editor again.
     }
   };
 
