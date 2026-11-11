@@ -673,6 +673,7 @@ export default function ProductVariantManager({
                       const file = event.target.files?.[0] ?? null;
                       event.currentTarget.value = "";
                       if (!file) return;
+                      const generation = imageEditGenerationRef.current;
                       void imageEditor
                         .editFile(file, {
                           title: "Adjust variant image",
@@ -682,14 +683,15 @@ export default function ProductVariantManager({
                           previewContext: "product",
                         })
                         .then((edited) => {
-                          if (edited) setPendingImageFile(edited);
+                          if (edited && generation === imageEditGenerationRef.current)
+                            setPendingImageFile(edited);
                         });
                     }}
                   />
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    disabled={!editing || uploading}
+                    disabled={!editing || uploading || imageBusy || saving || reordering}
                     className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {uploading ? (
@@ -704,6 +706,7 @@ export default function ProductVariantManager({
                       <button
                         type="button"
                         onClick={() => {
+                          const generation = imageEditGenerationRef.current;
                           void imageEditor
                             .editUrl(draft.imageUrl, {
                               title: "Adjust existing variant image",
@@ -713,14 +716,14 @@ export default function ProductVariantManager({
                               previewContext: "product",
                             })
                             .then((edited) => {
-                              if (!edited) return;
+                              if (!edited || generation !== imageEditGenerationRef.current) return;
                               void upload(
                                 edited,
                                 "Variant image adjustment saved. Storefront refresh requested.",
                               );
                             });
                         }}
-                        disabled={uploading}
+                        disabled={uploading || imageBusy || saving || reordering}
                         className="h-9 rounded-xl border border-indigo-200 px-3 text-[10px] font-bold text-indigo-600 disabled:opacity-50"
                       >
                         {t("Adjust")}
@@ -728,6 +731,7 @@ export default function ProductVariantManager({
                       <button
                         type="button"
                         onClick={() => void clearImage()}
+                        disabled={uploading || imageBusy || saving || reordering}
                         className="h-9 rounded-xl border border-rose-100 px-3 text-[10px] font-bold text-rose-600"
                       >
                         {t("Clear image")}
@@ -752,7 +756,7 @@ export default function ProductVariantManager({
                     <button
                       type="button"
                       onClick={() => setPendingImageFile(null)}
-                      disabled={uploading}
+                      disabled={uploading || imageBusy || saving || reordering}
                       className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
                     >
                       {t("Cancel")}
@@ -760,7 +764,7 @@ export default function ProductVariantManager({
                     <button
                       type="button"
                       onClick={() => void upload(pendingImageFile)}
-                      disabled={uploading}
+                      disabled={uploading || imageBusy || saving || reordering}
                       className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
                     >
                       {t("Confirm & upload")}
