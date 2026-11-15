@@ -1653,9 +1653,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
             id="product-specifications"
             title={t("Specifications")}
             subtitle={
-              selectedCategory ? `${selectedCategory.name} template` : t("Select a category")
+              selectedCategory
+                ? `${selectedCategory.name} · ${specificationKeys(specificationTemplate).filter((key) => specifications[key]?.trim()).length}/${specificationKeys(specificationTemplate).length}`
+                : t("Select a category")
             }
-            defaultOpen={Boolean(id)}
+            defaultOpen
           >
             <div className="p-5">
               <ProductSpecificationEditor

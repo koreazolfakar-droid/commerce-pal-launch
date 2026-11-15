@@ -633,6 +633,8 @@ export default function CategoryForm({
             </div>
             <CategorySpecificationTemplateEditor
               value={draft.specTemplate}
+              categorySlug={draft.slug}
+              categoryName={draft.name}
               onChange={(specTemplate) => patch({ specTemplate })}
             />
           </section>

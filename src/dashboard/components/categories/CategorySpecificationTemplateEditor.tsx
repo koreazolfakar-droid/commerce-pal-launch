@@ -1,9 +1,16 @@
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   normalizeSpecificationKey,
   type ProductSpecificationTemplate,
 } from "@/lib/productSpecifications";
+import {
+  SPECIFICATION_PRESETS,
+  copySpecificationPreset,
+  recommendSpecificationPreset,
+  specificationPresetById,
+} from "@/lib/specificationPresets";
 
 function nextFieldKey(label: string, used: Set<string>) {
   const base = normalizeSpecificationKey(label) || "field";
@@ -16,13 +23,32 @@ function nextFieldKey(label: string, used: Set<string>) {
 export default function CategorySpecificationTemplateEditor({
   value,
   onChange,
+  categorySlug,
+  categoryName,
 }: {
   value: ProductSpecificationTemplate;
   onChange: (value: ProductSpecificationTemplate) => void;
+  categorySlug?: string;
+  categoryName?: string;
 }) {
   const { lang, t } = useLanguage();
   const ar = lang === "ar";
   const template = value;
+  const [selectedPresetId, setSelectedPresetId] = useState("");
+  const recommended = recommendSpecificationPreset(categorySlug || "") ??
+    recommendSpecificationPreset(categoryName || "");
+  const effectivePresetId = selectedPresetId || recommended?.id || "";
+  const applyPreset = () => {
+    const preset = specificationPresetById(effectivePresetId);
+    if (!preset) return;
+    const existingFields = template.sections.flatMap((item) => item.fields);
+    if (existingFields.length && !window.confirm(
+      ar
+        ? "استبدال القالب الحالي؟ قد تصبح بعض المواصفات القديمة مخفية عن المتجر. لن تُحذف قيم المنتجات المحفوظة."
+        : "Replace the current template? Some existing specifications may no longer display in the storefront. Saved product values will not be deleted.",
+    )) return;
+    onChange(copySpecificationPreset(preset));
+  };
 
   const commit = (next: ProductSpecificationTemplate) => {
     onChange(next);
@@ -69,6 +95,48 @@ export default function CategorySpecificationTemplateEditor({
           <Plus className="size-3.5" />
           {ar ? "إضافة قسم" : t("Add section")}
         </button>
+      </div>
+
+      <div className="mt-4 space-y-2 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3 dark:border-slate-700 dark:bg-slate-800/40">
+        <div>
+          <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+            {ar ? "ابدأ بقالب جاهز للأجهزة" : "Start from an electronics template"}
+          </p>
+          <p className="mt-1 text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+            {ar
+              ? "اختر نوع الجهاز لتُضاف الحقول المناسبة، ثم عدّلها قبل حفظ التصنيف. لا تتم تعبئة أي مواصفة للمنتج تلقائياً."
+              : "Select a device type to add its fields, then customize before saving. No product facts are filled automatically."}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <select
+            aria-label={ar ? "نوع قالب المواصفات" : "Specification template type"}
+            value={effectivePresetId}
+            onChange={(event) => setSelectedPresetId(event.target.value)}
+            className="h-10 min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">{ar ? "اختر نوع الجهاز" : "Choose device type"}</option>
+            {SPECIFICATION_PRESETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {ar ? preset.labelAr : preset.label}
+                {recommended?.id === preset.id ? (ar ? " · مقترح" : " · Suggested") : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={applyPreset}
+            disabled={!effectivePresetId}
+            className="h-10 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {ar ? "تطبيق القالب" : "Apply template"}
+          </button>
+        </div>
+        {template.sections.length > 0 ? (
+          <p className="text-[10px] text-slate-600 dark:text-slate-300">
+            {ar ? "تنبيه: تطبيق قالب آخر يستبدل تعريف الحقول الحالي بعد التأكيد." : "Applying another preset replaces the current field definitions after confirmation."}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-4 space-y-3">

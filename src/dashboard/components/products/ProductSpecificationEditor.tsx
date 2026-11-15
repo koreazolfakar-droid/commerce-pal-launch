@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
+import { specificationFieldSuggestions } from "@/lib/specificationPresets";
 import {
   aiSpecificationFieldKey,
   specificationKeyFromAiField,
@@ -48,7 +49,21 @@ export default function ProductSpecificationEditor({
   const { lang } = useLanguage();
   const ar = lang === "ar";
   const [showScopedAi, setShowScopedAi] = useState(false);
+  const [specSearch, setSpecSearch] = useState("");
   const fields = template.sections.flatMap((section) => section.fields);
+  const completedCount = fields.filter((field) => Boolean(values[field.key]?.trim())).length;
+  const completionPercent = fields.length ? Math.round(100 * completedCount / fields.length) : 0;
+  const normalizedSearch = specSearch.normalize("NFKC").trim().toLocaleLowerCase();
+  const visibleSections = template.sections
+    .map((section) => ({
+      ...section,
+      fields: section.fields.filter((field) =>
+        !normalizedSearch ||
+        [field.label, field.labelAr, field.key, field.unit]
+          .some((text) => text?.toLocaleLowerCase().includes(normalizedSearch)),
+      ),
+    }))
+    .filter((section) => section.fields.length);
   if (!fields.length) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-[10px] text-slate-400">
@@ -139,18 +154,57 @@ export default function ProductSpecificationEditor({
         ) : null}
       </details>
 
+      <div className="mb-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-100">
+            {ar ? "اكتمال المواصفات" : "Specification completion"}
+          </span>
+          <span className="text-xs font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
+            {completedCount}/{fields.length} · {completionPercent}%
+          </span>
+        </div>
+        <div
+          role="progressbar"
+          aria-label={ar ? "اكتمال المواصفات" : "Specification completion"}
+          aria-valuenow={completedCount}
+          aria-valuemin={0}
+          aria-valuemax={fields.length}
+          className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
+        >
+          <div
+            className="h-full rounded-full bg-indigo-600 transition-[width]"
+            style={{ width: `${completionPercent}%` }}
+          />
+        </div>
+        <p className="text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+          {ar
+            ? "املأ المواصفات المؤكدة فقط. الاقتراحات خيارات جاهزة وليست حقائق عن الجهاز، ولا يُشترط اكتمال كل الحقول لحفظ المسودة."
+            : "Enter only verified facts. Suggested choices are not model facts, and all fields need not be filled to save a draft."}
+        </p>
+        <input
+          type="search"
+          value={specSearch}
+          onChange={(event) => setSpecSearch(event.target.value)}
+          placeholder={ar ? "ابحث عن مواصفة..." : "Find a specification..."}
+          aria-label={ar ? "البحث في حقول المواصفات" : "Search specification fields"}
+          className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        />
+      </div>
       <div className="space-y-4">
-        {template.sections.map((section) => {
+        {visibleSections.map((section) => {
 
           return (
             <section
               key={section.title}
               className="overflow-hidden rounded-xl border border-slate-200"
             >
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3">
-                <div className="text-[10px] font-black uppercase tracking-[.1em] text-slate-500">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3 dark:border-slate-700 dark:bg-slate-800/70">
+                <div className="text-[11px] font-bold text-slate-700 dark:text-slate-100">
                   {ar ? section.titleAr || section.title : section.title}
                 </div>
+                <span className="text-[10px] font-semibold tabular-nums text-slate-500 dark:text-slate-300">
+                  {section.fields.filter((field) => values[field.key]?.trim()).length}/{section.fields.length}
+                </span>
               </div>
 
               <div className="grid gap-3 p-3.5 sm:grid-cols-2">
@@ -159,7 +213,7 @@ export default function ProductSpecificationEditor({
                   return (
                     <label key={field.key} className="block min-w-0">
                       <span className="mb-1.5 flex min-h-5 items-center justify-between gap-2">
-                        <span className="text-[10px] font-bold text-slate-600">
+                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
                           {ar ? field.labelAr || field.label : field.label}
                           {field.unit ? (
                             <span className="ms-1 font-medium text-slate-400">({field.unit})</span>
@@ -176,7 +230,9 @@ export default function ProductSpecificationEditor({
                         </span>
                       </span>
                       <input
-                        aria-label={field.label}
+                        aria-label={ar ? field.labelAr || field.label : field.label}
+                        list={specificationFieldSuggestions(field.key).length ? `spec-suggestions-${field.key}` : undefined}
+                        maxLength={500}
                         value={values[field.key] ?? ""}
                         onChange={(event) => onChange(field.key, event.target.value)}
                         placeholder={
@@ -188,9 +244,17 @@ export default function ProductSpecificationEditor({
                         }
                         className={
                           "h-10 w-full rounded-xl border bg-white px-3 text-[11px] text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
-                          (generated ? "border-amber-200" : "border-slate-200")
+                          (generated ? "border-amber-300 dark:border-amber-600" : "border-slate-200 dark:border-slate-600") +
+                          " dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
                         }
                       />
+                      {specificationFieldSuggestions(field.key).length > 0 ? (
+                        <datalist id={`spec-suggestions-${field.key}`}>
+                          {specificationFieldSuggestions(field.key).map((suggestion) => (
+                            <option key={suggestion} value={suggestion} />
+                          ))}
+                        </datalist>
+                      ) : null}
                     </label>
                   );
                 })}
@@ -198,6 +262,11 @@ export default function ProductSpecificationEditor({
             </section>
           );
         })}
+        {visibleSections.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300">
+            {ar ? "ما في مواصفات مطابقة للبحث." : "No matching specification fields."}
+          </div>
+        ) : null}
       </div>
     </div>
   );
