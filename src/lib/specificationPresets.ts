@@ -62,7 +62,7 @@ export const SPECIFICATION_PRESETS: Preset[] = [
   },
   {
     id: "headphones", label: "Headphones & earbuds", labelAr: "السماعات",
-    aliases: ["headphones", "headphone", "earbuds", "earbud", "earphones", "headset", "tws", "airpods", "سماعات", "سماعة"],
+    aliases: ["headphones", "headphones-earbuds", "headphone", "earbuds", "earbud", "earphones", "headset", "tws", "airpods", "سماعات", "سماعة"],
     template: { sections: [
       section("Sound", "الصوت", [["form_factor", "Headphone type", "نوع السماعة"], ["driver_size", "Driver size", "قطر المشغّل", "mm"], ["noise_cancellation", "Noise cancellation", "إلغاء الضوضاء"], ["audio_codecs", "Audio codecs", "ترميزات الصوت"]]),
       section("Connection", "الاتصال", [["connectivity", "Connection type", "نوع الاتصال"], ["bluetooth_version", "Bluetooth version", "إصدار بلوتوث", "Bluetooth"], ["multipoint", "Multipoint support", "اتصال متعدد الأجهزة"]]),
@@ -72,7 +72,7 @@ export const SPECIFICATION_PRESETS: Preset[] = [
   },
   {
     id: "smartwatches", label: "Smartwatches", labelAr: "الساعات الذكية",
-    aliases: ["smartwatches", "smartwatch", "smart-watch", "watches", "fitness-bands", "smart-band", "ساعات-ذكية"],
+    aliases: ["smartwatches", "smartwatch", "smart-watch", "smart-watches", "watches", "fitness-bands", "smart-band", "ساعات-ذكية"],
     template: { sections: [
       section("Display & design", "الشاشة والتصميم", [["display_size", "Display size", "حجم الشاشة", "inches"], ["display_type", "Display type", "نوع الشاشة"], ["case_size", "Case size", "حجم الهيكل", "mm"], ["water_resistance", "Water rating", "مقاومة الماء"]]),
       section("Health & activity", "الصحة والنشاط", [["health_sensors", "Health sensors", "حساسات الصحة"], ["gps", "GPS", "تحديد الموقع"], ["sports_modes", "Sports modes", "أنماط الرياضة"]]),
@@ -89,7 +89,7 @@ export const SPECIFICATION_PRESETS: Preset[] = [
   },
   {
     id: "speakers", label: "Speakers", labelAr: "مكبرات الصوت",
-    aliases: ["speakers", "speaker", "audio", "bluetooth-speaker", "soundbar", "سبيكر", "مكبرات-صوت"],
+    aliases: ["speakers", "speaker", "audio", "audio-speakers", "bluetooth-speaker", "soundbar", "سبيكر", "مكبرات-صوت"],
     template: { sections: [
       section("Audio", "الصوت", [["output_power", "Output power", "قدرة الصوت", "W"], ["speaker_configuration", "Driver configuration", "تكوين السماعات"], ["frequency_response", "Frequency response", "نطاق التردد"], ["audio_features", "Sound features", "ميزات الصوت"]]),
       section("Connectivity & power", "الاتصال والطاقة", [["connectivity", "Connectivity", "الاتصال"], ["bluetooth_version", "Bluetooth version", "إصدار بلوتوث", "Bluetooth"], ["battery_life", "Playtime", "مدة التشغيل", "hours"], ["charging_port", "Charging port", "منفذ الشحن"], ["water_resistance", "Water resistance", "مقاومة الماء"]]),
@@ -97,7 +97,7 @@ export const SPECIFICATION_PRESETS: Preset[] = [
   },
   {
     id: "consoles", label: "Game consoles", labelAr: "أجهزة الألعاب",
-    aliases: ["consoles", "console", "gaming-console", "playstation", "xbox", "gaming-systems", "أجهزة-الألعاب"],
+    aliases: ["consoles", "console", "gaming-console", "gaming-consoles", "playstation", "xbox", "gaming-systems", "أجهزة-الألعاب"],
     template: { sections: [
       section("System", "النظام", [["platform", "Platform", "المنصة"], ["processor", "Processor", "المعالج"], ["graphics", "Graphics", "معالج الرسوميات"], ["storage", "Storage", "التخزين", "GB"]]),
       section("Video & audio", "الصورة والصوت", [["max_resolution", "Maximum output resolution", "أقصى دقة عرض"], ["refresh_rate", "Maximum refresh rate", "معدل التحديث", "Hz"], ["hdr", "HDR support", "دعم HDR"]]),
@@ -123,7 +123,7 @@ export const SPECIFICATION_PRESETS: Preset[] = [
 ];
 
 function normalizeCategoryName(value: string): string {
-  return value.normalize("NFKC").trim().toLocaleLowerCase().replace(/[\\s_&/]+/g, "-").replace(/-+/g, "-");
+  return value.normalize("NFKC").trim().toLocaleLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
 
 /** Suggest a starter only for an explicit category match; never assume a product spec value. */
