@@ -29,7 +29,11 @@ export const products = Array.from({ length: 9 }, (_, i) => {
       tags: ["smartphone"],
       availableForSale: true,
       description: "Local test product for catalog verification.",
-      descriptionHtml: "<p>Local test product for catalog verification.</p>",
+      descriptionHtml:
+        "<p>Local test product for catalog verification.</p>" +
+        (i === 0
+          ? "<h2>Specifications</h2><p>Storage: 128GB</p><p>Display: 6.72-inch FHD+ LCD with 120Hz refresh rate</p><p>Processor: Qualcomm Snapdragon 695 5G</p><p>Main camera: 108MP main camera with additional depth and macro sensors</p><p>Battery capacity: 5000mAh</p>"
+          : ""),
       priceRange: { minVariantPrice: money },
       compareAtPriceRange: { minVariantPrice: compareAtPrice ?? money },
       images,
