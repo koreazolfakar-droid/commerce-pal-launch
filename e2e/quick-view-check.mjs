@@ -38,6 +38,24 @@ export async function runQuickViewChecks(browser, baseURL) {
         await expect(trigger).toHaveCount(1);
         await trigger.scrollIntoViewIfNeeded();
         await expect(trigger).toBeVisible();
+        const dimensions = await trigger.evaluate((button) => {
+          const face = button.querySelector("span").getBoundingClientRect();
+          const icon = button.querySelector("svg").getBoundingClientRect();
+          const target = button.getBoundingClientRect();
+          return {
+            face: [face.width, face.height],
+            icon: [icon.width, icon.height],
+            target: [target.width, target.height],
+            background: getComputedStyle(button).backgroundColor,
+          };
+        });
+        assert.deepEqual(dimensions.face, [24, 24], "Quick-view face must stay compact");
+        assert.deepEqual(dimensions.icon, [12, 12], "Quick-view icon must stay compact");
+        assert.ok(
+          dimensions.target.every((size) => size >= 44),
+          "Keep a comfortable hit area",
+        );
+        assert.equal(dimensions.background, "rgba(0, 0, 0, 0)", "Hit area must stay invisible");
         const before = await page.evaluate(() => ({ url: location.href, y: scrollY }));
         await trigger.click();
         const dialog = page.getByRole("dialog");
