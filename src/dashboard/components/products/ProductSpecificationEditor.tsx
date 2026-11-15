@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
+import ProductSpecificationImportPanel from "@/dashboard/components/products/ProductSpecificationImportPanel";
 import { specificationFieldSuggestions } from "@/lib/specificationPresets";
 import {
   aiSpecificationFieldKey,
   specificationKeyFromAiField,
+  validateSpecificationValue,
   type ProductSpecificationField,
   type ProductSpecificationTemplate,
   type ProductSpecificationValues,
@@ -50,6 +52,7 @@ export default function ProductSpecificationEditor({
   const ar = lang === "ar";
   const [showScopedAi, setShowScopedAi] = useState(false);
   const [specSearch, setSpecSearch] = useState("");
+  const [fieldView, setFieldView] = useState<"all" | "missing" | "filled">("all");
   const fields = template.sections.flatMap((section) => section.fields);
   const completedCount = fields.filter((field) => Boolean(values[field.key]?.trim())).length;
   const completionPercent = fields.length ? Math.round(100 * completedCount / fields.length) : 0;
@@ -58,9 +61,11 @@ export default function ProductSpecificationEditor({
     .map((section) => ({
       ...section,
       fields: section.fields.filter((field) =>
-        !normalizedSearch ||
-        [field.label, field.labelAr, field.key, field.unit]
-          .some((text) => text?.toLocaleLowerCase().includes(normalizedSearch)),
+        (fieldView === "all" ||
+          (fieldView === "missing" ? !values[field.key]?.trim() : Boolean(values[field.key]?.trim()))) &&
+        (!normalizedSearch ||
+          [field.label, field.labelAr, field.key, field.unit]
+            .some((text) => text?.toLocaleLowerCase().includes(normalizedSearch))),
       ),
     }))
     .filter((section) => section.fields.length);
@@ -154,6 +159,7 @@ export default function ProductSpecificationEditor({
         ) : null}
       </details>
 
+      <ProductSpecificationImportPanel template={template} values={values} onChange={onChange} />
       <div className="mb-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-100">
@@ -189,6 +195,30 @@ export default function ProductSpecificationEditor({
           aria-label={ar ? "البحث في حقول المواصفات" : "Search specification fields"}
           className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
         />
+        <div className="flex flex-wrap gap-2" role="group" aria-label={ar ? "تصفية حقول المواصفات" : "Filter specification fields"}>
+          {([
+            ["all", ar ? "الكل" : "All"],
+            ["missing", ar ? "الناقصة" : "Missing"],
+            ["filled", ar ? "المعبّأة" : "Filled"],
+          ] as const).map(([mode, label]) => (
+            <button
+              type="button"
+              key={mode}
+              aria-pressed={fieldView === mode}
+              onClick={() => setFieldView(mode)}
+              className={
+                "h-9 rounded-lg border px-3 text-xs font-semibold transition focus-visible:outline-2 focus-visible:outline-primary " +
+                (fieldView === mode
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-foreground hover:bg-muted")
+              }
+            >
+              {label}
+              {mode === "missing" ? " (" + (fields.length - completedCount) + ")" :
+                mode === "filled" ? " (" + completedCount + ")" : ""}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="space-y-4">
         {visibleSections.map((section) => {
@@ -210,6 +240,7 @@ export default function ProductSpecificationEditor({
               <div className="grid gap-3 p-3.5 sm:grid-cols-2">
                 {section.fields.map((field) => {
                   const generated = aiGeneratedKeys.has(field.key);
+                  const issue = validateSpecificationValue(field, values[field.key] ?? "");
                   return (
                     <label key={field.key} className="block min-w-0">
                       <span className="mb-1.5 flex min-h-5 items-center justify-between gap-2">
@@ -231,6 +262,7 @@ export default function ProductSpecificationEditor({
                       </span>
                       <input
                         aria-label={ar ? field.labelAr || field.label : field.label}
+                        aria-invalid={Boolean(issue)}
                         list={specificationFieldSuggestions(field.key).length ? `spec-suggestions-${field.key}` : undefined}
                         maxLength={500}
                         value={values[field.key] ?? ""}
@@ -248,6 +280,11 @@ export default function ProductSpecificationEditor({
                           " dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
                         }
                       />
+                      {issue ? (
+                        <span role="alert" className="mt-1 block text-[11px] text-amber-700 dark:text-amber-300">
+                          {ar ? "تحقق من تنسيق القيمة ووحدة القياس قبل الحفظ." : issue}
+                        </span>
+                      ) : null}
                       {specificationFieldSuggestions(field.key).length > 0 ? (
                         <datalist id={`spec-suggestions-${field.key}`}>
                           {specificationFieldSuggestions(field.key).map((suggestion) => (
@@ -264,7 +301,7 @@ export default function ProductSpecificationEditor({
         })}
         {visibleSections.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300">
-            {ar ? "ما في مواصفات مطابقة للبحث." : "No matching specification fields."}
+            {ar ? "لا توجد حقول ضمن التصفية الحالية." : "No fields match the current filter."}
           </div>
         ) : null}
       </div>
