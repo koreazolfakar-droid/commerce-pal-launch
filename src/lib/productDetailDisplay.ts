@@ -153,7 +153,10 @@ export function reconcileVariantSpecifications(
             (key === "memory" || key === "storage") &&
             /^\d+(?:\.\d+)?\s+(?:GB|TB)$/i.test(choice.value) &&
             /^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b/i.test(value)
-              ? value.replace(/^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b/i, choice.value)
+              ? value.replace(
+                  /^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b(?:\s*(?:\/|\||,|\bor\b|أو)\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b)*/i,
+                  choice.value,
+                )
               : choice.value;
         }
         const identity =

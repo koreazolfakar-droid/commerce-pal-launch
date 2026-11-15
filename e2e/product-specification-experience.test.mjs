@@ -197,3 +197,26 @@ test("highlight numbers cannot match suffixes of decimal or grouped numeric toke
   assert.equal(formatProductHighlight("battery", "1,000,000mAh battery"), "1,000,000 mAh");
   assert.equal(formatProductHighlight("camera", "12,5MP camera"), "12,5 MP");
 });
+
+test("selected capacity replaces generic alternatives while retaining technology details", () => {
+  const result = reconcileVariantSpecifications(
+    [
+      {
+        title: "Memory",
+        rows: [
+          { label: "Storage", value: "128GB / 256GB" },
+          { label: "RAM", value: "8GB / 12GB LPDDR5" },
+        ],
+      },
+    ],
+    [
+      { name: "Storage", value: "512GB" },
+      { name: "RAM", value: "16GB" },
+    ],
+    "en",
+  );
+  assert.deepEqual(
+    result[0].rows.map((row) => row.value),
+    ["512 GB", "16 GB LPDDR5"],
+  );
+});
