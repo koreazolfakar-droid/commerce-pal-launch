@@ -7,7 +7,8 @@ export type ProductTitleFact = {
   labelAr: string;
 };
 
-const COLOR_SUFFIX = /(?:\s[-–—]\s|\()\s*(black|white|blue|red|green|grey|gray|silver|gold|pink|purple|navy)\s*\)?\s*$/i;
+const COLOR_SUFFIX =
+  /(?:\s[-–—]\s|\()\s*(black|white|blue|red|green|grey|gray|silver|gold|pink|purple|navy)\s*\)?\s*$/i;
 
 const FACT_DEFINITIONS: Array<{
   key: ProductTitleFact["key"];
@@ -16,12 +17,48 @@ const FACT_DEFINITIONS: Array<{
   pattern: RegExp;
   value: (match: RegExpMatchArray) => string;
 }> = [
-  { key: "power", label: "Power", labelAr: "القدرة", pattern: /\b(\d{1,3}(?:\.\d+)?)\s?W\b/i, value: (match) => match[1] + "W" },
-  { key: "technology", label: "Technology", labelAr: "التقنية", pattern: /\bGaN\b/i, value: () => "GaN" },
-  { key: "connection", label: "Connection", labelAr: "التوصيل", pattern: /\bUSB[\s-]?C\b/i, value: () => "USB-C" },
-  { key: "display", label: "Display", labelAr: "الشاشة", pattern: /\bLED\s+display\b/i, value: () => "LED display" },
-  { key: "included", label: "Included", labelAr: "الملحقات", pattern: /(?:\bwith\s+(?:(?:a|an)\s+)?(?:USB[\s-]?C\s+)?|&\s*(?:USB[\s-]?C\s+)?)cable\b/i, value: () => "Cable" },
-  { key: "color", label: "Color", labelAr: "اللون", pattern: COLOR_SUFFIX, value: (match) => match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase() },
+  {
+    key: "power",
+    label: "Power",
+    labelAr: "القدرة",
+    pattern: /\b(\d{1,3}(?:\.\d+)?)\s?W\b/i,
+    value: (match) => match[1] + "W",
+  },
+  {
+    key: "technology",
+    label: "Technology",
+    labelAr: "التقنية",
+    pattern: /\bGaN\b/i,
+    value: () => "GaN",
+  },
+  {
+    key: "connection",
+    label: "Connection",
+    labelAr: "التوصيل",
+    pattern: /\bUSB[\s-]?C\b/i,
+    value: () => "USB-C",
+  },
+  {
+    key: "display",
+    label: "Display",
+    labelAr: "الشاشة",
+    pattern: /\bLED\s+display\b/i,
+    value: () => "LED display",
+  },
+  {
+    key: "included",
+    label: "Included",
+    labelAr: "الملحقات",
+    pattern: /(?:\bwith\s+(?:(?:a|an)\s+)?(?:USB[\s-]?C\s+)?|&\s*(?:USB[\s-]?C\s+)?)cable\b/i,
+    value: () => "Cable",
+  },
+  {
+    key: "color",
+    label: "Color",
+    labelAr: "اللون",
+    pattern: COLOR_SUFFIX,
+    value: (match) => match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase(),
+  },
 ];
 
 /** Only explicit facts from the merchant's product title; never estimate absent specifications. */
@@ -29,7 +66,14 @@ export function inferProductTitleFacts(title: string): ProductTitleFact[] {
   return FACT_DEFINITIONS.flatMap((definition) => {
     const match = title.match(definition.pattern);
     return match
-      ? [{ key: definition.key, label: definition.label, labelAr: definition.labelAr, value: definition.value(match) }]
+      ? [
+          {
+            key: definition.key,
+            label: definition.label,
+            labelAr: definition.labelAr,
+            value: definition.value(match),
+          },
+        ]
       : [];
   });
 }
@@ -43,6 +87,115 @@ const LABEL_SYNONYMS: Record<ProductTitleFact["key"], RegExp> = {
   color: /colou?r|اللون/i,
 };
 
+function normalizeSpecificationText(value: string) {
+  return value
+    .normalize("NFKC")
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase();
+}
+
+function specificationOptionKey(label: string) {
+  const name = normalizeSpecificationText(label)
+    .replace(/[()[\]_-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/^(?:colou?r|اللون|الوان|الالوان|لون)$/.test(name)) return "color";
+  if (/^(?:ram|memory|memory ram|system memory|الذاكرة|ذاكرة الوصول العشوائي|رام)$/.test(name))
+    return "memory";
+  if (
+    /^(?:storage|internal storage|storage capacity|rom|التخزين|سعة التخزين|الذاكرة الداخلية)$/.test(
+      name,
+    )
+  )
+    return "storage";
+  return "field:" + name;
+}
+
+/** Actual selected options take precedence over generic catalog values, without mutating them. */
+export function reconcileVariantSpecifications(
+  groups: SpecGroup[],
+  options: Array<{ name: string; value: string }>,
+  language: "ar" | "en",
+): SpecGroup[] {
+  const choices = new Map<string, { label: string; value: string }>();
+  for (const option of options) {
+    const label = option.name.trim();
+    let value = option.value.trim();
+    if (!label || !value || /^default(?:\s+title)?$/i.test(value)) continue;
+    const key = specificationOptionKey(label);
+    if (key === "memory" || key === "storage") {
+      value = /^\d+(?:\.\d+)?$/.test(value)
+        ? value + " GB"
+        : value.replace(
+            /(\d)\s*(GB|TB)\b/i,
+            (_, digit: string, unit: string) => digit + " " + unit.toUpperCase(),
+          );
+    }
+    choices.set(key, { label, value });
+  }
+  const replaced = new Set<string>();
+  const seen = new Set<string>();
+  const result = groups
+    .map((group) => ({
+      ...group,
+      rows: group.rows.flatMap((row) => {
+        if (!row.label.trim() || !row.value.trim()) return [];
+        const key = specificationOptionKey(row.label);
+        const choice = choices.get(key);
+        let value = row.value;
+        if (choice) {
+          replaced.add(key);
+          // Preserve technology and expansion details after a leading capacity.
+          value =
+            (key === "memory" || key === "storage") &&
+            /^\d+(?:\.\d+)?\s+(?:GB|TB)$/i.test(choice.value) &&
+            /^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b/i.test(value)
+              ? value.replace(
+                  /^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b(?:\s*(?:\/|\||,|\bor\b|أو)\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b)*/i,
+                  choice.value,
+                )
+              : choice.value;
+        }
+        const identity =
+          (choice ? key : normalizeSpecificationText(row.label)) +
+          "|" +
+          normalizeSpecificationText(value);
+        if (seen.has(identity)) return [];
+        seen.add(identity);
+        return [{ ...row, value }];
+      }),
+    }))
+    .filter((group) => group.rows.length > 0);
+  const missing = [...choices].filter(([key]) => !replaced.has(key)).map(([, row]) => row);
+  return missing.length
+    ? [
+        {
+          title: language === "ar" ? "النسخة المختارة" : "Selected configuration",
+          rows: missing,
+        },
+        ...result,
+      ]
+    : result;
+}
+
+/** Match literal words across section, label and value; keep complete matching rows. */
+export function filterSpecificationGroups(groups: SpecGroup[], query: string): SpecGroup[] {
+  const words = normalizeSpecificationText(query).split(" ").filter(Boolean);
+  if (!words.length) return groups;
+  return groups
+    .map((group) => ({
+      ...group,
+      rows: group.rows.filter((row) => {
+        const text = normalizeSpecificationText(group.title + " " + row.label + " " + row.value);
+        return words.every((word) => text.includes(word));
+      }),
+    }))
+    .filter((group) => group.rows.length > 0);
+}
+
 /** Supplement real catalogue specifications with title facts, without duplicating existing fields. */
 export function buildDisplaySpecificationGroups(
   groups: SpecGroup[],
@@ -51,12 +204,15 @@ export function buildDisplaySpecificationGroups(
 ): SpecGroup[] {
   const facts = inferProductTitleFacts(title);
   const existing = groups.flatMap((group) => group.rows);
-  const newFacts = facts.filter((fact) => !existing.some((row) => {
-    const label = row.label.normalize("NFKC").trim();
-    const value = row.value.normalize("NFKC").trim().toLowerCase();
-    // Existing merchant data has priority, including when the value differs from the title.
-    return LABEL_SYNONYMS[fact.key].test(label) || value === fact.value.toLowerCase();
-  }));
+  const newFacts = facts.filter(
+    (fact) =>
+      !existing.some((row) => {
+        const label = row.label.normalize("NFKC").trim();
+        const value = row.value.normalize("NFKC").trim().toLowerCase();
+        // Existing merchant data has priority, including when the value differs from the title.
+        return LABEL_SYNONYMS[fact.key].test(label) || value === fact.value.toLowerCase();
+      }),
+  );
   if (!newFacts.length) return groups;
   const inferredGroup = {
     title: language === "ar" ? "معلومات مؤكدة من اسم المنتج" : "Product highlights",
@@ -92,7 +248,10 @@ function overviewFromKnownFacts(title: string, brand: string | undefined, langua
       : (rawBrand ? rawBrand + " " : "") + kind.en
     : title.trim();
 
-  const descriptions: Record<ProductTitleFact["key"], { en: (s: string) => string; ar: (s: string) => string }> = {
+  const descriptions: Record<
+    ProductTitleFact["key"],
+    { en: (s: string) => string; ar: (s: string) => string }
+  > = {
     power: { en: (v) => v + " power", ar: (v) => "قدرة " + v },
     technology: { en: (v) => v + " technology", ar: (v) => "تقنية " + v },
     connection: { en: (v) => v + " connection", ar: (v) => "توصيل " + v },
@@ -121,16 +280,21 @@ export function buildDisplayOverview(
     }))
     .filter((section) => section.paragraphs.length > 0 || section.bullets.length > 0);
   if (meaningful.length) {
-    const normalize = (value: string) => value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+    const normalize = (value: string) =>
+      value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
     const normalizedTitle = normalize(title);
-    const hasOtherContent = meaningful.some((section) =>
-      section.bullets.length > 0 || section.paragraphs.some((paragraph) => normalize(paragraph) !== normalizedTitle),
+    const hasOtherContent = meaningful.some(
+      (section) =>
+        section.bullets.length > 0 ||
+        section.paragraphs.some((paragraph) => normalize(paragraph) !== normalizedTitle),
     );
     if (!normalizedTitle || !hasOtherContent) return meaningful;
     return meaningful
       .map((section) => ({
         ...section,
-        paragraphs: section.paragraphs.filter((paragraph) => normalize(paragraph) !== normalizedTitle),
+        paragraphs: section.paragraphs.filter(
+          (paragraph) => normalize(paragraph) !== normalizedTitle,
+        ),
       }))
       .filter((section) => section.paragraphs.length > 0 || section.bullets.length > 0);
   }
@@ -143,10 +307,14 @@ export function buildDisplayOverview(
 export function inferredBoxContents(title: string, language: "ar" | "en"): ContentSection[] {
   const cable = inferProductTitleFacts(title).find((fact) => fact.key === "included");
   if (!cable) return [];
-  return [{
-    title: null,
-    paragraphs: [],
-    bullets: [language === "ar" ? "كابل (مذكور ضمن اسم المنتج)" : "Cable (listed in the product title)"],
-    specs: [],
-  }];
+  return [
+    {
+      title: null,
+      paragraphs: [],
+      bullets: [
+        language === "ar" ? "كابل (مذكور ضمن اسم المنتج)" : "Cable (listed in the product title)",
+      ],
+      specs: [],
+    },
+  ];
 }

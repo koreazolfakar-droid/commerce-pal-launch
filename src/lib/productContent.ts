@@ -157,7 +157,7 @@ const GROUP_RULES: Array<{ title: string; test: RegExp }> = [
   },
   {
     title: "Memory & Storage",
-    test: /\bram\b|memory|storage|capacity|\bssd\b|microsd|expandable/i,
+    test: /\bram\b|memory|storage|\bssd\b|microsd|expandable/i,
   },
   {
     title: "Camera",

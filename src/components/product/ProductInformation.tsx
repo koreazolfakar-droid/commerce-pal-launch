@@ -81,9 +81,10 @@ export function ProductInformation({
         {sections.map((section, index) => (
           <details
             key={section.key}
+            id={section.key === "specifications" ? "product-specifications" : undefined}
             data-product-detail={section.key}
             open={index === 0 && section.key !== "delivery"}
-            className="group min-w-0"
+            className="group min-w-0 scroll-mt-4"
           >
             <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-foreground outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
               <span>{section.label}</span>

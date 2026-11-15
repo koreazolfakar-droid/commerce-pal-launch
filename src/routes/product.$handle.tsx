@@ -3,9 +3,10 @@ import { useLanguage } from "@/lib/i18n";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   ChevronRight,
+  ChevronDown,
   Cpu,
   Cable,
   HardDrive,
@@ -39,11 +40,16 @@ import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { productOptionKind } from "@/lib/productOptionDisplay";
-import { buildProductHighlights, buildProductSuggestions } from "@/lib/productPresentation";
+import {
+  buildProductHighlights,
+  buildProductSuggestions,
+  formatProductHighlight,
+} from "@/lib/productPresentation";
 import {
   buildDisplayOverview,
   buildDisplaySpecificationGroups,
   inferredBoxContents,
+  reconcileVariantSpecifications,
 } from "@/lib/productDetailDisplay";
 import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
@@ -357,9 +363,13 @@ function ProductPage() {
         : []),
     ].filter((row) => !structuredLabels.has(row.label.trim().toLocaleLowerCase()));
 
-    return buildDisplaySpecificationGroups(
-      [...structuredGroups, ...groupSpecs(fallbackRows)],
-      node.title,
+    return reconcileVariantSpecifications(
+      buildDisplaySpecificationGroups(
+        [...structuredGroups, ...groupSpecs(fallbackRows)],
+        node.title,
+        language,
+      ),
+      selectedVariant?.selectedOptions ?? [],
       language,
     );
   }, [
@@ -383,8 +393,20 @@ function ProductPage() {
     );
     return buildProductHighlights(specGroups, node.title, 6)
       .filter((highlight) => !optionKeys.has(highlight.key === "ram" ? "memory" : highlight.key))
-      .slice(0, 4);
+      .slice(0, 6);
   }, [specGroups, node.title, node.options]);
+
+  const showSpecifications = (event: MouseEvent<HTMLAnchorElement>) => {
+    const details = document.getElementById("product-specifications");
+    if (!(details instanceof HTMLDetailsElement)) return;
+    event.preventDefault();
+    details.open = true;
+    details.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    details.querySelector("summary")?.focus({ preventScroll: true });
+  };
 
   const displayOverview = useMemo(
     () => buildDisplayOverview(content.overview, node.title, node.vendor, language),
@@ -516,7 +538,7 @@ function ProductPage() {
               onSelect={handleOptionSelect}
             />
 
-            <div className="flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-3">
               <span className="text-sm font-medium text-foreground">
                 {language === "ar" ? "الكمية" : "Quantity"}
               </span>
@@ -590,26 +612,44 @@ function ProductPage() {
                 aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
                 className="min-w-0 border-t border-border/60 pt-4"
               >
-                <h2 className="mb-3 text-base font-semibold tracking-tight text-foreground">
-                  {language === "ar" ? "أبرز المميزات" : "Key features"}
-                </h2>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <h2 className="text-base font-semibold tracking-tight text-foreground">
+                    {language === "ar" ? "أبرز المميزات" : "Key features"}
+                  </h2>
+                  {specGroups.length > 0 && (
+                    <a
+                      href="#product-specifications"
+                      data-testid="product-specifications-link"
+                      aria-controls="product-specifications"
+                      onClick={showSpecifications}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
+                      <ChevronDown aria-hidden className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   {highlights.map((highlight) => {
                     const HighlightIcon =
                       FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
                     return (
-                      <div key={highlight.key} className="flex min-w-0 items-start gap-2.5 py-1">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/[0.06] text-primary">
-                          <HighlightIcon aria-hidden className="h-[18px] w-[18px]" />
-                        </span>
-                        <div className="min-w-0">
-                          <strong className="block break-words text-sm font-semibold leading-snug text-foreground">
-                            {highlight.value}
-                          </strong>
-                          <span className="mt-1 block break-words text-[11px] leading-snug text-muted-foreground">
+                      <div
+                        key={highlight.key}
+                        className="min-w-0 rounded-lg border border-border/60 bg-surface/30 p-3"
+                      >
+                        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                          <HighlightIcon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                          <span className="min-w-0 break-words text-xs leading-snug">
                             {language === "ar" ? highlight.labelAr : highlight.label}
                           </span>
                         </div>
+                        <strong
+                          title={highlight.value}
+                          className="line-clamp-2 break-words text-sm font-semibold leading-snug text-foreground"
+                        >
+                          {formatProductHighlight(highlight.key, highlight.value)}
+                        </strong>
                       </div>
                     );
                   })}
@@ -617,9 +657,22 @@ function ProductPage() {
               </section>
             )}
 
+            {highlights.length === 0 && specGroups.length > 0 && (
+              <a
+                href="#product-specifications"
+                data-testid="product-specifications-link"
+                aria-controls="product-specifications"
+                onClick={showSpecifications}
+                className="inline-flex min-h-11 items-center gap-2 self-start rounded-lg text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
+                <ChevronDown aria-hidden className="h-4 w-4" />
+              </a>
+            )}
+
             <div
               className="grid grid-cols-3 border-y border-border/60 py-1"
-              aria-label="Product actions"
+              aria-label={language === "ar" ? "إجراءات المنتج" : "Product actions"}
             >
               <Button
                 variant="ghost"
@@ -656,9 +709,15 @@ function ProductPage() {
                 size="sm"
                 className="h-11 min-w-0 rounded-lg px-2 text-xs text-success hover:bg-success/10 hover:text-success sm:text-sm"
               >
-                <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={whatsappOrderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
+                >
                   <MessageCircle className="h-4 w-4" />
-                  <span className="truncate">
+                  <span className="sm:hidden">{language === "ar" ? "اسألنا" : "Ask us"}</span>
+                  <span className="hidden sm:inline">
                     {language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
                   </span>
                 </a>
