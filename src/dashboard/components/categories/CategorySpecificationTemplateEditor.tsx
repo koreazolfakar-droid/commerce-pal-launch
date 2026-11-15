@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { mergeSpecificationTemplates } from "@/lib/specificationTemplateMerge";
 import { Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
 import {
@@ -35,9 +36,19 @@ export default function CategorySpecificationTemplateEditor({
   const ar = lang === "ar";
   const template = value;
   const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [presetMessage, setPresetMessage] = useState("");
   const recommended = recommendSpecificationPreset(categorySlug || "") ??
     recommendSpecificationPreset(categoryName || "");
   const effectivePresetId = selectedPresetId || recommended?.id || "";
+  const chosenPreset = specificationPresetById(effectivePresetId);
+  const mergePreview = chosenPreset ? mergeSpecificationTemplates(template, chosenPreset.template) : null;
+  const addMissingFields = () => {
+    if (!mergePreview?.added) return;
+    onChange(mergePreview.template);
+    setPresetMessage(ar
+      ? "أُضيف " + mergePreview.added + " حقل بدون تغيير الحقول الحالية. احفظ التصنيف لاعتمادها."
+      : "Added " + mergePreview.added + " fields without replacing existing definitions. Save the category to persist.");
+  };
   const applyPreset = () => {
     const preset = specificationPresetById(effectivePresetId);
     if (!preset) return;
@@ -48,6 +59,7 @@ export default function CategorySpecificationTemplateEditor({
         : "Replace the current template? Some existing specifications may no longer display in the storefront. Saved product values will not be deleted.",
     )) return;
     onChange(copySpecificationPreset(preset));
+    setPresetMessage(ar ? "تم تجهيز القالب. احفظ التصنيف لاعتماده." : "Template prepared. Save the category to persist it.");
   };
 
   const commit = (next: ProductSpecificationTemplate) => {
@@ -55,6 +67,7 @@ export default function CategorySpecificationTemplateEditor({
   };
 
   const addSection = () => {
+    if (template.sections.length >= 16) return;
     const index = template.sections.length + 1;
     const used = new Set(
       template.sections.flatMap((section) => section.fields.map((field) => field.key)),
@@ -90,7 +103,8 @@ export default function CategorySpecificationTemplateEditor({
         <button
           type="button"
           onClick={addSection}
-          className="inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 text-[10px] font-bold text-indigo-600"
+          disabled={template.sections.length >= 16}
+          className="inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 text-[10px] font-bold text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus className="size-3.5" />
           {ar ? "إضافة قسم" : t("Add section")}
@@ -125,16 +139,40 @@ export default function CategorySpecificationTemplateEditor({
           </select>
           <button
             type="button"
+            onClick={addMissingFields}
+            disabled={!mergePreview?.added}
+            className="h-10 rounded-xl border border-indigo-300 bg-white px-4 text-xs font-bold text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-600 dark:bg-slate-900 dark:text-indigo-300"
+          >
+            {ar ? "إضافة الناقص" : "Add missing fields"}
+            {mergePreview?.added ? " (+" + mergePreview.added + ")" : ""}
+          </button>
+          <button
+            type="button"
             onClick={applyPreset}
             disabled={!effectivePresetId}
             className="h-10 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {ar ? "تطبيق القالب" : "Apply template"}
+            {ar ? "استبدال القالب" : "Replace template"}
           </button>
         </div>
+        {mergePreview ? (
+          <p className="text-[11px] text-slate-600 dark:text-slate-300" aria-live="polite">
+            {ar ? "الحقول الموجودة مسبقاً" : "Already present"}: {mergePreview.alreadyPresent}
+            {" · "}
+            {ar ? "يمكن إضافتها" : "Can add"}: {mergePreview.added}
+            {mergePreview.skippedForLimit > 0 ? (
+              <span className="ms-2 text-amber-700 dark:text-amber-300">
+                {ar ? "تجاوز حدود القالب" : "Template limit reached"}: {mergePreview.skippedForLimit}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+        {presetMessage ? (
+          <p role="status" className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">{presetMessage}</p>
+        ) : null}
         {template.sections.length > 0 ? (
           <p className="text-[10px] text-slate-600 dark:text-slate-300">
-            {ar ? "تنبيه: تطبيق قالب آخر يستبدل تعريف الحقول الحالي بعد التأكيد." : "Applying another preset replaces the current field definitions after confirmation."}
+            {ar ? "إضافة الناقص تحافظ على الحقول الحالية. الاستبدال الكامل يحتاج تأكيداً وقد يخفي بعض المواصفات القديمة." : "Add missing fields preserves existing keys. Replacing the whole template requires confirmation and may hide older values."}
           </p>
         ) : null}
       </div>
@@ -287,7 +325,8 @@ export default function CategorySpecificationTemplateEditor({
                   };
                   commit({ sections });
                 }}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-[10px] font-bold text-slate-500"
+                disabled={section.fields.length >= 24}
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-[10px] font-bold text-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="size-3.5" />
                 {ar ? "إضافة حقل" : t("Add field")}
