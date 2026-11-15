@@ -32,7 +32,7 @@ export function QuickViewButton({ product }: { product: StoreProduct }) {
           className="press group/quick-view absolute bottom-1 start-1 z-20 grid h-11 w-11 place-items-center rounded-full text-foreground !shadow-none hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="pointer-events-none grid h-8 w-8 place-items-center rounded-full border border-border/70 bg-background/95 shadow-sm backdrop-blur transition-colors group-hover/quick-view:border-primary/40">
-            <Eye aria-hidden className="h-3.5 w-3.5" strokeWidth={1.9} />
+            <Eye aria-hidden className="!h-3.5 !w-3.5" strokeWidth={1.9} />
           </span>
         </button>
       </DialogTrigger>
