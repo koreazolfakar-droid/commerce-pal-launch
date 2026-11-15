@@ -132,12 +132,12 @@ export function buildProductHighlights(
 /** A concise view of explicit merchant values; complete wording remains in the spec table. */
 export function formatProductHighlight(key: string, value: string): string {
   if (key === "display") {
-    const size = value.match(/(\d+(?:\.\d+)?)\s?(?:[- ]?inch(?:es)?\b|["″])/i);
+    const size = value.match(/(?<![\d.,])(\d+(?:[.,]\d+)?)\s?(?:[- ]?inch(?:es)?\b|["″])/i);
     const resolution = value.match(/\b(?:WQHD|QHD|FHD|HD)\+?|\b[248]K\b/i);
     const panel = value.match(
       /\b(?:LTPO\s+)?(?:AMOLED|OLED|IPS(?:\s+LCD)?|LCD|Mini[- ]LED|LED)\b/i,
     );
-    const refresh = value.match(/\b(\d{2,3})\s?Hz\b/i);
+    const refresh = value.match(/(?<![\d.,])(\d{2,3})\s?Hz\b/i);
     const parts = [
       size ? size[1] + "″" : "",
       [resolution?.[0], panel?.[0]].filter(Boolean).join(" "),
@@ -146,11 +146,11 @@ export function formatProductHighlight(key: string, value: string): string {
     if (parts.length) return parts.join(" · ");
   }
   if (key === "camera") {
-    const camera = value.match(/\b(\d+(?:\.\d+)?)\s?MP\b/i);
+    const camera = value.match(/(?<![\d.,])(\d+(?:[.,]\d+)?)\s?MP\b/i);
     if (camera) return camera[1] + " MP";
   }
   if (key === "battery") {
-    const battery = value.match(/\b((?:\d{1,2},\d{3}|\d{3,5}))\s?mAh\b/i);
+    const battery = value.match(/(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d+)\s?mAh\b/i);
     if (battery) return battery[1] + " mAh";
   }
   return value;

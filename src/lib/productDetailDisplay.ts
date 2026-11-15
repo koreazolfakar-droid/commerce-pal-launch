@@ -102,7 +102,7 @@ function specificationOptionKey(label: string) {
     .replace(/[()[\]_-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  if (/^(?:colou?r|finish|shade|اللون|الوان|الالوان|لون)$/.test(name)) return "color";
+  if (/^(?:colou?r|اللون|الوان|الالوان|لون)$/.test(name)) return "color";
   if (/^(?:ram|memory|memory ram|system memory|الذاكرة|ذاكرة الوصول العشوائي|رام)$/.test(name))
     return "memory";
   if (
@@ -145,16 +145,24 @@ export function reconcileVariantSpecifications(
         if (!row.label.trim() || !row.value.trim()) return [];
         const key = specificationOptionKey(row.label);
         const choice = choices.get(key);
+        let value = row.value;
         if (choice) {
-          if (replaced.has(key)) return [];
           replaced.add(key);
-          return [{ ...row, value: choice.value }];
+          // Preserve technology and expansion details after a leading capacity.
+          value =
+            (key === "memory" || key === "storage") &&
+            /^\d+(?:\.\d+)?\s+(?:GB|TB)$/i.test(choice.value) &&
+            /^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b/i.test(value)
+              ? value.replace(/^\s*\d+(?:\.\d+)?\s*(?:GB|TB)\b/i, choice.value)
+              : choice.value;
         }
         const identity =
-          normalizeSpecificationText(row.label) + "|" + normalizeSpecificationText(row.value);
+          (choice ? key : normalizeSpecificationText(row.label)) +
+          "|" +
+          normalizeSpecificationText(value);
         if (seen.has(identity)) return [];
         seen.add(identity);
-        return [{ ...row }];
+        return [{ ...row, value }];
       }),
     }))
     .filter((group) => group.rows.length > 0);

@@ -143,3 +143,57 @@ test("long merchant features stay available in full while their summary remains 
   assert.equal(result[0].value, value);
   assert.equal(formatProductHighlight(result[0].key, result[0].value), "108 MP");
 });
+
+test("color options preserve separate finish facts in either merchant row order", () => {
+  for (const rows of [
+    [
+      { label: "Color", value: "Black" },
+      { label: "Finish", value: "Matte" },
+    ],
+    [
+      { label: "Finish", value: "Matte" },
+      { label: "Color", value: "Black" },
+    ],
+  ]) {
+    const result = reconcileVariantSpecifications(
+      [{ title: "Design", rows }],
+      [{ name: "Color", value: "Blue" }],
+      "en",
+    );
+    assert.deepEqual(
+      result[0].rows,
+      rows.map((row) => (row.label === "Color" ? { ...row, value: "Blue" } : row)),
+    );
+  }
+});
+
+test("selected memory capacities retain merchant technology and expansion qualifiers", () => {
+  const result = reconcileVariantSpecifications(
+    [
+      {
+        title: "Memory",
+        rows: [
+          { label: "Storage", value: "128GB UFS 3.1, expandable up to 1TB" },
+          { label: "RAM", value: "8 GB LPDDR5" },
+          { label: "Memory", value: "8 GB dual-channel" },
+        ],
+      },
+    ],
+    [
+      { name: "Storage", value: "512GB" },
+      { name: "RAM", value: "12GB" },
+    ],
+    "en",
+  );
+  assert.deepEqual(
+    result[0].rows.map((row) => row.value),
+    ["512 GB UFS 3.1, expandable up to 1TB", "12 GB LPDDR5", "12 GB dual-channel"],
+  );
+});
+
+test("highlight numbers cannot match suffixes of decimal or grouped numeric tokens", () => {
+  assert.equal(formatProductHighlight("display", "6,7-inch AMOLED display"), "6,7″ · AMOLED");
+  assert.equal(formatProductHighlight("battery", "100,000mAh power bank"), "100,000 mAh");
+  assert.equal(formatProductHighlight("battery", "1,000,000mAh battery"), "1,000,000 mAh");
+  assert.equal(formatProductHighlight("camera", "12,5MP camera"), "12,5 MP");
+});

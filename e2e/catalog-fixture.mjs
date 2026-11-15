@@ -28,7 +28,11 @@ export const products = Array.from({ length: 9 }, (_, i) => {
         i === 6 ? "Phone Cases" : i === 7 ? "E-Readers" : i === 8 ? "إضاءة ذكية" : "Smartphone",
       tags: ["smartphone"],
       availableForSale: true,
-      description: "Local test product for catalog verification.",
+      description:
+        "Local test product for catalog verification." +
+        (i === 0
+          ? "\nSpecifications\nStorage: 128GB\nDisplay: 6.72-inch FHD+ LCD with 120Hz refresh rate\nProcessor: Qualcomm Snapdragon 695 5G\nMain camera: 108MP main camera with additional depth and macro sensors\nBattery capacity: 5000mAh"
+          : ""),
       descriptionHtml:
         "<p>Local test product for catalog verification.</p>" +
         (i === 0
