@@ -1661,6 +1661,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           >
             <div className="p-5">
               <ProductSpecificationEditor
+                key={form.categoryId || "uncategorized"}
                 template={specificationTemplate}
                 values={specifications}
                 query={form.title}
