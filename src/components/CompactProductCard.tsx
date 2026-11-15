@@ -12,6 +12,7 @@ import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ProductImage } from "@/components/ProductImage";
+import { QuickViewButton } from "@/components/product/QuickViewButton";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { cn } from "@/lib/utils";
@@ -201,6 +202,7 @@ export const CompactProductCard = memo(function CompactProductCard({
               -{discount}%
             </span>
           )}
+          <QuickViewButton product={product} />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col pt-1.5 sm:pt-2">
@@ -358,6 +360,7 @@ export const CompactProductCard = memo(function CompactProductCard({
             </span>
           )}
 
+          <QuickViewButton product={product} />
           {wishlistButton}
         </div>
 
@@ -514,6 +517,7 @@ export const CompactProductCard = memo(function CompactProductCard({
           </span>
         )}
 
+        <QuickViewButton product={product} />
         {wishlistButton}
       </div>
 
