@@ -1,4 +1,5 @@
 import { createStorefrontPage } from "./helpers/storefront-fixture-fetch.mjs";
+import { runQuickViewChecks } from "./quick-view-check.mjs";
 import assert from "node:assert/strict";
 import { chromium, firefox, webkit } from "@playwright/test";
 
@@ -440,6 +441,7 @@ async function runRoutes(browser) {
 
 const browser = await launcher.launch({ headless: true });
 try {
+  if (suite === "all") await runQuickViewChecks(browser, baseURL);
   if (suite === "all") {
     const loadingPage = await createStorefrontPage(browser, {
       viewport: { width: 390, height: 844 },
