@@ -514,6 +514,9 @@ export async function signInDashboard(
     throw new Error(dashboardSignInErrorMessage(error));
   }
 
+  // A new password session must not reuse identity or role data from an older session.
+  clearDashboardAuthCaches();
+
   // One validated authorization/MFA round-trip replaces two sequential role lookups.
   // This still verifies the session with Auth, the staff role, AAL, MFA factors and
   // any server-side passkey step-up before deciding which screen may be shown.
