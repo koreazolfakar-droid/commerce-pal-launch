@@ -1399,13 +1399,17 @@
   }
 
   .dashboard-theme-scope .dashboard-sidebar {
-    position: sticky;
-    grid-column: 1;
-    align-self: start;
+    /* Keep the navigation pinned to the visible viewport, even when the
+       long inventory page scrolls its document or an ancestor container.
+       The grid's first column stays reserved for this fixed-width rail. */
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inset-inline-end: auto;
     top: 0;
     bottom: auto;
-    inset-inline-start: auto;
-    width: 100%;
+    width: var(--dashboard-integrated-sidebar-width);
+    height: 100vh;
     height: 100dvh;
     min-height: 0;
     padding-block: 0;
