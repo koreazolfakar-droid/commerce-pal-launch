@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import ProductSpecificationImportPanel from "@/dashboard/components/products/ProductSpecificationImportPanel";
@@ -61,10 +62,20 @@ export default function ProductSpecificationEditor({
   const [editedVisibleKeys, setEditedVisibleKeys] = useState<Set<string>>(new Set());
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<string | null>(null);
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(template.sections[0]?.fields[0]?.key ? [template.sections[0].fields[0].key] : []),
+  );
   const fields = template.sections.flatMap((section) => section.fields);
+  const sectionIdForField = (key: string) =>
+    template.sections.find((section) => section.fields.some((field) => field.key === key))?.fields[0]?.key ?? "";
+  const allSectionIds = template.sections
+    .map((section) => section.fields[0]?.key)
+    .filter((key): key is string => Boolean(key));
   const nextMissingKey = nextMissingSpecificationKey(template, values);
   const invalidFields = fields.filter((field) => validateSpecificationValue(field, values[field.key] ?? ""));
   const focusField = (key: string) => {
+    const sectionKey = sectionIdForField(key);
+    if (sectionKey) setOpenSections((current) => new Set([...current, sectionKey]));
     setFieldView("all");
     setEditedVisibleKeys(new Set());
     setSpecSearch("");
@@ -81,6 +92,7 @@ export default function ProductSpecificationEditor({
   const selectView = (mode: SpecificationFieldView) => {
     setEditedVisibleKeys(new Set());
     setFieldView(mode);
+    if (mode !== "all") setOpenSections(new Set(allSectionIds));
   };
   const completedCount = fields.filter((field) => Boolean(values[field.key]?.trim())).length;
   const completionPercent = fields.length ? Math.round(100 * completedCount / fields.length) : 0;
@@ -109,10 +121,10 @@ export default function ProductSpecificationEditor({
     <div>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-bold text-slate-700">
+          <div className="text-sm font-semibold text-foreground">
             {ar ? "مواصفات مرتبطة بالتصنيف" : "Category-aware specifications"}
           </div>
-          <p className="mt-1 max-w-xl text-[10px] leading-4 text-slate-400">
+          <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
             {ar
               ? "يتم حفظ الحقول المعرفة ضمن التصنيف فقط. تبقى قيم الذكاء الاصطناعي مقترحات للمراجعة حتى الحفظ."
               : "Only fields defined by the selected category are saved. AI values are suggestions and remain marked for review until you save."}
@@ -133,8 +145,8 @@ export default function ProductSpecificationEditor({
         />
       </div>
 
-      <details className="mb-4 rounded-xl border border-slate-200 bg-slate-50/60" onToggle={(event) => setShowScopedAi(event.currentTarget.open)}>
-        <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-slate-600">
+      <details className="mb-4 rounded-xl border border-border bg-card" onToggle={(event) => setShowScopedAi(event.currentTarget.open)}>
+        <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-foreground">
           {ar ? "خيارات AI متقدمة للأقسام والحقول" : "Advanced AI tools for sections and individual fields"}
         </summary>
         {showScopedAi ? (
@@ -208,7 +220,10 @@ export default function ProductSpecificationEditor({
         <input
           type="search"
           value={specSearch}
-          onChange={(event) => setSpecSearch(event.target.value)}
+          onChange={(event) => {
+            setSpecSearch(event.target.value);
+            if (event.target.value.trim()) setOpenSections(new Set(allSectionIds));
+          }}
           placeholder={ar ? "ابحث عن مواصفة..." : "Find a specification..."}
           aria-label={ar ? "البحث في حقول المواصفات" : "Search specification fields"}
           className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:border-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
@@ -259,24 +274,57 @@ export default function ProductSpecificationEditor({
           </div>
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold text-foreground">
+          {ar ? "مجموعات المواصفات" : "Specification groups"}
+          <span className="ms-1 font-normal text-muted-foreground">({visibleSections.length})</span>
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setOpenSections(new Set(allSectionIds))}
+            className="min-h-9 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-muted">
+            {ar ? "فتح الكل" : "Expand all"}
+          </button>
+          <button type="button" onClick={() => setOpenSections(new Set())}
+            className="min-h-9 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-muted">
+            {ar ? "إغلاق الكل" : "Collapse all"}
+          </button>
+        </div>
+      </div>
+      <div className="space-y-3">
         {visibleSections.map((section) => {
-
+          const sectionKey = sectionIdForField(section.fields[0].key);
+          const originalSection = template.sections.find((item) => item.fields[0]?.key === sectionKey);
+          const total = originalSection?.fields.length ?? section.fields.length;
+          const completed = originalSection?.fields.filter((field) => values[field.key]?.trim()).length ?? 0;
+          const errors = originalSection?.fields.filter((field) => validateSpecificationValue(field, values[field.key] ?? "")).length ?? 0;
+          const expanded = openSections.has(sectionKey);
           return (
             <section
-              key={section.title}
-              className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
+              key={sectionKey}
+              id={"spacecall-spec-section-" + sectionKey}
+              className="min-w-0 scroll-mt-24 overflow-hidden rounded-xl border border-border bg-card"
             >
-              <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-3.5 py-3 dark:border-slate-700 dark:bg-slate-800/70">
-                <div className="text-[11px] font-bold text-slate-700 dark:text-slate-100">
-                  {ar ? section.titleAr || section.title : section.title}
-                </div>
-                <span className="text-[10px] font-semibold tabular-nums text-slate-500 dark:text-slate-300">
-                  {section.fields.filter((field) => values[field.key]?.trim()).length}/{section.fields.length}
+              <button type="button" aria-expanded={expanded} aria-controls={"spacecall-spec-section-fields-" + sectionKey}
+                onClick={() => setOpenSections((current) => {
+                  const next = new Set(current);
+                  if (next.has(sectionKey)) next.delete(sectionKey);
+                  else next.add(sectionKey);
+                  return next;
+                })}
+                className="flex min-h-14 w-full items-center justify-between gap-3 bg-muted/40 px-3.5 py-3 text-start hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary">
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">{ar ? section.titleAr || section.title : section.title}</span>
+                  <span className="mt-1 block text-[11px] text-muted-foreground">
+                    {ar ? "المعبّأة" : "Filled"}: {completed}/{total}
+                    {errors ? <span className="ms-2 text-amber-700 dark:text-amber-300">
+                      {ar ? "تحتاج تصحيح" : "Needs review"}: {errors}
+                    </span> : null}
+                  </span>
                 </span>
-              </div>
-
-              <div className="grid gap-3 p-3.5 sm:grid-cols-2">
+                <ChevronDown aria-hidden="true" className={`size-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+              </button>
+              <div id={"spacecall-spec-section-fields-" + sectionKey}
+                className={expanded ? "grid gap-3 border-t border-border p-3.5 sm:grid-cols-2" : "hidden"}>
                 {section.fields.map((field) => {
                   const generated = aiGeneratedKeys.has(field.key);
                   const issue = validateSpecificationValue(field, values[field.key] ?? "");
