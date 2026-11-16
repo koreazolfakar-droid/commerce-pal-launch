@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [app, sidebar, css, routes] = await Promise.all([
+const [app, sidebar, css, routes, workspace] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/layout/DashboardSidebar.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/layout/SidebarPolish.css", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/workspace.css", import.meta.url), "utf8"),
 ]);
 
 test("sidebar redesign scopes CSS to navigation and preserves integrated desktop layout", () => {
@@ -45,10 +46,13 @@ test("active group visibility, keyboard focus, touch targets and reduced motion 
   assert.match(css, /\[dir="rtl"\]/);
 });
 
-test("desktop sidebar stays sticky across tall inventory pages without clipping the vertical scroll container", () => {
+test("desktop navigation remains viewport-fixed alongside a reserved content grid column", () => {
   assert.match(app, /dashboard-theme-scope min-h-screen min-h-\[100dvh\] overflow-x-clip/);
   assert.doesNotMatch(app, /dashboard-theme-scope[^\n]*overflow-x-hidden/);
   assert.match(css, /\.dashboard-theme-scope \.dashboard-sidebar\.sidebar-polished/);
   assert.match(sidebar, /dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain/);
   assert.match(sidebar, /dashboard-sidebar-footer p-3/);
+  assert.match(workspace, /position: fixed;\s*inset-block-start: 0;\s*inset-inline-start: 0;/);
+  assert.match(workspace, /width: var\(--dashboard-integrated-sidebar-width\)/);
+  assert.match(workspace, /\.dashboard-theme-scope \.dashboard-desktop-content \{\s*grid-column: 2;/);
 });
