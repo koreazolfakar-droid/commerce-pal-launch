@@ -44,6 +44,7 @@ export default function ProductSpecificationEditor({
   query,
   aiContext,
   aiGeneratedKeys,
+  reviewFocusRequest,
   onChange,
   onAiApply,
 }: {
@@ -52,6 +53,7 @@ export default function ProductSpecificationEditor({
   query: string;
   aiContext?: Record<string, unknown>;
   aiGeneratedKeys: ReadonlySet<string>;
+  reviewFocusRequest?: { key: string; nonce: number } | null;
   onChange: (key: string, value: string) => void;
   onAiApply: (values: Record<string, string>) => void;
 }) {
@@ -82,6 +84,20 @@ export default function ProductSpecificationEditor({
     setSpecSearch("");
     setFocusTarget(key);
   };
+  useEffect(() => {
+    if (!reviewFocusRequest?.key) return;
+    const key = reviewFocusRequest.key;
+    const sectionKey = template.sections.find((section) =>
+      section.fields.some((field) => field.key === key),
+    )?.fields[0]?.key;
+    if (!sectionKey) return;
+    setOpenSections((current) => new Set([...current, sectionKey]));
+    setFieldView("all");
+    setSpecSearch("");
+    setEditedVisibleKeys(new Set());
+    setFocusTarget(key);
+  }, [reviewFocusRequest, template]);
+
   useEffect(() => {
     if (!focusTarget) return;
     const element = document.getElementById("spacecall-spec-field-" + focusTarget);
