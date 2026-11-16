@@ -38,6 +38,7 @@ import {
 import { validateProductDraft } from "@/dashboard/lib/validation";
 import { reconcileSavedFields } from "@/dashboard/lib/productSave";
 import { SITE_URL } from "@/lib/storeConfig";
+import { productFormExample } from "@/lib/productFormExamples";
 import { createDashboardBrand, normalizeBrandSlug } from "@/dashboard/data/brands";
 import { createDashboardCollection } from "@/dashboard/data/collections";
 import { getProductImageResolution } from "@/dashboard/lib/imageProcessing";
@@ -93,7 +94,8 @@ const EMPTY: ProductDraft = {
 };
 
 export default function ProductFormPage({ id }: { id?: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ar = lang === "ar";
   const [, navigate] = useLocation();
   const [existing, setExisting] = useState<DashboardProduct | null>(null);
   const [brands, setBrands] = useState<Awaited<ReturnType<typeof listDashboardBrands>>>([]);
@@ -1244,6 +1246,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
         </div>
       </div>
 
+      <div role="note" className="mb-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs leading-5 text-foreground">
+        {ar
+          ? "كل خانة فيها مثال يساعدك تعرف شو تكتب. الأمثلة توضيحية فقط، وما بتنحفظ تلقائياً. اكتب المعلومات الحقيقية للمنتج."
+          : "Every field has an example to guide you. Examples are illustrative only and never save automatically. Enter your actual product details."}
+      </div>
       <ProductFormMap
         dirty={dirty}
         sections={[
@@ -1317,8 +1324,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   value={form.description}
                   onChange={(event) => update("description", event.target.value)}
                   rows={6}
-                  className="w-full resize-none rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
+                  placeholder={productFormExample("description", ar ? "ar" : "en")}
+                  className="w-full resize-y rounded-xl border border-border bg-card p-3 text-sm leading-6 text-foreground outline-none focus:border-primary placeholder:text-muted-foreground"
                 />
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                  {ar ? "مثال: " : "Example: "}{productFormExample("description", ar ? "ar" : "en")}
+                </span>
               </label>
               <details className="rounded-lg border border-border p-3">
                 <summary className="min-h-8 cursor-pointer text-sm font-semibold">
@@ -1339,9 +1350,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
                       value={form.descriptionAr}
                       rows={4}
                       maxLength={5000}
+                      placeholder={productFormExample("descriptionAr", "ar")}
                       onChange={(event) => update("descriptionAr", event.target.value)}
-                      className="mt-2 w-full resize-y rounded-lg border border-border bg-card p-3 text-base font-normal"
+                      className="mt-2 w-full resize-y rounded-lg border border-border bg-card p-3 text-sm leading-6 font-normal text-foreground placeholder:text-muted-foreground"
                     />
+                    <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
+                      مثال: {productFormExample("descriptionAr", "ar")}
+                    </span>
                   </label>
                 </div>
               </details>
@@ -1351,12 +1366,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     type="search"
                     value={brandSearch}
                     onChange={(event) => setBrandSearch(event.target.value)}
-                    placeholder={t("Search brands...")}
+                    placeholder={ar ? "ابحث مثل: Samsung" : "Search e.g. Samsung"}
                     aria-label={t("Search brands...")}
                     className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
                   />
                   <SelectField
                     label={t("Brand")}
+                    exampleKey="brandId"
                     value={form.brandId}
                     onChange={(value) => update("brandId", value)}
                   >
@@ -1383,7 +1399,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                             value={newBrandName}
                             onChange={(event) => setNewBrandName(event.target.value)}
                             aria-label={t("New brand name")}
-                            placeholder={t("New brand name")}
+                            placeholder={ar ? "مثال: Anker" : "e.g. Anker"}
                             maxLength={120}
                             className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
                           />
@@ -1405,12 +1421,13 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     type="search"
                     value={categorySearch}
                     onChange={(event) => setCategorySearch(event.target.value)}
-                    placeholder={t("Search categories...")}
+                    placeholder={ar ? "ابحث مثل: هواتف" : "Search e.g. Smartphones"}
                     aria-label={t("Search categories...")}
                     className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
                   />
                   <SelectField
                     label={t("Category")}
+                    exampleKey="categoryId"
                     value={form.categoryId}
                     onChange={changeCategory}
                   >
@@ -1473,8 +1490,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     <span className="mt-2 block text-[11px] font-bold text-slate-600">
                       {t("Select product images")}
                     </span>
-                    <span className="mt-1 block text-[10px] text-slate-400">
-                      {t("Images upload after save")}
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                      {ar ? "مثال: صورة واضحة للواجهة الأمامية، ثم صور الخلف والجوانب" : "Example: clear front image, then back and side views"}
                     </span>
                   </span>
                 </button>
@@ -1567,7 +1584,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 type="search"
                 value={collectionSearch}
                 onChange={(event) => setCollectionSearch(event.target.value)}
-                placeholder={t("Search collections...")}
+                placeholder={ar ? "مثال: أحدث المنتجات" : "e.g. New arrivals"}
                 aria-label={t("Search collections...")}
                 className="mb-3 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-indigo-400"
               />
@@ -1614,7 +1631,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                         value={newCollectionName}
                         onChange={(event) => setNewCollectionName(event.target.value)}
                         aria-label={t("New collection name")}
-                        placeholder={t("New collection name")}
+                        placeholder={ar ? "مثال: عروض الأسبوع" : "e.g. Weekly deals"}
                         maxLength={180}
                         className="h-10 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-[12px]"
                       />
@@ -1656,6 +1673,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   />
                   <Field
                     label={t("Storage / capacity")}
+                    exampleKey="variantStorage"
                     value={newVariantStorage}
                     onChange={(value) => {
                       setSaved(false);
@@ -1720,6 +1738,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
             <div className="space-y-4 p-5">
               <Field
                 label={t("SEO title")}
+                exampleKey="seoTitle"
                 value={form.seoTitle}
                 onChange={(value) => update("seoTitle", value)}
               />
@@ -1732,8 +1751,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   value={form.seoDescription}
                   onChange={(event) => update("seoDescription", event.target.value)}
                   rows={4}
-                  className="w-full resize-none rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
+                  placeholder={productFormExample("seoDescription", ar ? "ar" : "en")}
+                  className="w-full resize-y rounded-xl border border-border bg-card p-3 text-sm leading-6 text-foreground outline-none focus:border-primary placeholder:text-muted-foreground"
                 />
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                  {ar ? "مثال: " : "Example: "}{productFormExample("seoDescription", ar ? "ar" : "en")}
+                </span>
               </label>
               <div
                 aria-label={t("Search engine preview")}
@@ -1808,6 +1831,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
               {id ? (
                 <SelectField
                   label={t("Status")}
+                  exampleKey="status"
                   value={form.status}
                   onChange={(value) => update("status", value as ProductStatus)}
                 >
@@ -1840,6 +1864,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
               />
               <Field
                 label={t("Compare-at price")}
+                exampleKey="compareAt"
                 type="number"
                 value={form.compareAt}
                 onChange={(value) => update("compareAt", value)}
@@ -1882,12 +1907,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
             <div className="grid gap-4 p-5 sm:grid-cols-2">
               <Field
                 label={t("SKU")}
+                exampleKey="sku"
                 value={form.sku}
                 onChange={(value) => update("sku", value)}
                 disabled={variantLocked}
               />
               <Field
                 label={t("Barcode")}
+                exampleKey="barcode"
                 value={form.barcode}
                 onChange={(value) => update("barcode", value)}
                 disabled={variantLocked}
@@ -2082,6 +2109,7 @@ function Field({
   type = "text",
   disabled = false,
   fieldKey,
+  exampleKey,
   error,
 }: {
   label: string;
@@ -2090,9 +2118,17 @@ function Field({
   type?: string;
   disabled?: boolean;
   fieldKey?: string;
+  exampleKey?: string;
   error?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const key = exampleKey ?? fieldKey ?? "";
+  const example = productFormExample(key, lang === "ar" ? "ar" : "en");
+  const hintId = key ? `product-example-${key}` : undefined;
+  const describedBy = [
+    error && fieldKey ? `product-${fieldKey}-error` : "",
+    example ? hintId : "",
+  ].filter(Boolean).join(" ") || undefined;
   return (
     <label className="block">
       <span className="mb-1.5 block text-[13px] font-bold text-slate-600">{t(label)}</span>
@@ -2103,13 +2139,19 @@ function Field({
         disabled={disabled}
         data-product-field={fieldKey}
         aria-invalid={Boolean(error)}
-        aria-describedby={error && fieldKey ? `product-${fieldKey}-error` : undefined}
+        aria-describedby={describedBy}
+        placeholder={example ? (lang === "ar" ? "مثال: " : "e.g. ") + example : undefined}
         inputMode={type === "number" ? (fieldKey === "stock" ? "numeric" : "decimal") : undefined}
         min={type === "number" ? 0 : undefined}
         step={type === "number" ? (fieldKey === "stock" ? 1 : "any") : undefined}
         onChange={(event) => onChange(event.target.value)}
         className={`h-11 w-full rounded-lg border bg-card px-3 text-base text-foreground outline-none focus:border-primary disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground ${error ? "border-rose-500" : "border-border"}`}
       />
+      {example ? (
+        <span id={hintId} className="mt-1 block text-xs leading-5 text-muted-foreground">
+          {lang === "ar" ? "مثال: " : "Example: "}{example}
+        </span>
+      ) : null}
       {error && fieldKey ? (
         <span
           id={`product-${fieldKey}-error`}
@@ -2127,13 +2169,16 @@ function SelectField({
   value,
   onChange,
   children,
+  exampleKey,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   children: React.ReactNode;
+  exampleKey?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const example = productFormExample(exampleKey ?? "", lang === "ar" ? "ar" : "en");
   return (
     <label className="block">
       <span className="mb-1.5 block text-[13px] font-bold text-slate-600">{t(label)}</span>
@@ -2141,10 +2186,16 @@ function SelectField({
         aria-label={t(label)}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        aria-describedby={exampleKey && example ? `product-example-${exampleKey}` : undefined}
         className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus:border-primary"
       >
         {children}
       </select>
+      {example ? (
+        <span id={`product-example-${exampleKey}`} className="mt-1 block text-xs leading-5 text-muted-foreground">
+          {lang === "ar" ? "مثال: " : "Example: "}{example}
+        </span>
+      ) : null}
     </label>
   );
 }
