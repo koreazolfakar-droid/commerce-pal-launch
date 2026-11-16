@@ -1,4 +1,6 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Analytics is being updated. Please try again shortly.":
+    "يجري تحديث خدمة التحليلات. يُرجى المحاولة مجددًا بعد قليل.",
   "Tracked active variants": "المتغيرات النشطة المتتبعة",
   "Tracked active variants at zero": "المتغيرات النشطة المتتبعة النافدة",
   "Brands currently visible": "العلامات الظاهرة حاليًا",

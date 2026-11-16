@@ -65,8 +65,9 @@ shown under new filters. Inventory errors and sales errors are independent.
 
 Apply `supabase/migrations/20261116223007_dashboard_analytics_upgrades.sql` before
 releasing the new frontend. It only adds read-only RPCs and does not alter
-business data or the overview API. This implementation does not apply migrations
-to production or merge/deploy the application.
+business data or the overview API. PR #513 was merged and deployed on 2026-11-16;
+the read-only migration was subsequently applied and validated against production.
+Future releases must check database readiness before publishing the frontend.
 
 Run the repository gates: `bun run typecheck`, `bun run lint`,
 `bun run test:unit`, `bun run build`, and the fixture-backed `bun run test:ssr`.
@@ -80,3 +81,52 @@ cards, rankings, exact chart values, ranges/comparison, filters, navigation,
 export, stale requests, error/empty states, responsive widths, mobile drawer,
 editor permission visibility, Arabic and dark mode. Screenshots are written to
 `test-results/analytics/` (ignored by git). No test writes to a live database.
+
+## Release readiness gate (engineering phase P0)
+
+`bun run check:analytics-release` makes two bounded requests using only the public
+publishable key (or a legacy JWT with role `anon`). It never loads a staff session,
+uses a secret/service-role key, follows redirects, or prints response bodies.
+The expected response is PostgreSQL `42501`, naming the requested RPC: its signature
+exists and anonymous execution is denied. A missing RPC, incorrect credentials,
+network timeout, ambiguous denial, or unexpected successful data response blocks
+release. No anonymous grants should be added to make this check pass.
+
+The gate checks existence/signatures and anonymous denial, not authenticated output
+semantics or every RLS rule. Those remain covered by the database behavior suite,
+production-artifact browser tests, and authorized read-only validation after rollout.
+It does not apply migrations or make business writes.
+
+The CLI follows the same public URL/key environment precedence as the browser:
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY`, then `SUPABASE_URL` /
+`SUPABASE_PUBLISHABLE_KEY`, then the existing public defaults read from the browser
+client source. Missing or unrecognized defaults fail closed. No configuration
+values or raw transport errors are logged. Each probe has a 10-second deadline.
+
+Use the existing Cloudflare build, then the protected deploy command:
+
+```sh
+bun run build:cloudflare
+bun run deploy:cloudflare
+```
+
+Cloudflare Workers Builds currently builds `main` with `bun run build:cloudflare`
+and deploys with `npx wrangler deploy`. After the new scripts have reached `main`,
+change only that trigger's deploy command to `bun run deploy:cloudflare`. Preserve
+the build command, repository, branches, domains, bindings and credentials. The
+external trigger must not reference an unpublished script. Until this setting is
+switched, the automatic deployment path is not yet protected by the new gate.
+Manual `wrangler deploy` also bypasses it and should not be used for routine releases.
+
+Local/CI builds remain independent of live network access. CI tests the gate with
+synthetic transports; a release runs the public-key probe against its actual target.
+In a local environment requiring an HTTP proxy, Node's `NODE_USE_ENV_PROXY=1` may be
+needed to use the environment's proxy configuration.
+
+If a deployed client encounters a missing RPC (`PGRST202`/`42883`), the dashboard
+shows a localized temporary-unavailability message and a retry action rather than
+presenting the condition as an empty sales period or exposing an internal signature.
+The inventory and sales panels keep their independent error behavior.
+
+The next phases and their acceptance criteria are recorded in
+`docs/superpowers/plans/2026-11-16-dashboard-engineering-roadmap.md`.
