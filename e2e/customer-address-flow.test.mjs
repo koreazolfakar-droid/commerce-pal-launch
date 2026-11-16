@@ -114,8 +114,8 @@ test("customer order history is isolated behind the JWT-verified edge function",
 
   assert.match(edge, /db\.auth\.getUser\(token\)/);
   assert.match(edge, /customer_user_id/);
-  assert.match(edge, /customer_email/);
-  assert.match(edge, /customer_phone/);
+  assert.match(edge, /\.eq\("customer_user_id", user\.id\)/);
+  assert.doesNotMatch(edge, /\.(?:eq|ilike)\("customer_(?:email|phone)"/);
   assert.match(edge, /orderIdentityMatches/);
   assert.match(edge, /action === "items"/);
   assert.match(cleanup, /drop function if exists public\.get_my_store_orders/);
