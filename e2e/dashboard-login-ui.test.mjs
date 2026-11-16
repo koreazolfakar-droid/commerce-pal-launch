@@ -41,7 +41,9 @@ test("login page exposes bilingual theme-aware mobile UX without public security
   assert.match(login, /ThemeLanguageControls/);
   assert.match(login, /min-h-\[100dvh\]/);
   assert.match(login, /sm:text-\[13px\]/);
-  assert.match(login, /lg:grid-cols-\[1\.05fr_\.95fr\]/);
+  assert.match(login, /max-w-\[460px\]/);
+  assert.match(login, /items-center justify-center px-4 py-8 sm:px-6/);
+  assert.doesNotMatch(login, /lg:grid-cols-\[1\.05fr_\.95fr\]/);
   assert.doesNotMatch(login, /Supabase authentication with staff-role authorization/);
   assert.doesNotMatch(login, /Cloudflare Turnstile bot protection/);
   assert.doesNotMatch(login, /AAL2 security verified/);
