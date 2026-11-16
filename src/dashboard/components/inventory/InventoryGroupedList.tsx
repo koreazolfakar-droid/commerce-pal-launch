@@ -1,7 +1,8 @@
 import { Link } from "wouter";
-import { ChevronDown, ChevronUp, History, Loader2, Minus, Package, Plus, Pencil } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, History, Loader2, Minus, Package, Plus, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLanguage } from "@/dashboard/i18n";
+import { toast } from "sonner";
 import type { InventoryRow } from "@/dashboard/data/inventory";
 import { groupInventoryRows } from "./groupInventoryRows";
 
@@ -58,6 +59,8 @@ function VariantEditor({
   const { t } = useLanguage();
   const saving = savingId === row.variantId;
   const blocked = Boolean(savingId) || !row.trackInventory;
+  const pendingDraft = draftStocks[row.variantId] !== undefined && draftStocks[row.variantId] !== String(row.stock);
+  const quickBlocked = blocked || pendingDraft;
   const label = `${row.productName} — ${row.variantTitle || t("Default")}`;
 
   return (
@@ -73,20 +76,40 @@ function VariantEditor({
           <p className="break-words text-xs text-slate-500">{row.optionsLabel}</p>
         )}
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-          <span className="break-all"><span className="font-semibold">{t("SKU")}:</span> {row.sku || "—"}</span>
+          <span className="inline-flex max-w-full items-center gap-1 break-all">
+            <span><span className="font-semibold">{t("SKU")}:</span> {row.sku || "—"}</span>
+            {row.sku && (
+              <button type="button" title={t("Copy SKU")} aria-label={`${t("Copy SKU")}: ${row.sku}`}
+                className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600"
+                onClick={() => {
+                  void navigator.clipboard.writeText(row.sku)
+                    .then(() => toast.success(t("SKU copied")))
+                    .catch(() => toast.error(t("Unable to copy SKU")));
+                }}>
+                <Copy className="size-3.5" />
+              </button>
+            )}
+          </span>
           {row.barcode && <span className="break-all">{t("Barcode")}: {row.barcode}</span>}
         </div>
       </div>
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <span className="me-auto text-xs font-medium text-slate-500 lg:me-0">{t("On hand")}</span>
         <button
           type="button"
           onClick={() => onChangeBy(row, -1)}
-          disabled={blocked || row.stock <= 0}
+          disabled={quickBlocked || row.stock <= 0}
           aria-label={`Decrease stock for ${label}`}
           className="grid size-11 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus className="size-4" />
+        </button>
+        <button type="button" onClick={() => onChangeBy(row, -5)}
+          disabled={quickBlocked || row.stock < 5}
+          title={t("Decrease stock by five")}
+          aria-label={`${t("Decrease stock by five")}: ${label}`}
+          className="grid h-11 min-w-10 shrink-0 place-items-center rounded-lg border border-border bg-card px-1 text-xs font-semibold tabular-nums text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40">
+          −5
         </button>
         <input
           value={draftStocks[row.variantId] ?? String(row.stock)}
@@ -106,11 +129,18 @@ function VariantEditor({
         <button
           type="button"
           onClick={() => onChangeBy(row, 1)}
-          disabled={blocked}
+          disabled={quickBlocked}
           aria-label={`Increase stock for ${label}`}
           className="grid size-11 shrink-0 place-items-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+        </button>
+        <button type="button" onClick={() => onChangeBy(row, 5)}
+          disabled={quickBlocked}
+          title={t("Increase stock by five")}
+          aria-label={`${t("Increase stock by five")}: ${label}`}
+          className="grid h-11 min-w-10 shrink-0 place-items-center rounded-lg border border-blue-300 bg-blue-50 px-1 text-xs font-semibold tabular-nums text-blue-700 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40 dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-200">
+          +5
         </button>
       </div>
       <button
