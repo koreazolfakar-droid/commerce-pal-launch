@@ -1,4 +1,12 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Collapse navigation": "تصغير القائمة",
+  "Expand navigation": "توسيع القائمة",
+  "Clear inventory search": "مسح البحث في المخزون",
+  "Copy SKU": "نسخ رمز SKU",
+  "SKU copied": "تم نسخ رمز SKU",
+  "Unable to copy SKU": "تعذّر نسخ رمز SKU",
+  "Decrease stock by five": "إنقاص المخزون خمس وحدات",
+  "Increase stock by five": "زيادة المخزون خمس وحدات",
   "Discard unsaved variant changes?": "تجاهل تعديلات المتغيّر غير المحفوظة؟",
   "Changes to this variant have not been saved. Discard them and close the editor?": "تعديلات هذا المتغيّر لم تُحفظ. هل تريد تجاهلها وإغلاق المحرّر؟",
   "Discard changes": "تجاهل التعديلات",
