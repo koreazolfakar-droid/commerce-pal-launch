@@ -1,5 +1,10 @@
 import { dashboardListHref } from "@/dashboard/lib/listContext";
 import ProductFormMap from "@/dashboard/components/products/ProductFormMap";
+import ProductPublishReview from "@/dashboard/components/products/ProductPublishReview";
+import {
+  buildProductPublishReadiness,
+  type ProductReviewIssue,
+} from "@/dashboard/lib/productPublishReadiness";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { Archive, Check, Copy, Loader2, Save, Trash2, UploadCloud } from "lucide-react";
@@ -133,6 +138,8 @@ export default function ProductFormPage({ id }: { id?: string }) {
     {},
   );
   const [publishError, setPublishError] = useState("");
+  const [publishReviewExpanded, setPublishReviewExpanded] = useState(false);
+  const [reviewSpecFocusRequest, setReviewSpecFocusRequest] = useState<{key: string; nonce: number} | null>(null);
   const [form, setForm] = useState<ProductDraft>(EMPTY);
   const [newVariantColor, setNewVariantColor] = useState("");
   const [newVariantStorage, setNewVariantStorage] = useState("");
@@ -554,6 +561,35 @@ export default function ProductFormPage({ id }: { id?: string }) {
   };
 
   const variantLocked = variantCount > 1;
+  const publishReadiness = buildProductPublishReadiness({
+    validationErrors: validateProductDraft(form).errors,
+    invalidSpecifications: specificationTemplate.sections.flatMap((section) =>
+      section.fields.flatMap((field) => {
+        const message = validateSpecificationValue(field, specifications[field.key] ?? "");
+        return message ? [{
+          key: field.key,
+          label: field.label,
+          labelAr: field.labelAr,
+          message,
+        }] : [];
+      }),
+    ),
+    isNew: !id,
+    hasPublishImage: Boolean(id || pendingImages.length),
+    hasAnyImage: Boolean(form.imageUrl || existing?.image || pendingImages.length),
+    description: form.description,
+    brandId: form.brandId,
+    categoryId: form.categoryId,
+    sku: form.sku,
+    barcode: form.barcode,
+    seoTitle: form.seoTitle,
+    seoDescription: form.seoDescription,
+    stock: form.stock,
+    specificationFields: specificationKeys(specificationTemplate).length,
+    filledSpecifications: specificationKeys(specificationTemplate).filter((key) =>
+      Boolean(specifications[key]?.trim()),
+    ).length,
+  });
   const dirty = existing
     ? form.title.trim() !== existing.name ||
       form.description.trim() !== existing.description ||
@@ -631,12 +667,49 @@ export default function ProductFormPage({ id }: { id?: string }) {
   }, []);
 
   const saveLockRef = useRef(false);
-  const submitProduct = (statusOverride?: ProductStatus) => {
+  const submitProduct = (statusOverride?: ProductStatus, reviewConfirmed = false) => {
     if (saveLockRef.current) return;
     if (mediaBusy || variantsBusy || creatingReference) return;
+    const requestedStatus = statusOverride ?? form.status;
+    const isPublishRequest = requestedStatus === "Active" && (
+      statusOverride === "Active" || !id || existing?.status !== "Active"
+    );
+    if (isPublishRequest && (!reviewConfirmed || !publishReadiness.canPublish)) {
+      setPublishReviewExpanded(true);
+      requestAnimationFrame(() => document.getElementById("product-publish-review")?.scrollIntoView({
+        block: "center",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      }));
+      return;
+    }
     saveLockRef.current = true;
     void handleSave(statusOverride).finally(() => {
       saveLockRef.current = false;
+    });
+  };
+
+  const jumpToPublishIssue = (issue: ProductReviewIssue) => {
+    const target = document.getElementById(issue.sectionId);
+    if (target instanceof HTMLDetailsElement) target.open = true;
+    if (issue.specKey) {
+      setReviewSpecFocusRequest((current) => ({
+        key: issue.specKey!,
+        nonce: (current?.nonce ?? 0) + 1,
+      }));
+    }
+    requestAnimationFrame(() => {
+      target?.scrollIntoView({
+        block: "start",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      });
+      if (issue.fieldKey) {
+        const field = document.querySelector<HTMLInputElement>(
+          `[data-product-field="${issue.fieldKey}"]`,
+        );
+        (field ?? target)?.focus({ preventScroll: true });
+      } else if (!issue.specKey) {
+        target?.focus({ preventScroll: true });
+      }
     });
   };
   const handleSave = async (statusOverride?: ProductStatus) => {
@@ -858,6 +931,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
       }));
       setAiSpecificationKeys(new Set());
       setSaved(true);
+      setPublishReviewExpanded(false);
       if (shouldRefreshVariantManager) {
         setVariantRevision((value) => value + 1);
       }
@@ -1251,6 +1325,14 @@ export default function ProductFormPage({ id }: { id?: string }) {
           ? "كل خانة فيها مثال يساعدك تعرف شو تكتب. الأمثلة توضيحية فقط، وما بتنحفظ تلقائياً. اكتب المعلومات الحقيقية للمنتج."
           : "Every field has an example to guide you. Examples are illustrative only and never save automatically. Enter your actual product details."}
       </div>
+      <ProductPublishReview
+        result={publishReadiness}
+        expanded={publishReviewExpanded}
+        busy={saving || pendingAction !== null || mediaBusy || variantsBusy || creatingReference}
+        onToggle={() => setPublishReviewExpanded((current) => !current)}
+        onJump={jumpToPublishIssue}
+        onConfirm={() => submitProduct("Active", true)}
+      />
       <ProductFormMap
         dirty={dirty}
         sections={[
@@ -1723,6 +1805,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   ].filter(Boolean),
                 }}
                 aiGeneratedKeys={aiSpecificationKeys}
+                reviewFocusRequest={reviewSpecFocusRequest}
                 onChange={changeSpecification}
                 onAiApply={applyAiPatch}
               />
@@ -2131,7 +2214,12 @@ function Field({
   ].filter(Boolean).join(" ") || undefined;
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-semibold text-foreground">{t(label)}</span>
+      <span className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-foreground">
+        {t(label)}
+        {(["title", "price", "stock"].includes(fieldKey ?? "") && !disabled)
+          ? <span className="text-[11px] font-medium text-rose-700 dark:text-rose-300">{lang === "ar" ? "مطلوب" : "Required"}</span>
+          : <span className="text-[11px] font-normal text-muted-foreground">{lang === "ar" ? "اختياري" : "Optional"}</span>}
+      </span>
       <input
         value={value}
         type={type}

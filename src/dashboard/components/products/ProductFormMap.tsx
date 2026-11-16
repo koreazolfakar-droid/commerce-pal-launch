@@ -4,6 +4,11 @@ import { useLanguage } from "@/dashboard/i18n";
 
 type FormSection = { id: string; label: string; complete: boolean };
 
+// Informational sections are still navigable but never inflate setup progress.
+const NAVIGATION_ONLY = new Set([
+  "product-publishing", "product-shipping", "product-advanced",
+]);
+
 const FORM_GROUPS = [
   {
     id: "essentials",
@@ -51,7 +56,8 @@ export default function ProductFormMap({
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(["essentials", "presentation"]),
   );
-  const prepared = sections.filter((section) => section.complete).length;
+  const progressSections = sections.filter((section) => !NAVIGATION_ONLY.has(section.id));
+  const prepared = progressSections.filter((section) => section.complete).length;
 
   const jumpTo = (section: FormSection) => {
     const target = document.getElementById(section.id);
@@ -87,21 +93,21 @@ export default function ProductFormMap({
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 text-xs">
         <span className="font-medium text-foreground">
-          {ar ? "الأقسام المجهّزة" : "Sections prepared"}
+          {ar ? "أقسام أُدخلت فيها معلومات" : "Sections with information"}
         </span>
-        <span className="font-semibold tabular-nums text-foreground" dir="ltr">{prepared} / {sections.length}</span>
+        <span className="font-semibold tabular-nums text-foreground" dir="ltr">{prepared} / {progressSections.length}</span>
       </div>
       <div
         role="progressbar"
-        aria-label={ar ? "تقدم تعبئة أقسام المنتج" : "Product setup progress"}
+        aria-label={ar ? "تقدم تعبئة الأقسام - ليس شرطاً للنشر" : "Section content progress, not publishing readiness"}
         aria-valuemin={0}
-        aria-valuemax={sections.length}
+        aria-valuemax={progressSections.length}
         aria-valuenow={prepared}
         className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
       >
         <div
           className="h-full rounded-full bg-primary transition-[width]"
-          style={{ width: `${sections.length ? prepared / sections.length * 100 : 0}%` }}
+          style={{ width: `${progressSections.length ? prepared / progressSections.length * 100 : 0}%` }}
         />
       </div>
       <nav className="dashboard-form-map-steps" aria-label={t("Product sections")}>
@@ -110,7 +116,8 @@ export default function ProductFormMap({
             .map((id) => sections.find((section) => section.id === id))
             .filter((section): section is FormSection => Boolean(section));
           if (!groupSections.length) return null;
-          const count = groupSections.filter((section) => section.complete).length;
+          const countedSections = groupSections.filter((section) => !NAVIGATION_ONLY.has(section.id));
+          const count = countedSections.filter((section) => section.complete).length;
           const isOpen = expanded.has(group.id);
           return (
             <div key={group.id} className="dashboard-form-map-group">
@@ -137,7 +144,7 @@ export default function ProductFormMap({
                   </span>
                 </span>
                 <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground" dir="ltr">
-                  {count}/{groupSections.length}
+                  {countedSections.length ? `${count}/${countedSections.length}` : (ar ? "للمراجعة" : "Reference")}
                 </span>
                 <ChevronDown
                   aria-hidden="true"

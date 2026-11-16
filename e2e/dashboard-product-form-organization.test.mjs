@@ -29,7 +29,9 @@ test("product setup map organizes all twelve existing jump targets into four uni
 test("product map progress is transparent and not treated as a publishing gate", async () => {
   const source = await read("../src/dashboard/components/products/ProductFormMap.tsx");
   assert.match(source, /role="progressbar"/);
-  assert.match(source, /aria-valuemax=\{sections.length\}/);
+  assert.match(source, /aria-valuemax=\{progressSections.length\}/);
+  assert.match(source, /NAVIGATION_ONLY/);
+  assert.match(source, /Section content progress, not publishing readiness/);
   assert.match(source, /aria-valuenow=\{prepared\}/);
   assert.match(source, /save a draft at any time/);
   assert.doesNotMatch(source, /saveDashboardProduct|onSubmit|supabase/);
