@@ -134,12 +134,11 @@ for (const [name, user] of [
   ["confirmed email", { ...baseUser, email_confirmed_at: confirmed }],
   ["confirmed phone", { ...baseUser, phone_confirmed_at: confirmed }],
 ]) {
-  test("Legacy history remains available through " + name, async () => {
+  test("Unbound legacy history stays private even with " + name, async () => {
     const r = await invoke(customerSource, itemBody, { user });
-    assert.equal(r.response.status, 200);
-    assert.equal(r.body.items[0].title, "Fixture");
+    assert.equal(r.response.status, 404);
     const list = await invoke(customerSource, { action: "list" }, { user });
-    assert.equal(list.body.orders.length, 1);
+    assert.equal(list.body.orders.length, 0);
   });
 }
 
@@ -183,12 +182,12 @@ test("Order identifier injection is rejected before querying orders", async () =
   assert.equal(r.calls.some((c) => c.table), false);
 });
 
-test("Verified email lookup escapes ILIKE wildcard characters", async () => {
+test("Confirmed wildcard email cannot claim any unbound order or widen the query", async () => {
   const r = await invoke(customerSource, { action: "list" }, {
     user: { ...baseUser, email: "a_%@example.test", email_confirmed_at: confirmed },
   });
-  const filter = r.calls.flatMap((c) => c.filters ?? []).find((f) => f.op === "ilike");
-  assert.equal(filter.value, "a\\_\\%@example.test");
+  assert.deepEqual(r.body.orders, []);
+  assert.equal(r.calls.flatMap((c) => c.filters ?? []).some((f) => f.op === "ilike"), false);
 });
 
 for (const [name, source] of [["customer-orders", customerSource], ["create-order", createSource]]) {

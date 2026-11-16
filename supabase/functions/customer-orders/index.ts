@@ -87,45 +87,14 @@ function isUuid(value: unknown): value is string {
   );
 }
 
-function normalizedPhone(value: unknown) {
-  return typeof value === "string" ? value.replace(/\D/g, "") : "";
-}
-
-type OrderUser = {
-  id: string;
-  email?: string | null;
-  phone?: string | null;
-  email_confirmed_at?: string | null;
-  phone_confirmed_at?: string | null;
-  is_anonymous?: boolean;
-};
-
-function verifiedEmail(user: OrderUser) {
-  return !user.is_anonymous && user.email_confirmed_at
-    ? user.email?.trim().toLowerCase() || ""
-    : "";
-}
-
-function verifiedPhone(user: OrderUser) {
-  return !user.is_anonymous && user.phone_confirmed_at ? normalizedPhone(user.phone) : "";
-}
-
+/** Contact details are delivery data, not authority to claim a legacy order.
+ * Even confirmation timestamps can be auto-set by an Auth provider/configuration.
+ */
 function orderIdentityMatches(
   row: Record<string, unknown>,
-  user: OrderUser,
+  user: { id: string },
 ) {
-  if (typeof row.customer_user_id === "string" && row.customer_user_id) {
-    return row.customer_user_id === user.id;
-  }
-
-  const userEmail = verifiedEmail(user);
-  const orderEmail =
-    typeof row.customer_email === "string" ? row.customer_email.trim().toLowerCase() : "";
-  if (userEmail && orderEmail === userEmail) return true;
-
-  const userPhone = verifiedPhone(user);
-  const orderPhone = normalizedPhone(row.customer_phone);
-  return Boolean(userPhone && orderPhone === userPhone);
+  return typeof row.customer_user_id === "string" && row.customer_user_id === user.id;
 }
 
 function publicOrder(
@@ -245,7 +214,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: order, error: orderError } = await db
       .from("store_orders")
-      .select("id,customer_user_id,customer_email,customer_phone")
+      .select("id,customer_user_id")
       .eq("id", body.order_id)
       .maybeSingle();
 
@@ -329,7 +298,7 @@ Deno.serve(async (req: Request) => {
   );
 
   const columns =
-    "id,order_number,public_order_number,status,payment_status,payment_method,currency,subtotal,shipping_total,discount_total,total,delivery_address,city,delivery_location,created_at,completed_at,customer_user_id,customer_email,customer_phone";
+    "id,order_number,public_order_number,status,payment_status,payment_method,currency,subtotal,shipping_total,discount_total,total,delivery_address,city,delivery_location,created_at,completed_at,customer_user_id";
 
   const results = new Map<string, Record<string, unknown>>();
   const collect = (rows: unknown[] | null) => {
@@ -352,35 +321,6 @@ Deno.serve(async (req: Request) => {
     return json(req, 503, { error: "temporarily_unavailable" });
   }
   collect(byUser.data as unknown[] | null);
-
-  const email = verifiedEmail(user);
-  if (email) {
-    const byEmail = await db
-      .from("store_orders")
-      .select(columns)
-      .ilike("customer_email", email.replace(/[\\%_]/g, "\\$&"))
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (byEmail.error) {
-      console.error("customer-orders email lookup failed", byEmail.error.message);
-      return json(req, 503, { error: "temporarily_unavailable" });
-    }
-    collect(byEmail.data as unknown[] | null);
-  }
-
-  if (verifiedPhone(user)) {
-    const byPhone = await db
-      .from("store_orders")
-      .select(columns)
-      .eq("customer_phone", user.phone.trim())
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (byPhone.error) {
-      console.error("customer-orders phone lookup failed", byPhone.error.message);
-      return json(req, 503, { error: "temporarily_unavailable" });
-    }
-    collect(byPhone.data as unknown[] | null);
-  }
 
   const orderRows = [...results.values()]
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
