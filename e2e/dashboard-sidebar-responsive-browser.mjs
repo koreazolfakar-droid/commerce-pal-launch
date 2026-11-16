@@ -32,6 +32,41 @@ try {
     const active = sidebar.locator('[aria-current="page"]');
     await active.first().waitFor();
     assert.ok(await active.count() >= 1, "current route not visible at " + width);
+
+    // Inventory and other long pages scroll the document. The sidebar must
+    // stay pinned to the viewport instead of leaving an empty white column.
+    const scrolled = await page.evaluate(async () => {
+      const shell = document.querySelector(".dashboard-theme-scope");
+      if (!shell) throw new Error("Dashboard shell not mounted");
+      // Force a tall page at the shell level: a child page may use its own
+      // content scroller or Suspense container and not increase body height.
+      const originalMinHeight = shell.style.minHeight;
+      shell.style.minHeight = "2600px";
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const bounds = document.querySelector("#dashboard-sidebar-navigation").getBoundingClientRect();
+      const result = {
+        scrollY: window.scrollY,
+        shellTop: shell.getBoundingClientRect().top,
+        shellScrollY: shell.scrollTop,
+        shellHeight: shell.getBoundingClientRect().height,
+        documentHeight: document.documentElement.scrollHeight,
+        top: bounds.top,
+        bottom: bounds.bottom,
+        height: bounds.height,
+        viewportHeight: window.innerHeight,
+        horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+      };
+      shell.style.minHeight = originalMinHeight;
+      window.scrollTo({ top: 0, behavior: "instant" });
+      return result;
+    });
+    assert.ok(scrolled.scrollY >= 300, "long document must scroll at " + width + "px: " + JSON.stringify(scrolled));
+    assert.ok(Math.abs(scrolled.top) <= 2,
+      "sidebar scrolled away with the document at " + width + "px: " + JSON.stringify(scrolled));
+    assert.ok(scrolled.bottom >= scrolled.viewportHeight - 2,
+      "sidebar ends above the bottom of the screen at " + width + "px: " + JSON.stringify(scrolled));
+    assert.equal(scrolled.horizontalOverflow, false, "horizontal overflow after scrolling at " + width);
   }
 
   for (const width of [320, 390]) {
@@ -60,7 +95,7 @@ try {
   }
   console.log(JSON.stringify({ passed: [
     "compact desktop sidebar", "mobile drawer 320 and 390",
-    "navigation groups", "products route", "active route",
+    "navigation groups", "products route", "active route", "full-height sticky navigation during long-page scrolling",
   ] }));
 } finally {
   await browser.close();

@@ -165,7 +165,7 @@ function DashboardLayout() {
   const route = location.replace(/\/$/, "") || "/dashboard";
   const content = resolveDashboardRoute(route);
   return (
-    <div className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-hidden bg-background text-foreground">
+    <div className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-clip bg-background text-foreground">
       <a href="#dashboard-main" className="dashboard-skip-link">
         {t("Skip to content")}
       </a>
