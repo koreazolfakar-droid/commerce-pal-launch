@@ -52,6 +52,20 @@ await context.route("**/rest/v1/**", async route => {
   }
   return route.fallback();
 });
+const GROUP_FOR_SECTION = {
+  General: "essentials", Pricing: "essentials", Inventory: "essentials",
+  Media: "presentation", Variants: "presentation", Specifications: "presentation",
+  Collections: "discovery", "Product organization": "discovery", SEO: "discovery",
+  Publishing: "review", Shipping: "review", Advanced: "review",
+};
+async function jumpToProductSection(page, label) {
+  const nav = page.getByRole("navigation", { name: "Product sections", exact: true });
+  const groupId = GROUP_FOR_SECTION[label];
+  assert.ok(groupId, "Missing stage for section: " + label);
+  const toggle = nav.locator('.dashboard-form-map-group-toggle[aria-controls="product-form-group-' + groupId + '"]');
+  if (await toggle.getAttribute("aria-expanded") === "false") await toggle.click();
+  await nav.getByRole("button", { name: label, exact: true }).click();
+}
 const page=await context.newPage();
 await page.emulateMedia({ reducedMotion: "reduce" });
 page.on("pageerror",error=>errors.push(error.message));
@@ -70,7 +84,7 @@ try{
     assert.ok(metrics.documentWidth<=width+1,`page overflow at ${width}px`);
     assert.ok(metrics.priceWidth>=159,`price field too narrow: ${metrics.priceWidth}px at ${width}px`);
     for(const label of ["General","Media","Collections","Variants","Specifications","SEO","Publishing","Pricing","Inventory","Shipping","Advanced","Product organization"]){
-      await page.getByRole("navigation",{name:"Product sections",exact:true}).getByRole("button",{name:label,exact:true}).click();
+      await jumpToProductSection(page, label);
     }
     if([320,390,768,980,1280,1440,1920].includes(width)){
       await page.evaluate(()=>scrollTo(0,0));
@@ -102,7 +116,7 @@ try{
   await page.getByLabel("Arabic description",{exact:true}).fill("وصف عربي للاختبار");
   await page.getByRole("button",{name:"Color: Graphite",exact:true}).click();
   await page.getByLabel("Storage / capacity",{exact:true}).fill("128GB");
-  await page.getByRole("navigation",{name:"Product sections",exact:true}).getByRole("button",{name:"SEO",exact:true}).click();
+  await jumpToProductSection(page, "SEO");
   await page.getByLabel("SEO title",{exact:true}).fill("QA Phone | Space Call");
   await page.getByLabel("SEO description",{exact:true}).fill("QA Phone details and availability.");
   await page.getByLabel("Search engine preview",{exact:true}).getByText("QA Phone | Space Call",{exact:true}).waitFor();
