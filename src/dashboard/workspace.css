@@ -110,6 +110,81 @@
   border-color: color-mix(in oklab, var(--color-primary) 25%, var(--color-border));
   background: color-mix(in oklab, var(--color-primary) 5%, var(--color-card));
 }
+/* Guided product form map: group related fields instead of twelve flat buttons. */
+.dashboard-form-map .dashboard-form-map-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+}
+.dashboard-form-map-group {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  background: var(--color-card);
+}
+.dashboard-form-map .dashboard-form-map-group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 3.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: start;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-foreground);
+  background: color-mix(in oklab, var(--color-muted) 35%, var(--color-card));
+}
+.dashboard-form-map .dashboard-form-map-group-toggle:hover {
+  background: var(--color-muted);
+}
+.dashboard-form-map .dashboard-form-map-group-toggle:focus-visible,
+.dashboard-form-map .dashboard-form-map-link:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+.dashboard-form-map .dashboard-form-map-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.375rem;
+}
+.dashboard-form-map .dashboard-form-map-links[hidden] {
+  display: none;
+}
+.dashboard-form-map .dashboard-form-map-link {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.55rem 0.75rem;
+  text-align: start;
+  border-radius: 0.625rem;
+  border: 1px solid transparent;
+  color: var(--color-foreground);
+  background: transparent;
+}
+.dashboard-form-map .dashboard-form-map-link:hover {
+  background: var(--color-muted);
+}
+.dashboard-form-map .dashboard-form-map-link[data-complete="true"] {
+  border-color: transparent;
+  color: var(--color-foreground);
+  background: transparent;
+}
+@media (max-width: 767px) {
+  .dashboard-form-map .dashboard-form-map-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .dashboard-main [data-product-section] {
   scroll-margin-top: 7rem;
 }
