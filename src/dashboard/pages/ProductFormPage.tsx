@@ -203,6 +203,12 @@ export default function ProductFormPage({ id }: { id?: string }) {
   const [stockBaseline, setStockBaseline] = useState(0);
   const [specifications, setSpecifications] = useState<ProductSpecificationValues>({});
   const [aiSpecificationKeys, setAiSpecificationKeys] = useState<Set<string>>(new Set());
+  // Category switches must never destroy unfinished merchant edits.
+  // Snapshots are session-only and are not sent to Supabase.
+  const specificationDraftsRef = useRef(new Map<string, {
+    values: ProductSpecificationValues;
+    aiKeys: Set<string>;
+  }>());
 
   useEffect(() => {
     let cancelled = false;
@@ -236,6 +242,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           setRole(dashboardRole);
           setVariantCount(product?.variantCount ?? 0);
           setSaved(false);
+          specificationDraftsRef.current.clear();
           setSpecifications(product?.specifications ?? {});
           setAiSpecificationKeys(new Set());
           if (product) {
@@ -328,13 +335,23 @@ export default function ProductFormPage({ id }: { id?: string }) {
   );
 
   const changeCategory = (categoryId: string) => {
-    setSaved(false);
-    setForm((current) => ({ ...current, categoryId }));
+    if (categoryId === form.categoryId) return;
+    if (form.categoryId) {
+      specificationDraftsRef.current.set(form.categoryId, {
+        values: { ...specifications },
+        aiKeys: new Set(aiSpecificationKeys),
+      });
+    }
     const nextCategory = categories.find((category) => category.id === categoryId);
     const nextTemplate = nextCategory?.specTemplate ?? { sections: [] };
-    setSpecifications((current) => normalizeProductSpecifications(current, nextTemplate));
+    const savedDraft = specificationDraftsRef.current.get(categoryId);
     const nextKeys = new Set(specificationKeys(nextTemplate));
-    setAiSpecificationKeys((current) => new Set([...current].filter((key) => nextKeys.has(key))));
+    setSaved(false);
+    setForm((current) => ({ ...current, categoryId }));
+    setSpecifications(normalizeProductSpecifications(savedDraft?.values ?? specifications, nextTemplate));
+    setAiSpecificationKeys(new Set(
+      [...(savedDraft?.aiKeys ?? aiSpecificationKeys)].filter((key) => nextKeys.has(key)),
+    ));
   };
 
   const changeSpecification = (key: string, value: string) => {
@@ -368,6 +385,16 @@ export default function ProductFormPage({ id }: { id?: string }) {
       const effectiveTemplate = categoryMatch?.specTemplate ?? specificationTemplate;
       const normalizedSpecPatch = normalizeProductSpecifications(specPatch, effectiveTemplate);
       const effectiveKeys = new Set(specificationKeys(effectiveTemplate));
+      const switchingCategory = Boolean(categoryMatch && categoryMatch.id !== form.categoryId);
+      if (switchingCategory && form.categoryId) {
+        specificationDraftsRef.current.set(form.categoryId, {
+          values: { ...specifications },
+          aiKeys: new Set(aiSpecificationKeys),
+        });
+      }
+      const savedCategoryDraft = switchingCategory
+        ? specificationDraftsRef.current.get(categoryMatch!.id)
+        : undefined;
 
       setSaved(false);
       setForm((current) => ({
@@ -381,11 +408,15 @@ export default function ProductFormPage({ id }: { id?: string }) {
         ...(categoryMatch ? { categoryId: categoryMatch.id } : {}),
       }));
       setSpecifications((current) => ({
-        ...normalizeProductSpecifications(current, effectiveTemplate),
+        ...normalizeProductSpecifications(
+          switchingCategory ? savedCategoryDraft?.values ?? current : current,
+          effectiveTemplate,
+        ),
         ...normalizedSpecPatch,
       }));
       setAiSpecificationKeys((current) => {
-        const next = new Set([...current].filter((key) => effectiveKeys.has(key)));
+        const draftKeys = switchingCategory ? savedCategoryDraft?.aiKeys ?? current : current;
+        const next = new Set([...draftKeys].filter((key) => effectiveKeys.has(key)));
         Object.keys(normalizedSpecPatch).forEach((key) => next.add(key));
         return next;
       });
@@ -399,7 +430,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
         );
       }
     },
-    [brands, categories, specificationTemplate, variantCount],
+    [brands, categories, specificationTemplate, variantCount, form.categoryId, specifications, aiSpecificationKeys],
   );
 
   const createBrandInline = async () => {
