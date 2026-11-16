@@ -49,10 +49,8 @@ impl AppConfig {
                     source,
                 })?;
 
-        let database_max_connections = parse_positive_u32(
-            "DATABASE_MAX_CONNECTIONS",
-            DEFAULT_DATABASE_MAX_CONNECTIONS,
-        )?;
+        let database_max_connections =
+            parse_positive_u32("DATABASE_MAX_CONNECTIONS", DEFAULT_DATABASE_MAX_CONNECTIONS)?;
 
         let database_acquire_timeout_seconds = parse_positive_u64(
             "DATABASE_ACQUIRE_TIMEOUT_SECONDS",
@@ -181,18 +179,21 @@ pub enum ConfigError {
     #[error("DATABASE_URL must use the postgres:// or postgresql:// scheme")]
     InvalidDatabaseUrlScheme,
 
-    #[error("DATABASE_URL must explicitly require TLS with sslmode=require, verify-ca, or verify-full")]
+    #[error(
+        "DATABASE_URL must explicitly require TLS with sslmode=require, verify-ca, or verify-full"
+    )]
     DatabaseTlsRequired,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{validate_database_url, ConfigError};
+    use super::{ConfigError, validate_database_url};
 
     #[test]
     fn accepts_explicit_secure_postgres_ssl_modes() {
         for mode in ["require", "verify-ca", "verify-full"] {
-            let url = format!("postgresql://user:password@db.example.com:5432/postgres?sslmode={mode}");
+            let url =
+                format!("postgresql://user:password@db.example.com:5432/postgres?sslmode={mode}");
             assert!(validate_database_url(&url).is_ok());
         }
     }

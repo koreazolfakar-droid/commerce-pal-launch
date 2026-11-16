@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{PgPool, postgres::PgPoolOptions};
 use thiserror::Error;
 use tokio::time::timeout;
 
@@ -15,9 +15,7 @@ pub async fn connect(config: &AppConfig) -> Result<Option<PgPool>, sqlx::Error> 
 
     PgPoolOptions::new()
         .max_connections(config.database_max_connections)
-        .acquire_timeout(Duration::from_secs(
-            config.database_acquire_timeout_seconds,
-        ))
+        .acquire_timeout(Duration::from_secs(config.database_acquire_timeout_seconds))
         .connect(database_url)
         .await
         .map(Some)

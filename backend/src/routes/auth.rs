@@ -1,7 +1,7 @@
 use axum::{
-    http::{header::AUTHORIZATION, HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
     Json,
+    http::{HeaderMap, StatusCode, header::AUTHORIZATION},
+    response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
 use tracing::warn;
@@ -118,23 +118,32 @@ struct AuthErrorBody {
 
 #[cfg(test)]
 mod tests {
-    use super::{bearer_token, AuthError};
-    use axum::http::{header::AUTHORIZATION, HeaderMap, HeaderValue};
+    use super::{AuthError, bearer_token};
+    use axum::http::{HeaderMap, HeaderValue, header::AUTHORIZATION};
 
     #[test]
     fn extracts_bearer_token() {
         let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, HeaderValue::from_static("Bearer abc.def.ghi"));
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_static("Bearer abc.def.ghi"),
+        );
         assert_eq!(bearer_token(&headers).unwrap(), "abc.def.ghi");
     }
 
     #[test]
     fn rejects_missing_or_malformed_bearer_token() {
         let headers = HeaderMap::new();
-        assert!(matches!(bearer_token(&headers), Err(AuthError::MissingBearer)));
+        assert!(matches!(
+            bearer_token(&headers),
+            Err(AuthError::MissingBearer)
+        ));
 
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, HeaderValue::from_static("Basic abc"));
-        assert!(matches!(bearer_token(&headers), Err(AuthError::InvalidBearer)));
+        assert!(matches!(
+            bearer_token(&headers),
+            Err(AuthError::InvalidBearer)
+        ));
     }
 }
