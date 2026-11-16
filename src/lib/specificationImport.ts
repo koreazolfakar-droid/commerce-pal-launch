@@ -114,8 +114,11 @@ export function parseSpecificationImport(
   raw: string,
   template: ProductSpecificationTemplate,
 ): SpecificationImportResult {
-  const text = raw.slice(0, MAX_IMPORT_CHARS);
-  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  // Never accept a half-cut last row: truncated values could look valid but
+  // represent a different device specification.
+  const clipped = raw.slice(0, MAX_IMPORT_CHARS).replace(/\r\n?/g, "\n");
+  const text = raw.length > MAX_IMPORT_CHARS ? clipped.replace(/[^\n]*$/u, "") : clipped;
+  const lines = text.split("\n");
   const truncated = raw.length > MAX_IMPORT_CHARS || lines.length > MAX_IMPORT_LINES;
 
   const keys = new Map<string, ProductSpecificationField[]>();
