@@ -36,28 +36,32 @@ try {
     // Inventory and other long pages scroll the document. The sidebar must
     // stay pinned to the viewport instead of leaving an empty white column.
     const scrolled = await page.evaluate(async () => {
-      const main = document.querySelector(".dashboard-main");
-      if (!main) throw new Error("Dashboard main not mounted");
-      const spacer = document.createElement("div");
-      spacer.style.height = "1900px";
-      spacer.setAttribute("aria-hidden", "true");
-      main.appendChild(spacer);
+      const shell = document.querySelector(".dashboard-theme-scope");
+      if (!shell) throw new Error("Dashboard shell not mounted");
+      // Force a tall page at the shell level: a child page may use its own
+      // content scroller or Suspense container and not increase body height.
+      const originalMinHeight = shell.style.minHeight;
+      shell.style.minHeight = "2600px";
       window.scrollTo(0, document.documentElement.scrollHeight);
       await new Promise((resolve) => requestAnimationFrame(resolve));
       const bounds = document.querySelector("#dashboard-sidebar-navigation").getBoundingClientRect();
       const result = {
         scrollY: window.scrollY,
+        shellTop: shell.getBoundingClientRect().top,
+        shellScrollY: shell.scrollTop,
+        shellHeight: shell.getBoundingClientRect().height,
+        documentHeight: document.documentElement.scrollHeight,
         top: bounds.top,
         bottom: bounds.bottom,
         height: bounds.height,
         viewportHeight: window.innerHeight,
         horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
       };
-      spacer.remove();
+      shell.style.minHeight = originalMinHeight;
       window.scrollTo(0, 0);
       return result;
     });
-    assert.ok(scrolled.scrollY >= 300, "long document must scroll at " + width);
+    assert.ok(scrolled.scrollY >= 300, "long document must scroll at " + width + "px: " + JSON.stringify(scrolled));
     assert.ok(Math.abs(scrolled.top) <= 2,
       "sidebar scrolled away with the document at " + width + "px: " + JSON.stringify(scrolled));
     assert.ok(scrolled.bottom >= scrolled.viewportHeight - 2,
