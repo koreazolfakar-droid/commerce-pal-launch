@@ -19,4 +19,6 @@ COPY --from=builder /app/target/release/space-call-backend /usr/local/bin/space-
 
 ENV BIND_ADDR=0.0.0.0:8080
 
+USER 10001:10001
+
 CMD ["/usr/local/bin/space-call-backend"]
