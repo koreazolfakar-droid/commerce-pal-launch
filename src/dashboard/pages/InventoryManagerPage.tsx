@@ -395,7 +395,7 @@ export default function InventoryManagerPage() {
         ]}
       />
 
-      <div className="dashboard-summary-grid mb-4 grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="dashboard-summary-grid mb-3 grid grid-cols-3 gap-2 sm:gap-3">
         <div className="dashboard-metric-card rounded-xl border border-border bg-card p-3 sm:p-4">
           <div className="text-xs text-slate-500">{t("Total units")}</div>
           <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">{totalUnits}</div>
@@ -403,17 +403,17 @@ export default function InventoryManagerPage() {
             {summary.variantCount} {t("variants")}
           </div>
         </div>
-        <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3 sm:p-4">
-          <div className="text-[11px] text-amber-700/70">{t("Low stock variants")}</div>
-          <div className="mt-1 text-2xl font-bold text-amber-700">{low}</div>
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-800/50 dark:bg-amber-950/30 sm:p-4">
+          <div className="text-xs text-amber-800 dark:text-amber-200">{t("Low stock variants")}</div>
+          <div className="mt-1 text-2xl font-bold text-amber-800 dark:text-amber-200">{low}</div>
         </div>
-        <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3 sm:p-4">
-          <div className="text-[11px] text-rose-700/70">{t("Out of stock variants")}</div>
-          <div className="mt-1 text-2xl font-bold text-rose-700">{out}</div>
+        <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-800/50 dark:bg-rose-950/30 sm:p-4">
+          <div className="text-xs text-rose-800 dark:text-rose-200">{t("Out of stock variants")}</div>
+          <div className="mt-1 text-2xl font-bold text-rose-800 dark:text-rose-200">{out}</div>
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label={t("Inventory stock views")}>
+      <div className="dashboard-inventory-stock-tabs mb-2 flex flex-wrap items-center gap-2" role="group" aria-label={t("Inventory stock views")}>
         {[
           { label: "All stock", selected: !onlyLow, low: false, limit: 10 },
           { label: "Low stock", selected: onlyLow && threshold > 0, low: true, limit: 10 },
@@ -430,15 +430,15 @@ export default function InventoryManagerPage() {
             }}
             className={`min-h-10 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
               view.selected
-                ? "border-blue-600 bg-blue-50 text-blue-800"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                ? "border-blue-500 bg-blue-50 text-blue-800 dark:border-blue-400 dark:bg-blue-950/60 dark:text-blue-100"
+                : "border-border bg-card text-foreground hover:bg-muted/60"
             }`}
           >
             {t(view.label)}
           </button>
         ))}
       </div>
-      <div className="dashboard-filter-panel mb-4 rounded-xl border border-border bg-card p-3 sm:p-4">
+      <div className="dashboard-filter-panel dashboard-inventory-toolbar mb-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
         <div className="flex flex-col gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <div className="relative min-w-0 flex-1">
@@ -448,8 +448,16 @@ export default function InventoryManagerPage() {
                 onChange={(event) => { setQuery(event.target.value); setPage(1); }}
                 placeholder={t("Search product, variant, SKU, barcode, or brand")}
                 aria-label={t("Search product, variant, SKU, barcode, or brand")}
-                className="h-11 w-full rounded-lg border border-slate-200 bg-white ps-10 pe-3 text-sm outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100"
+                className="h-11 w-full rounded-lg border border-border bg-background ps-10 pe-10 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/20"
               />
+              {query && (
+                <button type="button" aria-label={t("Clear inventory search")}
+                  title={t("Clear inventory search")}
+                  onClick={() => { setQuery(""); setPage(1); }}
+                  className="absolute end-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600">
+                  <X className="size-4" />
+                </button>
+              )}
             </div>
             <button
               type="button"
@@ -592,7 +600,7 @@ export default function InventoryManagerPage() {
                     className={`min-w-9 rounded-lg border px-2 py-2 text-[11px] font-bold transition ${
                       item === safePage
                         ? "border-indigo-500 bg-indigo-600 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        : "border-border bg-card text-foreground hover:bg-muted/60"
                     }`}
                   >
                     {item}
