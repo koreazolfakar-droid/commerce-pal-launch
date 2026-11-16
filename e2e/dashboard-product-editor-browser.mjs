@@ -174,7 +174,7 @@ try{
   await page.getByRole("button",{name:"Publish Product",exact:true}).first().click();
   const reviewPanel = page.locator("#product-publish-review");
   await reviewPanel.getByRole("button",{name:"Confirm publish",exact:true}).waitFor();
-  assert.equal(await reviewPanel.getByText("Publish blockers").count(),1);
+  assert.equal(await reviewPanel.getByText("Publish blockers",{exact:true}).count(),1);
   await reviewPanel.getByRole("button",{name:"Confirm publish",exact:true}).click();
   await page.getByRole("status").filter({hasText:"Active"}).waitFor();
   assert.equal(product.status,"active");
