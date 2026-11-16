@@ -1316,7 +1316,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 error={fieldErrors.title}
               />
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1.5 block text-sm font-semibold text-foreground">
                   {t("Description")}
                 </span>
                 <textarea
@@ -1328,7 +1328,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   className="w-full resize-y rounded-xl border border-border bg-card p-3 text-sm leading-6 text-foreground outline-none focus:border-primary placeholder:text-muted-foreground"
                 />
                 <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                  {ar ? "مثال: " : "Example: "}{productFormExample("description", ar ? "ar" : "en")}
+                  {ar ? "مثال توضيحي: " : "Illustrative example: "}{productFormExample("description", ar ? "ar" : "en")}
                 </span>
               </label>
               <details className="rounded-lg border border-border p-3">
@@ -1743,7 +1743,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                 onChange={(value) => update("seoTitle", value)}
               />
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1.5 block text-sm font-semibold text-foreground">
                   {t("SEO description")}
                 </span>
                 <textarea
@@ -2131,7 +2131,7 @@ function Field({
   ].filter(Boolean).join(" ") || undefined;
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[13px] font-bold text-slate-600">{t(label)}</span>
+      <span className="mb-1.5 block text-sm font-semibold text-foreground">{t(label)}</span>
       <input
         value={value}
         type={type}
@@ -2181,7 +2181,7 @@ function SelectField({
   const example = productFormExample(exampleKey ?? "", lang === "ar" ? "ar" : "en");
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[13px] font-bold text-slate-600">{t(label)}</span>
+      <span className="mb-1.5 block text-sm font-semibold text-foreground">{t(label)}</span>
       <select
         aria-label={t(label)}
         value={value}
