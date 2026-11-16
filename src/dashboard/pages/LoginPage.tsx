@@ -1,13 +1,11 @@
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
   Eye,
   EyeOff,
   KeyRound,
   Languages,
   Loader2,
-  LockKeyhole,
   Mail,
   Moon,
   ShieldCheck,
@@ -147,7 +145,7 @@ function BrandLockup() {
   const copy = loginCopy[lang];
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="login-logo-tile grid size-11 shrink-0 place-items-center overflow-hidden rounded-[15px] border border-white/10 bg-white/[.08] shadow-[0_14px_40px_rgba(54,68,173,.3)]">
+      <div className="login-logo-tile grid size-11 shrink-0 place-items-center overflow-hidden rounded-[15px] border border-white/10 bg-white/[.08] shadow-[0_10px_24px_rgba(37,99,235,.15)]">
         <img src="/logo.svg" alt="" className="h-7 w-auto max-w-8 object-contain" />
       </div>
       <div className="min-w-0">
@@ -586,7 +584,7 @@ export default function LoginPage() {
           data-testid="login-privacy-shield"
         >
           <div className="mx-auto max-w-xs px-6 text-center">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.07] text-[#c8ceff] shadow-[0_20px_60px_rgba(79,70,229,.18)]">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-blue-300/15 bg-blue-300/[.07] text-[#bfdbfe] shadow-[0_20px_60px_rgba(37,99,235,.14)]">
               <ShieldCheck className="size-6" />
             </div>
             <div className="login-heading mt-4 text-sm font-bold text-white">
@@ -613,9 +611,9 @@ export default function LoginPage() {
                   {t(title)}
                 </h1>
                 {view !== "signin" ? (
-                <p className="login-muted mt-2.5 max-w-md text-[12px] leading-5 text-slate-400">
-                  {t(description)}
-                </p>
+                  <p className="login-muted mt-2.5 max-w-md text-sm leading-5 text-slate-400">
+                    {t(description)}
+                  </p>
                 ) : null}
               </div>
 
@@ -679,7 +677,7 @@ export default function LoginPage() {
                         resetCaptcha();
                         setView("forgot");
                       }}
-                      className="login-link rounded-md px-1 py-0.5 text-xs font-bold text-[#93c5fd] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+                      className="login-link rounded-md px-1 py-0.5 text-xs font-bold text-[#93c5fd] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60"
                     >
                       {copy.forgotPassword}
                     </button>
@@ -703,7 +701,7 @@ export default function LoginPage() {
                   <button
                     onClick={() => void submit()}
                     disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
-                    className="mt-1 flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-gradient-to-r from-[#2563eb] to-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_20px_38px_rgba(37,99,235,.23)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50"
+                    className="mt-1 flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_20px_38px_rgba(37,99,235,.23)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 className="size-4 animate-spin" />
@@ -782,7 +780,7 @@ export default function LoginPage() {
                       <button
                         onClick={() => void sendReset()}
                         disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
-                        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-gradient-to-r from-[#2563eb] to-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition hover:brightness-110 disabled:opacity-50"
+                        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition hover:brightness-110 disabled:opacity-50"
                       >
                         {loading ? (
                           <Loader2 className="size-4 animate-spin" />
@@ -842,7 +840,7 @@ export default function LoginPage() {
                   <button
                     onClick={() => void saveNewPassword()}
                     disabled={loading}
-                    className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-gradient-to-r from-[#2563eb] to-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition hover:brightness-110 disabled:opacity-50"
+                    className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition hover:brightness-110 disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 className="size-4 animate-spin" />
