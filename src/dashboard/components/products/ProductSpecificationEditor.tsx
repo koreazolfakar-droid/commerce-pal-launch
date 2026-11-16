@@ -4,6 +4,7 @@ import { useLanguage } from "@/dashboard/i18n";
 import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import ProductSpecificationImportPanel from "@/dashboard/components/products/ProductSpecificationImportPanel";
 import { specificationFieldSuggestions } from "@/lib/specificationPresets";
+import { specificationFieldExample } from "@/lib/productFormExamples";
 import {
   nextMissingSpecificationKey,
   visibleSpecificationSections,
@@ -126,8 +127,8 @@ export default function ProductSpecificationEditor({
           </div>
           <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
             {ar
-              ? "يتم حفظ الحقول المعرفة ضمن التصنيف فقط. تبقى قيم الذكاء الاصطناعي مقترحات للمراجعة حتى الحفظ."
-              : "Only fields defined by the selected category are saved. AI values are suggestions and remain marked for review until you save."}
+              ? "كل خانة فيها مثال توضيحي يناسب نوع المواصفة. انسخ فقط القيم الصحيحة من مواصفات جهازك؛ أمثلة الشاشة والبطارية والمعالج ليست معلومات عن هذا المنتج."
+              : "Each field shows an illustrative example. Only enter verified specifications for this device; screen, battery and processor examples do not describe this product."}
           </p>
         </div>
         <AiAssistPanel
@@ -329,6 +330,12 @@ export default function ProductSpecificationEditor({
                   const generated = aiGeneratedKeys.has(field.key);
                   const issue = validateSpecificationValue(field, values[field.key] ?? "");
                   const suggestions = specificationFieldSuggestions(field.key);
+                  const example = specificationFieldExample(field, ar ? "ar" : "en");
+                  const numericExample = /^\d+(?:[.,]\d+)?$/u.test(example);
+                  const exampleWithUnit = numericExample && field.unit &&
+                    field.unit.toLowerCase() !== "bluetooth"
+                    ? `${example} ${field.unit}` : example;
+                  const hintId = `spec-example-${field.key}`;
                   return (
                     <div
                       key={field.key}
@@ -341,7 +348,7 @@ export default function ProductSpecificationEditor({
                     >
                     <label htmlFor={"spacecall-spec-field-" + field.key} className="block min-w-0">
                       <span className="mb-1.5 flex min-h-5 items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                        <span className="text-xs font-semibold text-foreground">
                           {ar ? field.labelAr || field.label : field.label}
                           {field.unit ? (
                             <span className="ms-1 font-medium text-slate-400">({field.unit})</span>
@@ -361,6 +368,7 @@ export default function ProductSpecificationEditor({
                         id={"spacecall-spec-field-" + field.key}
                         aria-label={ar ? field.labelAr || field.label : field.label}
                         aria-invalid={Boolean(issue)}
+                        aria-describedby={hintId}
                         list={suggestions.length ? `spec-suggestions-${field.key}` : undefined}
                         maxLength={500}
                         value={values[field.key] ?? ""}
@@ -369,21 +377,18 @@ export default function ProductSpecificationEditor({
                           setEditedVisibleKeys((current) => new Set(current).add(field.key));
                           onChange(field.key, event.target.value);
                         }}
-                        placeholder={
-                          field.unit
-                            ? `${ar ? "مثال" : "e.g."} ${field.unit}`
-                            : ar
-                              ? "أدخل قيمة مؤكدة"
-                              : "Enter verified value"
-                        }
+                        placeholder={(ar ? "مثال: " : "e.g. ") + exampleWithUnit}
                         className={
-                          "h-10 w-full rounded-xl border bg-white px-3 text-[11px] text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 " +
+                          "h-11 w-full rounded-xl border bg-card px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground " +
                           (generated ? "border-amber-300 dark:border-amber-600" : "border-slate-200 dark:border-slate-600") +
                           " dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
                         }
                       />
+                      <span id={hintId} className="mt-1 block text-xs leading-5 text-muted-foreground">
+                        {ar ? "مثال: " : "Example: "}{exampleWithUnit}
+                      </span>
                       {issue ? (
-                        <span role="alert" className="mt-1 block text-[11px] text-amber-700 dark:text-amber-300">
+                        <span role="alert" className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
                           {ar ? "تحقق من تنسيق القيمة ووحدة القياس قبل الحفظ." : issue}
                         </span>
                       ) : null}
