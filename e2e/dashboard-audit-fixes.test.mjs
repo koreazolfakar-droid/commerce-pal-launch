@@ -51,6 +51,10 @@ for (const page of ["Customers", "Orders"]) {
       paymentStatus: "all",
       sort: "newest",
       requestVersion: { current: 0 },
+      queryKey: "fixture-query",
+      currentQuery: { current: "fixture-query" },
+      setResultQuery() {},
+      setPage() {},
       setRefreshing() {},
       setLoading: (value) => loading.push(value),
       setResult: (value) => results.push(value),
@@ -100,6 +104,8 @@ test("inventory draft commit uses the pre-refresh snapshot and retains edits on 
     "commitAbsolute",
     {
       savingId: null,
+      savingRef: { current: false },
+      lang: "en",
       draftStocks: drafts,
       draftSnapshots: { current: new Map([["variant", original]]) },
       setSavingId() {},
@@ -122,6 +128,59 @@ test("inventory draft commit uses the pre-refresh snapshot and retains edits on 
   assert.equal(calls[0][1], 12);
   assert.equal(drafts.variant, "12");
   assert.deepEqual(errors, ["stock conflict"]);
+});
+
+
+test("blank and invalid inventory drafts cannot write stock or clear the user's edit", async () => {
+  const row = { variantId: "variant", productName: "Product", stock: 10, trackInventory: true };
+  for (const raw of ["", " ", "-1", "1.5", "Infinity", "9007199254740992"]) {
+    const errors = [];
+    const commit = await productionCallback(
+      "../src/dashboard/pages/InventoryManagerPage.tsx",
+      "commitAbsolute",
+      {
+        savingRef: { current: false }, lang: "en",
+        draftStocks: { variant: raw },
+        toast: { error: (message) => errors.push(message) },
+        setInventoryStock() { assert.fail("Invalid draft must not write stock"); },
+        setDraftStocks() { assert.fail("Invalid draft must remain available for correction"); },
+      },
+    );
+    await commit(row);
+    assert.equal(errors.length, 1, JSON.stringify(raw));
+  }
+});
+
+test("inventory writes serialize immediate submissions and accept explicit zero", async () => {
+  const row = { variantId: "variant", productName: "Product", stock: 10, trackInventory: true };
+  const lock = { current: false };
+  const calls = [];
+  let complete;
+  const commit = await productionCallback(
+    "../src/dashboard/pages/InventoryManagerPage.tsx",
+    "commitAbsolute",
+    {
+      savingRef: lock, lang: "en", draftStocks: { variant: "0" },
+      draftSnapshots: { current: new Map([["variant", row]]) },
+      setSavingId() {},
+      setInventoryStock(...args) {
+        calls.push(args);
+        return new Promise((resolve) => { complete = resolve; });
+      },
+      replaceRowStock(...args) { calls.push(args); },
+      load() {},
+      toast: { success() {}, error(message) { assert.fail(message); } },
+    },
+  );
+  const first = commit(row);
+  await commit(row);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][1], 0);
+  assert.equal(lock.current, true);
+  complete(0);
+  await first;
+  assert.equal(lock.current, false);
+  assert.deepEqual(calls[1], ["variant", 0, -10]);
 });
 
 test("preferences still work within the tab when browser storage is blocked", async () => {

@@ -17,7 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import BrandAssignmentDialog from "@/dashboard/components/brands/BrandAssignmentDialog";
@@ -52,10 +52,10 @@ function ProductStatus({ status }: { status: DashboardProduct["status"] }) {
   const { t } = useLanguage();
   const classes =
     status === "Active"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
       : status === "Draft"
-        ? "bg-amber-50 text-amber-700"
-        : "bg-slate-100 text-slate-500";
+        ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+        : "bg-muted text-muted-foreground";
 
   return (
     <span className={"rounded-full px-2 py-1 text-[8px] font-black " + classes}>{t(status)}</span>
@@ -78,11 +78,14 @@ function Toggle({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-start transition hover:border-indigo-200"
+      role="switch"
+      aria-checked={checked}
+      aria-label={t(title)}
+      className="flex w-full items-center justify-between gap-4 rounded-xl border border-border bg-card px-3.5 py-3 text-start transition hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <span className="min-w-0">
-        <span className="block text-[11px] font-bold text-slate-700">{t(title)}</span>
-        <span className="mt-0.5 block text-[9px] leading-4 text-slate-400">{t(description)}</span>
+        <span className="block text-[11px] font-bold text-foreground">{t(title)}</span>
+        <span className="mt-0.5 block text-[9px] leading-4 text-muted-foreground">{t(description)}</span>
       </span>
       <span
         className={
@@ -102,7 +105,7 @@ function Toggle({
 }
 
 export default function BrandsPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
   const [products, setProducts] = useState<DashboardProduct[]>([]);
@@ -123,6 +126,9 @@ export default function BrandsPage() {
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reorderDraft, setReorderDraft] = useState<CatalogBrand[]>([]);
+  const mutationLock = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [loadVersion, setLoadVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,7 +156,7 @@ export default function BrandsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadVersion]);
 
   const selected = brands.find((brand) => brand.id === selectedId) || brands[0];
 
@@ -228,6 +234,7 @@ export default function BrandsPage() {
   const listBrands = reorderMode ? reorderDraft : filteredBrands;
 
   const openCreate = () => {
+    if (mutationLock.current) return;
     const nextOrder = brands.reduce((max, brand) => Math.max(max, brand.order), 0) + 1;
     setEditing({
       mode: "create",
@@ -244,11 +251,13 @@ export default function BrandsPage() {
   };
 
   const openEdit = (brand: CatalogBrand) => {
+    if (mutationLock.current) return;
     setSelectedId(brand.id);
     setEditing({ mode: "edit", brand: { ...brand } });
   };
 
   const saveBrand = async (nextBrand: CatalogBrand, imageChange: BrandImageChange) => {
+    if (mutationLock.current) return false;
     const duplicateSlug = brands.some(
       (brand) =>
         brand.id !== nextBrand.id && brand.slug.toLowerCase() === nextBrand.slug.toLowerCase(),
@@ -258,6 +267,8 @@ export default function BrandsPage() {
       return false;
     }
 
+    mutationLock.current = true;
+    setBusy(true);
     try {
       let saved =
         editing?.mode === "create"
@@ -313,19 +324,29 @@ export default function BrandsPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand save failed.");
       return false;
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const toggleBrand = async (brand: CatalogBrand, patch: Partial<CatalogBrand>) => {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true);
     try {
       const saved = await updateDashboardBrand({ ...brand, ...patch });
       setBrands((current) => current.map((item) => (item.id === saved.id ? saved : item)));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand update failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const duplicateBrand = async (brand: CatalogBrand) => {
+    if (mutationLock.current) return;
     const now = new Date().toISOString();
     const duplicate: CatalogBrand = {
       ...brand,
@@ -339,6 +360,8 @@ export default function BrandsPage() {
       updatedAt: now,
     };
 
+    mutationLock.current = true;
+    setBusy(true);
     try {
       const created = await createDashboardBrand(duplicate);
       setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
@@ -346,10 +369,14 @@ export default function BrandsPage() {
       toast.success("Brand duplicated in Supabase without copying product assignments.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand duplication failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const requestDelete = (brand: CatalogBrand) => {
+    if (mutationLock.current) return;
     if (brands.length <= 1) {
       toast.error("Keep at least one brand in the catalog.");
       return;
@@ -360,9 +387,11 @@ export default function BrandsPage() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget || deleting) return;
+    if (!deleteTarget || deleting || mutationLock.current) return;
     const destinationId = deleteDestination === "unbranded" ? null : deleteDestination || null;
 
+    mutationLock.current = true;
+    setBusy(true);
     setDeleting(true);
     try {
       const deletedBrandId = deleteTarget.id;
@@ -386,12 +415,16 @@ export default function BrandsPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand deletion failed.");
     } finally {
+      mutationLock.current = false;
+      setBusy(false);
       setDeleting(false);
     }
   };
 
   const assignProducts = async (productIds: string[]) => {
-    if (!selected) return;
+    if (!selected || mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await assignProductsToDashboardBrand(productIds, selected.id);
       patchProductBrandAssignments(productIds, selected);
@@ -403,10 +436,16 @@ export default function BrandsPage() {
       );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product assignment failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const removeProductFromBrand = async (product: DashboardProduct) => {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await assignProductsToDashboardBrand([product.id], null);
       patchProductBrandAssignments([product.id], null);
@@ -414,11 +453,14 @@ export default function BrandsPage() {
       toast.success(product.name + " moved to Unbranded in Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Removing product from brand failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const confirmMoveProduct = async () => {
-    if (!moveProduct || !moveDestination) return;
+    if (!moveProduct || !moveDestination || mutationLock.current) return;
     const destinationId = moveDestination === "unbranded" ? null : moveDestination;
     const destination = brands.find((brand) => brand.id === moveDestination);
     const destinationName = destinationId === null ? "Unbranded" : destination?.name;
@@ -428,6 +470,8 @@ export default function BrandsPage() {
       return;
     }
 
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await assignProductsToDashboardBrand([moveProduct.id], destinationId);
       patchProductBrandAssignments([moveProduct.id], destination ?? null);
@@ -436,15 +480,20 @@ export default function BrandsPage() {
       setMoveDestination("");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Moving product failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const startReorder = () => {
+    if (mutationLock.current) return;
     setReorderDraft([...brands].sort((a, b) => a.order - b.order));
     setReorderMode(true);
   };
 
   const moveReorderItem = (brandId: string, direction: -1 | 1) => {
+    if (mutationLock.current) return;
     setReorderDraft((current) => {
       const index = current.findIndex((brand) => brand.id === brandId);
       const nextIndex = index + direction;
@@ -457,20 +506,33 @@ export default function BrandsPage() {
   };
 
   const saveReorder = async () => {
+    if (!reorderMode || mutationLock.current) return;
     const normalized = reorderDraft.map((brand, index) => ({
       ...brand,
       order: index + 1,
       updatedAt: new Date().toISOString(),
     }));
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await reorderDashboardBrands(normalized);
-      setBrands(normalized);
+      const positions = new Map(normalized.map((brand) => [brand.id, brand.order]));
+      // Reordering changes positions only; edits made since opening the draft stay intact.
+      setBrands((current) =>
+        current.map((brand) => ({
+          ...brand,
+          order: positions.get(brand.id) ?? brand.order,
+        })).sort((a, b) => a.order - b.order),
+      );
       setReorderMode(false);
       setReorderDraft([]);
       setSortMode("order");
       toast.success("Brand order saved to Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Saving brand order failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
@@ -492,16 +554,19 @@ export default function BrandsPage() {
 
   if (loading) {
     return (
-      <div className="grid min-h-[360px] place-items-center rounded-2xl border border-slate-200 bg-white">
-        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      <div role="status" aria-label={lang === "ar" ? "جارٍ تحميل العلامات التجارية" : "Loading brands"} className="grid min-h-[360px] place-items-center rounded-2xl border border-border bg-card">
+        <Loader2 className="size-6 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
-        {error}
+      <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+        <p>{error}</p>
+        <button type="button" onClick={() => setLoadVersion((current) => current + 1)} className="mt-4 min-h-10 rounded-xl border border-current px-4 font-semibold">
+          {lang === "ar" ? "إعادة المحاولة" : "Retry"}
+        </button>
       </div>
     );
   }
@@ -534,7 +599,9 @@ export default function BrandsPage() {
             brand={editing.brand}
             brands={brands}
             mode={editing.mode}
-            onClose={() => setEditing(null)}
+            onClose={() => {
+              if (!mutationLock.current) setEditing(null);
+            }}
             onSave={saveBrand}
           />
         )}
@@ -543,7 +610,14 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="pb-4 sm:pb-8">
+    <div className="pb-4 sm:pb-8" aria-busy={busy}>
+      {busy && (
+        <p role="status" className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          {lang === "ar" ? "جارٍ حفظ التعديلات…" : "Saving changes…"}
+        </p>
+      )}
+      <fieldset disabled={busy} className="m-0 min-w-0 border-0 p-0">
       {!reorderMode && (
         <button
           type="button"
@@ -722,7 +796,7 @@ export default function BrandsPage() {
                         className={
                           "rounded-full px-2 py-1 text-[8px] font-black " +
                           (selected.active
-                            ? "bg-emerald-50 text-emerald-700"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                             : "bg-slate-100 text-slate-500")
                         }
                       >
@@ -1067,13 +1141,17 @@ export default function BrandsPage() {
         )}
       </div>
 
+      </fieldset>
+
       {editing && (
         <BrandForm
           key={editing.brand.id}
           brand={editing.brand}
           brands={brands}
           mode={editing.mode}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+              if (!mutationLock.current) setEditing(null);
+            }}
           onSave={saveBrand}
         />
       )}
@@ -1082,7 +1160,9 @@ export default function BrandsPage() {
         <BrandAssignmentDialog
           brand={selected}
           products={products}
-          onClose={() => setAssignmentOpen(false)}
+          onClose={() => {
+            if (!mutationLock.current) setAssignmentOpen(false);
+          }}
           onAssign={assignProducts}
         />
       )}
@@ -1167,6 +1247,7 @@ export default function BrandsPage() {
           title={t("Move Product")}
           subtitle={moveProduct.name + " stays intact; only its Supabase brand assignment changes."}
           onClose={() => {
+            if (mutationLock.current) return;
             setMoveProduct(null);
             setMoveDestination("");
           }}
@@ -1178,6 +1259,7 @@ export default function BrandsPage() {
             <div className="relative">
               <select
                 value={moveDestination}
+                disabled={busy}
                 onChange={(event) => setMoveDestination(event.target.value)}
                 className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
               >
@@ -1198,7 +1280,9 @@ export default function BrandsPage() {
           <div className="mt-5 flex justify-end gap-2">
             <button
               type="button"
+              disabled={busy}
               onClick={() => {
+                if (mutationLock.current) return;
                 setMoveProduct(null);
                 setMoveDestination("");
               }}
@@ -1208,7 +1292,8 @@ export default function BrandsPage() {
             </button>
             <button
               type="button"
-              disabled={!moveDestination}
+              disabled={!moveDestination || busy}
+              aria-busy={busy}
               onClick={confirmMoveProduct}
               className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >

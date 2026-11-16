@@ -1,3 +1,4 @@
+import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
 import { dashboardListHref } from "@/dashboard/lib/listContext";
 import ContentAiAssist from "@/dashboard/components/ai/ContentAiAssist";
 import { useLanguage } from "@/dashboard/i18n";
@@ -13,7 +14,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
@@ -24,13 +25,32 @@ import {
   updateDashboardCollection,
   type DashboardCollectionDetail,
   type DashboardCollectionProduct,
+  type DashboardCollectionInput,
 } from "@/dashboard/data/collections";
 
+function collectionForm(collection: DashboardCollectionInput): DashboardCollectionInput {
+  return {
+    title: collection.title,
+    handle: collection.handle,
+    titleAr: collection.titleAr,
+    description: collection.description,
+    imageUrl: collection.imageUrl,
+    isActive: collection.isActive,
+    isFeatured: collection.isFeatured,
+    seoTitle: collection.seoTitle,
+    seoDescription: collection.seoDescription,
+  };
+}
+
 export default function CollectionDetailPage({ id }: { id: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [collection, setCollection] = useState<DashboardCollectionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const loadRequest = useRef(0);
+  const activeId = useRef(id);
+  const mutationLock = useRef(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingProducts, setSavingProducts] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -49,32 +69,31 @@ export default function CollectionDetailPage({ id }: { id: string }) {
   });
 
   const load = useCallback(async () => {
+    const request = ++loadRequest.current;
     setLoading(true);
+    setLoadError("");
+    setCollection((current) => current?.id === id ? current : null);
     try {
       const next = await getDashboardCollection(id);
+      if (request !== loadRequest.current || activeId.current !== id) return;
       setCollection(next);
-      if (next)
-        setForm({
-          title: next.title,
-          handle: next.handle,
-          titleAr: next.titleAr,
-          description: next.description,
-          imageUrl: next.imageUrl,
-          isActive: next.isActive,
-          isFeatured: next.isFeatured,
-          seoTitle: next.seoTitle,
-          seoDescription: next.seoDescription,
-        });
+      if (next) setForm(collectionForm(next));
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load collection.");
+      if (request === loadRequest.current && activeId.current === id) {
+        setLoadError(cause instanceof Error ? cause.message : "Unable to load collection.");
+      }
     } finally {
-      setLoading(false);
+      if (request === loadRequest.current) setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
+    activeId.current = id;
+    setProductSearch("");
+    setDeleteOpen(false);
     void load();
-  }, [load]);
+    return () => { loadRequest.current += 1; activeId.current = ""; };
+  }, [id, load]);
 
   useEffect(() => {
     if (loading || !collection) return;
@@ -88,7 +107,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
   }, [loading, collection]);
 
   const dirty = useMemo(() => {
-    if (!collection) return false;
+    if (!collection || collection.id !== id) return false;
     return (
       form.title !== collection.title ||
       form.handle !== collection.handle ||
@@ -100,19 +119,25 @@ export default function CollectionDetailPage({ id }: { id: string }) {
       form.seoTitle !== collection.seoTitle ||
       form.seoDescription !== collection.seoDescription
     );
-  }, [collection, form]);
-  useDashboardUnsavedChanges(dirty);
+  }, [collection, form, id]);
+  const busy = savingProfile || savingProducts || deleting;
+  const validProfile = form.title.trim().length >= 2 && Boolean(form.handle.trim());
+  const markSaved = useDashboardUnsavedChanges(dirty || savingProfile || savingProducts);
 
   const saveProfile = async () => {
-    if (!collection || savingProfile || form.title.trim().length < 2 || !form.handle.trim()) {
+    if (!collection || collection.id !== id || mutationLock.current || !validProfile) {
       return;
     }
 
+    const targetId = collection.id;
+    mutationLock.current = true;
     setSavingProfile(true);
     try {
-      const next = await updateDashboardCollection(collection.id, form);
+      const next = await updateDashboardCollection(targetId, form);
+      if (activeId.current !== targetId) return;
+      setForm(collectionForm(next));
       setCollection((current) =>
-        current
+        current?.id === targetId
           ? {
               ...current,
               ...next,
@@ -124,14 +149,16 @@ export default function CollectionDetailPage({ id }: { id: string }) {
       );
       toast.success("Collection saved.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Save failed.");
+      if (activeId.current === targetId) toast.error(cause instanceof Error ? cause.message : "Save failed.");
     } finally {
+      mutationLock.current = false;
       setSavingProfile(false);
     }
   };
 
   const saveProducts = async (products: DashboardCollectionProduct[]) => {
-    if (!collection || savingProducts) return;
+    if (!collection || collection.id !== id || mutationLock.current) return;
+    const targetId = collection.id;
 
     const normalized = products.map((product, index) => ({
       ...product,
@@ -148,14 +175,16 @@ export default function CollectionDetailPage({ id }: { id: string }) {
       .filter((product) => !memberIds.has(product.id))
       .map((product) => ({ ...product, sortOrder: 0 }));
 
+    mutationLock.current = true;
     setSavingProducts(true);
     try {
       await saveDashboardCollectionProducts(
-        collection.id,
+        targetId,
         normalized.map((product) => product.id),
       );
+      if (activeId.current !== targetId) return;
       setCollection((current) =>
-        current
+        current?.id === targetId
           ? {
               ...current,
               products: normalized,
@@ -166,8 +195,9 @@ export default function CollectionDetailPage({ id }: { id: string }) {
       );
       toast.success("Collection products saved.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Products update failed.");
+      if (activeId.current === targetId) toast.error(cause instanceof Error ? cause.message : "Products update failed.");
     } finally {
+      mutationLock.current = false;
       setSavingProducts(false);
     }
   };
@@ -195,36 +225,51 @@ export default function CollectionDetailPage({ id }: { id: string }) {
     void saveProducts(next);
   };
 
-  const available = useMemo(() => {
+  const matchingAvailable = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     if (!collection) return [];
-    return collection.availableProducts
-      .filter((product) => !term || product.title.toLowerCase().includes(term))
-      .slice(0, 40);
+    return collection.availableProducts.filter(
+      (product) => !term || product.title.toLowerCase().includes(term),
+    );
   }, [collection, productSearch]);
+  const available = matchingAvailable.slice(0, 40);
 
   const removeCollection = async () => {
-    if (!collection || deleting) return;
+    if (!collection || collection.id !== id || mutationLock.current) return;
+    const targetId = collection.id;
+    mutationLock.current = true;
     setDeleting(true);
     try {
-      await deleteDashboardCollection(collection.id);
+      await deleteDashboardCollection(targetId);
+      if (activeId.current !== targetId) return;
+      markSaved();
       setDeleteOpen(false);
       toast.success("Collection deleted.");
       navigate(dashboardListHref("/dashboard/collections"));
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Delete failed.");
+      if (activeId.current === targetId) toast.error(cause instanceof Error ? cause.message : "Delete failed.");
     } finally {
+      mutationLock.current = false;
       setDeleting(false);
     }
   };
 
-  if (loading && !collection)
+  if (loading && (!collection || collection.id !== id))
     return (
       <div className="grid min-h-[420px] place-items-center">
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
       </div>
     );
-  if (!collection)
+  if (loadError)
+    return (
+      <div className="space-y-4">
+        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+        <button type="button" onClick={() => navigate(dashboardListHref("/dashboard/collections"))} className="text-sm font-semibold text-indigo-600 hover:underline">
+          {t("Back to collections")}
+        </button>
+      </div>
+    );
+  if (!collection || collection.id !== id)
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
         {t("Collection not found.")}
@@ -254,7 +299,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <ContentAiAssist
-            disabled={savingProfile}
+            disabled={busy}
             entity="collection"
             query={form.title}
             values={form}
@@ -273,14 +318,14 @@ export default function CollectionDetailPage({ id }: { id: string }) {
           </button>
           <button
             onClick={() => setDeleteOpen(true)}
-            disabled={deleting || savingProfile || savingProducts}
+            disabled={busy}
             className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[11px] font-bold text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Trash2 className="size-3.5" /> {t("Delete")}
           </button>
           <button
             onClick={() => void saveProfile()}
-            disabled={!dirty || savingProfile || deleting}
+            disabled={!dirty || !validProfile || busy}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:opacity-40"
           >
             {savingProfile ? (
@@ -299,7 +344,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
             <div className="border-b border-slate-100 px-5 py-4">
               <div className="text-[13px] font-bold text-[#14203a]">{t("Collection details")}</div>
             </div>
-            <div className="grid gap-4 p-5 sm:grid-cols-2">
+            <fieldset disabled={busy} className="grid min-w-0 gap-4 p-5 sm:grid-cols-2">
               {[
                 ["Title", "title"],
                 ["Handle", "handle"],
@@ -354,7 +399,12 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                 />{" "}
                 {t("Featured")}
               </label>
-            </div>
+              {!validProfile ? (
+                <p role="status" className="text-[11px] text-amber-700 sm:col-span-2">
+                  {lang === "ar" ? "أدخل اسماً من حرفين على الأقل ورابطاً مختصراً قبل الحفظ." : "Enter a title with at least two characters and a handle before saving."}
+                </p>
+              ) : null}
+            </fieldset>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white">
@@ -371,7 +421,7 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                 {collection.products.map((product, index) => (
                   <div
                     key={product.id}
-                    className="grid grid-cols-[52px_1fr_auto] items-center gap-3 px-5 py-3"
+                    className="grid grid-cols-[52px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3"
                   >
                     <div className="grid size-12 place-items-center overflow-hidden rounded-xl bg-slate-100">
                       {product.imageUrl ? (
@@ -400,21 +450,24 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                     <div className="flex gap-1">
                       <button
                         onClick={() => moveProduct(product.id, -1)}
-                        disabled={savingProducts}
+                        aria-label={`${t("Move up")}: ${product.title}`}
+                        disabled={busy || index === 0}
                         className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <ArrowUp className="size-3.5" />
                       </button>
                       <button
                         onClick={() => moveProduct(product.id, 1)}
-                        disabled={savingProducts}
+                        aria-label={`${t("Move down")}: ${product.title}`}
+                        disabled={busy || index === collection.products.length - 1}
                         className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <ArrowDown className="size-3.5" />
                       </button>
                       <button
                         onClick={() => removeProduct(product.id)}
-                        disabled={savingProducts}
+                        aria-label={`${t("Remove")}: ${product.title}`}
+                        disabled={busy}
                         className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         <Trash2 className="size-3.5" />
@@ -445,10 +498,16 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                 <input
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
+                  aria-label={t("Search catalog products")}
                   placeholder={t("Search catalog products")}
                   className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px]"
                 />
               </div>
+              {matchingAvailable.length > available.length ? (
+                <p role="status" className="mb-3 text-[11px] text-slate-500">
+                  {available.length} / {matchingAvailable.length} · {lang === "ar" ? "ابحث لتضييق النتائج والعثور على بقية المنتجات." : "Search to narrow the results and find more products."}
+                </p>
+              ) : null}
               <div className="max-h-[620px] divide-y divide-slate-100 overflow-y-auto">
                 {available.map((product) => (
                   <div key={product.id} className="flex items-center gap-3 py-3">
@@ -478,7 +537,8 @@ export default function CollectionDetailPage({ id }: { id: string }) {
                     </div>
                     <button
                       onClick={() => addProduct(product)}
-                      disabled={savingProducts}
+                      aria-label={`${t("Add products")}: ${product.title}`}
+                      disabled={busy}
                       className="grid size-8 place-items-center rounded-lg bg-indigo-50 text-indigo-600 disabled:opacity-40"
                     >
                       <Plus className="size-4" />
@@ -494,14 +554,14 @@ export default function CollectionDetailPage({ id }: { id: string }) {
             </div>
           </div>
 
-          {collection.imageUrl ? (
+          {form.imageUrl ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <div className="mb-3 text-[11px] font-bold text-slate-600">
                 {t("Collection image preview")}
               </div>
               <div className="grid aspect-[16/9] place-items-center overflow-hidden rounded-xl bg-slate-50">
                 <img
-                  src={collection.imageUrl}
+                  src={form.imageUrl}
                   alt=""
                   className="max-h-full max-w-full object-contain"
                 />
@@ -512,13 +572,13 @@ export default function CollectionDetailPage({ id }: { id: string }) {
       </div>
 
       {dirty ? (
-        <div className="dashboard-save-bar fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl">
+        <div className="dashboard-save-bar fixed left-1/2 z-40 flex w-max max-w-[calc(100vw-24px)] -translate-x-1/2 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl">
           <span className="text-[11px] font-semibold text-slate-600">
             {t("Unsaved collection changes")}
           </span>
           <button
             onClick={() => void saveProfile()}
-            disabled={savingProfile || deleting}
+            disabled={!validProfile || busy}
             className="rounded-lg bg-[#5968ea] px-3 py-1.5 text-[10px] font-bold text-white disabled:opacity-50"
           >
             {savingProfile ? t("Saving...") : t("Save")}

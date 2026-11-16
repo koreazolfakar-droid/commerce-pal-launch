@@ -133,11 +133,11 @@ function OrdersSkeleton() {
   );
 }
 
-function OrderMobileCard({ order, onOpen }: { order: DashboardOrderListItem; onOpen: () => void }) {
+function OrderMobileCard({ order, onOpen, disabled }: { order: DashboardOrderListItem; onOpen: () => void; disabled: boolean }) {
   const { t } = useLanguage();
   return (
     <article className="border-b border-slate-100 p-4 last:border-b-0">
-      <button type="button" onClick={onOpen} className="w-full text-start">
+      <button type="button" onClick={onOpen} disabled={disabled} className="w-full rounded-lg text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-60">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-[12px] font-black text-[#5968ea]">#{order.publicOrderNumber}</div>
@@ -228,6 +228,11 @@ export default function OrdersPage() {
           pageSize: 25,
         });
         if (version !== requestVersion.current) return;
+        const lastPage = Math.max(1, Math.ceil(next.total / next.pageSize));
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
         setResult(next);
         setError("");
         if (manual) toast.success("Orders refreshed from Supabase.");
@@ -243,10 +248,11 @@ export default function OrdersPage() {
         }
       }
     },
-    [page, paymentStatus, search, sort, status],
+    [page, paymentStatus, search, sort, status, setPage],
   );
 
   useEffect(() => {
+    setLoading(true);
     const timer = window.setTimeout(() => void load(false), search ? 300 : 0);
     return () => {
       requestVersion.current += 1;
@@ -324,7 +330,7 @@ export default function OrdersPage() {
         <button
           type="button"
           onClick={() => void load(true)}
-          disabled={refreshing}
+          disabled={loading || refreshing}
           className="dashboard-button flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold disabled:opacity-60 sm:w-auto"
         >
           <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -370,7 +376,7 @@ export default function OrdersPage() {
         />
       </div>
 
-      <div className="dashboard-catalog-panel overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div aria-busy={loading || refreshing} className="dashboard-catalog-panel overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-slate-100">
           <div className="overflow-x-auto px-3 pt-3 sm:px-4">
             <div className="flex min-w-max gap-1.5 pb-3">
@@ -417,6 +423,7 @@ export default function OrdersPage() {
                   setSearch(event.target.value);
                   setPage(1);
                 }}
+                aria-label={t("Public order #, customer, phone or email")}
                 placeholder={t("Public order #, customer, phone or email")}
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-3 text-[11px] outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50"
               />
@@ -436,7 +443,7 @@ export default function OrdersPage() {
                 <option value="all">{t("All payments")}</option>
                 {(["unpaid", "paid", "partially_refunded", "refunded"] as const).map((value) => (
                   <option key={value} value={value}>
-                    {paymentStatusLabel(value)}
+                    {t(paymentStatusLabel(value))}
                   </option>
                 ))}
               </select>
@@ -484,6 +491,7 @@ export default function OrdersPage() {
               key={order.id}
               order={order}
               onOpen={() => setQuickOrderId(order.id)}
+              disabled={loading || refreshing}
             />
           ))}
         </div>
@@ -505,13 +513,22 @@ export default function OrdersPage() {
               {orders.map((order) => (
                 <tr
                   key={order.id}
-                  onClick={() => setQuickOrderId(order.id)}
-                  className="cursor-pointer border-b border-slate-50 transition hover:bg-[#fafbff]"
+                  onClick={() => { if (!loading && !refreshing) setQuickOrderId(order.id); }}
+                  className={`border-b border-slate-50 transition ${loading || refreshing ? "opacity-60" : "cursor-pointer hover:bg-muted/50"}`}
                 >
                   <td className="px-5 py-4">
-                    <div className="text-[11px] font-black text-[#5968ea]">
+                    <button
+                      type="button"
+                      disabled={loading || refreshing}
+                      aria-label={`${t("Order")} #${order.publicOrderNumber}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setQuickOrderId(order.id);
+                      }}
+                      className="rounded-md text-[11px] font-bold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait"
+                    >
                       #{order.publicOrderNumber}
-                    </div>
+                    </button>
                     <div className="mt-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-300">
                       {order.paymentMethod}
                     </div>
@@ -575,17 +592,17 @@ export default function OrdersPage() {
 
         <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <span className="text-[10px] text-slate-400">
-            {t("Showing")} {total ? (page - 1) * pageSize + 1 : 0}–
-            {Math.min(page * pageSize, total)} {t("of")} {total}
+            {t("Showing")} {total ? ((result?.page ?? page) - 1) * pageSize + 1 : 0}–
+            {Math.min((result?.page ?? page) * pageSize, total)} {t("of")} {total}
           </span>
           <div className="flex items-center justify-between gap-2 sm:justify-end">
             <span className="text-[9px] font-semibold text-slate-400">
-              {t("Page")} {page} {t("of")} {totalPages}
+              {t("Page")} {result?.page ?? page} {t("of")} {totalPages}
             </span>
             <button
               type="button"
               aria-label={t("Previous orders page")}
-              disabled={page <= 1 || loading}
+              disabled={page <= 1 || loading || refreshing}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-30"
             >
@@ -594,7 +611,7 @@ export default function OrdersPage() {
             <button
               type="button"
               aria-label={t("Next orders page")}
-              disabled={page >= totalPages || loading}
+              disabled={page >= totalPages || loading || refreshing}
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-30"
             >

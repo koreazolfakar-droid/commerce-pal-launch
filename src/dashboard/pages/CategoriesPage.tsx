@@ -16,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
@@ -69,27 +69,32 @@ function ToggleControl({
   onChange,
   title,
   description,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   title: string;
   description: string;
+  disabled?: boolean;
 }) {
   const { t } = useLanguage();
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-start transition hover:border-indigo-200"
+      className="flex w-full items-center justify-between gap-4 rounded-xl border border-border bg-card px-3.5 py-3 text-start transition hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
     >
       <span className="min-w-0">
-        <span className="block text-[11px] font-bold text-slate-700">{t(title)}</span>
-        <span className="mt-0.5 block text-[9px] leading-4 text-slate-400">{t(description)}</span>
+        <span className="block text-[11px] font-bold text-foreground">{t(title)}</span>
+        <span className="mt-0.5 block text-[10px] leading-4 text-muted-foreground">{t(description)}</span>
       </span>
       <span
         className={
           "relative h-6 w-11 shrink-0 rounded-full transition " +
-          (checked ? "bg-[#5968ea]" : "bg-slate-200")
+          (checked ? "bg-primary" : "bg-muted")
         }
       >
         <span
@@ -104,7 +109,7 @@ function ToggleControl({
 }
 
 export default function CategoriesPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [products, setProducts] = useState<DashboardProduct[]>([]);
@@ -125,6 +130,24 @@ export default function CategoriesPage() {
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reorderDraft, setReorderDraft] = useState<CatalogCategory[]>([]);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [mutationPending, setMutationPending] = useState(false);
+  const mutationLock = useRef(false);
+
+  const withCategoryMutation = <Args extends unknown[]>(
+    operation: (...args: Args) => Promise<void>,
+  ) => async (...args: Args) => {
+    // Block same-tick repeats and overlapping writes before React disables the controls.
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setMutationPending(true);
+    try {
+      await operation(...args);
+    } finally {
+      mutationLock.current = false;
+      setMutationPending(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +175,7 @@ export default function CategoriesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadToken]);
 
   const selected = categories.find((category) => category.id === selectedId) || categories[0];
 
@@ -263,7 +286,7 @@ export default function CategoriesPage() {
     setEditing({ mode: "edit", category: { ...category } });
   };
 
-  const saveCategory = async (nextCategory: CatalogCategory, imageChange: CategoryImageChange) => {
+  const saveCategory = withCategoryMutation(async (nextCategory: CatalogCategory, imageChange: CategoryImageChange) => {
     const duplicateSlug = categories.some(
       (category) =>
         category.id !== nextCategory.id &&
@@ -332,18 +355,18 @@ export default function CategoriesPage() {
       toast.error(message);
       throw cause;
     }
-  };
+  });
 
-  const toggleCategory = async (category: CatalogCategory, patch: Partial<CatalogCategory>) => {
+  const toggleCategory = withCategoryMutation(async (category: CatalogCategory, patch: Partial<CatalogCategory>) => {
     try {
       const saved = await updateDashboardCategory({ ...category, ...patch });
       setCategories((current) => current.map((item) => (item.id === saved.id ? saved : item)));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Category update failed.");
     }
-  };
+  });
 
-  const duplicateCategory = async (category: CatalogCategory) => {
+  const duplicateCategory = withCategoryMutation(async (category: CatalogCategory) => {
     const now = new Date().toISOString();
     const duplicate: CatalogCategory = {
       ...category,
@@ -364,7 +387,7 @@ export default function CategoriesPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Category duplication failed.");
     }
-  };
+  });
 
   const requestDelete = (category: CatalogCategory) => {
     if (categories.length <= 1) {
@@ -376,7 +399,7 @@ export default function CategoriesPage() {
     setDeleteDestination("uncategorized");
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = withCategoryMutation(async () => {
     if (!deleteTarget || deleting) return;
     const destinationId = deleteDestination === "uncategorized" ? null : deleteDestination || null;
     const deletedCategoryId = deleteTarget.id;
@@ -404,9 +427,9 @@ export default function CategoriesPage() {
     } finally {
       setDeleting(false);
     }
-  };
+  });
 
-  const assignProducts = async (productIds: string[]) => {
+  const assignProducts = withCategoryMutation(async (productIds: string[]) => {
     if (!selected) return;
     try {
       await assignProductsToDashboardCategory(productIds, selected);
@@ -420,9 +443,9 @@ export default function CategoriesPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product assignment failed.");
     }
-  };
+  });
 
-  const removeProductFromCategory = async (product: DashboardProduct) => {
+  const removeProductFromCategory = withCategoryMutation(async (product: DashboardProduct) => {
     try {
       await assignProductsToDashboardCategory([product.id], null);
       patchProductCategoryAssignments([product.id], null);
@@ -433,10 +456,21 @@ export default function CategoriesPage() {
         cause instanceof Error ? cause.message : "Removing product from category failed.",
       );
     }
-  };
+  });
 
-  const confirmMoveProduct = async () => {
+  const confirmMoveProduct = withCategoryMutation(async () => {
     if (!moveProduct || !moveDestination) return;
+    if (
+      moveDestination !== "uncategorized" &&
+      !categories.some((category) => category.id === moveDestination)
+    ) {
+      toast.error(
+        lang === "ar"
+          ? "اختر تصنيفًا متاحًا قبل نقل المنتج."
+          : "Choose an available category before moving the product.",
+      );
+      return;
+    }
     const destination =
       moveDestination === "uncategorized"
         ? null
@@ -452,7 +486,7 @@ export default function CategoriesPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Moving product failed.");
     }
-  };
+  });
 
   const startReorder = () => {
     setReorderDraft([...categories].sort((a, b) => a.order - b.order));
@@ -472,7 +506,7 @@ export default function CategoriesPage() {
     });
   };
 
-  const saveReorder = async () => {
+  const saveReorder = withCategoryMutation(async () => {
     const normalized = reorderDraft.map((category, index) => ({
       ...category,
       order: index + 1,
@@ -480,7 +514,14 @@ export default function CategoriesPage() {
     }));
     try {
       await reorderDashboardCategories(normalized);
-      setCategories(normalized);
+      // Ordering changes positions only; retain any current category metadata.
+      const positions = new Map(normalized.map((category) => [category.id, category.order]));
+      setCategories((current) =>
+        current.map((category) => ({
+          ...category,
+          order: positions.get(category.id) ?? category.order,
+        })).sort((a, b) => a.order - b.order),
+      );
       setReorderMode(false);
       setReorderDraft([]);
       setSortMode("order");
@@ -488,7 +529,7 @@ export default function CategoriesPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Saving category order failed.");
     }
-  };
+  });
 
   const scrollToProducts = (category?: CatalogCategory) => {
     if (category) setSelectedId(category.id);
@@ -508,16 +549,20 @@ export default function CategoriesPage() {
 
   if (loading) {
     return (
-      <div className="grid min-h-[360px] place-items-center rounded-2xl border border-slate-200 bg-white">
-        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      <div role="status" aria-label={lang === "ar" ? "جارٍ تحميل التصنيفات" : "Loading categories"} className="grid min-h-[360px] place-items-center rounded-2xl border border-border bg-card">
+        <Loader2 className="size-6 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
-        {error}
+      <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+        <p className="font-semibold">{lang === "ar" ? "تعذّر تحميل التصنيفات." : "Categories could not be loaded."}</p>
+        <p className="mt-1 break-words text-xs">{error}</p>
+        <button type="button" onClick={() => setReloadToken((current) => current + 1)} className="mt-4 min-h-10 rounded-xl border border-current px-4 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2">
+          {t("Retry")}
+        </button>
       </div>
     );
   }
@@ -551,7 +596,9 @@ export default function CategoriesPage() {
             category={editing.category}
             categories={categories}
             mode={editing.mode}
-            onClose={() => setEditing(null)}
+            onClose={() => {
+              if (!mutationLock.current) setEditing(null);
+            }}
             onSave={saveCategory}
           />
         )}
@@ -560,7 +607,14 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="pb-4 sm:pb-8">
+    <div className="pb-4 sm:pb-8" aria-busy={mutationPending}>
+      {mutationPending && (
+        <div role="status" className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          {lang === "ar" ? "جارٍ حفظ تغييرات التصنيفات…" : "Saving category changes…"}
+        </div>
+      )}
+      <fieldset disabled={mutationPending} className="contents">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <PageTitle eyebrow="Commerce / Catalog" title="Categories Management" description="Manage Space Call browsing categories, icons, visibility, order, and product assignments." />
@@ -1137,13 +1191,17 @@ export default function CategoriesPage() {
         )}
       </div>
 
+      </fieldset>
+
       {editing && (
         <CategoryForm
           key={editing.category.id}
           category={editing.category}
           categories={categories}
           mode={editing.mode}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            if (!mutationLock.current) setEditing(null);
+          }}
           onSave={saveCategory}
         />
       )}
@@ -1152,7 +1210,9 @@ export default function CategoriesPage() {
         <ProductAssignmentDialog
           category={selected}
           products={products}
-          onClose={() => setAssignmentOpen(false)}
+          onClose={() => {
+            if (!mutationLock.current) setAssignmentOpen(false);
+          }}
           onAssign={assignProducts}
         />
       )}
@@ -1162,7 +1222,7 @@ export default function CategoriesPage() {
           title={"Delete " + deleteTarget.name + "?"}
           subtitle={t("The category can be removed, but products are never deleted.")}
           onClose={() => {
-            if (!deleting) setDeleteTarget(null);
+            if (!mutationLock.current) setDeleteTarget(null);
           }}
         >
           {getCategoryProductCount(products, deleteTarget) > 0 ? (
@@ -1183,7 +1243,7 @@ export default function CategoriesPage() {
                   <select
                     value={deleteDestination}
                     onChange={(event) => setDeleteDestination(event.target.value)}
-                    disabled={deleting}
+                    disabled={mutationPending || deleting}
                     className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="uncategorized">{t("Uncategorized")}</option>
@@ -1209,7 +1269,7 @@ export default function CategoriesPage() {
             <button
               type="button"
               onClick={() => setDeleteTarget(null)}
-              disabled={deleting}
+              disabled={mutationPending || deleting}
               className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t("Cancel")}
@@ -1217,7 +1277,7 @@ export default function CategoriesPage() {
             <button
               type="button"
               onClick={confirmDelete}
-              disabled={deleting}
+              disabled={mutationPending || deleting}
               aria-busy={deleting}
               className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -1239,6 +1299,7 @@ export default function CategoriesPage() {
             moveProduct.name + " will stay intact; only its Supabase category assignment changes."
           }
           onClose={() => {
+            if (mutationLock.current) return;
             setMoveProduct(null);
             setMoveDestination("");
           }}
@@ -1250,6 +1311,7 @@ export default function CategoriesPage() {
             <div className="relative">
               <select
                 value={moveDestination}
+                disabled={mutationPending}
                 onChange={(event) => setMoveDestination(event.target.value)}
                 className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
               >
@@ -1270,7 +1332,9 @@ export default function CategoriesPage() {
           <div className="mt-5 flex justify-end gap-2">
             <button
               type="button"
+              disabled={mutationPending}
               onClick={() => {
+                if (mutationLock.current) return;
                 setMoveProduct(null);
                 setMoveDestination("");
               }}
@@ -1280,7 +1344,8 @@ export default function CategoriesPage() {
             </button>
             <button
               type="button"
-              disabled={!moveDestination}
+              disabled={mutationPending || !moveDestination}
+              aria-busy={mutationPending}
               onClick={confirmMoveProduct}
               className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >

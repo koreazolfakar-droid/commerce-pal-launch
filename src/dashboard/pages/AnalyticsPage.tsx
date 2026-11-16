@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowDownToLine,
   BarChart3,
@@ -43,6 +43,7 @@ export default function AnalyticsPage() {
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [compare, setCompare] = useState(true);
   const [currency, setCurrency] = useState("USD");
+  const [knownCurrencies, setKnownCurrencies] = useState(["USD"]);
   const [revision, setRevision] = useState(0);
   const rangeResult = useMemo(() => {
     try {
@@ -65,13 +66,17 @@ export default function AnalyticsPage() {
     !!range,
   );
   const { data, loading, error, updatedAt } = resource;
-  const refresh = () => {
+  const refresh = useCallback(() => {
+    // A fresh snapshot must include events after the previous report cutoff.
     setAnchor(new Date());
     setRevision((n) => n + 1);
-  };
-  useDashboardRealtimeRefresh(["store_sales", "store_orders", "store_product_variants"], () =>
-    setRevision((n) => n + 1),
-  );
+  }, []);
+  useDashboardRealtimeRefresh(["store_sales", "store_orders", "store_product_variants"], refresh);
+  useEffect(() => {
+    if (data) {
+      setKnownCurrencies((codes) => Array.from(new Set([...codes, ...data.currencies])));
+    }
+  }, [data]);
   const date = (value: string) =>
     new Date(value).toLocaleDateString(locale, {
       month: "short",
@@ -87,7 +92,7 @@ export default function AnalyticsPage() {
       n,
     );
   const exportReport = () => {
-    if (!data) return;
+    if (!data || loading || error || !range) return;
     const current = data.current,
       previous = data.previous;
     downloadCsv(`space-call-analytics-${data.periodStart.slice(0, 10)}.csv`, [
@@ -129,7 +134,7 @@ export default function AnalyticsPage() {
     ]);
   };
   return (
-    <div className="analytics-page">
+    <div className="analytics-page" aria-busy={loading}>
       <header className="analytics-header">
         <PageTitle
           eyebrow="Store performance"
@@ -159,7 +164,10 @@ export default function AnalyticsPage() {
               type="button"
               key={value}
               aria-pressed={period === value}
-              onClick={() => setPeriod(value)}
+              onClick={() => {
+                setAnchor(new Date());
+                setPeriod(value);
+              }}
             >
               {t(value === "custom" ? "Custom" : value)}
             </button>
@@ -181,7 +189,7 @@ export default function AnalyticsPage() {
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
             >
-              {Array.from(new Set([currency, ...(data?.currencies ?? [])])).map((code) => (
+              {Array.from(new Set([currency, ...knownCurrencies, ...(data?.currencies ?? [])])).map((code) => (
                 <option key={code} value={code}>
                   {code}
                 </option>
@@ -243,6 +251,9 @@ export default function AnalyticsPage() {
       </p>
       {loading ? (
         <>
+          <p role="status" className="analytics-caption">
+            {lang === "ar" ? "جارٍ تحميل التقرير للفترة والعملة المحددتين…" : "Loading the report for the selected period and currency…"}
+          </p>
           <AnalyticsSkeleton cards={10} />
           <div className="analytics-chart-grid">
             <AnalyticsSkeleton />
