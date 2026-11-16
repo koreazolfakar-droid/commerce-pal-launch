@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Smartphone,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLanguage } from "@/dashboard/i18n";
 import {
@@ -21,6 +21,7 @@ import {
   verifyDashboardPasskeySecondFactor,
   verifyDashboardTotp,
   type DashboardTotpEnrollment,
+  type DashboardMfaStatus,
 } from "@/dashboard/data/catalog";
 
 type MfaMode = "loading" | "choice" | "enroll" | "challenge";
@@ -117,15 +118,19 @@ function qrImageSource(value: string) {
 export default function DashboardMfaStep({
   onSuccess,
   onCancel,
+  initialStatus = null,
   theme = "dark",
 }: {
   onSuccess: () => void;
   onCancel: () => void;
+  initialStatus?: DashboardMfaStatus | null;
   theme?: LoginTheme;
 }) {
   const { lang, t } = useLanguage();
   const copy = mfaCopy[lang];
   const isRtl = lang === "ar";
+  // Only use the authenticated handoff once. Direct MFA links still fetch fresh status.
+  const initialStatusRef = useRef(initialStatus);
   const [mode, setMode] = useState<MfaMode>("loading");
   const [factorId, setFactorId] = useState("");
   const [enrollment, setEnrollment] = useState<DashboardTotpEnrollment | null>(null);
@@ -159,7 +164,8 @@ export default function DashboardMfaStep({
     setMode("loading");
 
     try {
-      const status = await getDashboardMfaStatus();
+      const status = initialStatusRef.current ?? (await getDashboardMfaStatus());
+      initialStatusRef.current = null;
       if (!status) {
         await signOutDashboard().catch(() => undefined);
         onCancel();

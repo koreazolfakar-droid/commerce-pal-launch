@@ -30,6 +30,6 @@ test("visual simplification preserves staff authentication and recovery routes",
   assert.match(login, /<TurnstileChallenge/);
   assert.match(login, /requestDashboardPasswordReset/);
   assert.match(login, /updateDashboardPassword/);
-  assert.match(login, /data-testid="login-privacy-shield"/);
+  assert.doesNotMatch(login, /login-privacy-shield|privacyShielded/);
   assert.doesNotMatch(login, /submitPasskey|signInDashboardWithPasskey/);
 });

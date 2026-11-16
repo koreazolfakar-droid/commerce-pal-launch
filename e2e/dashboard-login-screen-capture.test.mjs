@@ -8,26 +8,19 @@ const login = await readFile(
 );
 const server = await readFile(new URL("../src/server.ts", import.meta.url), "utf8");
 
-test("login page shields sensitive content when hidden or unfocused", () => {
-  assert.match(login, /privacyShielded/);
-  assert.match(login, /visibilitychange/);
-  assert.match(login, /window\.addEventListener\("blur", shield\)/);
-  assert.match(login, /window\.addEventListener\("focus", unshield\)/);
-  assert.match(login, /window\.addEventListener\("pagehide", shield\)/);
-  assert.match(login, /data-testid="login-privacy-shield"/);
+test("login remains usable when the mobile browser loses and regains focus", () => {
+  assert.doesNotMatch(login, /privacyShielded|setPrivacyShielded|login-privacy-shield/);
+  assert.doesNotMatch(login, /window\.addEventListener\("blur"|window\.addEventListener\("pagehide"/);
+  assert.doesNotMatch(login, /PrintScreen|Sensitive content hidden|تم إخفاء المحتوى الحساس/);
+  assert.match(login, /type=\{visible \? "text" : "password"\}/);
 });
 
-test("login page deters desktop PrintScreen and printing", () => {
-  assert.match(login, /event\.key === "PrintScreen"/);
-  assert.match(login, /event\.preventDefault\(\)/);
+test("login still hides credentials from printed pages", () => {
   assert.match(login, /print:hidden/);
   assert.match(login, /@media print/);
   assert.match(login, /visibility: hidden !important/);
 });
 
 test("server disables page-initiated display capture", () => {
-  assert.match(
-    server,
-    /Permissions-Policy"[\s\S]*display-capture=\(\)/,
-  );
+  assert.match(server, /Permissions-Policy"[\s\S]*display-capture=\(\)/);
 });

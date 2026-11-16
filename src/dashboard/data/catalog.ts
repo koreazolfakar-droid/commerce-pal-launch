@@ -521,7 +521,9 @@ export async function signInDashboard(
     throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
   }
 
-  await dashboardLoginThrottle(email, "success");
+  // Cleanup is best-effort and must not delay the mandatory second-factor screen.
+  // The pre-auth throttle above remains fail-closed and is still awaited.
+  void dashboardLoginThrottle(email, "success").catch(() => undefined);
   return role;
 }
 
