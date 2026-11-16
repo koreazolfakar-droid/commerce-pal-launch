@@ -145,6 +145,7 @@ function editor({
     setSpecifications: () => {},
     setAiSpecificationKeys: () => {},
     setSaved: () => {},
+    setPublishReviewExpanded: () => {},
     setFieldErrors: () => {},
     setPublishError: () => {},
     setUploadedImageCount: () => {},
