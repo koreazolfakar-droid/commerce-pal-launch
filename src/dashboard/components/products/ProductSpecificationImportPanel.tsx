@@ -28,6 +28,7 @@ export default function ProductSpecificationImportPanel({
   const [overwrite, setOverwrite] = useState(false);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState("");
+  const [showManualCopy, setShowManualCopy] = useState(false);
 
   const preview = useMemo(
     () => parseSpecificationImport(source, template),
@@ -69,9 +70,13 @@ export default function ProductSpecificationImportPanel({
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(exported);
+      setShowManualCopy(false);
       setMessage(ar ? "تم نسخ المواصفات المكتملة." : "Filled specifications copied.");
     } catch {
-      setMessage(ar ? "تعذّر النسخ. تحقق من صلاحية الحافظة." : "Could not copy. Check clipboard permission.");
+      setShowManualCopy(true);
+      setMessage(ar
+        ? "النسخ التلقائي غير متاح على هذا الجهاز. انسخ النص أدناه يدوياً."
+        : "Automatic clipboard access is unavailable. Select and copy the text below.");
     }
   };
 
@@ -110,6 +115,22 @@ export default function ProductSpecificationImportPanel({
         </div>
       </div>
       {message ? <p role="status" className="mt-2 flex items-center gap-2 text-xs text-foreground"><CheckCircle2 className="size-4 text-primary" aria-hidden="true" />{message}</p> : null}
+      {showManualCopy && exported ? (
+        <div className="mt-3 space-y-1">
+          <label htmlFor="spacecall-spec-copy-text" className="text-xs font-medium text-foreground">
+            {ar ? "نسخة نصية قابلة للتحديد" : "Selectable specification text"}
+          </label>
+          <textarea
+            id="spacecall-spec-copy-text"
+            readOnly
+            rows={5}
+            dir="auto"
+            value={exported}
+            onFocus={(event) => event.currentTarget.select()}
+            className="w-full rounded-lg border border-border bg-background p-3 font-mono text-xs text-foreground"
+          />
+        </div>
+      ) : null}
 
       {expanded ? (
         <div className="mt-3 space-y-3 border-t border-border pt-3">
@@ -134,8 +155,8 @@ export default function ProductSpecificationImportPanel({
           />
           <p className="text-[11px] leading-5 text-muted-foreground">
             {ar
-              ? "مدعوم: الاسم: القيمة، الاسم = القيمة، جدول مفصول بعلامة Tab أو Markdown. لا يوجد بحث تلقائي أو إثبات لصحة البيانات."
-              : "Supports label: value, label = value, tab-separated and Markdown tables. Matching does not verify product accuracy."}
+              ? "مدعوم: الاسم: القيمة، الاسم = القيمة، جداول Excel ذات عمودين أو ثلاثة، وجداول Markdown. يمكن استخدام أسماء شائعة للمواصفات؛ يجب التحقق من القيم قبل حفظ المنتج."
+              : "Supports label: value, label = value, 2- or 3-column Excel/TSV and Markdown tables. Common aliases are recognized, but values must be verified before saving."}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span aria-live="polite">
