@@ -181,7 +181,7 @@ try {
     });
     assert.ok(geometry, label + ": expected dashboard layout");
     assert.equal(geometry.rootDisplay, "grid", label);
-    assert.equal(geometry.sidePosition, "sticky", label);
+    assert.equal(geometry.sidePosition, "fixed", label);
     assert.equal(geometry.sideTransform, "none", label);
     assert.equal(geometry.sideTranslate, "none", label);
     assert.equal(geometry.sideVisible, true, label);
