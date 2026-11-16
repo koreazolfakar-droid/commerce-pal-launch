@@ -4,6 +4,11 @@ import AiAssistPanel from "@/dashboard/components/ai/AiAssistPanel";
 import ProductSpecificationImportPanel from "@/dashboard/components/products/ProductSpecificationImportPanel";
 import { specificationFieldSuggestions } from "@/lib/specificationPresets";
 import {
+  nextMissingSpecificationKey,
+  visibleSpecificationSections,
+  type SpecificationFieldView,
+} from "@/lib/specificationEntryView";
+import {
   aiSpecificationFieldKey,
   specificationKeyFromAiField,
   validateSpecificationValue,
@@ -52,12 +57,12 @@ export default function ProductSpecificationEditor({
   const ar = lang === "ar";
   const [showScopedAi, setShowScopedAi] = useState(false);
   const [specSearch, setSpecSearch] = useState("");
-  const [fieldView, setFieldView] = useState<"all" | "missing" | "filled">("all");
+  const [fieldView, setFieldView] = useState<SpecificationFieldView>("all");
   const [editedVisibleKeys, setEditedVisibleKeys] = useState<Set<string>>(new Set());
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
   const [focusTarget, setFocusTarget] = useState<string | null>(null);
   const fields = template.sections.flatMap((section) => section.fields);
-  const nextMissingField = fields.find((field) => !values[field.key]?.trim());
+  const nextMissingKey = nextMissingSpecificationKey(template, values);
   const invalidFields = fields.filter((field) => validateSpecificationValue(field, values[field.key] ?? ""));
   const focusField = (key: string) => {
     setFieldView("all");
@@ -73,26 +78,15 @@ export default function ProductSpecificationEditor({
     element.scrollIntoView({ block: "center", behavior: "smooth" });
     setFocusTarget(null);
   }, [focusTarget, fieldView, specSearch]);
-  const selectView = (mode: "all" | "missing" | "filled") => {
+  const selectView = (mode: SpecificationFieldView) => {
     setEditedVisibleKeys(new Set());
     setFieldView(mode);
   };
   const completedCount = fields.filter((field) => Boolean(values[field.key]?.trim())).length;
   const completionPercent = fields.length ? Math.round(100 * completedCount / fields.length) : 0;
-  const normalizedSearch = specSearch.normalize("NFKC").trim().toLocaleLowerCase();
-  const visibleSections = template.sections
-    .map((section) => ({
-      ...section,
-      fields: section.fields.filter((field) =>
-        (fieldView === "all" ||
-          editedVisibleKeys.has(field.key) ||
-          (fieldView === "missing" ? !values[field.key]?.trim() : Boolean(values[field.key]?.trim()))) &&
-        (!normalizedSearch ||
-          [field.label, field.labelAr, field.key, field.unit]
-            .some((text) => text?.toLocaleLowerCase().includes(normalizedSearch))),
-      ),
-    }))
-    .filter((section) => section.fields.length);
+  const visibleSections = visibleSpecificationSections(
+    template, values, fieldView, specSearch, editedVisibleKeys,
+  );
   if (!fields.length) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-[10px] text-slate-400">
@@ -256,8 +250,8 @@ export default function ProductSpecificationEditor({
             ) : null}
             <button
               type="button"
-              disabled={!nextMissingField}
-              onClick={() => nextMissingField && focusField(nextMissingField.key)}
+              disabled={!nextMissingKey}
+              onClick={() => nextMissingKey && focusField(nextMissingKey)}
               className="h-9 rounded-lg border border-primary/30 bg-primary/5 px-3 text-xs font-semibold text-foreground hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {ar ? "انتقل للحقل الناقص" : "Next missing field"}
