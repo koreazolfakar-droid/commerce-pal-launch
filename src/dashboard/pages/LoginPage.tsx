@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Sun,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
@@ -20,6 +20,7 @@ import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
   getDashboardMfaStatus,
+  type DashboardMfaStatus,
   isDashboardTurnstileConfigured,
   requestDashboardPasswordReset,
   signInDashboard,
@@ -60,8 +61,6 @@ const loginCopy = {
     passwordHint: "Use at least 10 characters and avoid passwords you use on other services.",
     antiPhishing:
       "Never share your password or verification code. Space Call support will never ask for them.",
-    sensitiveHidden: "Sensitive content hidden",
-    returnSecurely: "Return to this page to continue.",
     capsLock: "Caps Lock is on. Check your password before continuing.",
     showPassword: "Show password",
     hidePassword: "Hide password",
@@ -113,8 +112,6 @@ const loginCopy = {
     recoveryBody: "إذا كان البريد مرتبطًا بحساب مصرح له، سيصل رابط الاستعادة قريبًا.",
     passwordHint: "استخدم 10 أحرف على الأقل وتجنب كلمات المرور المستخدمة في خدمات أخرى.",
     antiPhishing: "لا تشارك كلمة المرور أو رمز التحقق. دعم Space Call لن يطلبهما منك.",
-    sensitiveHidden: "تم إخفاء المحتوى الحساس",
-    returnSecurely: "عد إلى هذه الصفحة للمتابعة.",
     capsLock: "زر الأحرف الكبيرة مفعّل. تحقق من كلمة المرور قبل المتابعة.",
     showPassword: "إظهار كلمة المرور",
     hidePassword: "إخفاء كلمة المرور",
@@ -297,42 +294,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [inlineError, setInlineError] = useState("");
-  const [privacyShielded, setPrivacyShielded] = useState(false);
+  const [mfaInitialStatus, setMfaInitialStatus] = useState<DashboardMfaStatus | null>(null);
+  const signInPendingRef = useRef(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
   const { theme, toggleTheme } = useTheme();
-
-  useEffect(() => {
-    const shield = () => setPrivacyShielded(true);
-    const unshield = () => setPrivacyShielded(false);
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") shield();
-      else unshield();
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "PrintScreen") {
-        event.preventDefault();
-        shield();
-        window.setTimeout(unshield, 1200);
-      }
-    };
-
-    window.addEventListener("blur", shield);
-    window.addEventListener("focus", unshield);
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("pagehide", shield);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      window.removeEventListener("blur", shield);
-      window.removeEventListener("focus", unshield);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("pagehide", shield);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, []);
 
   useEffect(() => {
     if (recoveryMode) return;
@@ -423,14 +389,18 @@ export default function LoginPage() {
   }, [copy, view]);
 
   const submit = async () => {
+    // Reject rapid taps and Enter repeats before React updates the disabled button.
+    if (signInPendingRef.current) return;
     setInlineError("");
     if (!email.trim() || !password) {
       setInlineError(copy.required);
       return;
     }
 
+    signInPendingRef.current = true;
     setLoading(true);
     try {
+      setMfaInitialStatus(null);
       await signInDashboard(email, password, captchaToken ?? undefined);
 
       if (rememberEmail) window.localStorage.setItem(EMAIL_STORAGE_KEY, email.trim());
@@ -444,6 +414,8 @@ export default function LoginPage() {
         navigate("/dashboard");
       } else {
         setPassword("");
+        // The server-validated MFA state is reused by the next screen.
+        setMfaInitialStatus(mfaStatus);
         setView("mfa");
         window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
       }
@@ -455,6 +427,7 @@ export default function LoginPage() {
       setInlineError(message);
       toast.error(message);
     } finally {
+      signInPendingRef.current = false;
       setLoading(false);
       resetCaptcha();
     }
@@ -522,6 +495,7 @@ export default function LoginPage() {
     setShowNewPassword(false);
     setShowConfirmPassword(false);
     resetCaptcha();
+    setMfaInitialStatus(null);
     setView("signin");
   };
 
@@ -547,6 +521,7 @@ export default function LoginPage() {
     setShowPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
+    setMfaInitialStatus(null);
     setView("signin");
     setInlineError("");
   }, []);
@@ -568,7 +543,6 @@ export default function LoginPage() {
         [data-login-theme="light"] .login-icon-button, [data-login-theme="light"] .login-control { color: #475569 !important; background: #ffffff !important; border-color: #cbd5e1 !important; }
         [data-login-theme="light"] .login-soft { background: #f8fafc !important; border-color: #e2e8f0 !important; box-shadow: none !important; }
         [data-login-theme="light"] .login-footer { background: #f8fafc !important; border-color: #e2e8f0 !important; }
-        [data-login-theme="light"] .login-privacy { background: rgba(243,246,251,.98) !important; }
         [data-login-theme="light"] .login-logo-tile { background: #ffffff !important; border-color: #dbe4f0 !important; box-shadow: 0 10px 24px rgba(15,23,42,.08) !important; }
         [data-login-theme="light"] .login-error { background: #fff1f2 !important; border-color: #fecdd3 !important; color: #be123c !important; }
         [data-login-theme="light"] .login-link { color: #1d4ed8 !important; }
@@ -577,25 +551,6 @@ export default function LoginPage() {
           body * { visibility: hidden !important; }
         }
       `}</style>
-      {privacyShielded ? (
-        <div
-          className="login-privacy fixed inset-0 z-[9999] grid place-items-center bg-[#09172b]/98 backdrop-blur-xl"
-          aria-live="polite"
-          data-testid="login-privacy-shield"
-        >
-          <div className="mx-auto max-w-xs px-6 text-center">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-blue-300/15 bg-blue-300/[.07] text-[#bfdbfe] shadow-[0_20px_60px_rgba(37,99,235,.14)]">
-              <ShieldCheck className="size-6" />
-            </div>
-            <div className="login-heading mt-4 text-sm font-bold text-white">
-              {copy.sensitiveHidden}
-            </div>
-            <p className="login-muted mt-1.5 text-sm leading-5 text-slate-400">
-              {copy.returnSecurely}
-            </p>
-          </div>
-        </div>
-      ) : null}
       <div className="relative mx-auto flex min-h-[100dvh] w-full items-center justify-center px-4 py-8 sm:px-6">
         <div className="w-full max-w-[460px]">
           <header className="mb-6 flex items-center justify-between gap-3">
@@ -855,6 +810,7 @@ export default function LoginPage() {
 
               {view === "mfa" ? (
                 <DashboardMfaStep
+                  initialStatus={mfaInitialStatus}
                   onSuccess={handleMfaSuccess}
                   onCancel={handleMfaCancel}
                   theme={theme}
