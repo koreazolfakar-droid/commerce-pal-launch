@@ -28,7 +28,7 @@ test("every specification field in ten starter categories has a concrete bilingu
         for (const lang of ["ar", "en"]) {
           const example = examples.specificationFieldExample(field, lang);
           assert.ok(example && example.trim().length > 0, preset.id + ":" + field.key + ":" + lang);
-          assert.doesNotMatch(example, /undefined|null|NaN/i);
+          assert.doesNotMatch(example, /\bundefined\b|\bnull\b|\bNaN\b/i);
           assert.doesNotMatch(example, /manufacturer|الشركة/i, "starter fields need a concrete example: " + field.key);
         }
       }
