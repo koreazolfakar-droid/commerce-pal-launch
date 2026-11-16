@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
 import { useTheme, type Theme } from "@/dashboard/contexts/ThemeContext";
+import { supabase } from "@/integrations/supabase/client";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
@@ -304,7 +305,13 @@ export default function LoginPage() {
     if (recoveryMode) return;
 
     let cancelled = false;
-    getDashboardMfaStatus()
+    // Most visits to the sign-in page have no session. Avoid a pointless
+    // server MFA check (and token-refresh attempt) in that case.
+    void supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (cancelled || !session) return null;
+        return getDashboardMfaStatus();
+      })
       .then((status) => {
         if (cancelled || !status) return;
         if (status.ready) {
@@ -401,13 +408,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       setMfaInitialStatus(null);
-      await signInDashboard(email, password, captchaToken ?? undefined);
+      const mfaStatus = await signInDashboard(email, password, captchaToken ?? undefined);
 
       if (rememberEmail) window.localStorage.setItem(EMAIL_STORAGE_KEY, email.trim());
       else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
-
-      const mfaStatus = await getDashboardMfaStatus();
-      if (!mfaStatus) throw new Error("Unable to verify this session.");
 
       if (mfaStatus.ready) {
         toast.success(copy.signedIn);
