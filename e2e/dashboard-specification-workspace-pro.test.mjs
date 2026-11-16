@@ -124,7 +124,7 @@ test("product and category workspaces are wired with review and no direct persis
     readFile(new URL("../src/dashboard/pages/ProductFormPage.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(productEditor, /ProductSpecificationImportPanel/);
-  assert.match(productEditor, /fieldView === "missing"/);
+  assert.match(productEditor, /visibleSpecificationSections\(/);
   assert.match(productEditor, /aria-invalid/);
   assert.match(productImport, /specificationImportPatch/);
   assert.match(productImport, /validateSpecificationValue/);
