@@ -92,8 +92,8 @@ function parseRow(raw: string): [string, string] | null {
 
   // Portable 3-column TSV: key, human label, value. A stable key avoids
   // confusion when multiple sections happen to share a translated label.
-  if (row.includes("	")) {
-    const cells = row.split(/	+/u).map((cell) => cell.trim());
+  if (row.includes("\t")) {
+    const cells = row.split(/\t+/u).map((cell) => cell.trim());
     if (cells.length === 3 && cells[0] && cells[2]) {
       return /^(?:key|field|attribute)$/iu.test(cells[0]) ? null : [cells[0], cells[2]];
     }
