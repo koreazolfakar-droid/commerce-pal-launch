@@ -271,3 +271,15 @@ test("Bounded reader preserves split UTF-8 at the exact byte boundary", async ()
   const req = new Request("https://fixture.test", { method: "POST", body, duplex: "half" });
   assert.equal(await bodyModule.readBoundedText(req, bytes.length), '{"city":"صيدا"}');
 });
+
+if (process.env.SPACE_CALL_SECURITY_BASELINE) {
+  test("Baseline reproduction: base handler accepts unconfirmed legacy contact", async () => {
+    const baseline = await readFile(process.env.SPACE_CALL_SECURITY_BASELINE, "utf8");
+    const r = await invoke(baseline, itemBody);
+    assert.equal(r.response.status, 200);
+    assert.equal(r.body.items[0].title, "Fixture");
+    // Compare against the same request and database fixture on the patched handler.
+    const fixed = await invoke(customerSource, itemBody);
+    assert.equal(fixed.response.status, 404);
+  });
+}
