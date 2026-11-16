@@ -170,6 +170,7 @@ export function normalizeDashboardPath(pathname: string) {
   return withoutQuery.length > 1 ? withoutQuery.replace(/\/+$/, "") : withoutQuery;
 }
 
+const analyticsPage = lazyPage(() => import("@/dashboard/pages/AnalyticsPage"));
 const homePage = lazyPage(() => import("@/dashboard/pages/DashboardHomePage"));
 const ordersPage = lazyPage(() => import("@/dashboard/pages/OrdersPage"));
 const orderDetailPage = lazyPage(() => import("@/dashboard/pages/OrderDetailPage"));
@@ -230,8 +231,7 @@ const routes: DashboardRouteDefinition[] = [
   staticRoute({
     id: "analytics",
     path: "/dashboard/analytics",
-    page: homePage,
-    render: (Page) => createElement(Page, { analyticsView: true }),
+    page: analyticsPage,
     meta: {
       eyebrow: "Management / Insights",
       title: "Analytics",
