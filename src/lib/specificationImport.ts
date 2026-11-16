@@ -44,6 +44,35 @@ function normalizedLabel(raw: string) {
     .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
+// Common manufacturer terms are aliases only when the current category has
+// the corresponding field. Canonical keys/labels always take precedence.
+const FIELD_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  display_size: ["screen size", "screen diagonal", "display diagonal", "screen size (in)", "حجم شاشة"],
+  display_type: ["panel type", "screen technology", "panel technology", "نوع الشاشة"],
+  display_resolution: ["screen resolution", "screen pixels", "resolution", "دقة الشاشة"],
+  refresh_rate: ["screen refresh rate", "display refresh rate", "معدل تحديث الشاشة"],
+  chipset: ["processor", "soc", "cpu", "mobile processor", "شريحة المعالجة"],
+  processor: ["cpu", "chipset", "processor model"],
+  ram: ["ram size", "ram capacity", "system memory", "memory (ram)", "الرام"],
+  storage: ["internal storage", "internal memory", "storage capacity", "rom", "مساحة التخزين"],
+  operating_system: ["os", "system software", "نظام التشغيل"],
+  rear_camera: ["main camera", "primary camera", "rear camera", "الكاميرا الرئيسية"],
+  front_camera: ["selfie camera", "front camera", "كاميرا السيلفي"],
+  battery_capacity: ["battery", "battery size", "battery capacity (mah)", "سعة بطارية"],
+  charging_power: ["wired charging power", "fast charging wattage", "wired charging", "قدرة الشحن"],
+  bluetooth_version: ["bluetooth", "bt version", "bluetooth ver", "اصدار بلوتوث"],
+  noise_cancellation: ["anc", "active noise cancellation", "noise canceling", "عزل الضوضاء"],
+  water_resistance: ["ip rating", "waterproof rating", "dust water protection", "تصنيف الحماية"],
+  driver_size: ["driver diameter", "speaker driver size", "speaker size", "حجم المحرك الصوتي"],
+  playback_time: ["playtime", "music playback time", "earbud battery life"],
+  battery_with_case: ["total battery life", "total playback with case", "playback with case"],
+  max_output: ["maximum output", "maximum charging power", "max power", "output power"],
+  port_count: ["number of ports", "ports count", "عدد منافذ"],
+  ports: ["port type", "port types", "connectors", "connectivity ports", "منافذ"],
+  compatibility: ["compatible devices", "supported devices", "توافق الجهاز"],
+  cable_included: ["includes cable", "charging cable included", "مرفق كابل"],
+};
+
 function parseRow(raw: string): [string, string] | null {
   const row = raw.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/u, "").trim();
   if (!row || /^#{1,6}\s/u.test(row) || /^[-|:\s]+$/u.test(row)) return null;
@@ -51,6 +80,9 @@ function parseRow(raw: string): [string, string] | null {
   // Markdown: | Screen size | 6.7 inches |
   if (row.startsWith("|")) {
     const cells = row.split("|").slice(1, -1).map((cell) => cell.trim());
+    if (cells.length === 3 && cells[0] && cells[2]) {
+      return /^(?:key|field|attribute)$/iu.test(cells[0]) ? null : [cells[0], cells[2]];
+    }
     if (cells.length === 2 && cells[0] && cells[1] &&
         !/^(?:label|field|attribute|المواصفة|اسم المواصفة)$/iu.test(cells[0])) {
       return [cells[0], cells[1]];
@@ -58,7 +90,18 @@ function parseRow(raw: string): [string, string] | null {
     return null;
   }
 
-  // Manufacturer text, TSV, spreadsheets, or simple key/value lines.
+  // Portable 3-column TSV: key, human label, value. A stable key avoids
+  // confusion when multiple sections happen to share a translated label.
+  if (row.includes("	")) {
+    const cells = row.split(/	+/u).map((cell) => cell.trim());
+    if (cells.length === 3 && cells[0] && cells[2]) {
+      return /^(?:key|field|attribute)$/iu.test(cells[0]) ? null : [cells[0], cells[2]];
+    }
+    if (cells.length === 2 && cells[0] && cells[1]) return [cells[0], cells[1]];
+    return null;
+  }
+
+  // Manufacturer text or simple key/value lines.
   const match = /^(.{1,140}?)(?:\t+|\s*[:：=]\s*)(.+)$/u.exec(row);
   if (!match) return null;
   const label = match[1].replace(/^\*{1,2}|\*{1,2}$/g, "").trim();
@@ -75,18 +118,22 @@ export function parseSpecificationImport(
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const truncated = raw.length > MAX_IMPORT_CHARS || lines.length > MAX_IMPORT_LINES;
 
-  const indexed = new Map<string, ProductSpecificationField[]>();
+  const keys = new Map<string, ProductSpecificationField[]>();
+  const labels = new Map<string, ProductSpecificationField[]>();
+  const aliases = new Map<string, ProductSpecificationField[]>();
+  const index = (target: Map<string, ProductSpecificationField[]>, raw: string, field: ProductSpecificationField) => {
+    const label = normalizedLabel(raw);
+    if (!label) return;
+    const owners = target.get(label) ?? [];
+    if (!owners.some((owner) => owner.key === field.key)) owners.push(field);
+    target.set(label, owners);
+  };
   for (const section of template.sections) {
     for (const field of section.fields) {
-      for (const label of [field.key, field.label, field.labelAr].filter(
-        (item): item is string => Boolean(item),
-      )) {
-        const normalized = normalizedLabel(label);
-        if (!normalized) continue;
-        const owners = indexed.get(normalized) ?? [];
-        if (!owners.some((owner) => owner.key === field.key)) owners.push(field);
-        indexed.set(normalized, owners);
-      }
+      index(keys, field.key, field);
+      index(labels, field.label, field);
+      if (field.labelAr) index(labels, field.labelAr, field);
+      for (const alias of FIELD_ALIASES[field.key] ?? []) index(aliases, alias, field);
     }
   }
 
@@ -97,7 +144,8 @@ export function parseSpecificationImport(
     const parsed = parseRow(rawLine);
     if (!parsed) return;
     const [label, value] = parsed;
-    const owners = indexed.get(normalizedLabel(label)) ?? [];
+    const normalized = normalizedLabel(label);
+    const owners = keys.get(normalized) ?? labels.get(normalized) ?? aliases.get(normalized) ?? [];
     const reason = owners.length === 0 ? "unmatched" :
       owners.length > 1 ? "ambiguous" :
       seen.has(owners[0].key) ? "duplicate" :
@@ -147,7 +195,11 @@ export function exportSpecifications(
     section.fields.flatMap((field) => {
       const value = values[field.key]?.trim();
       return value
-        ? [(ar ? field.labelAr || field.label : field.label) + "\t" + value.replace(/[\t\r\n]+/g, " ")]
+        ? [
+          field.key + "\t" +
+          (ar ? field.labelAr || field.label : field.label).replace(/[\t\r\n]+/g, " ") + "\t" +
+          value.replace(/[\t\r\n]+/g, " "),
+        ]
         : [];
     }),
   ).join("\n");
