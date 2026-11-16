@@ -162,14 +162,32 @@ function DashboardLayout() {
   const [location] = useLocation();
   const { t } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => readPreference("dashboard:sidebar-collapsed") === "true",
+  );
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((current) => {
+      const next = !current;
+      writePreference("dashboard:sidebar-collapsed", String(next));
+      return next;
+    });
+  }, []);
   const route = location.replace(/\/$/, "") || "/dashboard";
   const content = resolveDashboardRoute(route);
   return (
-    <div className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-clip bg-background text-foreground">
+    <div
+      className="dashboard-theme-scope min-h-screen min-h-[100dvh] overflow-x-clip bg-background text-foreground"
+      data-sidebar-collapsed={sidebarCollapsed ? "true" : undefined}
+    >
       <a href="#dashboard-main" className="dashboard-skip-link">
         {t("Skip to content")}
       </a>
-      <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <Sidebar
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleSidebarCollapsed}
+      />
       <div
         inert={mobileOpen ? true : undefined}
         className="dashboard-desktop-content min-h-screen min-h-[100dvh] min-w-0"

@@ -271,3 +271,48 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Optional desktop icon rail. The authenticated shell reserves the same width
+   in its grid; all role-filtered links stay present and keyboard accessible. */
+@media (min-width: 768px) {
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] {
+    --dashboard-integrated-sidebar-width: 72px;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-brand {
+    min-height: 112px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding-inline: 6px;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-brand-copy,
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-label,
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-group-heading {
+    display: none;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-scroll {
+    padding-inline: 7px;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-action {
+    justify-content: center;
+    padding-inline: 0;
+    gap: 0;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-shortcuts {
+    gap: 5px;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-footer {
+    padding-inline: 7px;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished :is(.dashboard-sidebar-new-product, .dashboard-sidebar-store) {
+    justify-content: center;
+    padding-inline: 0;
+    gap: 0;
+  }
+  .dashboard-theme-scope[data-sidebar-collapsed="true"] .sidebar-polished .dashboard-sidebar-group + .dashboard-sidebar-group {
+    padding-block-start: 8px;
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope .sidebar-polished .dashboard-sidebar-collapse { display: none; }
+}

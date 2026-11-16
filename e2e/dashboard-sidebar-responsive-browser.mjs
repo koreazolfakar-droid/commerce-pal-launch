@@ -33,6 +33,20 @@ try {
     await active.first().waitFor();
     assert.ok(await active.count() >= 1, "current route not visible at " + width);
 
+    if (width === 980) {
+      await sidebar.getByRole("button", { name: "Collapse navigation" }).click();
+      assert.equal(await page.locator(".dashboard-theme-scope").getAttribute("data-sidebar-collapsed"), "true");
+      assert.ok(Math.abs((await sidebar.boundingBox()).width - 72) <= 2, "compact rail width");
+      await page.reload();
+      await sidebar.waitFor({ state: "visible" });
+      assert.equal(await page.locator(".dashboard-theme-scope").getAttribute("data-sidebar-collapsed"), "true",
+        "compact preference persists after reload");
+      assert.equal(await sidebar.getByRole("button", { name: "Users" }).count(), 0,
+        "editor role must never gain admin-only navigation in compact mode");
+      await sidebar.getByRole("button", { name: "Expand navigation" }).click();
+      assert.notEqual(await page.locator(".dashboard-theme-scope").getAttribute("data-sidebar-collapsed"), "true");
+    }
+
     // Inventory and other long pages scroll the document. The sidebar must
     // stay pinned to the viewport instead of leaving an empty white column.
     const scrolled = await page.evaluate(async () => {
@@ -95,7 +109,7 @@ try {
   }
   console.log(JSON.stringify({ passed: [
     "compact desktop sidebar", "mobile drawer 320 and 390",
-    "navigation groups", "products route", "active route", "full-height sticky navigation during long-page scrolling",
+    "navigation groups", "products route", "active route", "persistent compact desktop rail", "full-height sticky navigation during long-page scrolling",
   ] }));
 } finally {
   await browser.close();
