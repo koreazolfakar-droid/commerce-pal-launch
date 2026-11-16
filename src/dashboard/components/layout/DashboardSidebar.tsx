@@ -23,6 +23,8 @@ import {
   Menu,
   Package,
   PackagePlus,
+  PanelLeftClose,
+  PanelLeftOpen,
   PanelsTopLeft,
   SearchCheck,
   Settings2,
@@ -71,7 +73,7 @@ function Logo() {
       <div className="dashboard-brand-mark grid size-11 shrink-0 place-items-center rounded-xl" aria-hidden="true">
         <span>SC</span>
       </div>
-      <div className="min-w-0">
+      <div className="dashboard-sidebar-brand-copy min-w-0">
         <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
         <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
       </div>
@@ -82,9 +84,13 @@ function Logo() {
 export default function Sidebar({
   mobileOpen,
   setMobileOpen,
+  collapsed,
+  onToggleCollapsed,
 }: {
   mobileOpen: boolean;
   setMobileOpen: (v: boolean) => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }) {
   const { t, lang } = useLanguage();
   const [location, navigate] = useLocation();
@@ -172,6 +178,16 @@ export default function Sidebar({
           <Logo />
           <button
             type="button"
+            onClick={onToggleCollapsed}
+            aria-label={t(collapsed ? "Expand navigation" : "Collapse navigation")}
+            title={t(collapsed ? "Expand navigation" : "Collapse navigation")}
+            aria-expanded={!collapsed}
+            className="dashboard-sidebar-collapse grid size-10 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+          >
+            {collapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
+          </button>
+          <button
+            type="button"
             onClick={() => setMobileOpen(false)}
             aria-label={t("Close navigation")}
             className="dashboard-sidebar-close grid size-10 shrink-0 place-items-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
@@ -187,7 +203,7 @@ export default function Sidebar({
                   type="button"
                   onClick={() => toggleSection(section.label)}
                   aria-expanded={!closedSections.includes(section.label)}
-                  className="dashboard-sidebar-section mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-400 hover:text-white"
+                  className="dashboard-sidebar-section dashboard-sidebar-group-heading mb-2 flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-400 hover:text-white"
                 >
                   <span>{t(section.label)}</span>
                   <ChevronDown
@@ -198,7 +214,7 @@ export default function Sidebar({
               <div className="dashboard-sidebar-items">
                 {section.items
                   .filter((item) => !unavailableDashboardRoutes.has(item.href))
-                  .filter((item) => !closedSections.includes(section.label) || item.href === activeHref)
+                  .filter((item) => collapsed || !closedSections.includes(section.label) || item.href === activeHref)
                   .filter((item) => item.href !== "/dashboard/users" || identity.role === "admin")
                   .map((item) => {
                     const Icon = iconMap[item.icon] ?? LayoutDashboard;
@@ -224,14 +240,14 @@ export default function Sidebar({
                           strokeWidth={1.8}
                         />
                         <>
-                          <span className="min-w-0 flex-1 truncate">{t(item.label)}</span>
+                          <span className="dashboard-sidebar-label min-w-0 flex-1 truncate">{t(item.label)}</span>
                             {[
                               "/dashboard/marketing",
                               "/dashboard/coupons",
                               "/dashboard/messages",
                               "/dashboard/reviews",
                             ].includes(item.href) ? (
-                              <span className="dashboard-sidebar-status ms-auto rounded px-1.5 py-0.5 text-[10px]">
+                              <span className="dashboard-sidebar-status dashboard-sidebar-label ms-auto rounded px-1.5 py-0.5 text-[10px]">
                                 {t("Not connected")}
                               </span>
                             ) : null}
@@ -252,19 +268,23 @@ export default function Sidebar({
                   navigate("/dashboard/products/new");
                   setMobileOpen(false);
                 }}
+                aria-label={t("Quick product")}
+                title={t("Quick product")}
                 className="dashboard-sidebar-new-product flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-[13px] font-semibold"
               >
                 <PackagePlus className="size-[18px]" strokeWidth={1.8} />
-                <span className="flex-1 text-start">{t("Quick product")}</span>
-                <span aria-hidden="true">+</span>
+                <span className="dashboard-sidebar-label flex-1 text-start">{t("Quick product")}</span>
+                <span className="dashboard-sidebar-label" aria-hidden="true">+</span>
               </button>
               <button
                 type="button"
                 onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
+                aria-label={t("Open store")}
+                title={t("Open store")}
                 className="dashboard-sidebar-store flex min-h-11 w-full items-center gap-2.5 rounded-lg px-3 text-[12px] font-medium"
               >
                 <ExternalLink className="size-4" />
-                <span className="flex-1 text-start">{t("Open store")}</span>
+                <span className="dashboard-sidebar-label flex-1 text-start">{t("Open store")}</span>
               </button>
           </div>
         </div>
