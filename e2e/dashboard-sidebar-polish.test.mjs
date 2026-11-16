@@ -44,3 +44,11 @@ test("active group visibility, keyboard focus, touch targets and reduced motion 
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\[dir="rtl"\]/);
 });
+
+test("desktop sidebar stays sticky across tall inventory pages without clipping the vertical scroll container", () => {
+  assert.match(app, /dashboard-theme-scope min-h-screen min-h-\[100dvh\] overflow-x-clip/);
+  assert.doesNotMatch(app, /dashboard-theme-scope[^\n]*overflow-x-hidden/);
+  assert.match(css, /\.dashboard-theme-scope \.dashboard-sidebar\.sidebar-polished/);
+  assert.match(sidebar, /dashboard-sidebar-scroll flex-1 overflow-y-auto overscroll-contain/);
+  assert.match(sidebar, /dashboard-sidebar-footer p-3/);
+});
