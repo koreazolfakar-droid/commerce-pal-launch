@@ -53,8 +53,8 @@ export default function ProductFormMap({
   );
   const prepared = sections.filter((section) => section.complete).length;
 
-  const jumpTo = (id: string) => {
-    const target = document.getElementById(id);
+  const jumpTo = (section: FormSection) => {
+    const target = document.getElementById(section.id);
     if (!target) return;
     if (target instanceof HTMLDetailsElement) target.open = true;
     const parentDetails = target.closest("details");
@@ -154,7 +154,7 @@ export default function ProductFormMap({
                     type="button"
                     key={section.id}
                     data-complete={section.complete}
-                    onClick={() => jumpTo(section.id)}
+                    onClick={() => jumpTo(section)}
                     className="dashboard-form-map-link"
                   >
                     {section.complete
