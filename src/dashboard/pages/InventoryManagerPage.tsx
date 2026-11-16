@@ -399,7 +399,7 @@ export default function InventoryManagerPage() {
         <div className="dashboard-metric-card rounded-xl border border-border bg-card p-3 sm:p-4">
           <div className="text-xs text-slate-500">{t("Total units")}</div>
           <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">{totalUnits}</div>
-          <div className="mt-1 text-[10px] text-slate-400">
+          <div className="mt-1 text-xs text-muted-foreground">
             {summary.variantCount} {t("variants")}
           </div>
         </div>
@@ -463,10 +463,11 @@ export default function InventoryManagerPage() {
               type="button"
               aria-expanded={filtersOpen}
               onClick={() => setFiltersOpen((open) => !open)}
-              className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:hidden"
+              className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:hidden"
               aria-label={t("Advanced inventory filters")}
             >
               <SlidersHorizontal className="size-5" />
+              {activeFilterCount > 0 && <span className="ms-1 text-xs font-bold tabular-nums">{activeFilterCount}</span>}
             </button>
           </div>
           <div className={`${filtersOpen ? "flex" : "hidden"} flex-wrap items-center gap-2 lg:flex`}>
@@ -474,7 +475,7 @@ export default function InventoryManagerPage() {
               value={category}
               onChange={(event) => { setCategory(event.target.value); setPage(1); }}
               aria-label={t("All categories")}
-              className="h-11 min-w-0 max-w-full flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex-none"
+              className="h-11 min-w-0 max-w-full flex-1 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground sm:flex-none"
             >
               <option value="all">{t("All categories")}</option>
               {categories.items.map((item) => (
@@ -484,7 +485,7 @@ export default function InventoryManagerPage() {
                 <option value="uncategorized">{t("Uncategorized")}</option>
               )}
             </select>
-            <label className="flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700">
+            <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground">
               <SlidersHorizontal className="size-4" />
               {t("Low ≤")}
               <input
@@ -493,7 +494,7 @@ export default function InventoryManagerPage() {
                 type="number"
                 min={0}
                 aria-label={t("Low stock threshold")}
-                className="w-14 bg-transparent text-sm outline-none"
+                className="w-14 bg-transparent text-sm text-foreground outline-none"
               />
             </label>
             <button
@@ -501,7 +502,7 @@ export default function InventoryManagerPage() {
               onClick={() => { setOnlyLow((current) => !current); setPage(1); }}
               aria-pressed={onlyLow}
               className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
-                onlyLow ? "border-amber-300 bg-amber-50 text-amber-800" : "border-slate-200 bg-white text-slate-700"
+                onlyLow ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200" : "border-border bg-background text-foreground"
               }`}
             >
               <Filter className="size-4" />
@@ -510,7 +511,7 @@ export default function InventoryManagerPage() {
             <button
               type="button"
               onClick={() => { setQuery(""); setCategory("all"); setOnlyLow(false); setThreshold(10); setPage(1); }}
-              className="min-h-11 rounded-lg px-3 text-sm font-semibold text-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="min-h-11 rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
               {t("Reset filters")}
             </button>
@@ -519,14 +520,14 @@ export default function InventoryManagerPage() {
       </div>
 
       <div className="dashboard-catalog-panel overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
+        <div className="flex items-center justify-between border-b border-border p-3 sm:px-5 sm:py-3.5">
           <div>
-            <div className="text-[15px] font-bold text-[#14203a]">{t("Inventory products")}</div>
-            <div className="mt-1 text-[10px] text-slate-400">
+            <div className="text-[15px] font-bold text-foreground">{t("Inventory products")}</div>
+            <div className="mt-1 text-xs text-muted-foreground">
               {t(paginationMode === "products" ? "All variants are included in each product group." : "Products are grouped by ID. Counts apply to variants on this page.")}
             </div>
           </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
             {totalCount ? `${pageStart + 1}–${pageEnd} of ${totalCount}` : t("0 shown")}
           </span>
         </div>
@@ -546,14 +547,14 @@ export default function InventoryManagerPage() {
           onHistory={(row) => setHistoryRow(row)}
         />
         {!totalCount && (
-          <div className="p-12 text-center text-sm text-slate-400">
+          <div className="p-12 text-center text-sm text-muted-foreground">
             <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
             {t("No inventory variants match these filters.")}
           </div>
         )}
 
         {totalCount > 0 && (
-          <div className="flex flex-col gap-3 border-t border-slate-100 bg-[#fcfcfe] px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex items-center justify-between gap-3 sm:justify-start">
               <span className="text-xs font-semibold text-slate-500">
                 {t("Showing")} {pageStart + 1}–{pageEnd} {t("of")} {totalCount} {t(paginationMode === "products" ? "products" : "variants")}
@@ -566,7 +567,7 @@ export default function InventoryManagerPage() {
                     setPageSize(Number(event.target.value));
                     setPage(1);
                   }}
-                  className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  className="h-9 rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-blue-500"
                   aria-label={t("Inventory rows per page")}
                 >
                   <option value={20}>20</option>
