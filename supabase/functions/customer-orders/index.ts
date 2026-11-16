@@ -1,3 +1,4 @@
+import { readBoundedText, RequestBodyTooLargeError } from "../_shared/requestBody.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
@@ -90,20 +91,39 @@ function normalizedPhone(value: unknown) {
   return typeof value === "string" ? value.replace(/\D/g, "") : "";
 }
 
+type OrderUser = {
+  id: string;
+  email?: string | null;
+  phone?: string | null;
+  email_confirmed_at?: string | null;
+  phone_confirmed_at?: string | null;
+  is_anonymous?: boolean;
+};
+
+function verifiedEmail(user: OrderUser) {
+  return !user.is_anonymous && user.email_confirmed_at
+    ? user.email?.trim().toLowerCase() || ""
+    : "";
+}
+
+function verifiedPhone(user: OrderUser) {
+  return !user.is_anonymous && user.phone_confirmed_at ? normalizedPhone(user.phone) : "";
+}
+
 function orderIdentityMatches(
   row: Record<string, unknown>,
-  user: { id: string; email?: string | null; phone?: string | null },
+  user: OrderUser,
 ) {
   if (typeof row.customer_user_id === "string" && row.customer_user_id) {
     return row.customer_user_id === user.id;
   }
 
-  const userEmail = user.email?.trim().toLowerCase() || "";
+  const userEmail = verifiedEmail(user);
   const orderEmail =
     typeof row.customer_email === "string" ? row.customer_email.trim().toLowerCase() : "";
   if (userEmail && orderEmail === userEmail) return true;
 
-  const userPhone = normalizedPhone(user.phone);
+  const userPhone = verifiedPhone(user);
   const orderPhone = normalizedPhone(row.customer_phone);
   return Boolean(userPhone && orderPhone === userPhone);
 }
@@ -205,16 +225,16 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown>;
   try {
-    const raw = await req.text();
-    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
-      return json(req, 413, { error: "payload_too_large" });
-    }
+    const raw = await readBoundedText(req, MAX_BODY_BYTES);
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return json(req, 400, { error: "invalid_payload" });
     }
     body = parsed as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return json(req, 413, { error: "payload_too_large" });
+    }
     return json(req, 400, { error: "invalid_json" });
   }
 
@@ -333,11 +353,12 @@ Deno.serve(async (req: Request) => {
   }
   collect(byUser.data as unknown[] | null);
 
-  if (user.email) {
+  const email = verifiedEmail(user);
+  if (email) {
     const byEmail = await db
       .from("store_orders")
       .select(columns)
-      .ilike("customer_email", user.email.trim())
+      .ilike("customer_email", email.replace(/[\\%_]/g, "\\$&"))
       .order("created_at", { ascending: false })
       .limit(limit);
     if (byEmail.error) {
@@ -347,7 +368,7 @@ Deno.serve(async (req: Request) => {
     collect(byEmail.data as unknown[] | null);
   }
 
-  if (user.phone) {
+  if (verifiedPhone(user)) {
     const byPhone = await db
       .from("store_orders")
       .select(columns)
