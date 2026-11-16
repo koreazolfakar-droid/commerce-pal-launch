@@ -42,7 +42,7 @@ try {
       // content scroller or Suspense container and not increase body height.
       const originalMinHeight = shell.style.minHeight;
       shell.style.minHeight = "2600px";
-      window.scrollTo(0, document.documentElement.scrollHeight);
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
       await new Promise((resolve) => requestAnimationFrame(resolve));
       const bounds = document.querySelector("#dashboard-sidebar-navigation").getBoundingClientRect();
       const result = {
@@ -58,7 +58,7 @@ try {
         horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
       };
       shell.style.minHeight = originalMinHeight;
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: "instant" });
       return result;
     });
     assert.ok(scrolled.scrollY >= 300, "long document must scroll at " + width + "px: " + JSON.stringify(scrolled));
