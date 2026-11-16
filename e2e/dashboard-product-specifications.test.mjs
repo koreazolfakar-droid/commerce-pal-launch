@@ -67,7 +67,7 @@ test("product editor reads, validates and saves only category-defined specificat
   assert.match(productData, /p_collection_ids: \[\.\.\.new Set\(input\.collectionIds\)\]/);
   assert.match(productForm, /ProductSpecificationEditor/);
   assert.match(productForm, /const specificationTemplate = useMemo\([\s\S]*?selectedCategory\?\.specTemplate/);
-  assert.match(productForm, /normalizeProductSpecifications\(current, nextTemplate\)/);
+  assert.match(productForm, /normalizeProductSpecifications\(savedDraft\?\.values \?\? specifications, nextTemplate\)/);
   assert.match(productForm, /validateSpecificationValue/);
   assert.match(productForm, /specifications: cleanSpecifications/);
   assert.match(productEditor, /AI Fill Specifications/);

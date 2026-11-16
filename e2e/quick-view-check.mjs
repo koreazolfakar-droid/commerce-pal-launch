@@ -2,6 +2,21 @@ import assert from "node:assert/strict";
 import { expect } from "@playwright/test";
 import { createStorefrontPage } from "./helpers/storefront-fixture-fetch.mjs";
 
+/** Only retry when React hydration replaced the exact DOM node. Other errors fail immediately. */
+async function scrollQuickViewTrigger(locator) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await locator.scrollIntoViewIfNeeded({ timeout: 5000 });
+      return;
+    } catch (cause) {
+      if (!/element is not attached to the dom/i.test(String(cause)) || attempt === 2) {
+        throw cause;
+      }
+      await locator.waitFor({ state: "visible", timeout: 5000 });
+    }
+  }
+}
+
 /** Exercise the actual card, dialog, variant picker and persisted native cart. */
 export async function runQuickViewChecks(browser, baseURL) {
   for (const item of [
@@ -36,7 +51,7 @@ export async function runQuickViewChecks(browser, baseURL) {
         const title = await card.locator("h3").innerText();
         const trigger = card.getByRole("button", { name: /Quick view|معاينة سريعة/ });
         await expect(trigger).toHaveCount(1);
-        await trigger.scrollIntoViewIfNeeded();
+        await scrollQuickViewTrigger(trigger);
         await expect(trigger).toBeVisible();
         const dimensions = await trigger.evaluate((button) => {
           const face = button.querySelector("span").getBoundingClientRect();
