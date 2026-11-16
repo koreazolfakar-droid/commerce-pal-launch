@@ -6,9 +6,9 @@ mod state;
 use std::io;
 
 use axum::{
-    http::{header, HeaderValue, Method},
-    routing::get,
     Router,
+    http::{HeaderValue, Method, header},
+    routing::get,
 };
 use config::{AppConfig, ConfigError};
 use state::AppState;
@@ -37,7 +37,9 @@ async fn main() -> Result<(), StartupError> {
         db::ping(pool).await?;
         info!("database connection established");
     } else {
-        warn!("DATABASE_URL is not configured; using Supabase REST fallback for read-only catalog access");
+        warn!(
+            "DATABASE_URL is not configured; using Supabase REST fallback for read-only catalog access"
+        );
     }
 
     let state = AppState::new(pool, &config);
@@ -78,9 +80,8 @@ async fn main() -> Result<(), StartupError> {
 }
 
 fn init_tracing() {
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        EnvFilter::new("space_call_backend=info,tower_http=info")
-    });
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("space_call_backend=info,tower_http=info"));
 
     tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -98,7 +99,7 @@ async fn shutdown_signal() {
 
     #[cfg(unix)]
     {
-        use tokio::signal::unix::{signal, SignalKind};
+        use tokio::signal::unix::{SignalKind, signal};
 
         let terminate = async {
             match signal(SignalKind::terminate()) {

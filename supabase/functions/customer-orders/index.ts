@@ -1,3 +1,4 @@
+import { readBoundedText, RequestBodyTooLargeError } from "../_shared/requestBody.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
@@ -86,26 +87,14 @@ function isUuid(value: unknown): value is string {
   );
 }
 
-function normalizedPhone(value: unknown) {
-  return typeof value === "string" ? value.replace(/\D/g, "") : "";
-}
-
+/** Contact details are delivery data, not authority to claim a legacy order.
+ * Even confirmation timestamps can be auto-set by an Auth provider/configuration.
+ */
 function orderIdentityMatches(
   row: Record<string, unknown>,
-  user: { id: string; email?: string | null; phone?: string | null },
+  user: { id: string },
 ) {
-  if (typeof row.customer_user_id === "string" && row.customer_user_id) {
-    return row.customer_user_id === user.id;
-  }
-
-  const userEmail = user.email?.trim().toLowerCase() || "";
-  const orderEmail =
-    typeof row.customer_email === "string" ? row.customer_email.trim().toLowerCase() : "";
-  if (userEmail && orderEmail === userEmail) return true;
-
-  const userPhone = normalizedPhone(user.phone);
-  const orderPhone = normalizedPhone(row.customer_phone);
-  return Boolean(userPhone && orderPhone === userPhone);
+  return typeof row.customer_user_id === "string" && row.customer_user_id === user.id;
 }
 
 function publicOrder(
@@ -205,16 +194,16 @@ Deno.serve(async (req: Request) => {
 
   let body: Record<string, unknown>;
   try {
-    const raw = await req.text();
-    if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
-      return json(req, 413, { error: "payload_too_large" });
-    }
+    const raw = await readBoundedText(req, MAX_BODY_BYTES);
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return json(req, 400, { error: "invalid_payload" });
     }
     body = parsed as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return json(req, 413, { error: "payload_too_large" });
+    }
     return json(req, 400, { error: "invalid_json" });
   }
 
@@ -225,7 +214,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: order, error: orderError } = await db
       .from("store_orders")
-      .select("id,customer_user_id,customer_email,customer_phone")
+      .select("id,customer_user_id")
       .eq("id", body.order_id)
       .maybeSingle();
 
@@ -309,7 +298,7 @@ Deno.serve(async (req: Request) => {
   );
 
   const columns =
-    "id,order_number,public_order_number,status,payment_status,payment_method,currency,subtotal,shipping_total,discount_total,total,delivery_address,city,delivery_location,created_at,completed_at,customer_user_id,customer_email,customer_phone";
+    "id,order_number,public_order_number,status,payment_status,payment_method,currency,subtotal,shipping_total,discount_total,total,delivery_address,city,delivery_location,created_at,completed_at,customer_user_id";
 
   const results = new Map<string, Record<string, unknown>>();
   const collect = (rows: unknown[] | null) => {
@@ -332,34 +321,6 @@ Deno.serve(async (req: Request) => {
     return json(req, 503, { error: "temporarily_unavailable" });
   }
   collect(byUser.data as unknown[] | null);
-
-  if (user.email) {
-    const byEmail = await db
-      .from("store_orders")
-      .select(columns)
-      .ilike("customer_email", user.email.trim())
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (byEmail.error) {
-      console.error("customer-orders email lookup failed", byEmail.error.message);
-      return json(req, 503, { error: "temporarily_unavailable" });
-    }
-    collect(byEmail.data as unknown[] | null);
-  }
-
-  if (user.phone) {
-    const byPhone = await db
-      .from("store_orders")
-      .select(columns)
-      .eq("customer_phone", user.phone.trim())
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (byPhone.error) {
-      console.error("customer-orders phone lookup failed", byPhone.error.message);
-      return json(req, 503, { error: "temporarily_unavailable" });
-    }
-    collect(byPhone.data as unknown[] | null);
-  }
 
   const orderRows = [...results.values()]
     .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))

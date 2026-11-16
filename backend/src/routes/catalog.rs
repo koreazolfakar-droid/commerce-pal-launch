@@ -1,8 +1,8 @@
 use axum::{
+    Json,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::{Deserialize, Serialize};
 use tracing::warn;
@@ -47,7 +47,6 @@ pub struct PublicProduct {
     tags: Vec<String>,
     sort_order: i32,
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PublicCatalogCard {
@@ -117,7 +116,6 @@ pub async fn list_products(
 
     Ok(Json(products))
 }
-
 
 pub async fn list_cards(
     State(state): State<AppState>,
@@ -214,10 +212,7 @@ async fn query_postgres(
     })
 }
 
-async fn query_supabase(
-    state: &AppState,
-    limit: i64,
-) -> Result<Vec<PublicProduct>, CatalogError> {
+async fn query_supabase(state: &AppState, limit: i64) -> Result<Vec<PublicProduct>, CatalogError> {
     let url = format!("{}/rest/v1/store_products", state.supabase_url);
     let limit = limit.to_string();
 
@@ -242,10 +237,13 @@ async fn query_supabase(
         return Err(CatalogError::Unavailable);
     }
 
-    response.json::<Vec<PublicProduct>>().await.map_err(|error| {
-        warn!(%error, "Supabase public catalog returned an invalid payload");
-        CatalogError::Unavailable
-    })
+    response
+        .json::<Vec<PublicProduct>>()
+        .await
+        .map_err(|error| {
+            warn!(%error, "Supabase public catalog returned an invalid payload");
+            CatalogError::Unavailable
+        })
 }
 
 #[derive(Debug)]

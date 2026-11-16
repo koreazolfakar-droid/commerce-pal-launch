@@ -270,6 +270,8 @@ try {
     expected_delivery_fee: 2,
   };
   async function order(body, token = customerSession.access_token) {
+    // Isolated loopback-only Auth/REST fixture; no remote credentials or production traffic.
+    // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
     const response = await fetch("http://127.0.0.1:8000", {
       method: "POST",
       headers: {

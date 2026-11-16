@@ -1,3 +1,4 @@
+import { readBoundedText, RequestBodyTooLargeError } from "../_shared/requestBody.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
@@ -371,12 +372,12 @@ Deno.serve(async (req: Request) => {
 
   let body: unknown;
   try {
-    const text = await req.text();
-    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
+    const text = await readBoundedText(req, MAX_BODY_BYTES);
+    body = JSON.parse(text);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
       return json(req, 413, { error: "payload_too_large" });
     }
-    body = JSON.parse(text);
-  } catch {
     return json(req, 400, { error: "invalid_json" });
   }
 

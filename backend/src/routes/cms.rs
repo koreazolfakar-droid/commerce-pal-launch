@@ -1,8 +1,8 @@
 use axum::{
+    Json,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Serialize;
 use serde_json::Value;
@@ -10,9 +10,7 @@ use tracing::warn;
 
 use crate::state::AppState;
 
-pub async fn public_cms(
-    State(state): State<AppState>,
-) -> Result<Json<Value>, CmsError> {
+pub async fn public_cms(State(state): State<AppState>) -> Result<Json<Value>, CmsError> {
     let url = format!("{}/functions/v1/public-cms", state.supabase_url);
 
     let response = state
