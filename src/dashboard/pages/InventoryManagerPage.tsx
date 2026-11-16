@@ -61,7 +61,7 @@ function paginationItems(currentPage: number, totalPages: number): PaginationIte
 }
 
 export default function InventoryManagerPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const urlSearch = useSearch();
   const attention = new URLSearchParams(urlSearch).get("attention");
   const [rows, setRows] = useState<InventoryRow[]>([]);
@@ -100,6 +100,8 @@ export default function InventoryManagerPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  // React state disables controls on the next render; this lock also blocks same-tick repeats.
+  const savingRef = useRef(false);
   const [draftStocks, setDraftStocks] = useState<Record<string, string>>({});
   const draftSnapshots = useRef(new Map<string, InventoryRow>());
   useEffect(() => {
@@ -112,13 +114,14 @@ export default function InventoryManagerPage() {
     for (const id of draftSnapshots.current.keys())
       if (!(id in draftStocks)) draftSnapshots.current.delete(id);
   }, [draftStocks, rows]);
-  const inventoryDirty = Object.entries(draftStocks).some(
+  const pendingDraftCount = Object.entries(draftStocks).filter(
     ([id, value]) =>
       value !==
       String(
         draftSnapshots.current.get(id)?.stock ?? rows.find((row) => row.variantId === id)?.stock,
       ),
-  );
+  ).length;
+  const inventoryDirty = pendingDraftCount > 0;
   useDashboardUnsavedChanges(inventoryDirty);
   const [historyRow, setHistoryRow] = useState<InventoryRow | null>(null);
   const [page, setPage] = useDashboardQueryState<number>("page", 1);
@@ -288,8 +291,9 @@ export default function InventoryManagerPage() {
   };
 
   const changeBy = async (row: InventoryRow, delta: number) => {
-    if (!row.trackInventory || savingId) return;
+    if (!row.trackInventory || savingRef.current) return;
     if (row.stock + delta < 0) return;
+    savingRef.current = true;
     setSavingId(row.variantId);
     try {
       const newStock = await adjustInventoryDelta(
@@ -303,19 +307,24 @@ export default function InventoryManagerPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Inventory adjustment failed.");
     } finally {
+      savingRef.current = false;
       setSavingId(null);
     }
   };
 
   const commitAbsolute = async (row: InventoryRow) => {
-    if (!row.trackInventory || savingId) return;
+    if (!row.trackInventory || savingRef.current) return;
     const raw = draftStocks[row.variantId];
     if (raw == null) return;
 
     const nextStock = Number(raw);
-    if (!Number.isInteger(nextStock) || nextStock < 0) {
-      toast.error("Stock must be a non-negative whole number.");
-      setDraftStocks((current) => ({ ...current, [row.variantId]: String(row.stock) }));
+    // An empty number input coerces to zero; never turn clearing the field into a stock write.
+    if (!raw.trim() || !Number.isSafeInteger(nextStock) || nextStock < 0) {
+      toast.error(
+        lang === "ar"
+          ? "أدخل كمية صحيحة تساوي صفرًا أو أكثر. لم يُحفظ التعديل."
+          : "Enter a non-negative whole quantity. Your edit has not been saved.",
+      );
       return;
     }
 
@@ -328,6 +337,7 @@ export default function InventoryManagerPage() {
       return;
     }
 
+    savingRef.current = true;
     setSavingId(row.variantId);
     try {
       const snapshot = draftSnapshots.current.get(row.variantId) ?? row;
@@ -342,13 +352,16 @@ export default function InventoryManagerPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Inventory update failed.");
     } finally {
+      savingRef.current = false;
       setSavingId(null);
     }
   };
 
   if (loading) {
     return (
-      <div className="grid min-h-[420px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status"
+        aria-label={lang === "ar" ? "جارٍ تحميل المخزون" : "Loading inventory"}
+        className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
       </div>
     );
@@ -519,6 +532,33 @@ export default function InventoryManagerPage() {
         </div>
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <p>
+          {lang === "ar"
+            ? "لحفظ الكمية، اضغط Enter أو اخرج من حقل الكمية. الحقل الفارغ لا يغيّر المخزون."
+            : "Press Enter or leave the quantity field to save. An empty field never changes stock."}
+        </p>
+        {inventoryDirty && (
+          <div className="flex flex-wrap items-center gap-2" role="status">
+            <span>
+              {pendingDraftCount} {lang === "ar" ? "تعديلات لم تُحفظ" : "unsaved quantity edits"}
+            </span>
+            <button
+              type="button"
+              disabled={Boolean(savingId)}
+              onClick={() => {
+                if (savingRef.current) return;
+                draftSnapshots.current.clear();
+                setDraftStocks({});
+              }}
+              className="min-h-9 rounded-lg border border-border bg-card px-3 font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+            >
+              {lang === "ar" ? "إلغاء التعديلات" : "Discard edits"}
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="dashboard-catalog-panel overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="flex items-center justify-between border-b border-border p-3 sm:px-5 sm:py-3.5">
           <div>
@@ -585,10 +625,10 @@ export default function InventoryManagerPage() {
                 type="button"
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={safePage <= 1}
-                className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:cursor-not-allowed disabled:opacity-35"
+                className="grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={t("Previous inventory page")}
               >
-                <ChevronLeft className="size-4" />
+                <ChevronLeft className="size-4 rtl:rotate-180" />
               </button>
 
               {paginationItems(safePage, totalPages).map((item) =>
@@ -620,10 +660,10 @@ export default function InventoryManagerPage() {
                 type="button"
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                 disabled={safePage >= totalPages}
-                className="grid size-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-600 disabled:cursor-not-allowed disabled:opacity-35"
+                className="grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label={t("Next inventory page")}
               >
-                <ChevronRight className="size-4" />
+                <ChevronRight className="size-4 rtl:rotate-180" />
               </button>
             </nav>
           </div>
