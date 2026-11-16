@@ -494,7 +494,7 @@ export async function signInDashboard(
   email: string,
   password: string,
   captchaToken?: string,
-): Promise<DashboardRole> {
+): Promise<DashboardMfaStatus> {
   if (isDashboardTurnstileConfigured && !captchaToken) {
     throw new Error("Complete the security verification before signing in.");
   }
@@ -514,9 +514,14 @@ export async function signInDashboard(
     throw new Error(dashboardSignInErrorMessage(error));
   }
 
-  clearDashboardRoleCache();
-  const role = await getDashboardRole();
-  if (!role) {
+  // A new password session must not reuse identity or role data from an older session.
+  clearDashboardAuthCaches();
+
+  // One validated authorization/MFA round-trip replaces two sequential role lookups.
+  // This still verifies the session with Auth, the staff role, AAL, MFA factors and
+  // any server-side passkey step-up before deciding which screen may be shown.
+  const mfaStatus = await getDashboardMfaStatus();
+  if (!mfaStatus) {
     await supabase.auth.signOut({ scope: "local" });
     throw new Error(DASHBOARD_SIGNIN_DENIED_MESSAGE);
   }
@@ -524,7 +529,7 @@ export async function signInDashboard(
   // Cleanup is best-effort and must not delay the mandatory second-factor screen.
   // The pre-auth throttle above remains fail-closed and is still awaited.
   void dashboardLoginThrottle(email, "success").catch(() => undefined);
-  return role;
+  return mfaStatus;
 }
 
 export type DashboardPasskey = {
@@ -771,20 +776,23 @@ export async function getDashboardMfaStatus(): Promise<DashboardMfaStatus | null
   const user = await getValidatedDashboardUser();
   if (!user) return null;
 
-  const { data: roleRow, error: roleError } = await supabase
-    .from("user_roles")
-    .select("role,mfa_required,mfa_enrolled_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (roleError || !roleRow) return null;
-  if (roleRow.role !== "admin" && roleRow.role !== "editor") return null;
-
-  const [aalResult, factorsResult, passkeyStepUpReady] = await Promise.all([
+  // All checks are independently server-backed and can run together after the
+  // session user is validated. Never grant access until the staff-role result
+  // and both MFA assurance/factor results have been checked.
+  const [roleResult, aalResult, factorsResult, passkeyStepUpReady] = await Promise.all([
+    supabase
+      .from("user_roles")
+      .select("role,mfa_required,mfa_enrolled_at")
+      .eq("user_id", user.id)
+      .maybeSingle(),
     supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
     supabase.auth.mfa.listFactors(),
     getDashboardPasskeyStepUpReady(),
   ]);
+
+  const { data: roleRow, error: roleError } = roleResult;
+  if (roleError || !roleRow) return null;
+  if (roleRow.role !== "admin" && roleRow.role !== "editor") return null;
 
   throwIfError(aalResult.error, "Checking MFA assurance failed");
   throwIfError(factorsResult.error, "Loading MFA factors failed");
