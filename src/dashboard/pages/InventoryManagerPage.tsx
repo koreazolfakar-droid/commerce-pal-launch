@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Search,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -92,6 +93,7 @@ export default function InventoryManagerPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [movementLoading, setMovementLoading] = useState(false);
   const loadRequestRef = useRef(0);
+  const summaryCacheRef = useRef(new Map<number, InventorySummary>());
   const movementRequestRef = useRef(0);
   const hasLoadedRef = useRef(false);
   const [movementVersion, setMovementVersion] = useState(0);
@@ -129,6 +131,8 @@ export default function InventoryManagerPage() {
       else if (!hasLoadedRef.current) setLoading(true);
 
       try {
+        // Search, category and pagination do not change this threshold summary.
+        const cachedSummary = manual ? undefined : summaryCacheRef.current.get(threshold);
         const [pageResult, summaryResult] = await Promise.all([
           loadInventoryPage({
             search: serverQuery,
@@ -138,7 +142,7 @@ export default function InventoryManagerPage() {
             page,
             pageSize,
           }),
-          loadInventorySummary(threshold),
+          cachedSummary ? Promise.resolve(cachedSummary) : loadInventorySummary(threshold),
         ]);
 
         if (requestId !== loadRequestRef.current) return;
@@ -147,6 +151,7 @@ export default function InventoryManagerPage() {
         setTotalCount(pageResult.totalCount);
         setProductCountOnPage(pageResult.productCountOnPage);
         setPaginationMode(pageResult.paginationMode);
+        summaryCacheRef.current.set(threshold, summaryResult);
         setSummary(summaryResult);
         setError("");
         setMovementVersion((current) => current + 1);
@@ -173,7 +178,10 @@ export default function InventoryManagerPage() {
     void load(false);
   }, [load]);
 
-  useDashboardRealtimeRefresh(["store_product_variants"], () => void load(false));
+  useDashboardRealtimeRefresh(["store_product_variants"], () => {
+    summaryCacheRef.current.clear();
+    void load(false);
+  });
 
   useEffect(() => {
     let active = true;
@@ -253,11 +261,13 @@ export default function InventoryManagerPage() {
       });
   }, [pageVariantKey, movementVersion]);
 
+  const activeFilterCount = Number(Boolean(query.trim())) + Number(category !== "all") + Number(onlyLow) + Number(threshold !== 10);
   const totalUnits = summary.totalUnits;
   const low = summary.lowCount;
   const out = summary.outCount;
 
   const replaceRowStock = (variantId: string, stock: number, delta: number) => {
+    summaryCacheRef.current.clear();
     setRows((current) =>
       current.map((row) =>
         row.variantId === variantId
