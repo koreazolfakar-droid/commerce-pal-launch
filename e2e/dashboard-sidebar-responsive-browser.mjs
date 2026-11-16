@@ -32,6 +32,37 @@ try {
     const active = sidebar.locator('[aria-current="page"]');
     await active.first().waitFor();
     assert.ok(await active.count() >= 1, "current route not visible at " + width);
+
+    // Inventory and other long pages scroll the document. The sidebar must
+    // stay pinned to the viewport instead of leaving an empty white column.
+    const scrolled = await page.evaluate(async () => {
+      const main = document.querySelector(".dashboard-main");
+      if (!main) throw new Error("Dashboard main not mounted");
+      const spacer = document.createElement("div");
+      spacer.style.height = "1900px";
+      spacer.setAttribute("aria-hidden", "true");
+      main.appendChild(spacer);
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const bounds = document.querySelector("#dashboard-sidebar-navigation").getBoundingClientRect();
+      const result = {
+        scrollY: window.scrollY,
+        top: bounds.top,
+        bottom: bounds.bottom,
+        height: bounds.height,
+        viewportHeight: window.innerHeight,
+        horizontalOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+      };
+      spacer.remove();
+      window.scrollTo(0, 0);
+      return result;
+    });
+    assert.ok(scrolled.scrollY >= 300, "long document must scroll at " + width);
+    assert.ok(Math.abs(scrolled.top) <= 2,
+      "sidebar scrolled away with the document at " + width + "px: " + JSON.stringify(scrolled));
+    assert.ok(scrolled.bottom >= scrolled.viewportHeight - 2,
+      "sidebar ends above the bottom of the screen at " + width + "px: " + JSON.stringify(scrolled));
+    assert.equal(scrolled.horizontalOverflow, false, "horizontal overflow after scrolling at " + width);
   }
 
   for (const width of [320, 390]) {
@@ -60,7 +91,7 @@ try {
   }
   console.log(JSON.stringify({ passed: [
     "compact desktop sidebar", "mobile drawer 320 and 390",
-    "navigation groups", "products route", "active route",
+    "navigation groups", "products route", "active route", "full-height sticky navigation during long-page scrolling",
   ] }));
 } finally {
   await browser.close();
