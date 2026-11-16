@@ -105,13 +105,13 @@ export default function CategorySpecificationTemplateEditor({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-700 dark:bg-slate-900/40">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-black text-slate-700">
+          <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
             {ar ? "قالب المواصفات" : t("Specification template")}
           </div>
-          <p className="mt-1 max-w-xl text-[10px] leading-4 text-slate-400">
+          <p className="mt-1 max-w-xl text-[11px] leading-5 text-slate-600 dark:text-slate-300">
             {ar
               ? "تظهر هذه الحقول تلقائيًا في المنتجات التابعة لهذا التصنيف وتحدد أقسام المواصفات في المتجر."
               : t(
@@ -227,7 +227,7 @@ export default function CategorySpecificationTemplateEditor({
                 }}
                 placeholder={t("Section title")}
                 aria-label={t("Specification section title")}
-                className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                className="h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               />
               <input
                 value={section.titleAr ?? ""}
@@ -242,7 +242,7 @@ export default function CategorySpecificationTemplateEditor({
                 }}
                 placeholder="عنوان القسم"
                 aria-label={t("Arabic specification section title")}
-                className="h-9 min-w-0 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                className="h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               />
               <div className="flex items-center gap-1">
                 <button type="button" disabled={sectionIndex === 0}
@@ -292,7 +292,7 @@ export default function CategorySpecificationTemplateEditor({
                     }}
                     placeholder={t("Label")}
                     aria-label={t("Specification field label")}
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
+                    className="h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-800 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                   />
                   <input
                     value={field.labelAr ?? ""}
@@ -309,7 +309,7 @@ export default function CategorySpecificationTemplateEditor({
                     }}
                     placeholder="الاسم بالعربية"
                     aria-label={t("Arabic specification field label")}
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] font-semibold outline-none focus:border-indigo-400"
+                    className="h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-800 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                   />
                   {showTechnical ? (
                     <input
@@ -343,7 +343,7 @@ export default function CategorySpecificationTemplateEditor({
                     }}
                     placeholder={t("Unit")}
                     aria-label={t("Specification field unit")}
-                    className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-[10px] outline-none focus:border-indigo-400"
+                    className="h-9 min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] text-slate-800 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                   />
                   <div className="flex items-center gap-1">
                     <button type="button" disabled={fieldIndex === 0}
@@ -396,7 +396,7 @@ export default function CategorySpecificationTemplateEditor({
                   commit({ sections });
                 }}
                 disabled={section.fields.length >= 24}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-[10px] font-bold text-slate-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-[11px] font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200"
               >
                 <Plus className="size-3.5" />
                 {ar ? "إضافة حقل" : t("Add field")}
