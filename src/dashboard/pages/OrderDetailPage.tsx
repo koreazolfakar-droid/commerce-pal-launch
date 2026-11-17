@@ -138,7 +138,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
   const changeStatus = async (status: DashboardOrderStatus) => {
     if (!order || saving || loading || mutationOrderId.current) return;
     mutationOrderId.current = order.id;
-    requestVersion.current += 1;
+    const mutationRequest = ++requestVersion.current;
     setLoading(false);
     setSaving(true);
     try {
@@ -155,7 +155,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
       mutationOrderId.current = null;
       if (mounted.current) {
         setSaving(false);
-        if (currentOrderId.current === order.id) setLoading(false);
+        if (currentOrderId.current === order.id) {
+          if (requestVersion.current !== mutationRequest) void load();
+          else setLoading(false);
+        }
       }
     }
   };
@@ -163,7 +166,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
   const changePayment = async (status: DashboardPaymentStatus) => {
     if (!order || saving || loading || mutationOrderId.current || status === order.paymentStatus) return;
     mutationOrderId.current = order.id;
-    requestVersion.current += 1;
+    const mutationRequest = ++requestVersion.current;
     setLoading(false);
     setSaving(true);
     try {
@@ -179,7 +182,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
       mutationOrderId.current = null;
       if (mounted.current) {
         setSaving(false);
-        if (currentOrderId.current === order.id) setLoading(false);
+        if (currentOrderId.current === order.id) {
+          if (requestVersion.current !== mutationRequest) void load();
+          else setLoading(false);
+        }
       }
     }
   };
@@ -198,7 +204,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
 
     if (deliveryType === order.deliveryType && fee === order.shippingTotal) return;
     mutationOrderId.current = order.id;
-    requestVersion.current += 1;
+    const mutationRequest = ++requestVersion.current;
     setLoading(false);
     setSaving(true);
     try {
@@ -218,7 +224,10 @@ export default function OrderDetailPage({ id }: { id: string }) {
       mutationOrderId.current = null;
       if (mounted.current) {
         setSaving(false);
-        if (currentOrderId.current === order.id) setLoading(false);
+        if (currentOrderId.current === order.id) {
+          if (requestVersion.current !== mutationRequest) void load();
+          else setLoading(false);
+        }
       }
     }
   };

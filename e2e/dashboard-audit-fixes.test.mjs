@@ -220,6 +220,75 @@ test("PO detail clears a previous route's order before a failed request and reta
   assert.equal(errors.at(-1), "Fixture offline");
 });
 
+
+for (const [handler, args] of [
+  ["changeStatus", ["confirmed"]],
+  ["changePayment", ["paid"]],
+  ["changeDelivery", []],
+]) {
+  for (const outcome of ["success", "failure"]) {
+    test(handler + " reloads the original order after navigating away and returning during " + outcome, async () => {
+      const original = {
+        id: "order-a", version: 1, publicOrderNumber: 1, status: "new",
+        paymentStatus: "unpaid", deliveryType: "paid", shippingTotal: 7,
+      };
+      const saved = { ...original, version: 2, deliveryType: "free", shippingTotal: 0 };
+      const other = { ...original, id: "order-b", shippingTotal: 99 };
+      const state = { order: original, loading: false, saving: false, deliveryFee: "7" };
+      const reads = [];
+      let complete, fail;
+      const pending = new Promise((resolve, reject) => { complete = resolve; fail = reject; });
+      const dependencies = {
+        id: original.id, order: original, saving: false, loading: false, lang: "en",
+        deliveryType: "free", deliveryFee: "0",
+        mutationOrderId: { current: null },
+        mounted: { current: true },
+        requestVersion: { current: 0 },
+        currentOrderId: { current: original.id },
+        useCallback: (fn) => fn,
+        setOrder: (next) => { state.order = typeof next === "function" ? next(state.order) : next; },
+        setLoading: (value) => { state.loading = value; },
+        setSaving: (value) => { state.saving = value; },
+        setError() {},
+        setCancelOrderId() {},
+        setDeliveryType() {},
+        setDeliveryFee: (value) => { state.deliveryFee = value; },
+        orderStatusLabel: (value) => value,
+        paymentStatusLabel: (value) => value,
+        toast: { success() {}, error() {} },
+        getDashboardOrder: async (id) => { reads.push(id); return id === other.id ? other : saved; },
+        updateDashboardOrderStatus: () => pending,
+        updateDashboardOrderPaymentStatus: () => pending,
+        updateDashboardOrderDelivery: () => pending,
+      };
+      const path = "../src/dashboard/pages/OrderDetailPage.tsx";
+      dependencies.load = await productionCallback(path, "load", dependencies);
+      const mutate = await productionCallback(path, handler, dependencies);
+      const operation = mutate(...args);
+      dependencies.requestVersion.current += 1;
+      dependencies.currentOrderId.current = other.id;
+      const loadOther = await productionCallback(path, "load", { ...dependencies, id: other.id });
+      await loadOther();
+      assert.equal(state.order.id, other.id);
+      dependencies.requestVersion.current += 1;
+      dependencies.currentOrderId.current = original.id;
+      await dependencies.load();
+      assert.deepEqual(reads, [other.id]);
+      if (outcome === "success") complete(saved);
+      else fail(new Error("Fixture write failed"));
+      await operation;
+      await Promise.resolve();
+      await Promise.resolve();
+      assert.deepEqual(reads, [other.id, original.id]);
+      assert.equal(state.order.id, original.id);
+      assert.equal(state.deliveryFee, "0");
+      assert.equal(state.saving, false);
+      assert.equal(state.loading, false);
+      assert.equal(dependencies.mutationOrderId.current, null);
+    });
+  }
+}
+
 test("preferences still work within the tab when browser storage is blocked", async () => {
   const previous = globalThis.window;
   globalThis.window = {
