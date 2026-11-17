@@ -90,6 +90,8 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
     async (manual = false, afterMutation = false) => {
       if (mutationTarget.current === id && !afterMutation) return;
       const request = ++requestVersion.current;
+      setPo((current) => (current?.id === id ? current : null));
+      setError("");
       if (manual) setRefreshing(true);
       else setLoading(true);
       try {
@@ -119,7 +121,8 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
   useEffect(() => {
     activeId.current = id;
-    void load(false);
+    // Route loads must recover even when returning to an order with a pending mutation.
+    void load(false, true);
     return () => {
       requestVersion.current += 1;
       activeId.current = "";

@@ -183,6 +183,43 @@ test("inventory writes serialize immediate submissions and accept explicit zero"
   assert.deepEqual(calls[1], ["variant", 0, -10]);
 });
 
+
+test("PO detail clears a previous route's order before a failed request and retains same-order refresh data", async () => {
+  let po = { id: "previous-order" };
+  const errors = [], loading = [];
+  const dependencies = {
+    id: "current-order",
+    useCallback: (fn) => fn,
+    mutationTarget: { current: null },
+    requestVersion: { current: 0 },
+    activeId: { current: "current-order" },
+    setPo: (next) => { po = typeof next === "function" ? next(po) : next; },
+    setError: (message) => errors.push(message),
+    setLoading: (value) => loading.push(value),
+    setRefreshing() {},
+    loadPurchaseOrderDetail: async () => { throw new Error("Fixture offline"); },
+    toast: { error() {} },
+  };
+  const load = await productionCallback(
+    "../src/dashboard/pages/PurchaseOrderDetailPage.tsx", "load", dependencies,
+  );
+  const request = load();
+  assert.equal(po, null);
+  await request;
+  assert.equal(errors.at(-1), "Fixture offline");
+  assert.equal(loading.at(-1), false);
+  po = { id: "current-order" };
+  await load(true);
+  assert.equal(po.id, "current-order");
+  assert.equal(errors.at(-1), "Fixture offline");
+  dependencies.mutationTarget.current = "current-order";
+  po = { id: "another-route" };
+  await load(false, true);
+  assert.equal(po, null);
+  assert.equal(loading.at(-1), false);
+  assert.equal(errors.at(-1), "Fixture offline");
+});
+
 test("preferences still work within the tab when browser storage is blocked", async () => {
   const previous = globalThis.window;
   globalThis.window = {
