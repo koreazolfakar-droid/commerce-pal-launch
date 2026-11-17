@@ -17,7 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
@@ -50,7 +50,7 @@ function slugify(value: string) {
 }
 
 export default function CollectionsPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [collections, setCollections] = useState<DashboardCollectionListItem[]>([]);
   const [search, setSearch] = useDashboardQueryState<string>("search", "");
@@ -66,24 +66,33 @@ export default function CollectionsPage() {
   const [deleting, setDeleting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
+  const [reordering, setReordering] = useState(false);
+  const mutationLock = useRef(false);
+  const loadRequest = useRef(0);
 
   const formGuard = useDashboardFormGuard(showCreate, draft, saving, () => setShowCreate(false));
   const modalRef = useDashboardModal(formGuard.close, showCreate);
 
   const load = useCallback(async () => {
+    if (mutationLock.current) return;
+    const request = ++loadRequest.current;
     setLoading(true);
     setLoadError("");
     try {
-      setCollections(await listDashboardCollections());
+      const next = await listDashboardCollections();
+      if (request === loadRequest.current) setCollections(next);
     } catch (cause) {
-      setLoadError(cause instanceof Error ? cause.message : "Unable to load collections.");
+      if (request === loadRequest.current) {
+        setLoadError(cause instanceof Error ? cause.message : "Unable to load collections.");
+      }
     } finally {
-      setLoading(false);
+      if (request === loadRequest.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     void load();
+    return () => { loadRequest.current += 1; };
   }, [load]);
 
   const visible = useMemo(() => {
@@ -97,7 +106,11 @@ export default function CollectionsPage() {
     });
   }, [collections, filter, search]);
 
+  const hasFilters = Boolean(search.trim()) || filter !== "all";
+  const busy = saving || deleting || reordering;
+
   const move = async (id: string, direction: -1 | 1) => {
+    if (mutationLock.current || loading || hasFilters) return;
     const ordered = [...collections].sort(
       (a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title),
     );
@@ -105,7 +118,10 @@ export default function CollectionsPage() {
     const target = index + direction;
     if (index < 0 || target < 0 || target >= ordered.length) return;
     [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
+    const previous = collections;
     const next = ordered.map((item, sortOrder) => ({ ...item, sortOrder }));
+    mutationLock.current = true;
+    setReordering(true);
     setCollections(next);
     try {
       await reorderDashboardCollections(
@@ -114,20 +130,31 @@ export default function CollectionsPage() {
       toast.success("Collection order saved.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Reorder failed.");
-      void load();
+      setCollections(previous);
+    } finally {
+      mutationLock.current = false;
+      setReordering(false);
     }
   };
 
   const create = async () => {
+    if (mutationLock.current) return;
     if (draft.title.trim().length < 2) {
       toast.error("Collection title is required.");
       return;
     }
+    const handle = slugify(draft.handle || draft.title);
+    if (!handle) {
+      toast.error(lang === "ar" ? "أدخل رابطاً مختصراً بحروف إنجليزية، مثل summer-offers." : "Enter a handle using English letters, such as summer-offers.");
+      return;
+    }
+    mutationLock.current = true;
     setSaving(true);
     try {
       const created = await createDashboardCollection({
         ...draft,
-        handle: draft.handle || slugify(draft.title),
+        title: draft.title.trim(),
+        handle,
       });
       toast.success("Collection created.");
       formGuard.markSaved();
@@ -137,13 +164,15 @@ export default function CollectionsPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Collection creation failed.");
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
 
   const remove = async () => {
-    if (!deleteTarget || deleting) return;
+    if (!deleteTarget || mutationLock.current || loading) return;
     const item = deleteTarget;
+    mutationLock.current = true;
     setDeleting(true);
     try {
       await deleteDashboardCollection(item.id);
@@ -153,6 +182,7 @@ export default function CollectionsPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Collection deletion failed.");
     } finally {
+      mutationLock.current = false;
       setDeleting(false);
     }
   };
@@ -167,18 +197,20 @@ export default function CollectionsPage() {
           <PageTitle
             eyebrow="Catalog / Collections"
             title="Collections"
-            description="Real storefront collections powered by Supabase."
+            description={lang === "ar" ? "نظّم مجموعات المنتجات وترتيب ظهورها في المتجر." : "Organize product collections and their storefront order."}
           />
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => void load()}
+            disabled={loading || busy}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
-            <RefreshCw className="size-3.5" /> {t("Refresh")}
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> {t("Refresh")}
           </button>
           <button
             onClick={() => setShowCreate(true)}
+            disabled={busy || loading}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
           >
             <FolderPlus className="size-4" /> {t("New collection")}
@@ -207,12 +239,14 @@ export default function CollectionsPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label={t("Search collections")}
               placeholder={t("Search collections")}
               className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px] outline-none focus:border-indigo-400"
             />
           </div>
           <select
             value={filter}
+            aria-label={t("All collections")}
             onChange={(e) => setFilter(e.target.value as typeof filter)}
             className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600"
           >
@@ -223,16 +257,25 @@ export default function CollectionsPage() {
           </select>
         </div>
 
+        {hasFilters ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-[11px] text-slate-500" role="status">
+            <span>{visible.length} / {collections.length} · {lang === "ar" ? "امسح الفلاتر لتغيير ترتيب المجموعات." : "Clear filters to change collection order."}</span>
+            <button type="button" onClick={() => { setSearch(""); setFilter("all"); }} className="font-semibold text-indigo-600 hover:underline">
+              {lang === "ar" ? "مسح الفلاتر" : "Clear filters"}
+            </button>
+          </div>
+        ) : null}
+
         {loading ? (
           <div className="grid min-h-[300px] place-items-center">
             <Loader2 className="size-6 animate-spin text-[#5968ea]" />
           </div>
         ) : visible.length ? (
           <div className="divide-y divide-slate-100">
-            {visible.map((item) => (
+            {visible.map((item, index) => (
               <div
                 key={item.id}
-                className="grid gap-4 px-5 py-4 lg:grid-cols-[64px_1fr_140px_140px_150px] lg:items-center"
+                className="grid gap-4 px-5 py-4 lg:grid-cols-[64px_minmax(0,1fr)_120px_60px_auto] lg:items-center"
               >
                 <div className="grid size-14 place-items-center overflow-hidden rounded-xl bg-slate-100">
                   {item.imageUrl ? (
@@ -246,7 +289,7 @@ export default function CollectionsPage() {
                   className="min-w-0 text-start"
                 >
                   <div className="truncate text-[13px] font-bold text-slate-700">{item.title}</div>
-                  <div className="mt-1 text-[10px] text-slate-400">
+                  <div className="mt-1 break-all text-[10px] text-slate-400">
                     /{item.handle} · {item.productCount} {t("products")}
                   </div>
                 </button>
@@ -265,7 +308,7 @@ export default function CollectionsPage() {
                 <div className="text-[11px] text-slate-500">
                   {t("Order")} {item.sortOrder + 1}
                 </div>
-                <div className="flex justify-end gap-1">
+                <div className="flex flex-wrap justify-end gap-1">
                   <button
                     onClick={() => navigate(`/dashboard/collections/${item.id}#add-products`)}
                     title={t("Add products to this collection")}
@@ -276,25 +319,30 @@ export default function CollectionsPage() {
                   </button>
                   <button
                     onClick={() => void move(item.id, -1)}
-                    className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
+                    aria-label={`${t("Move up")}: ${item.title}`}
+                    disabled={busy || hasFilters || index === 0}
+                    className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <ArrowUp className="size-3.5" />
                   </button>
                   <button
                     onClick={() => void move(item.id, 1)}
-                    className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
+                    aria-label={`${t("Move down")}: ${item.title}`}
+                    disabled={busy || hasFilters || index === collections.length - 1}
+                    className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <ArrowDown className="size-3.5" />
                   </button>
                   <button
                     onClick={() => navigate(`/dashboard/collections/${item.id}`)}
-                    className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"
+                    className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:cursor-not-allowed disabled:opacity-35"
                   >
-                    <Pencil className="size-3.5" />
+                    <Pencil aria-label={t("Edit collection")} className="size-3.5" />
                   </button>
                   <button
                     onClick={() => setDeleteTarget(item)}
-                    disabled={deleting}
+                    aria-label={`${t("Delete")}: ${item.title}`}
+                    disabled={busy}
                     className="grid size-8 place-items-center rounded-lg border border-rose-100 text-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Trash2 className="size-3.5" />
@@ -332,6 +380,7 @@ export default function CollectionsPage() {
               <button
                 onClick={formGuard.close}
                 disabled={saving}
+                aria-label={t("Close")}
                 className="grid size-9 place-items-center rounded-xl bg-slate-100 text-slate-500"
               >
                 <X className="size-4" />
@@ -357,7 +406,7 @@ export default function CollectionsPage() {
                     setDraft((d) => ({
                       ...d,
                       title: e.target.value,
-                      handle: d.handle || slugify(e.target.value),
+                      handle: !d.handle || d.handle === slugify(d.title) ? slugify(e.target.value) : d.handle,
                     }))
                   }
                   className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
@@ -369,6 +418,8 @@ export default function CollectionsPage() {
                 </span>
                 <input
                   value={draft.handle}
+                  placeholder="summer-offers"
+                  dir="ltr"
                   onChange={(e) => setDraft((d) => ({ ...d, handle: slugify(e.target.value) }))}
                   className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
                 />

@@ -2,8 +2,8 @@ import { useDashboardFormGuard } from "@/dashboard/hooks/useDashboardFormGuard";
 import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { useLanguage } from "@/dashboard/i18n";
-import { Building2, Loader2, MapPin, Plus, Search, Save, Truck, X } from "lucide-react";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { Building2, Loader2, MapPin, Plus, Search, Save, Truck, X, RefreshCw } from "lucide-react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   createReceivingSupplier,
@@ -54,11 +54,14 @@ function money(value: number) {
 }
 
 export default function SuppliersPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [workspace, setWorkspace] = useState<ReceivingWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
+  const requestVersion = useRef(0);
+  const mounted = useRef(true);
   const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [supplierDraft, setSupplierDraft] = useState<SupplierDraft | null>(null);
   const [locationDraft, setLocationDraft] = useState<LocationDraft | null>(null);
@@ -73,33 +76,42 @@ export default function SuppliersPage() {
     },
   );
   const openSupplier = (draft: SupplierDraft) => {
+    if (saveLock.current) return;
     if (formGuard.close()) setSupplierDraft(draft);
   };
   const openLocation = (draft: LocationDraft) => {
+    if (saveLock.current) return;
     if (formGuard.close()) setLocationDraft(draft);
   };
 
   const load = useCallback(async () => {
+    const request = ++requestVersion.current;
     setLoading(true);
     setLoadError("");
     try {
-      setWorkspace(
-        await loadReceivingWorkspace({
-          includeReceivings: false,
-          includeProductOptions: false,
-          includeAudit: false,
-          includeSerials: false,
-        }),
-      );
+      const next = await loadReceivingWorkspace({
+        includeReceivings: false,
+        includeProductOptions: false,
+        includeAudit: false,
+        includeSerials: false,
+      });
+      if (request !== requestVersion.current || !mounted.current) return;
+      setWorkspace(next);
     } catch (cause) {
+      if (request !== requestVersion.current || !mounted.current) return;
       setLoadError(cause instanceof Error ? cause.message : "Unable to load suppliers.");
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && mounted.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void load();
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+    };
   }, [load]);
 
   const supplierStats = useMemo(() => {
@@ -141,9 +153,12 @@ export default function SuppliersPage() {
   };
 
   const saveSupplier = async () => {
-    if (saving) return;
+    if (saveLock.current || loading) return;
     if (!supplierDraft) return;
-    if (!supplierDraft.name.trim()) return toast.error("Supplier name is required.");
+    if (!supplierDraft.name.trim()) return toast.error(t("Supplier name is required."));
+    saveLock.current = true;
+    requestVersion.current += 1;
+    setLoading(false);
     setSaving(true);
     try {
       if (supplierDraft.id) {
@@ -156,7 +171,8 @@ export default function SuppliersPage() {
           notes: supplierDraft.notes,
           isActive: supplierDraft.isActive,
         });
-        toast.success("Supplier updated.");
+        if (!mounted.current) return;
+        toast.success(t("Supplier updated."));
       } else {
         await createReceivingSupplier({
           name: supplierDraft.name,
@@ -166,15 +182,17 @@ export default function SuppliersPage() {
           notes: supplierDraft.notes,
           isActive: supplierDraft.isActive,
         });
-        toast.success("Supplier created.");
+        if (!mounted.current) return;
+        toast.success(t("Supplier created."));
       }
       formGuard.markSaved();
       setSupplierDraft(null);
       await load();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Saving supplier failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : t("Saving supplier failed."));
     } finally {
-      setSaving(false);
+      saveLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
@@ -189,8 +207,15 @@ export default function SuppliersPage() {
   };
 
   const saveLocation = async () => {
-    if (saving) return;
+    if (saveLock.current || loading) return;
     if (!locationDraft) return;
+    if (!locationDraft.name.trim() || !locationDraft.code.trim()) {
+      toast.error(lang === "ar" ? "أدخل اسم الموقع ورمزه قبل الحفظ." : "Enter a location name and code before saving.");
+      return;
+    }
+    saveLock.current = true;
+    requestVersion.current += 1;
+    setLoading(false);
     setSaving(true);
     try {
       await saveProcurementLocation({
@@ -200,29 +225,31 @@ export default function SuppliersPage() {
         address: locationDraft.address,
         isActive: locationDraft.isActive,
       });
-      toast.success(locationDraft.id ? "Location updated." : "Location created.");
+      if (!mounted.current) return;
+      toast.success(t(locationDraft.id ? "Location updated." : "Location created."));
       formGuard.markSaved();
       setLocationDraft(null);
       await load();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Saving location failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : t("Saving location failed."));
     } finally {
-      setSaving(false);
+      saveLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   if (loading && !workspace) {
     return (
-      <div className="grid min-h-[440px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div className="grid min-h-[440px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-indigo-600" />
       </div>
     );
   }
 
   return (
-    <div>
+    <div aria-busy={loading || saving}>
       {loadError && (
-        <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
+        <DashboardLoadError message={loadError} busy={loading || saving} onRetry={() => { if (!saveLock.current) void load(); }} />
       )}
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
@@ -236,14 +263,24 @@ export default function SuppliersPage() {
             {t("Manage supplier contacts, purchasing history and receiving destinations.")}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
+            type="button"
+            disabled={loading || saving}
+            onClick={() => { if (!saveLock.current) void load(); }}
+            className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-[11px] font-bold text-foreground disabled:opacity-50"
+          >
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} /> {t("Refresh")}
+          </button>
+          <button
+            disabled={loading || saving}
             onClick={() => openLocation({ ...blankLocation })}
-            className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
+            className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-[11px] font-bold text-slate-700"
           >
             <MapPin className="size-3.5" /> {t("New location")}
           </button>
           <button
+            disabled={loading || saving}
             onClick={() => openSupplier({ ...blankSupplier })}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white"
           >
@@ -253,7 +290,7 @@ export default function SuppliersPage() {
       </div>
 
       {supplierDraft ? (
-        <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.05)]">
+        <div className="mb-5 rounded-2xl border border-border bg-card p-5 shadow-[0_8px_24px_rgba(33,47,82,.05)]">
           <div className="mb-4 flex items-center justify-between">
             <div className="text-[14px] font-bold text-[#14203a]">
               {supplierDraft.id ? t("Edit supplier") : t("New supplier")}
@@ -269,30 +306,40 @@ export default function SuppliersPage() {
           </div>
           <fieldset disabled={saving} className="min-w-0 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <input
+              type="text"
+              aria-label={t("Supplier name")}
               value={supplierDraft.name}
               onChange={(e) => setSupplierDraft({ ...supplierDraft, name: e.target.value })}
               placeholder={t("Supplier name")}
               className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
             />
             <input
+              type="text"
+              aria-label={t("Code")}
               value={supplierDraft.code}
               onChange={(e) => setSupplierDraft({ ...supplierDraft, code: e.target.value })}
               placeholder={t("Code")}
               className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
             />
             <input
+              type="tel"
+              aria-label={t("Phone")}
               value={supplierDraft.phone}
               onChange={(e) => setSupplierDraft({ ...supplierDraft, phone: e.target.value })}
               placeholder={t("Phone")}
               className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
             />
             <input
+              type="email"
+              aria-label={t("Email")}
               value={supplierDraft.email}
               onChange={(e) => setSupplierDraft({ ...supplierDraft, email: e.target.value })}
               placeholder={t("Email")}
               className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
             />
             <input
+              type="text"
+              aria-label={t("Internal notes")}
               value={supplierDraft.notes}
               onChange={(e) => setSupplierDraft({ ...supplierDraft, notes: e.target.value })}
               placeholder={t("Internal notes")}
@@ -310,7 +357,7 @@ export default function SuppliersPage() {
           <div className="mt-4 flex justify-end">
             <button
               onClick={() => void saveSupplier()}
-              disabled={saving}
+              disabled={saving || !supplierDraft.name.trim()}
               className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-5 text-[11px] font-bold text-white disabled:opacity-50"
             >
               <Save className="size-3.5" /> {t("Save supplier")}
@@ -320,7 +367,7 @@ export default function SuppliersPage() {
       ) : null}
 
       {locationDraft ? (
-        <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-5">
+        <div className="mb-5 rounded-2xl border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="text-[14px] font-bold text-[#14203a]">
               {locationDraft.id ? t("Edit location") : t("New store / warehouse")}
@@ -335,18 +382,24 @@ export default function SuppliersPage() {
           </div>
           <fieldset disabled={saving} className="min-w-0 grid gap-3 md:grid-cols-4">
             <input
+              type="text"
+              aria-label={t("Location name")}
               value={locationDraft.name}
               onChange={(e) => setLocationDraft({ ...locationDraft, name: e.target.value })}
               placeholder={t("Location name")}
               className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
             />
             <input
+              type="text"
+              aria-label={t("Code")}
               value={locationDraft.code}
               onChange={(e) => setLocationDraft({ ...locationDraft, code: e.target.value })}
               placeholder={t("Code")}
               className="h-10 rounded-xl border border-slate-200 px-3 text-[12px]"
             />
             <input
+              type="text"
+              aria-label={t("Address")}
               value={locationDraft.address}
               onChange={(e) => setLocationDraft({ ...locationDraft, address: e.target.value })}
               placeholder={t("Address")}
@@ -364,7 +417,7 @@ export default function SuppliersPage() {
           <div className="mt-4 flex justify-end">
             <button
               onClick={() => void saveLocation()}
-              disabled={saving}
+              disabled={saving || !locationDraft.name.trim() || !locationDraft.code.trim()}
               className="rounded-xl bg-[#5968ea] px-5 py-2.5 text-[11px] font-bold text-white"
             >
               {t("Save location")}
@@ -373,19 +426,26 @@ export default function SuppliersPage() {
         </div>
       ) : null}
 
-      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="mb-5 rounded-2xl border border-border bg-card p-4">
         <div className="relative">
           <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <input
+            aria-label={t("Search suppliers by name, code, phone or email")}
+            type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("Search suppliers by name, code, phone or email")}
             className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px]"
           />
         </div>
+        {query.trim() && (
+          <button type="button" onClick={() => setQuery("")} className="mt-2 text-xs font-semibold text-primary hover:underline">
+            {t("Clear search")}
+          </button>
+        )}
       </div>
 
-      <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="mb-5 overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div className="flex items-center gap-2 text-[14px] font-bold text-[#14203a]">
             <Truck className="size-4" /> {t("Suppliers")}
@@ -393,6 +453,13 @@ export default function SuppliersPage() {
           <span className="text-[10px] font-bold text-slate-400">{filteredSuppliers.length}</span>
         </div>
         <div className="divide-y divide-slate-100">
+          {!filteredSuppliers.length && (
+            <div role="status" className="p-6 text-center text-sm text-muted-foreground">
+              {query.trim()
+                ? (lang === "ar" ? "لا يوجد مورّد مطابق. جرّب بحثاً آخر أو امسح البحث." : "No matching suppliers. Try another search or clear it.")
+                : (lang === "ar" ? "لم تتم إضافة مورّدين بعد." : "No suppliers added yet.")}
+            </div>
+          )}
           {filteredSuppliers.map((supplier) => {
             const stats = supplierStats.get(supplier.id) ?? {
               poCount: 0,
@@ -402,6 +469,7 @@ export default function SuppliersPage() {
             return (
               <button
                 key={supplier.id}
+                disabled={saving || loading}
                 onClick={() => editSupplier(supplier)}
                 className="grid w-full gap-3 p-4 text-start transition hover:bg-slate-50 md:grid-cols-[1.2fr_1fr_repeat(3,.65fr)] md:items-center"
               >
@@ -435,7 +503,7 @@ export default function SuppliersPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div className="flex items-center gap-2 text-[14px] font-bold text-[#14203a]">
             <Building2 className="size-4" /> {t("Stores / Warehouses")}
@@ -445,9 +513,13 @@ export default function SuppliersPage() {
           </span>
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          {workspace && !workspace.locations.length && (
+            <p className="text-sm text-muted-foreground sm:col-span-2 lg:col-span-3">{lang === "ar" ? "أضف متجراً أو مستودعاً لاستخدامه في أوامر الشراء والاستلام." : "Add a store or warehouse to use for purchasing and receiving."}</p>
+          )}
           {(workspace?.locations ?? []).map((location) => (
             <button
               key={location.id}
+              disabled={saving || loading}
               onClick={() => editLocation(location)}
               className="rounded-xl border border-slate-200 p-4 text-start hover:border-indigo-200 hover:bg-indigo-50/30"
             >

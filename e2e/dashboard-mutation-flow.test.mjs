@@ -21,8 +21,8 @@ test("brand mutations patch local dashboard state instead of reloading the full 
 
   const deleteFlow = functionSlice(
     page,
-    "const confirmDelete = async () =>",
-    "const assignProducts = async",
+    "const confirmDelete =",
+    "const assignProducts =",
   );
   assert.doesNotMatch(deleteFlow, /loadBrandsWorkspace\(\)/);
   assert.match(deleteFlow, /setBrands\(remainingBrands\)/);
@@ -30,7 +30,7 @@ test("brand mutations patch local dashboard state instead of reloading the full 
 
   const assignFlow = functionSlice(
     page,
-    "const assignProducts = async",
+    "const assignProducts =",
     "const removeProductFromBrand = async",
   );
   assert.doesNotMatch(assignFlow, /listDashboardProducts|loadBrandsWorkspace/);
@@ -47,8 +47,8 @@ test("category mutations patch local dashboard state and guard duplicate deletes
 
   const deleteFlow = functionSlice(
     page,
-    "const confirmDelete = async () =>",
-    "const assignProducts = async",
+    "const confirmDelete =",
+    "const assignProducts =",
   );
   assert.doesNotMatch(deleteFlow, /loadCategoriesWorkspace\(\)/);
   assert.match(deleteFlow, /if \(!deleteTarget \|\| deleting\) return/);
@@ -59,13 +59,15 @@ test("category mutations patch local dashboard state and guard duplicate deletes
 
   const assignFlow = functionSlice(
     page,
-    "const assignProducts = async",
-    "const removeProductFromCategory = async",
+    "const assignProducts =",
+    "const removeProductFromCategory =",
   );
   assert.doesNotMatch(assignFlow, /listDashboardProducts|loadCategoriesWorkspace/);
   assert.match(assignFlow, /patchProductCategoryAssignments/);
 
-  assert.match(page, /disabled=\{deleting\}/);
+  assert.match(page, /disabled=\{mutationPending \|\| deleting\}/);
+  assert.match(page, /const confirmDelete = withCategoryMutation/);
+  assert.match(page, /if \(mutationLock\.current\) return/);
   assert.match(page, /deleting \? t\("Deleting\.\.\."\) : t\("Delete Category"\)/);
 });
 

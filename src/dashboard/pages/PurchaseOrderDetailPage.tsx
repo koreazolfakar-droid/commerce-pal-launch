@@ -11,7 +11,7 @@ import {
   RefreshCw,
   Truck,
 } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -67,7 +67,7 @@ function InfoItem({ label, value }: { label: string; value: ReactNode }) {
 }
 
 export default function PurchaseOrderDetailPage({ id }: { id: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [po, setPo] = useState<PurchaseOrderSummary | null>(null);
   const [supplier, setSupplier] = useState<ReceivingSupplier | null>(null);
@@ -81,13 +81,22 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const requestVersion = useRef(0);
+  const activeId = useRef(id);
+  const mutationTarget = useRef<string | null>(null);
+  activeId.current = id;
 
   const load = useCallback(
-    async (manual = false) => {
+    async (manual = false, afterMutation = false) => {
+      if (mutationTarget.current === id && !afterMutation) return;
+      const request = ++requestVersion.current;
+      setPo((current) => (current?.id === id ? current : null));
+      setError("");
       if (manual) setRefreshing(true);
       else setLoading(true);
       try {
         const detail = await loadPurchaseOrderDetail(id);
+        if (request !== requestVersion.current || activeId.current !== id) return;
         setPo(detail.purchaseOrder);
         setSupplier(detail.supplier);
         setEvents(detail.events);
@@ -96,77 +105,109 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         setError(detail.purchaseOrder ? "" : "Purchase order was not found.");
         if (manual && detail.purchaseOrder) toast.success("Purchase order refreshed.");
       } catch (cause) {
+        if (request !== requestVersion.current || activeId.current !== id) return;
         const message = cause instanceof Error ? cause.message : "Unable to load purchase order.";
         setError(message);
         if (manual) toast.error(message);
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (request === requestVersion.current && activeId.current === id) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [id],
   );
 
   useEffect(() => {
-    void load(false);
+    activeId.current = id;
+    // Route loads must recover even when returning to an order with a pending mutation.
+    void load(false, true);
+    return () => {
+      requestVersion.current += 1;
+      activeId.current = "";
+    };
   }, [load]);
 
   const submit = async () => {
-    if (!po || po.status !== "draft") return;
+    if (!po || po.id !== id || loading || refreshing || mutationTarget.current || po.status !== "draft") return;
     if (!window.confirm(`Submit PO ${po.poNumber}? Draft lines will become locked for receiving.`))
       return;
 
+    mutationTarget.current = po.id;
+    requestVersion.current += 1;
+    setRefreshing(false);
+    setLoading(false);
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id, po.updatedAt);
+      if (activeId.current !== po.id) return;
       toast.success(`PO ${po.poNumber} submitted for approval.`);
-      await load(false);
+      await load(false, true);
     } catch (cause) {
+      if (activeId.current !== po.id) return;
       toast.error(cause instanceof Error ? cause.message : "PO submission failed.");
     } finally {
-      setSaving(false);
+      mutationTarget.current = null;
+      if (activeId.current) setSaving(false);
     }
   };
 
   const runLifecycle = async (
     action: "approve" | "issue" | "reject" | "reopen" | "cancel" | "close",
   ) => {
-    if (!po) return;
+    if (!po || po.id !== id || loading || refreshing || mutationTarget.current) return;
+    mutationTarget.current = po.id;
+    requestVersion.current += 1;
+    setRefreshing(false);
+    setLoading(false);
     setSaving(true);
     try {
       if (action === "approve") {
         await approvePurchaseOrder(po.id, po.updatedAt);
+        if (activeId.current !== po.id) return;
         toast.success(`PO ${po.poNumber} approved.`);
       } else if (action === "issue") {
         await issuePurchaseOrder(po.id, po.updatedAt);
+        if (activeId.current !== po.id) return;
         toast.success(`PO ${po.poNumber} issued and ready for receiving.`);
       } else if (action === "reopen") {
         await reopenPurchaseOrder(po.id, po.updatedAt);
+        if (activeId.current !== po.id) return;
         toast.success(`PO ${po.poNumber} reopened as draft.`);
       } else if (action === "reject") {
         const reason = window.prompt("Reason for rejecting this purchase order?")?.trim();
         if (!reason) return;
         await rejectPurchaseOrder(po.id, po.updatedAt, reason);
+        if (activeId.current !== po.id) return;
         toast.success(`PO ${po.poNumber} rejected.`);
       } else if (action === "close") {
         await closePurchaseOrder(po.id, po.updatedAt);
+        if (activeId.current !== po.id) return;
         toast.success(`PO ${po.poNumber} closed.`);
       } else {
         const reason = window.prompt("Reason for cancelling this purchase order?")?.trim();
         if (!reason) return;
         await cancelPurchaseOrder(po.id, po.updatedAt, reason);
+        if (activeId.current !== po.id) return;
         toast.success(`PO ${po.poNumber} cancelled.`);
       }
-      await load(false);
+      await load(false, true);
     } catch (cause) {
+      if (activeId.current !== po.id) return;
       toast.error(cause instanceof Error ? cause.message : "Purchase order action failed.");
     } finally {
-      setSaving(false);
+      mutationTarget.current = null;
+      if (activeId.current) setSaving(false);
     }
   };
 
   const uploadAttachment = async (file: File | null) => {
-    if (!po || !file) return;
+    if (!po || po.id !== id || !file || loading || refreshing || mutationTarget.current) return;
+    mutationTarget.current = po.id;
+    requestVersion.current += 1;
+    setRefreshing(false);
+    setLoading(false);
     setSaving(true);
     try {
       await uploadProcurementAttachment({
@@ -174,18 +215,41 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         purchaseOrderId: po.id,
         attachmentType,
       });
+      if (activeId.current !== po.id) return;
       toast.success("Attachment uploaded.");
-      await load(false);
+      await load(false, true);
     } catch (cause) {
+      if (activeId.current !== po.id) return;
       toast.error(cause instanceof Error ? cause.message : "Attachment upload failed.");
     } finally {
-      setSaving(false);
+      mutationTarget.current = null;
+      if (activeId.current) setSaving(false);
     }
   };
 
-  if (loading) {
+  const removeAttachment = async (attachment: ProcurementAttachment) => {
+    if (!po || po.id !== id || !isAdmin || loading || refreshing || mutationTarget.current) return;
+    if (!window.confirm(t("Delete this attachment?"))) return;
+    mutationTarget.current = po.id;
+    requestVersion.current += 1;
+    setRefreshing(false);
+    setLoading(false);
+    setSaving(true);
+    try {
+      await deleteProcurementAttachment(attachment);
+      if (activeId.current !== po.id) return;
+      await load(false, true);
+    } catch (cause) {
+      if (activeId.current === po.id) toast.error(cause instanceof Error ? cause.message : t("Delete failed."));
+    } finally {
+      mutationTarget.current = null;
+      if (activeId.current) setSaving(false);
+    }
+  };
+
+  if (loading || (po && po.id !== id)) {
     return (
-      <div className="grid min-h-[440px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div className="grid min-h-[440px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-indigo-600" />
       </div>
     );
@@ -206,6 +270,9 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         >
           {t("Back to Purchase Orders")}
         </button>
+        <button type="button" onClick={() => void load()} className="ms-2 mt-4 rounded-xl border border-border bg-card px-4 py-2 text-[11px] font-bold text-foreground">
+          {t("Retry")}
+        </button>
       </div>
     );
   }
@@ -217,7 +284,13 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
       : 0;
 
   return (
-    <div>
+    <div aria-busy={saving || refreshing}>
+      {error && (
+        <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <p>{lang === "ar" ? "تعذّر تحديث أمر الشراء. تظهر آخر بيانات ناجحة." : "Purchase order refresh failed. Showing the last successfully loaded data."}</p>
+          <p className="mt-1 break-words text-xs">{error}</p>
+        </div>
+      )}
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <button
@@ -253,7 +326,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
           <button
             onClick={() => void load(true)}
-            disabled={refreshing}
+            disabled={saving || refreshing}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600 disabled:opacity-50"
           >
             <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -263,6 +336,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {po.status === "draft" ? (
             <>
               <button
+                disabled={saving || refreshing}
                 onClick={() => navigate(`/dashboard/purchase-orders/${po.id}/edit`)}
                 className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
               >
@@ -270,7 +344,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
               </button>
               <button
                 onClick={() => void submit()}
-                disabled={saving}
+                disabled={saving || refreshing}
                 className="h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-50"
               >
                 {t("Submit for approval")}
@@ -282,14 +356,14 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             <>
               <button
                 onClick={() => void runLifecycle("reject")}
-                disabled={saving}
+                disabled={saving || refreshing}
                 className="h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50"
               >
                 {t("Reject")}
               </button>
               <button
                 onClick={() => void runLifecycle("approve")}
-                disabled={saving}
+                disabled={saving || refreshing}
                 className="h-10 rounded-xl bg-emerald-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
               >
                 {t("Approve PO")}
@@ -300,7 +374,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {po.status === "approved" && isAdmin ? (
             <button
               onClick={() => void runLifecycle("issue")}
-              disabled={saving}
+              disabled={saving || refreshing}
               className="h-10 rounded-xl bg-violet-600 px-4 text-[11px] font-bold text-white disabled:opacity-50"
             >
               {t("Issue PO")}
@@ -310,7 +384,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {po.status === "rejected" && isAdmin ? (
             <button
               onClick={() => void runLifecycle("reopen")}
-              disabled={saving}
+              disabled={saving || refreshing}
               className="h-10 rounded-xl border border-amber-200 bg-amber-50 px-4 text-[11px] font-bold text-amber-700 disabled:opacity-50"
             >
               {t("Reopen draft")}
@@ -319,6 +393,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
 
           {canReceive ? (
             <button
+              disabled={saving || refreshing}
               onClick={() => navigate(`/dashboard/receiving/${po.id}`)}
               className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
             >
@@ -330,7 +405,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {isAdmin && po.status === "received" ? (
             <button
               onClick={() => void runLifecycle("close")}
-              disabled={saving}
+              disabled={saving || refreshing}
               className="h-10 rounded-xl bg-slate-700 px-4 text-[11px] font-bold text-white disabled:opacity-50"
             >
               {t("Close PO")}
@@ -340,7 +415,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           {isAdmin && ["draft", "pending_approval", "approved", "ordered"].includes(po.status) ? (
             <button
               onClick={() => void runLifecycle("cancel")}
-              disabled={saving}
+              disabled={saving || refreshing}
               className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-500 disabled:opacity-50"
             >
               {t("Cancel PO")}
@@ -385,7 +460,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.08em] text-slate-400">
             <ClipboardList className="size-3.5" />
             {t("Ordered")}
@@ -427,7 +502,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         </div>
       ) : null}
 
-      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="mb-5 rounded-2xl border border-border bg-card p-4">
         <div className="mb-2 flex items-center justify-between">
           <div>
             <div className="text-[12px] font-bold text-[#14203a]">{t("Receiving progress")}</div>
@@ -442,7 +517,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div>
             <div className="text-[14px] font-bold text-[#14203a]">{t("Purchase order items")}</div>
@@ -539,7 +614,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white">
+        <div className="rounded-2xl border border-border bg-card">
           <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-[14px] font-bold text-[#14203a]">
@@ -551,6 +626,8 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <select
+                aria-label={t("Attachment type")}
+                disabled={saving || refreshing}
                 value={attachmentType}
                 onChange={(event) => setAttachmentType(event.target.value as typeof attachmentType)}
                 className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[10px]"
@@ -566,7 +643,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                   type="file"
                   className="hidden"
                   accept="application/pdf,image/*"
-                  disabled={saving}
+                  disabled={saving || refreshing}
                   onChange={(event) => {
                     const file = event.target.files?.[0] ?? null;
                     void uploadAttachment(file);
@@ -597,16 +674,8 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
                 </div>
                 {isAdmin ? (
                   <button
-                    onClick={() => {
-                      if (!window.confirm("Delete this attachment?")) return;
-                      setSaving(true);
-                      void deleteProcurementAttachment(attachment)
-                        .then(() => load(false))
-                        .catch((cause) =>
-                          toast.error(cause instanceof Error ? cause.message : "Delete failed."),
-                        )
-                        .finally(() => setSaving(false));
-                    }}
+                    disabled={saving || refreshing}
+                    onClick={() => void removeAttachment(attachment)}
                     className="text-[10px] font-bold text-rose-600"
                   >
                     {t("Delete")}
@@ -622,7 +691,7 @@ export default function PurchaseOrderDetailPage({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white">
+        <div className="rounded-2xl border border-border bg-card">
           <div className="border-b border-slate-100 p-4">
             <div className="text-[14px] font-bold text-[#14203a]">{t("PO timeline")}</div>
             <div className="mt-1 text-[10px] text-slate-400">

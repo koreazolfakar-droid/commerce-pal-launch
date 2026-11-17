@@ -17,7 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -46,12 +46,15 @@ const EMPTY: DashboardSeoInput = {
 const LIVE_ROUTES = new Set(["home", "brands"]);
 
 export default function SeoPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [pages, setPages] = useState<DashboardSeoPage[]>([]);
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const operationLock = useRef(false);
+  const requestVersion = useRef(0);
+  const mounted = useRef(true);
   const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [editing, setEditing] = useState<DashboardSeoPage | null>(null);
   const [draft, setDraft] = useState<DashboardSeoInput>(EMPTY);
@@ -64,21 +67,31 @@ export default function SeoPage() {
   const modalRef = useDashboardModal(formGuard.close, modalOpen);
 
   const load = useCallback(async () => {
+    if (operationLock.current) return;
+    const request = ++requestVersion.current;
     setLoading(true);
     setLoadError("");
     try {
       const workspace = await loadDashboardSeoWorkspace();
+      if (request !== requestVersion.current || !mounted.current) return;
       setPages(workspace.pages);
       setCanDelete(workspace.role === "admin");
     } catch (cause) {
-      setLoadError(cause instanceof Error ? cause.message : "SEO load failed.");
+      if (request === requestVersion.current && mounted.current) {
+        setLoadError(cause instanceof Error ? cause.message : "SEO load failed.");
+      }
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && mounted.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void load();
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+    };
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -94,6 +107,7 @@ export default function SeoPage() {
   }, [pages, query]);
 
   const openCreate = () => {
+    if (operationLock.current || loading || loadError) return;
     setEditing(null);
     setDraft(EMPTY);
     setJsonText("{}");
@@ -101,6 +115,7 @@ export default function SeoPage() {
   };
 
   const openEdit = (page: DashboardSeoPage) => {
+    if (operationLock.current || loading || loadError) return;
     setEditing(page);
     setDraft({
       pageSlug: page.pageSlug,
@@ -121,7 +136,7 @@ export default function SeoPage() {
   };
 
   const save = async () => {
-    if (saving) return;
+    if (operationLock.current || loading || loadError) return;
     let jsonLd: Record<string, unknown>;
     try {
       const parsed = JSON.parse(jsonText || "{}");
@@ -130,9 +145,11 @@ export default function SeoPage() {
     } catch {
       return toast.error("JSON-LD must be a valid JSON object.");
     }
+    operationLock.current = true;
     setSaving(true);
     try {
       const saved = await saveDashboardSeoPage({ ...draft, jsonLd });
+      if (!mounted.current) return;
       setPages((current) =>
         [...current.filter((page) => page.pageSlug !== saved.pageSlug), saved].sort((a, b) =>
           a.pageSlug.localeCompare(b.pageSlug),
@@ -142,26 +159,35 @@ export default function SeoPage() {
       setModalOpen(false);
       toast.success("SEO metadata saved to Supabase.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "SEO save failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "SEO save failed.");
     } finally {
-      setSaving(false);
+      operationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const remove = async (page: DashboardSeoPage) => {
+    if (operationLock.current || loading || loadError) return;
     if (!canDelete) return toast.error("Only admins can delete SEO pages.");
     if (!window.confirm(`Delete SEO configuration for "${page.pageSlug}"?`)) return;
+    operationLock.current = true;
+    setSaving(true);
     try {
       await deleteDashboardSeoPage(page.pageSlug);
+      if (!mounted.current) return;
       setPages((current) => current.filter((row) => row.pageSlug !== page.pageSlug));
       toast.success("SEO row deleted.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "SEO delete failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "SEO delete failed.");
+    } finally {
+      operationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   return (
-    <div>
+    <div aria-busy={loading || saving}>
+      {saving && <p role="status" className="mb-3 text-xs text-muted-foreground">{lang === "ar" ? "جارٍ حفظ التغييرات…" : "Saving changes…"}</p>}
       {loadError && (
         <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
       )}
@@ -180,12 +206,14 @@ export default function SeoPage() {
         <div className="flex gap-2">
           <button
             onClick={() => void load()}
+            disabled={loading || saving}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
             <RefreshCw className="size-3.5" /> {t("Refresh")}
           </button>
           <button
             onClick={openCreate}
+            disabled={loading || saving || Boolean(loadError)}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
           >
             <Plus className="size-4" /> {t("Add SEO page")}
@@ -208,6 +236,7 @@ export default function SeoPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("Search SEO pages...")}
+              aria-label={t("Search SEO pages...")}
               className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[12px] outline-none focus:border-indigo-400"
             />
           </div>
@@ -248,6 +277,7 @@ export default function SeoPage() {
                       </td>
                       <td className="px-3 py-4 text-[10px] text-slate-500">{page.robots}</td>
                       <td className="px-3 py-4">
+                        <span className="sr-only">{page.isPublic ? t("Public") : t("Private")}</span>
                         {page.isPublic ? (
                           <Eye className="size-4 text-emerald-600" />
                         ) : (
@@ -265,6 +295,8 @@ export default function SeoPage() {
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => openEdit(page)}
+                            disabled={saving || Boolean(loadError)}
+                            aria-label={`${t("Edit SEO page")}: ${page.pageSlug}`}
                             className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-50"
                           >
                             <Pencil className="size-3.5" />
@@ -272,6 +304,8 @@ export default function SeoPage() {
                           {canDelete && page.pageSlug !== "home" ? (
                             <button
                               onClick={() => void remove(page)}
+                              disabled={saving || Boolean(loadError)}
+                              aria-label={`${t("Delete")}: ${page.pageSlug}`}
                               className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50"
                             >
                               <Trash2 className="size-3.5" />
@@ -343,6 +377,11 @@ export default function SeoPage() {
                   }))
                 }
               />
+            </div>
+            <div className="mb-4 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground" role="status">
+              <p className="font-semibold text-foreground">{lang === "ar" ? "معاينة عنوان البحث" : "Search title preview"}</p>
+              <p className="mt-1 break-words">{(lang === "ar" ? draft.titleAr : draft.titleEn) || draft.title || "Space Call"}</p>
+              <p className="mt-2">{lang === "ar" ? "حروف العنوان والوصف الإنجليزي" : "English title and description characters"}: {draft.titleEn.length} / {draft.descriptionEn.length}</p>
             </div>
             <fieldset disabled={saving} className="min-w-0 grid gap-4 sm:grid-cols-2">
               <Field

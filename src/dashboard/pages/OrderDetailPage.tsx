@@ -1,3 +1,4 @@
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { OrderDeliveryLocation } from "@/dashboard/components/orders/OrderDeliveryLocation";
 import { useLanguage } from "@/dashboard/i18n";
@@ -77,11 +78,14 @@ function paymentStatusOptions(status: DashboardPaymentStatus): DashboardPaymentS
 }
 
 export default function OrderDetailPage({ id }: { id: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [order, setOrder] = useState<DashboardOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const mutationOrderId = useRef<string | null>(null);
+  const mounted = useRef(true);
   const [error, setError] = useState("");
   const [deliveryType, setDeliveryType] =
     useState<Exclude<DashboardDeliveryType, "pending">>("free");
@@ -91,6 +95,8 @@ export default function OrderDetailPage({ id }: { id: string }) {
   currentOrderId.current = id;
 
   const load = useCallback(async () => {
+    // A refresh must not replace the result of a pending version-checked mutation.
+    if (mutationOrderId.current === id) return;
     const request = ++requestVersion.current;
     setLoading(true);
     setOrder((current) => (current?.id === id ? current : null));
@@ -114,9 +120,12 @@ export default function OrderDetailPage({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => {
+    mounted.current = true;
+    setCancelOrderId(null);
     void load();
     return () => {
       // Ignore an older order response when navigating or unmounting.
+      mounted.current = false;
       requestVersion.current += 1;
     };
   }, [load]);
@@ -127,47 +136,81 @@ export default function OrderDetailPage({ id }: { id: string }) {
   );
 
   const changeStatus = async (status: DashboardOrderStatus) => {
-    if (!order || saving) return;
+    if (!order || saving || loading || mutationOrderId.current) return;
+    mutationOrderId.current = order.id;
+    const mutationRequest = ++requestVersion.current;
+    setLoading(false);
     setSaving(true);
     try {
       const next = await updateDashboardOrderStatus(order.id, status, order.version);
       if (currentOrderId.current !== order.id) return;
+      if (!mounted.current) return;
       setOrder(next);
+      if (status === "cancelled") setCancelOrderId(null);
       toast.success(`Order #${order.publicOrderNumber} marked ${orderStatusLabel(status)}.`);
     } catch (cause) {
+      if (!mounted.current || currentOrderId.current !== order.id) return;
       toast.error(cause instanceof Error ? cause.message : "Order status update failed.");
     } finally {
-      setSaving(false);
+      mutationOrderId.current = null;
+      if (mounted.current) {
+        setSaving(false);
+        if (currentOrderId.current === order.id) {
+          if (requestVersion.current !== mutationRequest) void load();
+          else setLoading(false);
+        }
+      }
     }
   };
 
   const changePayment = async (status: DashboardPaymentStatus) => {
-    if (!order || saving || status === order.paymentStatus) return;
+    if (!order || saving || loading || mutationOrderId.current || status === order.paymentStatus) return;
+    mutationOrderId.current = order.id;
+    const mutationRequest = ++requestVersion.current;
+    setLoading(false);
     setSaving(true);
     try {
       const next = await updateDashboardOrderPaymentStatus(order.id, status, order.version);
       if (currentOrderId.current !== order.id) return;
+      if (!mounted.current) return;
       setOrder(next);
       toast.success(`Payment status changed to ${paymentStatusLabel(status)}.`);
     } catch (cause) {
+      if (!mounted.current || currentOrderId.current !== order.id) return;
       toast.error(cause instanceof Error ? cause.message : "Payment status update failed.");
     } finally {
-      setSaving(false);
+      mutationOrderId.current = null;
+      if (mounted.current) {
+        setSaving(false);
+        if (currentOrderId.current === order.id) {
+          if (requestVersion.current !== mutationRequest) void load();
+          else setLoading(false);
+        }
+      }
     }
   };
 
   const changeDelivery = async () => {
-    if (!order || saving) return;
+    if (!order || saving || loading || mutationOrderId.current) return;
+    if (deliveryType === "paid" && !deliveryFee.trim()) {
+      toast.error(lang === "ar" ? "أدخل رسوم التوصيل." : "Enter a delivery fee.");
+      return;
+    }
     const fee = deliveryType === "free" ? 0 : Number(deliveryFee);
     if (!Number.isFinite(fee) || fee < 0 || fee > 10000) {
       toast.error("Delivery fee must be between 0 and 10000.");
       return;
     }
 
+    if (deliveryType === order.deliveryType && fee === order.shippingTotal) return;
+    mutationOrderId.current = order.id;
+    const mutationRequest = ++requestVersion.current;
+    setLoading(false);
     setSaving(true);
     try {
       const next = await updateDashboardOrderDelivery(order.id, deliveryType, fee, order.version);
       if (currentOrderId.current !== order.id) return;
+      if (!mounted.current) return;
       setOrder(next);
       if (next) {
         setDeliveryType(next.deliveryType === "paid" ? "paid" : "free");
@@ -175,9 +218,17 @@ export default function OrderDetailPage({ id }: { id: string }) {
       }
       toast.success(deliveryType === "free" ? "Free delivery applied." : "Delivery fee updated.");
     } catch (cause) {
+      if (!mounted.current || currentOrderId.current !== order.id) return;
       toast.error(cause instanceof Error ? cause.message : "Delivery update failed.");
     } finally {
-      setSaving(false);
+      mutationOrderId.current = null;
+      if (mounted.current) {
+        setSaving(false);
+        if (currentOrderId.current === order.id) {
+          if (requestVersion.current !== mutationRequest) void load();
+          else setLoading(false);
+        }
+      }
     }
   };
 
@@ -203,6 +254,9 @@ export default function OrderDetailPage({ id }: { id: string }) {
             {error.includes("not found") ? t("Order not found.") : t("Order could not be loaded.")}
           </div>
           <div className="mt-1 text-xs text-rose-600">{error}</div>
+          <button type="button" onClick={() => void load()} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+            {t("Retry")}
+          </button>
         </div>
       </div>
     );
@@ -231,6 +285,8 @@ export default function OrderDetailPage({ id }: { id: string }) {
     order.paymentStatus === "unpaid" && !["delivered", "done", "cancelled"].includes(order.status);
   const canAdvanceStatus = nextStatus !== "done" || order.paymentStatus !== "unpaid";
   const allowedPaymentStatuses = paymentStatusOptions(order.paymentStatus);
+  const deliveryChanged = deliveryType !== order.deliveryType ||
+    (deliveryType === "free" ? 0 : Number(deliveryFee)) !== order.shippingTotal;
   const money = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -266,7 +322,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => void load()}
-            disabled={loading}
+            disabled={loading || saving}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-[11px] font-bold text-slate-600"
           >
             <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -274,8 +330,8 @@ export default function OrderDetailPage({ id }: { id: string }) {
           </button>
           {canCancel ? (
             <button
-              onClick={() => void changeStatus("cancelled")}
-              disabled={saving}
+              onClick={() => setCancelOrderId(order.id)}
+              disabled={saving || loading}
               className="flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-white px-3.5 text-[11px] font-bold text-rose-600 disabled:opacity-50"
             >
               <X className="size-3.5" /> {t("Cancel order")}
@@ -284,7 +340,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
           {nextStatus ? (
             <button
               onClick={() => void changeStatus(nextStatus)}
-              disabled={saving || !canAdvanceStatus}
+              disabled={saving || loading || !canAdvanceStatus}
               title={
                 !canAdvanceStatus
                   ? t("Mark the payment as paid before completing this order.")
@@ -485,7 +541,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
                         event.target.value as Exclude<DashboardDeliveryType, "pending">,
                       )
                     }
-                    disabled={!canEditDelivery || saving}
+                    disabled={!canEditDelivery || saving || loading}
                     className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 disabled:bg-slate-50 disabled:opacity-60"
                   >
                     <option value="free">{t("Free Delivery")}</option>
@@ -500,10 +556,12 @@ export default function OrderDetailPage({ id }: { id: string }) {
                   <input
                     type="number"
                     min="0"
+                    max="10000"
                     step="0.01"
+                    inputMode="decimal"
                     value={deliveryType === "free" ? "0" : deliveryFee}
                     onChange={(event) => setDeliveryFee(event.target.value)}
-                    disabled={!canEditDelivery || saving || deliveryType === "free"}
+                    disabled={!canEditDelivery || saving || loading || deliveryType === "free"}
                     className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 disabled:bg-slate-50 disabled:opacity-60"
                   />
                 </label>
@@ -511,7 +569,7 @@ export default function OrderDetailPage({ id }: { id: string }) {
                 <button
                   type="button"
                   onClick={() => void changeDelivery()}
-                  disabled={!canEditDelivery || saving}
+                  disabled={!canEditDelivery || saving || loading || !deliveryChanged}
                   className="mt-auto h-10 rounded-xl bg-[#14203a] px-4 text-[11px] font-bold text-white disabled:opacity-40"
                 >
                   {t("Save delivery")}
@@ -545,12 +603,12 @@ export default function OrderDetailPage({ id }: { id: string }) {
                   onChange={(event) =>
                     void changePayment(event.target.value as DashboardPaymentStatus)
                   }
-                  disabled={saving}
+                  disabled={saving || loading}
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 disabled:opacity-60"
                 >
                   {allowedPaymentStatuses.map((value) => (
                     <option key={value} value={value}>
-                      {paymentStatusLabel(value)}
+                      {t(paymentStatusLabel(value))}
                     </option>
                   ))}
                 </select>
@@ -583,6 +641,20 @@ export default function OrderDetailPage({ id }: { id: string }) {
           ) : null}
         </div>
       </div>
+
+      <DashboardConfirmDialog
+        open={cancelOrderId === order.id}
+        title={lang === "ar" ? "إلغاء الطلب؟" : "Cancel order?"}
+        description={lang === "ar"
+          ? `سيتم إلغاء الطلب #${order.publicOrderNumber} وإعادة الكميات المحجوزة إلى المخزون. لا يمكن التراجع عن الإلغاء.`
+          : `Cancel order #${order.publicOrderNumber} and return its reserved quantities to stock. This cannot be undone.`}
+        confirmLabel={t("Cancel order")}
+        pendingLabel={lang === "ar" ? "جارٍ الإلغاء…" : "Cancelling…"}
+        destructive
+        pending={saving || loading}
+        onClose={() => { if (!saving && !loading) setCancelOrderId(null); }}
+        onConfirm={() => { if (cancelOrderId === id) void changeStatus("cancelled"); }}
+      />
 
       {error ? (
         <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-[11px] text-amber-700">

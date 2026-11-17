@@ -1314,11 +1314,12 @@ function createHomepageSectionKey(type: string, suffix = Date.now()) {
 }
 
 export default function HomepageBuilderPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [brands, setBrands] = useState<DashboardBrand[]>([]);
   const [products, setProducts] = useState<DashboardProduct[]>([]);
   const [productsReady, setProductsReady] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [productsError, setProductsError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [reload, setReload] = useState(0);
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -1327,6 +1328,7 @@ export default function HomepageBuilderPage() {
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const mutationLock = useRef(false);
   const [dirty, setDirty] = useState(false);
   useDashboardUnsavedChanges(dirty);
   const [mode, setMode] = useState<DisplayMode>("desktop");
@@ -1381,18 +1383,23 @@ export default function HomepageBuilderPage() {
 
     let cancelled = false;
     setProductsLoading(true);
+    setProductsError("");
     listDashboardProducts()
       .then((liveProducts) => {
-        if (!cancelled) setProducts(liveProducts);
+        if (!cancelled) {
+          setProducts(liveProducts);
+          setProductsReady(true);
+        }
       })
       .catch((cause) => {
         if (!cancelled) {
-          toast.error(cause instanceof Error ? cause.message : "Unable to load products.");
+          const message = cause instanceof Error ? cause.message : "Unable to load products.";
+          setProductsError(message);
+          toast.error(message);
         }
       })
       .finally(() => {
         if (!cancelled) {
-          setProductsReady(true);
           setProductsLoading(false);
         }
       });
@@ -1402,8 +1409,24 @@ export default function HomepageBuilderPage() {
     };
   }, [needsManualProducts, productsReady]);
 
+  const retryProducts = async () => {
+    if (productsLoading) return;
+    setProductsLoading(true);
+    setProductsError("");
+    try {
+      const liveProducts = await listDashboardProducts();
+      setProducts(liveProducts);
+      setProductsReady(true);
+    } catch (cause) {
+      setProductsError(cause instanceof Error ? cause.message : "Unable to load products.");
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const handler = (event: Event) => {
+      if (mutationLock.current) return;
       const detail = (event as CustomEvent<{ source: string; target: string }>).detail;
       setSections((current) => {
         const from = current.findIndex((item) => item.id === detail.source);
@@ -1422,7 +1445,7 @@ export default function HomepageBuilderPage() {
   }, []);
 
   const updateSelected = (patch: Partial<HomepageSection>) => {
-    if (!selected) return;
+    if (!selected || mutationLock.current) return;
     setDirty(true);
     setSections((current) =>
       current.map((section) => (section.id === selected.id ? { ...section, ...patch } : section)),
@@ -1430,6 +1453,7 @@ export default function HomepageBuilderPage() {
   };
 
   const move = (id: string, direction: "up" | "down") => {
+    if (mutationLock.current) return;
     setSections((current) => {
       const index = current.findIndex((item) => item.id === id);
       const target = direction === "up" ? index - 1 : index + 1;
@@ -1442,6 +1466,7 @@ export default function HomepageBuilderPage() {
   };
 
   const addSection = (type: SectionType) => {
+    if (mutationLock.current) return;
     const base = createSection(type, sections.length + 1);
     const item: HomepageSection = {
       ...base,
@@ -1459,6 +1484,7 @@ export default function HomepageBuilderPage() {
   };
 
   const duplicate = (section: HomepageSection) => {
+    if (mutationLock.current) return;
     const copy: HomepageSection = {
       ...section,
       id: createHomepageUuid(),
@@ -1489,6 +1515,7 @@ export default function HomepageBuilderPage() {
   };
 
   const deleteSection = async (id: string) => {
+    if (mutationLock.current) return;
     if (sections.length <= 1) {
       toast.error("Keep at least one homepage section.");
       return;
@@ -1513,6 +1540,13 @@ export default function HomepageBuilderPage() {
       return;
     }
 
+    if (!window.confirm(
+      lang === "ar"
+        ? `حذف القسم «${section.name}» نهائيًا؟`
+        : `Permanently delete “${section.name}”?`,
+    )) return;
+    mutationLock.current = true;
+    setSaving(true);
     try {
       await deleteDashboardHomepageSection(id);
       setPersistedIds((current) => {
@@ -1524,11 +1558,15 @@ export default function HomepageBuilderPage() {
       toast.success("Homepage section deleted from Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Deleting homepage section failed.");
+    } finally {
+      mutationLock.current = false;
+      setSaving(false);
     }
   };
 
   const persist = async (nextSections: HomepageSection[], message: string) => {
-    if (saving) return;
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       const saved = await saveDashboardHomepageSections(nextSections);
@@ -1542,6 +1580,7 @@ export default function HomepageBuilderPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Saving homepage sections failed.");
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
@@ -1549,12 +1588,11 @@ export default function HomepageBuilderPage() {
   const saveChanges = () => persist(sections, "Homepage changes saved to Supabase.");
 
   const publishAll = async () => {
+    if (mutationLock.current) return;
     const next = sections.map((section) => ({
       ...section,
       status: "published" as const,
     }));
-    setSections(next);
-    setDirty(true);
     await persist(next, "Homepage sections published to the live CMS.");
   };
 
@@ -1574,7 +1612,7 @@ export default function HomepageBuilderPage() {
 
   if (loadError)
     return (
-      <div role="alert" className="rounded-2xl border bg-white p-6">
+      <div role="alert" className="rounded-2xl border border-border bg-card p-6 text-foreground">
         <p>{loadError}</p>
         <button
           className="mt-4 rounded-xl border px-4 py-2"
@@ -1589,7 +1627,7 @@ export default function HomepageBuilderPage() {
 
   if (loading) {
     return (
-      <div className="grid min-h-[460px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status" aria-busy="true" className="grid min-h-[460px] place-items-center rounded-2xl border border-border bg-card">
         <div className="text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-[#5968ea]" />
           <div className="mt-3 text-[11px] font-semibold text-slate-400">
@@ -1601,7 +1639,7 @@ export default function HomepageBuilderPage() {
   }
 
   return (
-    <div>
+    <fieldset disabled={saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
       <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
@@ -1622,7 +1660,7 @@ export default function HomepageBuilderPage() {
               dirty ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
             }`}
           >
-            {dirty ? t("Unsaved changes") : t("Synced to Supabase")}
+            {saving ? t("Saving…") : dirty ? t("Unsaved changes") : t("Synced to Supabase")}
           </span>
           <button
             onClick={() => void saveChanges()}
@@ -1664,6 +1702,17 @@ export default function HomepageBuilderPage() {
         </button>
       </div>
 
+      {needsManualProducts && productsError ? (
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <span className="min-w-0 break-words">
+            {lang === "ar" ? "تعذّر تحميل المنتجات للاختيار اليدوي." : "Products could not be loaded for manual selection."} {productsError}
+          </span>
+          <button type="button" disabled={productsLoading} onClick={() => void retryProducts()} className="min-h-10 rounded-lg border border-current px-3 disabled:opacity-50">
+            {t("Retry")}
+          </button>
+        </div>
+      ) : null}
+
       {!sections.length ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
           <div className="text-sm font-bold text-slate-600">
@@ -1686,6 +1735,7 @@ export default function HomepageBuilderPage() {
                 selected={selected?.id === section.id}
                 onSelect={() => setSelectedId(section.id)}
                 onToggle={() => {
+                  if (mutationLock.current) return;
                   setDirty(true);
                   setSections((current) =>
                     current.map((item) =>
@@ -1835,6 +1885,6 @@ export default function HomepageBuilderPage() {
           </div>
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }

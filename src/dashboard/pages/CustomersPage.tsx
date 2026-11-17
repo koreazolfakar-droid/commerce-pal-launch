@@ -26,9 +26,6 @@ import {
   type DashboardCustomerListResult,
 } from "@/dashboard/data/customers";
 
-const money = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
-
 function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   const { t } = useLanguage();
   return (
@@ -41,7 +38,10 @@ function StatCard({ label, value, detail }: { label: string; value: string; deta
 }
 
 export default function CustomersPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar" : "en-US";
+  const money = (value: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(value);
   const [, navigate] = useLocation();
   const [search, setSearch] = useDashboardQueryState<string>("search", "");
   const [filter, setFilter] = useDashboardQueryState<DashboardCustomerFilter>("filter", "all", [
@@ -52,6 +52,12 @@ export default function CustomersPage() {
   const [page, setPage] = useDashboardQueryState<number>("page", 1);
   const [result, setResult] = useState<DashboardCustomerListResult | null>(null);
   const requestVersion = useRef(0);
+  const createLock = useRef(false);
+  const mounted = useRef(true);
+  const queryKey = JSON.stringify([search, filter, page]);
+  const currentQuery = useRef(queryKey);
+  currentQuery.current = queryKey;
+  const [resultQuery, setResultQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -71,7 +77,7 @@ export default function CustomersPage() {
   const createDirty = showCreate && Object.values(draft).some(Boolean);
   const markDraftSaved = useDashboardUnsavedChanges(createDirty);
   const closeCreate = () => {
-    if (creating) return;
+    if (createLock.current) return;
     if (!createDirty || window.confirm(t("Discard unsaved changes?"))) setShowCreate(false);
   };
   const createDialogRef = useDashboardModal(closeCreate, showCreate);
@@ -79,16 +85,23 @@ export default function CustomersPage() {
   const load = useCallback(
     async (manual = false) => {
       const version = ++requestVersion.current;
+      const requestedQuery = queryKey;
       if (manual) setRefreshing(true);
       else setLoading(true);
       try {
         const next = await listDashboardCustomers({ search, filter, page, pageSize: 20 });
-        if (version !== requestVersion.current) return;
+        if (version !== requestVersion.current || currentQuery.current !== requestedQuery) return;
+        const lastPage = Math.max(1, Math.ceil(next.total / next.pageSize));
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
         setResult(next);
+        setResultQuery(requestedQuery);
         setError("");
         if (manual) toast.success("Customers refreshed from Supabase.");
       } catch (cause) {
-        if (version !== requestVersion.current) return;
+        if (version !== requestVersion.current || currentQuery.current !== requestedQuery) return;
         const message = cause instanceof Error ? cause.message : "Unable to load customers.";
         setError(message);
         if (manual) toast.error(message);
@@ -99,10 +112,19 @@ export default function CustomersPage() {
         }
       }
     },
-    [filter, page, search],
+    [filter, page, search, queryKey, setPage],
   );
 
   useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
     const timer = window.setTimeout(() => void load(false), search ? 250 : 0);
     return () => {
       requestVersion.current += 1;
@@ -111,15 +133,19 @@ export default function CustomersPage() {
   }, [load, search]);
 
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil((result?.total ?? 0) / (result?.pageSize ?? 20))),
-    [result],
+    () => resultQuery === queryKey
+      ? Math.max(1, Math.ceil((result?.total ?? 0) / (result?.pageSize ?? 20)))
+      : 1,
+    [result, resultQuery, queryKey],
   );
 
   const createCustomer = async () => {
+    if (createLock.current) return;
     if (draft.name.trim().length < 2 || draft.phone.replace(/\D/g, "").length < 6) {
       toast.error("Enter a valid customer name and phone.");
       return;
     }
+    createLock.current = true;
     setCreating(true);
     try {
       const customer = await createDashboardCustomer({
@@ -136,7 +162,9 @@ export default function CustomersPage() {
         isVip: draft.isVip,
         isBlocked: draft.isBlocked,
       });
-      toast.success("Customer created.");
+      if (!mounted.current) return;
+      if (!customer) throw new Error(t("Customer creation could not be confirmed."));
+      toast.success(t("Customer created."));
       markDraftSaved();
       setShowCreate(false);
       setDraft({
@@ -150,25 +178,29 @@ export default function CustomersPage() {
         isVip: false,
         isBlocked: false,
       });
-      if (customer) navigate(`/dashboard/customers/${customer.id}`);
-      else void load(true);
+      navigate(`/dashboard/customers/${customer.id}`);
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Customer creation failed.");
+      if (mounted.current) {
+        toast.error(cause instanceof Error ? cause.message : t("Customer creation failed."));
+      }
     } finally {
-      setCreating(false);
+      createLock.current = false;
+      if (mounted.current) setCreating(false);
     }
   };
 
   if (loading && !result) {
     return (
-      <div className="grid min-h-[420px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
       </div>
     );
   }
 
-  const customers = result?.customers ?? [];
+  const activeResult = resultQuery === queryKey ? result : null;
+  const customers = activeResult?.customers ?? [];
   const stats = result?.stats;
+  const pending = loading || refreshing || (!activeResult && !error);
 
   return (
     <div>
@@ -183,7 +215,7 @@ export default function CustomersPage() {
         <div className="flex gap-2">
           <button
             onClick={() => void load(true)}
-            disabled={refreshing}
+            disabled={pending}
             className="dashboard-button flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold"
           >
             <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -210,22 +242,22 @@ export default function CustomersPage() {
       <div className="dashboard-summary-grid grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("Total customers")}
-          value={(stats?.total ?? 0).toLocaleString()}
+          value={stats ? stats.total.toLocaleString(locale) : "—"}
           detail="Real CRM records"
         />
         <StatCard
           label={t("VIP customers")}
-          value={(stats?.vip ?? 0).toLocaleString()}
+          value={stats ? stats.vip.toLocaleString(locale) : "—"}
           detail="Flagged by staff"
         />
         <StatCard
           label={t("Blocked")}
-          value={(stats?.blocked ?? 0).toLocaleString()}
+          value={stats ? stats.blocked.toLocaleString(locale) : "—"}
           detail="Restricted customers"
         />
         <StatCard
           label={t("Avg. lifetime value")}
-          value={money(stats?.averageLifetimeValue ?? 0)}
+          value={stats ? money(stats.averageLifetimeValue) : "—"}
           detail="Across all customers"
         />
       </div>
@@ -240,17 +272,19 @@ export default function CustomersPage() {
                 setSearch(event.target.value);
                 setPage(1);
               }}
+              aria-label={t("Search name, phone, email or city")}
               placeholder={t("Search name, phone, email or city")}
-              className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px] outline-none focus:border-indigo-400"
+              className="h-10 w-full rounded-xl border border-border bg-background ps-9 pe-3 text-[11px] outline-none focus:border-indigo-400"
             />
           </div>
           <select
+            aria-label={t("Customer status")}
             value={filter}
             onChange={(event) => {
               setFilter(event.target.value as DashboardCustomerFilter);
               setPage(1);
             }}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600"
+            className="h-10 rounded-xl border border-border bg-background px-3 text-[11px] font-semibold text-slate-600"
           >
             <option value="all">{t("All customers")}</option>
             <option value="vip">{t("VIP only")}</option>
@@ -258,7 +292,21 @@ export default function CustomersPage() {
           </select>
         </div>
 
-        <div className="overflow-x-auto">
+        {pending ? (
+          <div role="status" className="flex items-center gap-2 border-b border-border px-5 py-4 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+            {lang === "ar" ? "جارٍ تحميل العملاء…" : "Loading customers…"}
+          </div>
+        ) : null}
+        {error ? (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-amber-50 px-5 py-4 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+            <span className="min-w-0 flex-1 break-words">{error}</span>
+            <button type="button" disabled={pending} onClick={() => void load(true)} className="dashboard-button">
+              {t("Retry")}
+            </button>
+          </div>
+        ) : null}
+        <div className="overflow-x-auto" aria-busy={pending}>
           <DashboardResponsiveTable>
             <table className="w-full min-w-[900px] text-start">
               <thead className="bg-[#fafbfe]">
@@ -284,7 +332,7 @@ export default function CustomersPage() {
                       }
                     }}
                     onClick={() => navigate(`/dashboard/customers/${customer.id}`)}
-                    className="cursor-pointer border-b border-slate-50 hover:bg-[#fafbff]"
+                    className="cursor-pointer border-b border-border hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
                   >
                     <td className="px-5 py-4">
                       <div className="text-[12px] font-bold text-slate-700">{customer.name}</div>
@@ -301,7 +349,7 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-3 py-4 text-[11px] text-slate-400">
                       {customer.lastOrderAt
-                        ? new Date(customer.lastOrderAt).toLocaleDateString()
+                        ? new Date(customer.lastOrderAt).toLocaleDateString(locale)
                         : "—"}
                     </td>
                     <td className="max-w-[220px] px-3 py-4">
@@ -342,7 +390,7 @@ export default function CustomersPage() {
           </DashboardResponsiveTable>
         </div>
 
-        {!customers.length ? (
+        {!customers.length && !pending && !error ? (
           <div className="px-6 py-14 text-center">
             <Users className="mx-auto size-8 text-slate-300" />
             <div className="mt-3 text-sm font-bold text-slate-600">
@@ -353,42 +401,47 @@ export default function CustomersPage() {
             <div className="mt-1 text-[11px] text-slate-400">
               {t("Customers are created automatically from orders, or you can add one manually.")}
             </div>
+            {search || filter !== "all" ? (
+              <button type="button" className="dashboard-button mt-4" onClick={() => {
+                setSearch("");
+                setFilter("all");
+                setPage(1);
+              }}>
+                {t("Clear filters")}
+              </button>
+            ) : null}
           </div>
         ) : null}
 
         <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
           <span className="text-[11px] text-slate-400">
-            {t("Showing")} {result?.total ? (page - 1) * (result?.pageSize ?? 20) + 1 : 0}–
-            {Math.min(page * (result?.pageSize ?? 20), result?.total ?? 0)} {t("of")}{" "}
-            {result?.total ?? 0}
+            {t("Showing")} {activeResult?.total ? (activeResult.page - 1) * activeResult.pageSize + 1 : 0}–
+            {Math.min((activeResult?.page ?? 1) * (activeResult?.pageSize ?? 20), activeResult?.total ?? 0)} {t("of")}{" "}
+            {activeResult?.total ?? 0}
           </span>
           <div className="flex items-center gap-2">
             <button
-              disabled={page <= 1}
+              aria-label={t("Previous page")}
+              disabled={pending || page <= 1}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-4 rtl:rotate-180" />
             </button>
             <span className="text-[10px] font-semibold text-slate-400">
               {t("Page")} {page} / {totalPages}
             </span>
             <button
-              disabled={page >= totalPages}
+              aria-label={t("Next page")}
+              disabled={pending || page >= totalPages}
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30"
             >
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-4 rtl:rotate-180" />
             </button>
           </div>
         </div>
       </div>
-
-      {error ? (
-        <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-[11px] text-amber-700">
-          {t("Last refresh warning:")} {error}
-        </div>
-      ) : null}
 
       {showCreate ? (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm">
@@ -398,7 +451,7 @@ export default function CustomersPage() {
             aria-modal="true"
             aria-label={t("Add customer")}
             tabIndex={-1}
-            className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+            className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-card text-foreground shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <div>
@@ -415,7 +468,7 @@ export default function CustomersPage() {
                 <X className="size-4" />
               </button>
             </div>
-            <div className="grid gap-4 p-6 sm:grid-cols-2">
+            <fieldset disabled={creating} className="grid gap-4 p-6 sm:grid-cols-2 disabled:opacity-70">
               {[
                 ["Name", "name"],
                 ["Phone", "phone"],
@@ -432,11 +485,13 @@ export default function CustomersPage() {
                     {t(label)}
                   </span>
                   <input
+                    type={key === "email" ? "email" : key === "phone" ? "tel" : "text"}
+                    autoComplete={key === "name" ? "name" : key === "email" ? "email" : key === "phone" ? "tel" : "off"}
                     value={draft[key as keyof typeof draft] as string}
                     onChange={(event) =>
                       setDraft((current) => ({ ...current, [key]: event.target.value }))
                     }
-                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none focus:border-indigo-400"
+                    className="h-10 w-full rounded-xl border border-border bg-background px-3 text-[12px] outline-none focus:border-indigo-400"
                   />
                 </label>
               ))}
@@ -449,7 +504,7 @@ export default function CustomersPage() {
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, internalNotes: event.target.value }))
                   }
-                  className="min-h-24 w-full rounded-xl border border-slate-200 p-3 text-[12px] outline-none focus:border-indigo-400"
+                  className="min-h-24 w-full rounded-xl border border-border bg-background p-3 text-[12px] outline-none focus:border-indigo-400"
                 />
               </label>
               <label className="flex items-center gap-2 text-[11px] font-semibold text-slate-600">
@@ -472,7 +527,7 @@ export default function CustomersPage() {
                 />
                 {t("Block customer")}
               </label>
-            </div>
+            </fieldset>
             <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
               <button
                 onClick={closeCreate}

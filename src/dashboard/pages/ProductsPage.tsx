@@ -1,4 +1,5 @@
 import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
+import DashboardConfirmDialog from "@/dashboard/components/DashboardConfirmDialog";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
@@ -32,7 +33,8 @@ import {
   setDashboardProductsStatus,
 } from "@/dashboard/data/productManagement";
 
-type StatusFilter = "All" | "Active" | "Draft" | "Archived";
+type ProductStatus = DashboardProduct["status"];
+type StatusFilter = "All" | ProductStatus;
 type StockFilter = "all" | "low" | "out" | "available";
 type SortMode = "updated" | "name" | "price-asc" | "price-desc" | "stock-asc" | "stock-desc";
 
@@ -40,10 +42,10 @@ function StatusPill({ status }: { status: DashboardProduct["status"] }) {
   const { t } = useLanguage();
   const tone =
     status === "Active"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
       : status === "Draft"
-        ? "bg-amber-50 text-amber-700"
-        : "bg-slate-100 text-slate-600";
+        ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+        : "bg-muted text-muted-foreground";
   return (
     <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${tone}`}>{t(status)}</span>
   );
@@ -64,6 +66,9 @@ export default function ProductsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
+  const mutationLock = useRef(false);
+  const mounted = useRef(true);
+  const [pendingBulk, setPendingBulk] = useState<{ ids: string[]; status: ProductStatus } | null>(null);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useDashboardQueryState<string>("search", "");
@@ -94,6 +99,7 @@ export default function ProductsPage() {
   const [pageSize, setPageSize] = useDashboardQueryState<number>("pageSize", 20, [20, 50, 100]);
   const requestId = useRef(0);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const mobileSelectAllRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     const request = ++requestId.current;
@@ -108,9 +114,8 @@ export default function ProductsPage() {
       setCatalog(products);
       setBrands(brandRows);
       setCategories(categoryRows);
-      setSelected(
-        (current) => new Set([...current].filter((id) => products.some((p) => p.id === id))),
-      );
+      const productIds = new Set(products.map((product) => product.id));
+      setSelected((current) => new Set([...current].filter((id) => productIds.has(id))));
       setError("");
     } catch (cause) {
       if (request !== requestId.current) return;
@@ -121,8 +126,10 @@ export default function ProductsPage() {
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void load();
     return () => {
+      mounted.current = false;
       requestId.current += 1;
     };
   }, [load]);
@@ -163,8 +170,9 @@ export default function ProductsPage() {
     visible.length > 0 && visible.every((product) => selected.has(product.id));
   const someVisibleSelected = visible.some((product) => selected.has(product.id));
   useEffect(() => {
-    if (selectAllRef.current)
-      selectAllRef.current.indeterminate = someVisibleSelected && !allVisibleSelected;
+    for (const checkbox of [selectAllRef.current, mobileSelectAllRef.current]) {
+      if (checkbox) checkbox.indeterminate = someVisibleSelected && !allVisibleSelected;
+    }
   }, [someVisibleSelected, allVisibleSelected, loading]);
   const hasFilters = Boolean(
     search || status !== "All" || brandId || categoryId || stock !== "all",
@@ -178,6 +186,7 @@ export default function ProductsPage() {
     setPage(1);
   };
   const toggleAll = () => {
+    if (mutationLock.current || loading || error || pendingBulk) return;
     setSelected((current) => {
       const next = new Set(current);
       visible.forEach((product) => {
@@ -202,33 +211,56 @@ export default function ProductsPage() {
       ]),
     ]);
 
-  const bulkStatus = async (nextStatus: "Active" | "Draft" | "Archived") => {
-    const ids = [...selected];
-    if (!ids.length || working) return;
+  const requestBulkStatus = (nextStatus: ProductStatus) => {
+    if (mutationLock.current || loading || error || !selected.size) return;
+    // Freeze the exact set the user reviews, including selections on other pages.
+    setPendingBulk({ ids: [...selected], status: nextStatus });
+  };
+
+  const bulkStatus = async () => {
+    if (!pendingBulk || mutationLock.current || loading || error) return;
+    const { ids, status: nextStatus } = pendingBulk;
+    mutationLock.current = true;
     setWorking(true);
     try {
       const count = await setDashboardProductsStatus(ids, nextStatus);
-      toast.success(`${count} product${count === 1 ? "" : "s"} moved to ${nextStatus}.`);
+      if (!mounted.current) return;
+      toast.success(
+        lang === "ar"
+          ? `تم تحديث حالة ${count} منتج إلى ${t(nextStatus)}.`
+          : `${count} product${count === 1 ? "" : "s"} moved to ${nextStatus}.`,
+      );
+      setPendingBulk(null);
       setSelected(new Set());
       await load();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Bulk product update failed.");
+      if (!mounted.current) return;
+      toast.error(cause instanceof Error ? cause.message : t("Bulk product update failed."));
     } finally {
-      setWorking(false);
+      mutationLock.current = false;
+      if (mounted.current) setWorking(false);
     }
   };
 
   const duplicate = async (product: DashboardProduct) => {
-    if (working) return;
+    if (mutationLock.current || loading || error || pendingBulk) return;
+    mutationLock.current = true;
     setWorking(true);
     try {
       const newId = await duplicateDashboardProduct(product.id);
-      toast.success("Draft copy created with zero stock and fresh identifiers.");
+      if (!mounted.current) return;
+      toast.success(
+        lang === "ar"
+          ? "تم إنشاء نسخة مسودة بمخزون صفر ومعرّفات جديدة."
+          : "Draft copy created with zero stock and fresh identifiers.",
+      );
       navigate(`/dashboard/products/${newId}`);
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Product duplicate failed.");
+      if (!mounted.current) return;
+      toast.error(cause instanceof Error ? cause.message : t("Product duplicate failed."));
     } finally {
-      setWorking(false);
+      mutationLock.current = false;
+      if (mounted.current) setWorking(false);
     }
   };
 
@@ -238,7 +270,25 @@ export default function ProductsPage() {
   const lowStock = catalog.filter((product) => product.stock > 0 && product.stock <= 10).length;
 
   return (
-    <div>
+    <div aria-busy={loading || working}>
+      <DashboardConfirmDialog
+        open={pendingBulk !== null}
+        title={lang === "ar" ? "تأكيد تحديث حالة المنتجات" : "Confirm product status update"}
+        description={
+          pendingBulk
+            ? lang === "ar"
+              ? `سيتم تغيير حالة ${pendingBulk.ids.length} منتج محدّد إلى ${t(pendingBulk.status)}، بما فيها التحديدات في الصفحات الأخرى. المنتجات النشطة تظهر في المتجر، والمسودات والمؤرشفة مخفية.`
+              : `${pendingBulk.ids.length} selected products will move to ${pendingBulk.status}, including selections on other pages. Active products appear in the store; drafts and archived products stay hidden.`
+            : ""
+        }
+        confirmLabel={lang === "ar" ? "تحديث الحالة" : "Update status"}
+        pending={working}
+        destructive={pendingBulk?.status === "Archived"}
+        onClose={() => {
+          if (!mutationLock.current) setPendingBulk(null);
+        }}
+        onConfirm={() => void bulkStatus()}
+      />
       <div className="dashboard-page-header mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <PageTitle
@@ -317,7 +367,7 @@ export default function ProductsPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("Product, brand, SKU, barcode or handle")}
-                className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[12px] outline-none focus:border-indigo-400"
+                className="h-10 w-full rounded-xl border border-border bg-background ps-9 pe-3 text-[12px] text-foreground outline-none focus:border-primary"
               />
             </div>
           </label>
@@ -385,7 +435,7 @@ export default function ProductsPage() {
               <button
                 type="button"
                 onClick={() => setSelected(new Set())}
-                disabled={working}
+                disabled={working || loading || Boolean(error) || pendingBulk !== null}
                 className="dashboard-inline-action"
               >
                 {t("Clear selection")}
@@ -394,13 +444,13 @@ export default function ProductsPage() {
           </div>
           {selected.size ? (
             <div className="flex flex-wrap gap-2">
-              <BulkButton disabled={working} onClick={() => void bulkStatus("Active")}>
+              <BulkButton disabled={working || loading || Boolean(error) || pendingBulk !== null} onClick={() => requestBulkStatus("Active")}>
                 {t("Activate")}
               </BulkButton>
-              <BulkButton disabled={working} onClick={() => void bulkStatus("Draft")}>
+              <BulkButton disabled={working || loading || Boolean(error) || pendingBulk !== null} onClick={() => requestBulkStatus("Draft")}>
                 {t("Move to draft")}
               </BulkButton>
-              <BulkButton disabled={working} onClick={() => void bulkStatus("Archived")}>
+              <BulkButton disabled={working || loading || Boolean(error) || pendingBulk !== null} onClick={() => requestBulkStatus("Archived")}>
                 <Archive className="size-3.5" /> {t("Archive")}
               </BulkButton>
             </div>
@@ -409,8 +459,11 @@ export default function ProductsPage() {
       </div>
 
       {loading ? (
-        <div className="grid min-h-72 place-items-center rounded-2xl border border-slate-200 bg-white">
-          <Loader2 className="size-6 animate-spin text-indigo-500" />
+        <div className="grid min-h-72 place-items-center rounded-2xl border border-border bg-card">
+          <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-6 animate-spin text-primary" aria-hidden="true" />
+            <span>{t("Loading products...")}</span>
+          </div>
         </div>
       ) : error ? (
         <div
@@ -440,7 +493,7 @@ export default function ProductsPage() {
                       aria-label={t("Select visible")}
                       checked={allVisibleSelected}
                       onChange={toggleAll}
-                      disabled={working}
+                      disabled={working || loading || Boolean(error) || pendingBulk !== null}
                     />
                   </th>
                   <th className="px-3 py-3">{t("Product")}</th>
@@ -460,7 +513,7 @@ export default function ProductsPage() {
                       <input
                         type="checkbox"
                         aria-label={`${t("Select product")}: ${product.name}`}
-                        disabled={working}
+                        disabled={working || loading || Boolean(error) || pendingBulk !== null}
                         checked={selected.has(product.id)}
                         onChange={() =>
                           setSelected((current) => {
@@ -479,7 +532,7 @@ export default function ProductsPage() {
                       >
                         <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
                           {product.image ? (
-                            <img src={product.image} alt="" className="size-full object-contain" />
+                            <img src={product.image} alt="" className="size-full object-contain" loading="lazy" decoding="async" />
                           ) : (
                             <Package className="size-4 text-slate-400" />
                           )}
@@ -518,7 +571,7 @@ export default function ProductsPage() {
                       <div className="flex justify-end gap-1">
                         <button
                           onClick={() => void duplicate(product)}
-                          disabled={working}
+                          disabled={working || loading || Boolean(error) || pendingBulk !== null}
                           aria-label={`${t("Duplicate")}: ${product.name}`}
                           className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
                           title={t("Duplicate")}
@@ -529,6 +582,7 @@ export default function ProductsPage() {
                           onClick={() => navigate(`/dashboard/products/${product.id}`)}
                           className="grid size-8 place-items-center rounded-lg text-indigo-600 hover:bg-indigo-50"
                           title={t("Edit")}
+                          aria-label={`${t("Edit")}: ${product.name}`}
                         >
                           <Pencil className="size-3.5" />
                         </button>
@@ -543,7 +597,13 @@ export default function ProductsPage() {
           <div className="divide-y divide-border/70 md:hidden">
             <div className="flex items-center justify-between px-4 py-3 text-[10px] text-slate-400">
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} />{" "}
+                <input
+                  ref={mobileSelectAllRef}
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleAll}
+                  disabled={working || pendingBulk !== null}
+                />{" "}
                 {t("Select visible")}
               </label>
               <span>
@@ -556,7 +616,7 @@ export default function ProductsPage() {
                   <input
                     type="checkbox"
                     aria-label={`${t("Select product")}: ${product.name}`}
-                    disabled={working}
+                    disabled={working || loading || Boolean(error) || pendingBulk !== null}
                     checked={selected.has(product.id)}
                     onChange={() =>
                       setSelected((current) => {
@@ -574,7 +634,7 @@ export default function ProductsPage() {
                   >
                     <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
                       {product.image ? (
-                        <img src={product.image} alt="" className="size-full object-contain" />
+                        <img src={product.image} alt="" className="size-full object-contain" loading="lazy" decoding="async" />
                       ) : (
                         <Package className="size-5 text-slate-400" />
                       )}
@@ -604,7 +664,7 @@ export default function ProductsPage() {
                   </button>
                   <button
                     onClick={() => void duplicate(product)}
-                    disabled={working}
+                    disabled={working || loading || Boolean(error) || pendingBulk !== null}
                     aria-label={`${t("Duplicate")}: ${product.name}`}
                     className="grid size-9 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500"
                   >
@@ -702,7 +762,7 @@ function Select({
         aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-indigo-400"
+        className="h-10 rounded-xl border border-border bg-background px-3 text-[11px] font-semibold text-foreground outline-none focus:border-primary"
       >
         {children}
       </select>
@@ -723,7 +783,7 @@ function BulkButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 disabled:opacity-50"
+      className="flex min-h-10 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[11px] font-semibold text-foreground disabled:opacity-50"
     >
       {children}
     </button>

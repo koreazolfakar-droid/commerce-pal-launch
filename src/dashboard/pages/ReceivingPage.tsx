@@ -113,7 +113,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 function integerOrZero(value: string) {
   const parsed = Number(value || 0);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : NaN;
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : NaN;
 }
 
 function money(value: number, currency = "USD") {
@@ -134,7 +134,7 @@ export default function ReceivingPage({
   mode?: ProcurementPageMode;
   purchaseOrderId?: string;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const purchaseOrdersMode = mode === "purchase-orders";
   const purchaseOrderCreateMode = mode === "purchase-order-create";
@@ -143,6 +143,9 @@ export default function ReceivingPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const mutationLock = useRef(false);
+  const requestVersion = useRef(0);
+  const mounted = useRef(true);
   const [error, setError] = useState("");
   const [panel, setPanel] = useState<Panel>(() => (purchaseOrderCreateMode ? "po" : null));
   const [query, setQuery] = useDashboardQueryState<string>("search", "");
@@ -220,7 +223,7 @@ export default function ReceivingPage({
           : false;
   const markPanelSaved = useDashboardUnsavedChanges(panelDirty);
   const closePanel = () => {
-    if (saving || (panelDirty && !window.confirm(t("Discard unsaved changes?")))) return;
+    if (saving || mutationLock.current || (panelDirty && !window.confirm(t("Discard unsaved changes?")))) return;
     markPanelSaved();
     if (purchaseOrderCreateMode) navigate("/dashboard/purchase-orders");
     else setPanel(null);
@@ -228,6 +231,8 @@ export default function ReceivingPage({
 
   const load = useCallback(
     async (manual = false) => {
+      if (!mounted.current) return;
+      const request = ++requestVersion.current;
       if (manual) setRefreshing(true);
       else setLoading(true);
       try {
@@ -238,24 +243,33 @@ export default function ReceivingPage({
           includeAudit: false,
           includeSerials: false,
         });
+        if (request !== requestVersion.current || !mounted.current) return;
         setWorkspace(next);
         setError("");
         if (manual) toast.success("Purchase orders and receiving refreshed.");
       } catch (cause) {
+        if (request !== requestVersion.current || !mounted.current) return;
         const message =
           cause instanceof Error ? cause.message : "Unable to load receiving workspace.";
         setError(message);
         if (manual) toast.error(message);
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (request === requestVersion.current && mounted.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [purchaseOrderCreateMode],
   );
 
   useEffect(() => {
+    mounted.current = true;
     void load(false);
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+    };
   }, [load]);
 
   const suppliers = workspace?.suppliers.filter((supplier) => supplier.isActive) ?? [];
@@ -359,7 +373,7 @@ export default function ReceivingPage({
   }, [poLines.length, poLocationId, poSupplierId, purchaseOrderCreateMode, workspace]);
 
   const openPanel = (next: Exclude<Panel, null>) => {
-    if (saving || (panelDirty && !window.confirm(t("Discard unsaved changes?")))) return;
+    if (saving || mutationLock.current || (panelDirty && !window.confirm(t("Discard unsaved changes?")))) return;
     markPanelSaved();
     setPanel(next);
     if (next === "po") resetPo();
@@ -374,7 +388,7 @@ export default function ReceivingPage({
 
   const selectReceivingPo = (poId: string, discardExisting = false) => {
     if (
-      saving ||
+      saving || mutationLock.current ||
       (!discardExisting && receivingDirty && !window.confirm(t("Discard unsaved changes?")))
     )
       return;
@@ -428,11 +442,13 @@ export default function ReceivingPage({
   }, [purchaseOrderId, receivingMode, workspace]);
 
   const saveSupplier = async () => {
-    if (saving) return;
+    if (saving || mutationLock.current) return;
     if (!supplierName.trim()) return toast.error("Supplier name is required.");
+    mutationLock.current = true;
     setSaving(true);
     try {
       await createReceivingSupplier({ name: supplierName, code: supplierCode });
+      if (!mounted.current) return;
       toast.success("Supplier created.");
       setSupplierName("");
       setSupplierCode("");
@@ -440,19 +456,22 @@ export default function ReceivingPage({
       setPanel(null);
       await load(false);
     } catch (cause) {
+      if (!mounted.current) return;
       toast.error(cause instanceof Error ? cause.message : "Supplier creation failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const savePo = async () => {
-    if (saving) return;
+    if (saving || mutationLock.current) return;
     if (!poSupplierId) return toast.error("Select a supplier.");
     if (!poNumber.trim()) return toast.error("PO number is required.");
     if (!poLocationId) return toast.error("Select a store / warehouse.");
     if (!poLines.length) return toast.error("Add at least one product.");
 
+    mutationLock.current = true;
     setSaving(true);
     try {
       const used = new Set<string>();
@@ -467,7 +486,7 @@ export default function ReceivingPage({
         if (!Number.isInteger(expectedQuantity) || expectedQuantity <= 0) {
           throw new Error("Expected quantity must be a positive whole number.");
         }
-        if (!Number.isFinite(unitCost) || unitCost < 0)
+        if (!line.unitCost.trim() || !Number.isFinite(unitCost) || unitCost < 0)
           throw new Error("Cost must be zero or greater.");
         return {
           productId: option.productId,
@@ -490,6 +509,7 @@ export default function ReceivingPage({
         notes: poNotes,
         items,
       });
+      if (!mounted.current) return;
       toast.success("Purchase order draft created.");
       markPanelSaved();
       if (purchaseOrderCreateMode) {
@@ -499,33 +519,40 @@ export default function ReceivingPage({
       setPanel(null);
       await load(false);
     } catch (cause) {
+      if (!mounted.current) return;
       toast.error(cause instanceof Error ? cause.message : "Purchase order creation failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const submitPo = async (po: PurchaseOrderSummary) => {
+    if (saving || mutationLock.current) return;
     if (
       !window.confirm(
         `Submit PO ${po.poNumber} for approval? Draft lines will be locked until review.`,
       )
     )
       return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       await submitPurchaseOrder(po.id, po.updatedAt);
+      if (!mounted.current) return;
       toast.success(`PO ${po.poNumber} submitted for approval.`);
       await load(false);
     } catch (cause) {
+      if (!mounted.current) return;
       toast.error(cause instanceof Error ? cause.message : "PO submission failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const saveReceiving = async () => {
-    if (saving) return;
+    if (saving || mutationLock.current) return;
     if (!selectedReceivingPo) return toast.error("Select an open purchase order.");
     if (!invoiceNumber.trim()) return toast.error("Invoice number is required.");
 
@@ -539,7 +566,7 @@ export default function ReceivingPage({
         if (!Number.isInteger(receivedQuantity) || !Number.isInteger(damagedQuantity)) {
           throw new Error(`${item.title}: quantities must be non-negative whole numbers.`);
         }
-        if (!Number.isFinite(unitCost) || unitCost < 0) {
+        if (!draft.unitCost.trim() || !Number.isFinite(unitCost) || unitCost < 0) {
           throw new Error(`${item.title}: cost must be zero or greater.`);
         }
         if (receivedQuantity + damagedQuantity === 0) return [];
@@ -567,6 +594,7 @@ export default function ReceivingPage({
 
       if (!lines.length) throw new Error("Enter at least one received or damaged quantity.");
 
+      mutationLock.current = true;
       setSaving(true);
       const receivingId = await createReceiving({
         purchaseOrderId: selectedReceivingPo.id,
@@ -575,6 +603,7 @@ export default function ReceivingPage({
         notes: receivingNotes,
         lines,
       });
+      if (!mounted.current) return;
       toast.success("Receiving draft created. Review serials, invoice matching, then approve.");
       markPanelSaved();
       setPanel(null);
@@ -585,13 +614,16 @@ export default function ReceivingPage({
       setReceivingLines({});
       navigate(`/dashboard/receivings/${receivingId}`);
     } catch (cause) {
+      if (!mounted.current) return;
       toast.error(cause instanceof Error ? cause.message : "Receiving draft creation failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const approve = async (receipt: ReceivingSummary) => {
+    if (saving || mutationLock.current) return;
     if (
       !window.confirm(
         `Approve receipt #${receipt.receiptNumber} for PO ${receipt.poNumber}? This will add ${receipt.stockUnits} usable unit(s) to stock and record purchase movements.`,
@@ -599,23 +631,27 @@ export default function ReceivingPage({
     ) {
       return;
     }
+    mutationLock.current = true;
     setSaving(true);
     try {
       const result = await approveReceiving(receipt.id, receipt.updatedAt);
+      if (!mounted.current) return;
       toast.success(
         `Receiving approved: +${result.stock_units_added} stock unit(s), ${result.damaged_units_recorded} damaged recorded.`,
       );
       await load(false);
     } catch (cause) {
+      if (!mounted.current) return;
       toast.error(cause instanceof Error ? cause.message : "Receiving approval failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   if (loading && !workspace) {
     return (
-      <div className="grid min-h-[440px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status" aria-label={t("Loading…")} className="grid min-h-[440px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-indigo-600" />
       </div>
     );
@@ -623,14 +659,15 @@ export default function ReceivingPage({
 
   if (error && !workspace) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
+      <div role="alert" className="rounded-2xl border border-rose-100 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/30">
         <div className="text-sm font-bold text-rose-700">{t("Receiving could not be loaded.")}</div>
         <div className="mt-1 text-xs text-rose-600">{error}</div>
         <button
           onClick={() => void load(true)}
+          disabled={refreshing}
           className="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-[11px] font-bold text-white"
         >
-          {t("Retry")}
+          {refreshing ? t("Loading…") : t("Retry")}
         </button>
       </div>
     );
@@ -643,7 +680,8 @@ export default function ReceivingPage({
     .reduce((sum, receipt) => sum + receipt.stockUnits, 0);
 
   return (
-    <div>
+    <fieldset disabled={saving || loading || refreshing} aria-busy={saving || loading || refreshing} className="min-w-0">
+      {saving ? <p role="status" className="mb-3 text-sm text-muted-foreground">{lang === "ar" ? "جارٍ الحفظ… انتظر اكتمال العملية." : "Saving… Wait for the operation to complete."}</p> : null}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
@@ -701,7 +739,7 @@ export default function ReceivingPage({
               </button>
               <button
                 onClick={() => navigate("/dashboard/purchase-orders/new")}
-                disabled={!suppliers.length || !productOptions.length}
+                disabled={loading || refreshing || saving || !suppliers.length}
                 className="flex h-10 items-center gap-2 rounded-xl bg-[#14203a] px-3.5 text-[11px] font-bold text-white disabled:opacity-40"
               >
                 <ClipboardList className="size-3.5" />
@@ -1959,6 +1997,6 @@ export default function ReceivingPage({
           {t("Last refresh warning:")} {error}
         </div>
       ) : null}
-    </div>
+    </fieldset>
   );
 }

@@ -51,6 +51,10 @@ for (const page of ["Customers", "Orders"]) {
       paymentStatus: "all",
       sort: "newest",
       requestVersion: { current: 0 },
+      queryKey: "fixture-query",
+      currentQuery: { current: "fixture-query" },
+      setResultQuery() {},
+      setPage() {},
       setRefreshing() {},
       setLoading: (value) => loading.push(value),
       setResult: (value) => results.push(value),
@@ -100,6 +104,8 @@ test("inventory draft commit uses the pre-refresh snapshot and retains edits on 
     "commitAbsolute",
     {
       savingId: null,
+      savingRef: { current: false },
+      lang: "en",
       draftStocks: drafts,
       draftSnapshots: { current: new Map([["variant", original]]) },
       setSavingId() {},
@@ -123,6 +129,165 @@ test("inventory draft commit uses the pre-refresh snapshot and retains edits on 
   assert.equal(drafts.variant, "12");
   assert.deepEqual(errors, ["stock conflict"]);
 });
+
+
+test("blank and invalid inventory drafts cannot write stock or clear the user's edit", async () => {
+  const row = { variantId: "variant", productName: "Product", stock: 10, trackInventory: true };
+  for (const raw of ["", " ", "-1", "1.5", "Infinity", "9007199254740992"]) {
+    const errors = [];
+    const commit = await productionCallback(
+      "../src/dashboard/pages/InventoryManagerPage.tsx",
+      "commitAbsolute",
+      {
+        savingRef: { current: false }, lang: "en",
+        draftStocks: { variant: raw },
+        toast: { error: (message) => errors.push(message) },
+        setInventoryStock() { assert.fail("Invalid draft must not write stock"); },
+        setDraftStocks() { assert.fail("Invalid draft must remain available for correction"); },
+      },
+    );
+    await commit(row);
+    assert.equal(errors.length, 1, JSON.stringify(raw));
+  }
+});
+
+test("inventory writes serialize immediate submissions and accept explicit zero", async () => {
+  const row = { variantId: "variant", productName: "Product", stock: 10, trackInventory: true };
+  const lock = { current: false };
+  const calls = [];
+  let complete;
+  const commit = await productionCallback(
+    "../src/dashboard/pages/InventoryManagerPage.tsx",
+    "commitAbsolute",
+    {
+      savingRef: lock, lang: "en", draftStocks: { variant: "0" },
+      draftSnapshots: { current: new Map([["variant", row]]) },
+      setSavingId() {},
+      setInventoryStock(...args) {
+        calls.push(args);
+        return new Promise((resolve) => { complete = resolve; });
+      },
+      replaceRowStock(...args) { calls.push(args); },
+      load() {},
+      toast: { success() {}, error(message) { assert.fail(message); } },
+    },
+  );
+  const first = commit(row);
+  await commit(row);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][1], 0);
+  assert.equal(lock.current, true);
+  complete(0);
+  await first;
+  assert.equal(lock.current, false);
+  assert.deepEqual(calls[1], ["variant", 0, -10]);
+});
+
+
+test("PO detail clears a previous route's order before a failed request and retains same-order refresh data", async () => {
+  let po = { id: "previous-order" };
+  const errors = [], loading = [];
+  const dependencies = {
+    id: "current-order",
+    useCallback: (fn) => fn,
+    mutationTarget: { current: null },
+    requestVersion: { current: 0 },
+    activeId: { current: "current-order" },
+    setPo: (next) => { po = typeof next === "function" ? next(po) : next; },
+    setError: (message) => errors.push(message),
+    setLoading: (value) => loading.push(value),
+    setRefreshing() {},
+    loadPurchaseOrderDetail: async () => { throw new Error("Fixture offline"); },
+    toast: { error() {} },
+  };
+  const load = await productionCallback(
+    "../src/dashboard/pages/PurchaseOrderDetailPage.tsx", "load", dependencies,
+  );
+  const request = load();
+  assert.equal(po, null);
+  await request;
+  assert.equal(errors.at(-1), "Fixture offline");
+  assert.equal(loading.at(-1), false);
+  po = { id: "current-order" };
+  await load(true);
+  assert.equal(po.id, "current-order");
+  assert.equal(errors.at(-1), "Fixture offline");
+  dependencies.mutationTarget.current = "current-order";
+  po = { id: "another-route" };
+  await load(false, true);
+  assert.equal(po, null);
+  assert.equal(loading.at(-1), false);
+  assert.equal(errors.at(-1), "Fixture offline");
+});
+
+
+for (const [handler, args] of [
+  ["changeStatus", ["confirmed"]],
+  ["changePayment", ["paid"]],
+  ["changeDelivery", []],
+]) {
+  for (const outcome of ["success", "failure"]) {
+    test(handler + " reloads the original order after navigating away and returning during " + outcome, async () => {
+      const original = {
+        id: "order-a", version: 1, publicOrderNumber: 1, status: "new",
+        paymentStatus: "unpaid", deliveryType: "paid", shippingTotal: 7,
+      };
+      const saved = { ...original, version: 2, deliveryType: "free", shippingTotal: 0 };
+      const other = { ...original, id: "order-b", shippingTotal: 99 };
+      const state = { order: original, loading: false, saving: false, deliveryFee: "7" };
+      const reads = [];
+      let complete, fail;
+      const pending = new Promise((resolve, reject) => { complete = resolve; fail = reject; });
+      const dependencies = {
+        id: original.id, order: original, saving: false, loading: false, lang: "en",
+        deliveryType: "free", deliveryFee: "0",
+        mutationOrderId: { current: null },
+        mounted: { current: true },
+        requestVersion: { current: 0 },
+        currentOrderId: { current: original.id },
+        useCallback: (fn) => fn,
+        setOrder: (next) => { state.order = typeof next === "function" ? next(state.order) : next; },
+        setLoading: (value) => { state.loading = value; },
+        setSaving: (value) => { state.saving = value; },
+        setError() {},
+        setCancelOrderId() {},
+        setDeliveryType() {},
+        setDeliveryFee: (value) => { state.deliveryFee = value; },
+        orderStatusLabel: (value) => value,
+        paymentStatusLabel: (value) => value,
+        toast: { success() {}, error() {} },
+        getDashboardOrder: async (id) => { reads.push(id); return id === other.id ? other : saved; },
+        updateDashboardOrderStatus: () => pending,
+        updateDashboardOrderPaymentStatus: () => pending,
+        updateDashboardOrderDelivery: () => pending,
+      };
+      const path = "../src/dashboard/pages/OrderDetailPage.tsx";
+      dependencies.load = await productionCallback(path, "load", dependencies);
+      const mutate = await productionCallback(path, handler, dependencies);
+      const operation = mutate(...args);
+      dependencies.requestVersion.current += 1;
+      dependencies.currentOrderId.current = other.id;
+      const loadOther = await productionCallback(path, "load", { ...dependencies, id: other.id });
+      await loadOther();
+      assert.equal(state.order.id, other.id);
+      dependencies.requestVersion.current += 1;
+      dependencies.currentOrderId.current = original.id;
+      await dependencies.load();
+      assert.deepEqual(reads, [other.id]);
+      if (outcome === "success") complete(saved);
+      else fail(new Error("Fixture write failed"));
+      await operation;
+      await Promise.resolve();
+      await Promise.resolve();
+      assert.deepEqual(reads, [other.id, original.id]);
+      assert.equal(state.order.id, original.id);
+      assert.equal(state.deliveryFee, "0");
+      assert.equal(state.saving, false);
+      assert.equal(state.loading, false);
+      assert.equal(dependencies.mutationOrderId.current, null);
+    });
+  }
+}
 
 test("preferences still work within the tab when browser storage is blocked", async () => {
   const previous = globalThis.window;

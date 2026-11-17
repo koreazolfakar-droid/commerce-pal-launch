@@ -100,10 +100,12 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
     );
   const integer = (value: number) => value.toLocaleString(locale);
   const [period, setPeriod] = useState<7 | 30 | 90>(30);
+  // Keep report labels tied to the data that actually loaded, including after a failed range change.
+  const [snapshotPeriod, setSnapshotPeriod] = useState<7 | 30 | 90>(30);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const requestId = useRef(0);
   const periodLabel = t(
-    period === 7 ? "Last 7 days" : period === 90 ? "Last 90 days" : "Last 30 days",
+    snapshotPeriod === 7 ? "Last 7 days" : snapshotPeriod === 90 ? "Last 90 days" : "Last 30 days",
   );
   const [, navigate] = useLocation();
   const [snapshot, setSnapshot] = useState<DashboardHomeSnapshot | null>(null);
@@ -121,6 +123,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         if (request !== requestId.current) return;
         setUpdatedAt(new Date());
         setSnapshot(next);
+        setSnapshotPeriod(period);
         setError("");
         if (manual) toast.success(t("Dashboard refreshed."));
       } catch (cause) {
@@ -159,7 +162,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
     return `${start} – ${end}`;
   }, [snapshot, locale]);
 
-  if (loading) {
+  if (loading && !snapshot) {
     return (
       <div className="space-y-5" aria-busy="true">
         <div role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -188,16 +191,19 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
 
   if (error && !snapshot) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
+      <div role="alert" className="rounded-2xl border border-rose-100 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/30">
         <div className="text-sm font-bold text-rose-700">
           {t("Dashboard data could not be loaded.")}
         </div>
         <div className="mt-1 text-xs text-rose-600">{error}</div>
         <button
+          type="button"
           onClick={() => void load(true)}
-          className="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-[11px] font-bold text-white"
+          disabled={refreshing}
+          aria-busy={refreshing}
+          className="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-[11px] font-bold text-white disabled:opacity-50"
         >
-          {t("Retry")}
+          {refreshing ? t("Loading live dashboard data…") : t("Retry")}
         </button>
       </div>
     );
@@ -206,7 +212,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
   if (!snapshot) return null;
 
   return (
-    <div className="dashboard-home-page">
+    <div className="dashboard-home-page" aria-busy={loading || refreshing}>
       <div className="dashboard-overview-header dashboard-home-header">
         <div>
           <PageTitle
@@ -230,18 +236,20 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
             </select>
           </label>
           <button
+            type="button"
             onClick={() => void load(true)}
-            disabled={refreshing}
+            disabled={loading || refreshing}
             className="dashboard-button"
           >
-            <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw aria-hidden="true" className={`size-4 ${loading || refreshing ? "animate-spin" : ""}`} />
             {t("Refresh")}
           </button>
           <button
-            disabled={refreshing || Boolean(error)}
+            type="button"
+            disabled={loading || refreshing || period !== snapshotPeriod || Boolean(error)}
             className="dashboard-button dashboard-button-primary"
             onClick={() =>
-              downloadCsv(`space-call-report-${period}d.csv`, [
+              downloadCsv(`space-call-report-${snapshotPeriod}d.csv`, [
                 ["Metric", "Value", "Period start", "Period end"],
                 [
                   "Gross sales (USD)",
@@ -268,6 +276,36 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
           </button>
         </div>
       </div>
+      {loading || refreshing ? (
+        <div role="status" className="mb-3 rounded-xl border border-border bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
+          {lang === "ar"
+            ? "جارٍ تحديث التقرير… الأرقام المعروضة من آخر تحديث ناجح."
+            : "Updating report… Showing the last successfully loaded figures."}
+        </div>
+      ) : null}
+      {error ? (
+        <div
+          role="alert"
+          className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          <div className="min-w-0 flex-1 break-words">
+            <p className="font-semibold">
+              {lang === "ar"
+                ? "تعذّر تحديث التقرير. الأرقام أدناه من آخر تحديث ناجح."
+                : "Report update failed. Figures below are from the last successful update."}
+            </p>
+            <p className="mt-1">{error}</p>
+          </div>
+          <button
+            type="button"
+            className="dashboard-button shrink-0"
+            disabled={loading || refreshing}
+            onClick={() => void load(true)}
+          >
+            {t("Retry")}
+          </button>
+        </div>
+      ) : null}
       <div className="dashboard-report-caption">
         <span>{rangeLabel}</span>
         <span aria-hidden="true">·</span>
@@ -350,7 +388,7 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
                   key={href}
                   type="button"
                   onClick={() => navigate(href)}
-                  className="dashboard-quick-action flex min-h-[88px] flex-col items-start justify-between gap-3 rounded-xl border border-slate-200/80 p-3 text-start text-[12px] font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50 active:scale-[.98]"
+                  className="dashboard-quick-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex min-h-[88px] flex-col items-start justify-between gap-3 rounded-xl border border-slate-200/80 p-3 text-start text-[12px] font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50 active:scale-[.98]"
                 >
                   <span className="grid size-9 place-items-center rounded-lg bg-indigo-50 text-[#5968ea]">
                     <Icon className="size-[18px]" />
@@ -487,14 +525,15 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
               {snapshot.recentOrders.map((order) => (
                 <button
                   key={order.id}
+                  type="button"
                   onClick={() => navigate(`/dashboard/orders/${order.id}`)}
-                  className="dashboard-recent-order-row grid w-full grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
+                  className="dashboard-recent-order-row grid w-full grid-cols-[minmax(0,1fr)_auto] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
                 >
                   <div className="min-w-0">
-                    <div className="dashboard-recent-order-title text-[12px] font-bold text-slate-700">
+                    <div className="dashboard-recent-order-title break-words text-[12px] font-bold text-slate-700">
                       #{order.orderNumber} · {order.customer}
                     </div>
-                    <div className="mt-1 text-[10px] text-slate-400">
+                    <div className="mt-1 break-words text-[10px] text-slate-400">
                       {new Date(order.createdAt).toLocaleString(locale)} · {order.status} ·{" "}
                       {order.paymentStatus}
                     </div>
@@ -572,14 +611,6 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         </div>
       </div>
 
-      {error ? (
-        <div
-          role="alert"
-          className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-[11px] text-amber-700"
-        >
-          {t("Last refresh warning:")} {error}
-        </div>
-      ) : null}
     </div>
   );
 }
