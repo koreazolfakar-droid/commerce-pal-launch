@@ -188,6 +188,23 @@ function RichTextField({
   );
 }
 
+function homepageSectionStatus(section: HomepageSection) {
+  if (section.status === "draft") return "Draft — not live";
+  if (
+    !section.enabled ||
+    !section.showOnStorefront ||
+    (!section.showOnDesktop && !section.showOnTablet && !section.showOnMobile)
+  ) return "Hidden from the store";
+  if (!isSectionWithinSchedule(section)) return "Outside display dates";
+  return "Published — visible on selected devices";
+}
+
+const SECTION_TYPE_GROUPS: { label: string; types: SectionType[] }[] = [
+  { label: "Banners and promotions", types: ["hero", "banner", "promo", "announcement", "countdown"] },
+  { label: "Products and categories", types: ["product-carousel", "featured-products", "collection", "collection-grid", "brands", "categories"] },
+  { label: "Content and information", types: ["text", "image-text", "trust", "faq", "newsletter", "video", "custom"] },
+];
+
 function SectionCard({
   section,
   selected,
@@ -196,6 +213,7 @@ function SectionCard({
   onDuplicate,
   onDelete,
   onMove,
+  onInsertAfter,
 }: {
   section: HomepageSection;
   selected: boolean;
@@ -204,6 +222,7 @@ function SectionCard({
   onDuplicate: () => void;
   onDelete: () => void;
   onMove: (direction: "up" | "down") => void;
+  onInsertAfter: () => void;
 }) {
   const { t } = useLanguage();
   return (
@@ -231,14 +250,12 @@ function SectionCard({
         <button onClick={onSelect} className="min-w-0 flex-1 text-start">
           <div className="truncate text-[12px] font-bold text-slate-700">{section.name}</div>
           <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
-            <span>{sectionTypeLabels[section.type]}</span>
+            <span>{t(sectionTypeLabels[section.type])}</span>
             <span>·</span>
             <span>#{section.order}</span>
-            {section.status === "published" && (
-              <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 font-bold text-emerald-600">
-                {t("Published")}
-              </span>
-            )}
+            <span className="rounded-full bg-slate-100 px-1.5 py-0.5 font-bold text-slate-600">
+              {t(homepageSectionStatus(section))}
+            </span>
           </div>
         </button>
         <div className="flex shrink-0 items-center gap-1">
@@ -273,9 +290,9 @@ function SectionCard({
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-        <span className="text-[10px] font-semibold text-slate-400">
-          {section.enabled ? t("Visible in preview") : t("Hidden from preview")}
-        </span>
+        <button type="button" onClick={onInsertAfter} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-indigo-100 px-2 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-50">
+          <Plus className="size-3.5" /> {t("Add immediately below")}
+        </button>
         <Toggle checked={section.enabled} onChange={onToggle} />
       </div>
     </div>
@@ -1333,6 +1350,7 @@ export default function HomepageBuilderPage() {
   useDashboardUnsavedChanges(dirty);
   const [mode, setMode] = useState<DisplayMode>("desktop");
   const [showAdd, setShowAdd] = useState(false);
+  const [insertAfterId, setInsertAfterId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const selected = sections.find((section) => section.id === selectedId) ?? sections[0];
@@ -1474,7 +1492,13 @@ export default function HomepageBuilderPage() {
       sectionId: createHomepageSectionKey(type),
       status: "draft",
     };
-    setSections((current) => [...current, item]);
+    setSections((current) => {
+      const referenceIndex = insertAfterId === null ? -1 : current.findIndex((section) => section.id === insertAfterId);
+      const insertIndex = insertAfterId === null ? 0 : referenceIndex === -1 ? current.length : referenceIndex + 1;
+      const next = [...current];
+      next.splice(insertIndex, 0, item);
+      return next.map((section, index) => ({ ...section, order: index + 1 }));
+    });
     setSelectedId(item.id);
     setShowAdd(false);
     setDirty(true);
@@ -1499,7 +1523,12 @@ export default function HomepageBuilderPage() {
       status: "draft",
       settings: { ...section.settings },
     };
-    setSections((current) => [...current, copy]);
+    setSections((current) => {
+      const next = [...current];
+      const sourceIndex = next.findIndex((item) => item.id === section.id);
+      next.splice(sourceIndex >= 0 ? sourceIndex + 1 : next.length, 0, copy);
+      return next.map((item, index) => ({ ...item, order: index + 1 }));
+    });
     setSelectedId(copy.id);
     setDirty(true);
     toast.success("Section duplicated locally. Save changes to persist it.");
@@ -1610,6 +1639,14 @@ export default function HomepageBuilderPage() {
     [sections, mode],
   );
 
+  const selectedIndex = selected ? sections.findIndex((section) => section.id === selected.id) : -1;
+  const previousSection = selectedIndex > 0 ? sections[selectedIndex - 1] : null;
+  const nextSection = selectedIndex >= 0 ? sections[selectedIndex + 1] : null;
+  const referenceIndex = insertAfterId === null ? -1 : sections.findIndex((section) => section.id === insertAfterId);
+  const insertIndex = insertAfterId === null ? 0 : referenceIndex < 0 ? sections.length : referenceIndex + 1;
+  const insertBefore = sections[insertIndex];
+  const insertAfter = insertIndex > 0 ? sections[insertIndex - 1] : null;
+
   if (loadError)
     return (
       <div role="alert" className="rounded-2xl border border-border bg-card p-6 text-foreground">
@@ -1679,7 +1716,10 @@ export default function HomepageBuilderPage() {
             {t("Publish all")}
           </button>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => {
+              setInsertAfterId(sections[sections.length - 1]?.id ?? null);
+              setShowAdd(true);
+            }}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
           >
             <Plus className="size-4" /> {t("Add section")}
@@ -1719,7 +1759,10 @@ export default function HomepageBuilderPage() {
             {t("No homepage CMS sections found.")}
           </div>
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => {
+              setInsertAfterId(null);
+              setShowAdd(true);
+            }}
             className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
           >
             <Plus className="size-4" /> {t("Add first section")}
@@ -1727,7 +1770,13 @@ export default function HomepageBuilderPage() {
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-bold text-slate-700">{t("Homepage order — top to bottom")}</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                {t("This list follows the website order. Drag, move or insert a section where you want it.")}
+              </p>
+            </div>
             {sections.map((section) => (
               <SectionCard
                 key={section.id}
@@ -1746,10 +1795,34 @@ export default function HomepageBuilderPage() {
                 onDuplicate={() => duplicate(section)}
                 onDelete={() => void deleteSection(section.id)}
                 onMove={(direction) => move(section.id, direction)}
+                onInsertAfter={() => {
+                  setInsertAfterId(section.id);
+                  setShowAdd(true);
+                }}
               />
             ))}
           </div>
-          <div>
+          <div className="min-w-0">
+            {selected && (
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-indigo-900">
+                    {t("Homepage position")} {selectedIndex + 1} / {sections.length}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
+                    {previousSection ? t("After") + " " + previousSection.name : t("Start of homepage")}
+                    {" · "}
+                    {nextSection ? t("Before") + " " + nextSection.name : t("End of homepage")}
+                  </p>
+                  <p className="mt-1 text-[11px] text-indigo-700">
+                    {t("This is the planned order. Only published and visible sections appear on the live storefront after saving.")}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setPreviewOpen(true)} className="inline-flex min-h-9 items-center gap-2 rounded-xl bg-indigo-700 px-3 text-xs font-semibold text-white">
+                  <Monitor className="size-4" /> {t("Preview this position")}
+                </button>
+              </div>
+            )}
             {selected ? (
               <Editor
                 brands={brands}
@@ -1794,8 +1867,41 @@ export default function HomepageBuilderPage() {
                 <X className="size-4" />
               </button>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(Object.keys(sectionTypeLabels) as SectionType[]).map((type) => (
+            <div className="mb-5 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4">
+              <label htmlFor="homepage-insert-position" className="mb-2 block text-sm font-bold text-slate-800">
+                {t("Choose where the new section appears")}
+              </label>
+              <select
+                id="homepage-insert-position"
+                value={insertAfterId ?? "__start__"}
+                onChange={(event) => setInsertAfterId(event.target.value === "__start__" ? null : event.target.value)}
+                className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="__start__">{t("At the top of the homepage")}</option>
+                {sections.map((section, index) => (
+                  <option key={section.id} value={section.id}>
+                    {index + 1}. {t("After")} {section.name}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-indigo-800" role="status">
+                <span className="rounded-lg bg-white px-2 py-1">{insertAfter ? insertAfter.name : t("Start of homepage")}</span>
+                <ArrowRight className="size-4 shrink-0 rtl:rotate-180" />
+                <strong className="rounded-lg border border-indigo-300 bg-indigo-100 px-2 py-1">{t("New section goes here")}</strong>
+                <ArrowRight className="size-4 shrink-0 rtl:rotate-180" />
+                <span className="rounded-lg bg-white px-2 py-1">{insertBefore ? insertBefore.name : t("End of homepage")}</span>
+              </div>
+              <p className="mt-3 text-[11px] text-indigo-700">
+                {t("New sections remain drafts and do not appear live until you publish them.")}
+              </p>
+            </div>
+            <p className="mb-3 text-sm font-bold text-slate-800">{t("Choose the kind of section to insert")}</p>
+            <div className="max-h-[55vh] space-y-5 overflow-y-auto pe-1">
+              {SECTION_TYPE_GROUPS.map((group) => (
+                <section key={group.label}>
+                  <h3 className="mb-2 text-xs font-bold text-slate-700">{t(group.label)}</h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {group.types.map((type) => (
                 <button
                   key={type}
                   onClick={() => addSection(type)}
@@ -1808,12 +1914,15 @@ export default function HomepageBuilderPage() {
                     <Plus className="size-4 text-slate-300 group-hover:text-indigo-500" />
                   </div>
                   <div className="text-[12px] font-bold text-slate-700">
-                    {sectionTypeLabels[type]}
+                    {t(sectionTypeLabels[type])}
                   </div>
-                  <div className="mt-1 text-[10px] leading-4 text-slate-400">
-                    {sectionTypeDescriptions[type]}
+                  <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                    {t(sectionTypeDescriptions[type])}
                   </div>
                 </button>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </div>
@@ -1874,7 +1983,14 @@ export default function HomepageBuilderPage() {
               } space-y-3`}
             >
               {visibleSections.map((section) => (
-                <HomepageSectionRenderer key={section.id} section={section} mode={mode} />
+                <div key={section.id} className={selected?.id === section.id ? "rounded-2xl ring-2 ring-indigo-500 ring-offset-4" : ""}>
+                  {selected?.id === section.id && (
+                    <div className="mb-2 rounded-lg bg-indigo-700 px-3 py-2 text-xs font-bold text-white">
+                      {t("Selected section — position")} {section.order} · {section.name}
+                    </div>
+                  )}
+                  <HomepageSectionRenderer section={section} mode={mode} />
+                </div>
               ))}
               {!visibleSections.length && (
                 <div className="rounded-2xl bg-white p-16 text-center text-sm text-slate-400">
