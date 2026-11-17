@@ -1,7 +1,7 @@
 import { dashboardListHref } from "@/dashboard/lib/listContext";
 import { useLanguage } from "@/dashboard/i18n";
 import { ArrowLeft, Loader2, Plus, Save, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -46,13 +46,17 @@ function optionKeyForLine(
 }
 
 export default function PurchaseOrderEditPage({ id }: { id: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [editData, setEditData] = useState<PurchaseOrderEditData | null>(null);
   const [po, setPo] = useState<PurchaseOrderSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const requestVersion = useRef(0);
+  const mutationLock = useRef(false);
+  const activeId = useRef(id);
+  activeId.current = id;
 
   const [supplierId, setSupplierId] = useState("");
   const [locationId, setLocationId] = useState("");
@@ -67,9 +71,13 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
   const [lines, setLines] = useState<DraftLine[]>([]);
 
   const load = useCallback(async () => {
+    const request = ++requestVersion.current;
     setLoading(true);
+    setError("");
+    setPo((current) => current?.id === id ? current : null);
     try {
       const next = await loadPurchaseOrderEditData(id);
+      if (request !== requestVersion.current || activeId.current !== id) return;
       const found = next.purchaseOrder;
       if (!found) throw new Error("Purchase order was not found.");
       if (found.status !== "draft") throw new Error("Only draft purchase orders can be edited.");
@@ -98,15 +106,21 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
       );
       setError("");
     } catch (cause) {
+      if (request !== requestVersion.current || activeId.current !== id) return;
       setError(cause instanceof Error ? cause.message : "Unable to load purchase order.");
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && activeId.current === id) setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
+    activeId.current = id;
     void load();
-  }, [load]);
+    return () => {
+      requestVersion.current += 1;
+      activeId.current = "";
+    };
+  }, [id, load]);
 
   const total = useMemo(() => {
     const subtotal = lines.reduce((sum, line) => {
@@ -118,14 +132,23 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
   }, [discount, lines, shipping, tax]);
 
   const save = async () => {
-    if (!editData || !po) return;
+    if (!editData || !po || po.id !== id || loading || mutationLock.current) return;
     if (!supplierId) return toast.error("Select a supplier.");
     if (!locationId) return toast.error("Select a store / warehouse.");
     if (!poNumber.trim()) return toast.error("PO number is required.");
     if (!lines.length) return toast.error("Add at least one product.");
 
+    mutationLock.current = true;
     setSaving(true);
     try {
+      for (const [label, value] of [["Discount", discount], ["Tax", tax], ["Shipping", shipping]]) {
+        if (!Number.isFinite(Number(value || 0)) || Number(value || 0) < 0) {
+          throw new Error(`${label} must be zero or greater.`);
+        }
+      }
+      if (!exchangeRate.trim() || !Number.isFinite(Number(exchangeRate)) || Number(exchangeRate) <= 0) {
+        throw new Error("Enter a positive exchange rate.");
+      }
       const used = new Set<string>();
       const items = lines.map((line) => {
         const option = editData.productOptions.find((item) => item.key === line.optionKey);
@@ -136,10 +159,10 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
 
         const expectedQuantity = Number(line.expectedQuantity);
         const unitCost = Number(line.unitCost);
-        if (!Number.isInteger(expectedQuantity) || expectedQuantity <= 0) {
+        if (!Number.isSafeInteger(expectedQuantity) || expectedQuantity <= 0) {
           throw new Error("Expected quantity must be a positive whole number.");
         }
-        if (!Number.isFinite(unitCost) || unitCost < 0)
+        if (!line.unitCost.trim() || !Number.isFinite(unitCost) || unitCost < 0)
           throw new Error("Unit cost must be zero or greater.");
 
         return {
@@ -165,16 +188,36 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
         notes,
         items,
       });
+      if (activeId.current !== po.id) return;
       toast.success("Purchase order draft updated.");
       navigate(`/dashboard/purchase-orders/${po.id}`);
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Purchase order update failed.");
+      if (activeId.current === po.id) toast.error(cause instanceof Error ? cause.message : "Purchase order update failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (activeId.current) setSaving(false);
     }
   };
 
-  if (loading) {
+  const removeDraft = async () => {
+    if (!po || po.id !== id || loading || mutationLock.current) return;
+    if (!window.confirm(`Delete draft ${po.poNumber}? This cannot be undone.`)) return;
+    mutationLock.current = true;
+    setSaving(true);
+    try {
+      await deletePurchaseOrderDraft(po.id, po.updatedAt);
+      if (activeId.current !== po.id) return;
+      toast.success("Purchase order draft deleted.");
+      navigate(dashboardListHref("/dashboard/purchase-orders"));
+    } catch (cause) {
+      if (activeId.current === po.id) toast.error(cause instanceof Error ? cause.message : "Delete failed.");
+    } finally {
+      mutationLock.current = false;
+      if (activeId.current) setSaving(false);
+    }
+  };
+
+  if (loading || (po && po.id !== id)) {
     return (
       <div className="grid min-h-[440px] place-items-center rounded-2xl border border-slate-200 bg-white">
         <Loader2 className="size-6 animate-spin text-indigo-600" />
@@ -195,6 +238,9 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
         >
           {t("Back to PO")}
         </button>
+        <button type="button" onClick={() => void load()} className="ms-2 mt-4 rounded-xl border border-border bg-card px-4 py-2 text-[11px] font-bold text-foreground">
+          {t("Retry")}
+        </button>
       </div>
     );
   }
@@ -205,6 +251,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
   return (
     <div>
       <button
+        disabled={saving}
         onClick={() => navigate(`/dashboard/purchase-orders/${po.id}`)}
         className="mb-4 inline-flex items-center gap-2 text-[11px] font-bold text-slate-500"
       >
@@ -224,7 +271,8 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
         </p>
       </div>
 
-      <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
+      <fieldset disabled={saving} aria-busy={saving} className="min-w-0 space-y-5 rounded-2xl border border-border bg-card p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
+        <p className="text-xs text-muted-foreground">{lang === "ar" ? "أدخل الكمية والتكلفة لكل سطر. تبقى المسودة قابلة للتعديل حتى إرسالها للموافقة." : "Enter a quantity and cost for each line. The draft remains editable until submitted for approval."}</p>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label>
             <FieldLabel>{t("Supplier")}</FieldLabel>
@@ -442,19 +490,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
 
         <div className="flex flex-wrap justify-between gap-2">
           <button
-            onClick={() => {
-              if (!window.confirm(`Delete draft ${po.poNumber}? This cannot be undone.`)) return;
-              setSaving(true);
-              void deletePurchaseOrderDraft(po.id, po.updatedAt)
-                .then(() => {
-                  toast.success("Purchase order draft deleted.");
-                  navigate(dashboardListHref("/dashboard/purchase-orders"));
-                })
-                .catch((cause) =>
-                  toast.error(cause instanceof Error ? cause.message : "Delete failed."),
-                )
-                .finally(() => setSaving(false));
-            }}
+            onClick={() => void removeDraft()}
             disabled={saving}
             className="h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 text-[11px] font-bold text-rose-700 disabled:opacity-50"
           >
@@ -469,7 +505,7 @@ export default function PurchaseOrderEditPage({ id }: { id: string }) {
             {t("Save draft changes")}
           </button>
         </div>
-      </div>
+      </fieldset>
     </div>
   );
 }

@@ -238,7 +238,7 @@ function MediaLibraryModal({
 }
 
 export default function HeroBannersPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [slides, setSlides] = useState<DashboardHeroSlide[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [form, setForm] = useState<DashboardHeroInput>(EMPTY_FORM);
@@ -250,6 +250,9 @@ export default function HeroBannersPage() {
   const [mediaTarget, setMediaTarget] = useState<"desktop" | "mobile" | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const actionLock = useRef(false);
+  const loadVersion = useRef(0);
   const [uploading, setUploading] = useState<HeroImageTarget | null>(null);
   const [pendingHeroImages, setPendingHeroImages] = useState<
     Partial<Record<HeroImageTarget, File>>
@@ -294,7 +297,9 @@ export default function HeroBannersPage() {
   );
 
   const load = useCallback(async () => {
+    const request = ++loadVersion.current;
     setLoading(true);
+    setLoadError("");
     try {
       await ensureDashboardHeroSessionReady();
       const [nextSlides, links, nextMedia] = await Promise.all([
@@ -302,6 +307,7 @@ export default function HeroBannersPage() {
         listDashboardHeroLinkOptions(),
         listDashboardHeroMedia(),
       ]);
+      if (request !== loadVersion.current) return;
       setSlides(nextSlides);
       setProducts(links.products);
       setCollections(links.collections);
@@ -312,14 +318,17 @@ export default function HeroBannersPage() {
       });
       if (!nextSlides.length) setForm(EMPTY_FORM);
     } catch (cause) {
+      if (request !== loadVersion.current) return;
+      setLoadError(cause instanceof Error ? cause.message : "Unable to load Hero CMS.");
       handleHeroActionError(cause, "Unable to load Hero CMS.");
     } finally {
-      setLoading(false);
+      if (request === loadVersion.current) setLoading(false);
     }
   }, [handleHeroActionError]);
 
   useEffect(() => {
     void load();
+    return () => { loadVersion.current += 1; };
   }, [load]);
 
   useEffect(() => {
@@ -349,7 +358,7 @@ export default function HeroBannersPage() {
   const hasPendingHeroImages = Boolean(pendingHeroImages.desktop || pendingHeroImages.mobile);
   const dirty = formDirty || hasPendingHeroImages;
   useDashboardUnsavedChanges(dirty);
-  const busy = saving || uploading !== null || imageEditor.isEditing;
+  const busy = loading || saving || uploading !== null || imageEditor.isEditing;
 
   const previewForm = useMemo<DashboardHeroInput>(
     () => ({
@@ -361,6 +370,7 @@ export default function HeroBannersPage() {
   );
 
   const handleVisualEditorChange = useCallback((next: DashboardHeroInput) => {
+    if (actionLock.current) return;
     setForm((current) => ({
       ...next,
       imageUrl: current.imageUrl,
@@ -379,7 +389,7 @@ export default function HeroBannersPage() {
   }, [dirty]);
 
   const newSlide = () => {
-    if (busy) {
+    if (busy || actionLock.current) {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
@@ -392,7 +402,7 @@ export default function HeroBannersPage() {
   };
 
   const refresh = async () => {
-    if (busy) {
+    if (busy || actionLock.current) {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
@@ -403,6 +413,7 @@ export default function HeroBannersPage() {
   };
 
   const save = async () => {
+    if (actionLock.current || saving || loading || imageEditor.isEditing) return;
     if (uploading !== null) {
       toast.info("Wait for the image upload to finish before saving.");
       return;
@@ -464,6 +475,7 @@ export default function HeroBannersPage() {
       return;
     }
 
+    actionLock.current = true;
     setSaving(true);
     try {
       const saved = selectedId
@@ -477,13 +489,14 @@ export default function HeroBannersPage() {
     } catch (cause) {
       handleHeroActionError(cause, "Hero save failed.");
     } finally {
+      actionLock.current = false;
       setSaving(false);
     }
   };
 
   const duplicate = async () => {
     if (!selected) return;
-    if (busy) {
+    if (busy || actionLock.current) {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
@@ -491,6 +504,7 @@ export default function HeroBannersPage() {
       toast.info("Save or discard unsaved Hero changes before duplicating.");
       return;
     }
+    actionLock.current = true;
     setSaving(true);
     try {
       const copy = await createDashboardHeroSlide({
@@ -509,13 +523,14 @@ export default function HeroBannersPage() {
     } catch (cause) {
       handleHeroActionError(cause, "Duplicate failed.");
     } finally {
+      actionLock.current = false;
       setSaving(false);
     }
   };
 
   const remove = async () => {
     if (!selected) return;
-    if (busy) {
+    if (busy || actionLock.current) {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
@@ -523,6 +538,8 @@ export default function HeroBannersPage() {
       ? "Delete this Hero slide? Unsaved changes will be discarded. Uploaded media stays in Media Library."
       : "Delete this Hero slide? Uploaded media stays in Media Library.";
     if (!window.confirm(message)) return;
+    actionLock.current = true;
+    setSaving(true);
     try {
       await deleteDashboardHeroSlide(selected.id);
       clearPendingHeroImages();
@@ -531,12 +548,15 @@ export default function HeroBannersPage() {
       await load();
     } catch (cause) {
       handleHeroActionError(cause, "Delete failed.");
+    } finally {
+      actionLock.current = false;
+      setSaving(false);
     }
   };
 
   const move = async (direction: -1 | 1) => {
     if (!selected) return;
-    if (busy) {
+    if (busy || actionLock.current) {
       toast.info("Wait for the current Hero action to finish first.");
       return;
     }
@@ -550,6 +570,8 @@ export default function HeroBannersPage() {
     if (index < 0 || target < 0 || target >= ordered.length) return;
     [ordered[index], ordered[target]] = [ordered[target], ordered[index]];
     const next = ordered.map((slide, sortOrder) => ({ ...slide, sortOrder }));
+    actionLock.current = true;
+    setSaving(true);
     setSlides(next);
     try {
       await reorderDashboardHeroSlides(
@@ -558,13 +580,17 @@ export default function HeroBannersPage() {
       toast.success("Hero order saved.");
     } catch (cause) {
       handleHeroActionError(cause, "Reorder failed.");
-      void load();
+      await load();
+    } finally {
+      actionLock.current = false;
+      setSaving(false);
     }
   };
 
   const upload = async (file: File | undefined, target: HeroImageTarget) => {
-    if (!file || uploading !== null) return;
+    if (!file || uploading !== null || saving || loading || actionLock.current) return;
     let completed = false;
+    actionLock.current = true;
     setUploading(target);
     try {
       const alt =
@@ -634,6 +660,7 @@ export default function HeroBannersPage() {
     } catch (cause) {
       handleHeroActionError(cause, "Image upload failed.");
     } finally {
+      actionLock.current = false;
       setUploading(null);
       if (desktopFileRef.current) desktopFileRef.current.value = "";
       if (mobileFileRef.current) mobileFileRef.current.value = "";
@@ -642,6 +669,7 @@ export default function HeroBannersPage() {
   };
 
   const editHeroFile = async (file: File, target: HeroImageTarget) => {
+    if (busy || actionLock.current) return;
     setPreviewMode(target);
     if (["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type)) {
       const edited = await imageEditor.editFile(file, {
@@ -658,7 +686,7 @@ export default function HeroBannersPage() {
   };
 
   const adjustExistingHero = async (target: HeroImageTarget, url: string) => {
-    if (!url) return;
+    if (!url || busy || actionLock.current) return;
     setPreviewMode(target);
     const edited = await imageEditor.editUrl(url, {
       title: target === "desktop" ? "Adjust existing desktop hero" : "Adjust existing mobile hero",
@@ -671,7 +699,7 @@ export default function HeroBannersPage() {
   };
 
   const chooseMedia = (asset: DashboardHeroMediaAsset) => {
-    if (!mediaTarget || uploading !== null) return;
+    if (!mediaTarget || busy || actionLock.current) return;
     const target = mediaTarget;
     setPreviewMode(target);
     clearPendingHeroImages(target);
@@ -722,7 +750,7 @@ export default function HeroBannersPage() {
 
   if (loading && !slides.length) {
     return (
-      <div className="grid min-h-[480px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status" aria-busy="true" className="grid min-h-[480px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
       </div>
     );
@@ -731,6 +759,16 @@ export default function HeroBannersPage() {
   return (
     <div>
       {imageEditor.dialog}
+      {loadError ? (
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="min-w-0 flex-1 break-words">
+            <p className="font-semibold">{lang === "ar" ? "تعذّر تحميل الشرائح. أعد المحاولة قبل إجراء تغييرات." : "Slides could not be loaded. Retry before making changes."}</p>
+            <p className="mt-1 text-xs">{loadError}</p>
+          </div>
+          <button type="button" disabled={busy} onClick={() => void refresh()} className="min-h-10 rounded-lg border border-current px-3 disabled:opacity-50">{t("Retry")}</button>
+        </div>
+      ) : null}
+      <fieldset disabled={loading || saving || uploading !== null || Boolean(loadError)} aria-busy={loading || saving || uploading !== null} className="m-0 min-w-0 border-0 p-0">
       <div className="mb-4 flex flex-col justify-between gap-3 sm:mb-7 sm:gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
@@ -804,7 +842,7 @@ export default function HeroBannersPage() {
                 <button
                   key={slide.id}
                   onClick={() => {
-                    if (busy) {
+                    if (busy || actionLock.current) {
                       toast.info("Wait for the current Hero action to finish first.");
                       return;
                     }
@@ -1829,6 +1867,7 @@ export default function HeroBannersPage() {
           onClose={() => setMediaTarget(null)}
         />
       ) : null}
+      </fieldset>
     </div>
   );
 }

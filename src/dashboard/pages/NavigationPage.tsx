@@ -5,7 +5,7 @@ import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState
 import { useLanguage } from "@/dashboard/i18n";
 import DashboardResponsiveTable from "@/dashboard/components/DashboardResponsiveTable";
 import { Eye, EyeOff, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -35,12 +35,15 @@ const AREAS: NavigationArea[] = ["header", "bottom", "footer", "mobile_menu", "t
 const ICON_TYPES: NavigationIconType[] = ["lucide", "image", "svg", "none"];
 
 export default function NavigationPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<DashboardNavigationItem[]>([]);
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const operationLock = useRef(false);
+  const requestVersion = useRef(0);
+  const mounted = useRef(true);
   const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [area, setArea] = useDashboardQueryState<"all" | NavigationArea>("area", "all");
   const [editing, setEditing] = useState<DashboardNavigationItem | null>(null);
@@ -51,21 +54,31 @@ export default function NavigationPage() {
   const modalRef = useDashboardModal(formGuard.close, modalOpen);
 
   const load = useCallback(async () => {
+    if (operationLock.current) return;
+    const request = ++requestVersion.current;
     setLoading(true);
     setLoadError("");
     try {
       const workspace = await loadDashboardNavigationWorkspace();
+      if (request !== requestVersion.current || !mounted.current) return;
       setItems(workspace.items);
       setCanDelete(workspace.role === "admin");
     } catch (cause) {
-      setLoadError(cause instanceof Error ? cause.message : "Navigation load failed.");
+      if (request === requestVersion.current && mounted.current) {
+        setLoadError(cause instanceof Error ? cause.message : "Navigation load failed.");
+      }
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && mounted.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void load();
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+    };
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -83,12 +96,14 @@ export default function NavigationPage() {
   }, [area, items, query]);
 
   const openCreate = () => {
+    if (operationLock.current || loading || loadError) return;
     setEditing(null);
     setDraft({ ...EMPTY, sortOrder: (items.length + 1) * 10 });
     setModalOpen(true);
   };
 
   const openEdit = (item: DashboardNavigationItem) => {
+    if (operationLock.current || loading || loadError) return;
     setEditing(item);
     setDraft({
       area: item.area,
@@ -105,12 +120,14 @@ export default function NavigationPage() {
   };
 
   const save = async () => {
-    if (saving) return;
+    if (operationLock.current || loading || loadError) return;
+    operationLock.current = true;
     setSaving(true);
     try {
       const saved = editing
         ? await updateDashboardNavigationItem(editing.id, draft)
         : await createDashboardNavigationItem(draft);
+      if (!mounted.current) return;
       setItems((current) =>
         [...current.filter((item) => item.id !== saved.id), saved].sort(
           (a, b) => a.area.localeCompare(b.area) || a.sortOrder - b.sortOrder,
@@ -120,25 +137,36 @@ export default function NavigationPage() {
       setModalOpen(false);
       toast.success(editing ? "Navigation item updated." : "Navigation item created.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Navigation save failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "Navigation save failed.");
     } finally {
-      setSaving(false);
+      operationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const remove = async (item: DashboardNavigationItem) => {
+    if (operationLock.current || loading || loadError) return;
     if (!canDelete) return toast.error("Only admins can delete navigation items.");
     if (!window.confirm(`Delete "${item.label}" from managed navigation?`)) return;
+    operationLock.current = true;
+    setSaving(true);
     try {
       await deleteDashboardNavigationItem(item.id);
+      if (!mounted.current) return;
       setItems((current) => current.filter((row) => row.id !== item.id));
       toast.success("Navigation item deleted.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Navigation delete failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "Navigation delete failed.");
+    } finally {
+      operationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const toggle = async (item: DashboardNavigationItem) => {
+    if (operationLock.current || loading || loadError) return;
+    operationLock.current = true;
+    setSaving(true);
     const input: DashboardNavigationInput = {
       area: item.area,
       label: item.label,
@@ -152,14 +180,19 @@ export default function NavigationPage() {
     };
     try {
       const saved = await updateDashboardNavigationItem(item.id, input);
+      if (!mounted.current) return;
       setItems((current) => current.map((row) => (row.id === saved.id ? saved : row)));
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Visibility update failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "Visibility update failed.");
+    } finally {
+      operationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   return (
-    <div>
+    <div aria-busy={loading || saving}>
+      {saving && <p role="status" className="mb-3 text-xs text-muted-foreground">{lang === "ar" ? "جارٍ حفظ التغييرات…" : "Saving changes…"}</p>}
       {loadError && (
         <DashboardLoadError message={loadError} busy={loading} onRetry={() => void load()} />
       )}
@@ -180,12 +213,14 @@ export default function NavigationPage() {
         <div className="flex gap-2">
           <button
             onClick={() => void load()}
+            disabled={loading || saving}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
             <RefreshCw className="size-3.5" /> {t("Refresh")}
           </button>
           <button
             onClick={openCreate}
+            disabled={loading || saving || Boolean(loadError)}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
           >
             <Plus className="size-4" /> {t("Add item")}
@@ -220,6 +255,7 @@ export default function NavigationPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("Search navigation...")}
+              aria-label={t("Search navigation...")}
               className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[12px] outline-none focus:border-indigo-400"
             />
           </div>
@@ -279,6 +315,10 @@ export default function NavigationPage() {
                       <td className="px-3 py-4">
                         <button
                           onClick={() => void toggle(item)}
+                          role="switch"
+                          aria-checked={item.isVisible}
+                          aria-label={`${t("Visible on storefront")}: ${item.label}`}
+                          disabled={saving || Boolean(loadError)}
                           className={`grid size-8 place-items-center rounded-lg ${
                             item.isVisible
                               ? "bg-emerald-50 text-emerald-600"
@@ -296,6 +336,8 @@ export default function NavigationPage() {
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => openEdit(item)}
+                            disabled={saving || Boolean(loadError)}
+                            aria-label={`${t("Edit navigation item")}: ${item.label}`}
                             className="grid size-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-50"
                           >
                             <Pencil className="size-3.5" />
@@ -303,6 +345,8 @@ export default function NavigationPage() {
                           {canDelete ? (
                             <button
                               onClick={() => void remove(item)}
+                              disabled={saving || Boolean(loadError)}
+                              aria-label={`${t("Delete")}: ${item.label}`}
                               className="grid size-8 place-items-center rounded-lg text-rose-500 hover:bg-rose-50"
                             >
                               <Trash2 className="size-3.5" />

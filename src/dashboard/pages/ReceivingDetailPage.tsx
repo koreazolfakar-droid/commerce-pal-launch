@@ -11,7 +11,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -50,7 +50,7 @@ function statusClass(status: string) {
 }
 
 export default function ReceivingDetailPage({ id }: { id: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [receipt, setReceipt] = useState<ReceivingSummary | null>(null);
   const [po, setPo] = useState<ReceivingPurchaseOrderBaseline | null>(null);
@@ -59,6 +59,11 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const mutationLock = useRef(false);
+  const requestVersion = useRef(0);
+  const mounted = useRef(true);
+  const activeId = useRef<string | null>(id);
+  activeId.current = id;
   const [error, setError] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [employeeLabel, setEmployeeLabel] = useState("");
@@ -69,10 +74,14 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
     "supplier_invoice" | "packing_list" | "other"
   >("supplier_invoice");
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (preserveDrafts = false) => {
+    const request = ++requestVersion.current;
     setLoading(true);
+    setError("");
+    setReceipt((current) => current?.id === id ? current : null);
     try {
       const detail = await loadReceivingDetail(id);
+      if (request !== requestVersion.current || !mounted.current || activeId.current !== id) return;
       const found = detail.receipt;
       if (!found) throw new Error("Receiving record was not found.");
       setReceipt(found);
@@ -80,6 +89,8 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       setEvents(detail.events);
       setAttachments(detail.attachments);
       setIsAdmin(detail.role === "admin");
+      // Document and serial operations must not discard other unsaved invoice/line edits.
+      if (!preserveDrafts) {
       setInvoiceNumber(found.invoiceNumber);
       setEmployeeLabel(found.employee === "Authenticated staff" ? "" : found.employee);
       setReceivingNotes(found.notes ?? "");
@@ -111,17 +122,26 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
           ]),
         ),
       );
+      }
       setError("");
     } catch (cause) {
+      if (request !== requestVersion.current || !mounted.current || activeId.current !== id) return;
       setError(cause instanceof Error ? cause.message : "Unable to load receiving record.");
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && mounted.current && activeId.current === id) setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
+    mounted.current = true;
+    activeId.current = id;
     void load();
-  }, [load]);
+    return () => {
+      mounted.current = false;
+      activeId.current = null;
+      requestVersion.current += 1;
+    };
+  }, [id, load]);
 
   const invoiceTotal = useMemo(
     () =>
@@ -148,16 +168,16 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       const damagedQuantity = Number(draft.damaged);
       const unitCost = Number(draft.unitCost);
 
-      if (!Number.isInteger(receivedQuantity) || receivedQuantity < 0) {
+      if (!draft.received.trim() || !Number.isSafeInteger(receivedQuantity) || receivedQuantity < 0) {
         throw new Error(`${line.title}: received quantity must be a non-negative whole number.`);
       }
-      if (!Number.isInteger(damagedQuantity) || damagedQuantity < 0) {
+      if (!draft.damaged.trim() || !Number.isSafeInteger(damagedQuantity) || damagedQuantity < 0) {
         throw new Error(`${line.title}: damaged quantity must be a non-negative whole number.`);
       }
       if (receivedQuantity + damagedQuantity <= 0) {
         throw new Error(`${line.title}: enter at least one received or damaged unit.`);
       }
-      if (!Number.isFinite(unitCost) || unitCost < 0) {
+      if (!draft.unitCost.trim() || !Number.isFinite(unitCost) || unitCost < 0) {
         throw new Error(`${line.title}: unit cost must be zero or greater.`);
       }
 
@@ -181,7 +201,7 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   };
 
   const persistReceivingDraft = async (reloadAfter = true) => {
-    if (!receipt || receipt.status !== "draft") return;
+    if (!receipt || receipt.id !== id || receipt.status !== "draft") throw new Error("Receiving draft is not loaded.");
     if (!invoiceNumber.trim()) throw new Error("Invoice number is required.");
 
     const lines = buildReceivingDraftLines();
@@ -194,83 +214,110 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
       lines,
     });
 
+    if (!mounted.current || activeId.current !== id) return null;
+    if (typeof nextUpdatedAt === "string") {
+      setReceipt((current) => current?.id === id ? { ...current, updatedAt: nextUpdatedAt } : current);
+    }
     if (reloadAfter) {
-      await load();
+      await load(true);
       return null;
     }
     return typeof nextUpdatedAt === "string" ? nextUpdatedAt : receipt.updatedAt;
   };
 
   const saveReceivingDraft = async () => {
+    if (!receipt || receipt.id !== id || receipt.status !== "draft" || saving || loading || mutationLock.current) return;
+    mutationLock.current = true;
     try {
       setSaving(true);
       await persistReceivingDraft(true);
+      if (!mounted.current || activeId.current !== id) return;
       toast.success("Receiving draft updated.");
     } catch (cause) {
+      if (!mounted.current || activeId.current !== id) return;
       toast.error(cause instanceof Error ? cause.message : "Updating receiving draft failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const saveSerials = async (lineId: string) => {
+    if (!receipt || receipt.id !== id || receipt.status !== "draft" || saving || loading || mutationLock.current) return;
+    if (!receipt.items.some((line) => line.id === lineId)) return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       await replaceReceivingSerials(lineId, serialDrafts[lineId] ?? []);
+      if (!mounted.current || activeId.current !== id) return;
       toast.success("Serial / IMEI data saved.");
-      await load();
+      await load(true);
     } catch (cause) {
+      if (!mounted.current || activeId.current !== id) return;
       toast.error(cause instanceof Error ? cause.message : "Saving serials failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const approve = async () => {
-    if (!receipt) return;
+    if (!receipt || receipt.id !== id || receipt.status !== "draft" || saving || loading || mutationLock.current) return;
     if (
       !window.confirm(
         `Approve receiving #${receipt.receiptNumber}? Latest draft fields and serials will be saved first, then stock will update.`,
       )
     )
       return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       let expectedUpdatedAt = receipt.updatedAt;
       if (receipt.status === "draft") {
         expectedUpdatedAt = (await persistReceivingDraft(false)) ?? expectedUpdatedAt;
+        if (!mounted.current || activeId.current !== id) return;
         for (const line of receipt.items) {
           await replaceReceivingSerials(line.id, serialDrafts[line.id] ?? []);
+          if (!mounted.current || activeId.current !== id) return;
         }
       }
+      if (!mounted.current || activeId.current !== id) return;
       await approveReceiving(receipt.id, expectedUpdatedAt);
+      if (!mounted.current || activeId.current !== id) return;
       toast.success("Receiving approved and stock updated.");
       await load();
     } catch (cause) {
+      if (!mounted.current || activeId.current !== id) return;
       toast.error(cause instanceof Error ? cause.message : "Approval failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const voidDraft = async () => {
-    if (!receipt) return;
+    if (!receipt || receipt.id !== id || receipt.status !== "draft" || saving || loading || mutationLock.current) return;
     const reason = window.prompt("Reason for voiding this receiving draft?")?.trim();
     if (!reason) return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       await voidReceiving(receipt.id, receipt.updatedAt, reason);
+      if (!mounted.current || activeId.current !== id) return;
       toast.success("Receiving draft voided.");
       await load();
     } catch (cause) {
+      if (!mounted.current || activeId.current !== id) return;
       toast.error(cause instanceof Error ? cause.message : "Void failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const uploadAttachment = async (file: File | null) => {
-    if (!receipt || !file) return;
+    if (!receipt || receipt.id !== id || !file || saving || loading || mutationLock.current) return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       await uploadProcurementAttachment({
@@ -278,28 +325,57 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
         receivingId: receipt.id,
         attachmentType,
       });
+      if (!mounted.current || activeId.current !== id) return;
       toast.success("Receiving document uploaded.");
-      await load();
+      await load(true);
     } catch (cause) {
+      if (!mounted.current || activeId.current !== id) return;
       toast.error(cause instanceof Error ? cause.message : "Upload failed.");
     } finally {
-      setSaving(false);
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
+    }
+  };
+
+
+  const removeAttachment = async (attachment: ProcurementAttachment) => {
+    if (!receipt || receipt.id !== id || !isAdmin || saving || loading || mutationLock.current) return;
+    if (!window.confirm(t("Delete this attachment?"))) return;
+    mutationLock.current = true;
+    setSaving(true);
+    try {
+      await deleteProcurementAttachment(attachment);
+      if (!mounted.current || activeId.current !== id) return;
+      await load(true);
+    } catch (cause) {
+      if (!mounted.current || activeId.current !== id) return;
+      toast.error(cause instanceof Error ? cause.message : "Delete failed.");
+    } finally {
+      mutationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="grid min-h-[440px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status" aria-label={t("Loading…")} className="grid min-h-[440px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-indigo-600" />
       </div>
     );
   }
 
-  if (error || !receipt) {
+  if (error || !receipt || receipt.id !== id) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6">
+      <div role="alert" className="rounded-2xl border border-rose-100 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/30">
         <div className="text-sm font-bold text-rose-700">{t("Receiving could not be opened.")}</div>
         <div className="mt-1 text-xs text-rose-600">{error}</div>
+        <button
+          type="button"
+          onClick={() => void load(receipt?.id === id)}
+          className="mt-4 me-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+        >
+          {t("Retry")}
+        </button>
         <button
           onClick={() => navigate(dashboardListHref("/dashboard/receiving"))}
           className="mt-4 rounded-xl bg-[#14203a] px-4 py-2 text-[11px] font-bold text-white"
@@ -314,7 +390,8 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
   const priceVariance = invoiceTotal - poBaselineTotal;
 
   return (
-    <div>
+    <fieldset disabled={saving || loading} aria-busy={saving || loading} className="min-w-0">
+      {saving ? <p role="status" className="mb-3 text-sm text-muted-foreground">{lang === "ar" ? "جارٍ حفظ الاستلام… انتظر اكتمال العملية." : "Saving receiving… Wait for the operation to complete."}</p> : null}
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
           <button
@@ -896,16 +973,8 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
                 </a>
                 {isAdmin ? (
                   <button
-                    onClick={() => {
-                      if (!window.confirm("Delete this attachment?")) return;
-                      setSaving(true);
-                      void deleteProcurementAttachment(attachment)
-                        .then(() => load())
-                        .catch((cause) =>
-                          toast.error(cause instanceof Error ? cause.message : "Delete failed."),
-                        )
-                        .finally(() => setSaving(false));
-                    }}
+                    onClick={() => void removeAttachment(attachment)}
+                    disabled={saving || loading}
                     className="text-[10px] font-bold text-rose-600"
                   >
                     {t("Delete")}
@@ -955,6 +1024,6 @@ export default function ReceivingDetailPage({ id }: { id: string }) {
           {t("Stock and inventory movements were recorded when this receiving was approved.")}
         </div>
       ) : null}
-    </div>
+    </fieldset>
   );
 }
