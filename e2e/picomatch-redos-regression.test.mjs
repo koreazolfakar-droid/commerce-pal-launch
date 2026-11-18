@@ -40,9 +40,18 @@ test("security guard is not bypassed by setting recursion safeguard options", ()
   assert.throws(() => patched.makeRe("+(*a)", { maxExtglobRecursion: false }), /Unsafe repeated extglob rejected/);
 });
 
-test("deep nested patterns finish without quadratic look-ahead rescans", { timeout: 4000 }, () => {
+test("deep nested extglobs are rejected before they can stall the parser", { timeout: 1500 }, () => {
   const input = "+(".repeat(1000) + "a" + ")".repeat(1000);
-  assert.doesNotThrow(() => patched.parse(input));
+  assert.throws(() => patched.parse(input), /Nested repeated extglob exceeds safe depth/);
+});
+
+test("the dependency lockfile resolves every picomatch copy to the hardened local fork", async () => {
+  const lock = await readFile(new URL("../bun.lock", import.meta.url), "utf8");
+  const references = [...lock.matchAll(/"[^"]*\\/picomatch": \\["picomatch@([^"]+)"/g)]
+    .map((match) => match[1]);
+  assert.ok(references.length >= 3, "Expected transitive picomatch resolutions");
+  assert.ok(references.every((value) => value === "file:vendor/picomatch"),
+    "A registry picomatch copy bypasses the hardened fork: " + references.join(", "));
 });
 
 test("security backport provenance is explicit and fork version differs from vulnerable registry", async () => {
