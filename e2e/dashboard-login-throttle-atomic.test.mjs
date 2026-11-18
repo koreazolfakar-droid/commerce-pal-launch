@@ -118,10 +118,10 @@ test("pre-auth throttle does not trust spoofable forwarded IP fallbacks", () => 
     throttleSource.indexOf("function clientIp(req: Request) {"),
     throttleSource.indexOf("async function sha256("),
   );
-  assert.match(ipFunction, /req\\.headers\\.get\\("cf-connecting-ip"\\)/);
-  assert.doesNotMatch(ipFunction, /req\\.headers\\.get\\("x-forwarded-for"\\)/);
-  assert.doesNotMatch(ipFunction, /req\\.headers\\.get\\("x-real-ip"\\)/);
-  assert.doesNotMatch(ipFunction, /req\\.headers\\.get\\("true-client-ip"\\)/);
+  assert.match(ipFunction, /req\.headers\.get\("cf-connecting-ip"\)/);
+  assert.doesNotMatch(ipFunction, /req\.headers\.get\("x-forwarded-for"\)/);
+  assert.doesNotMatch(ipFunction, /req\.headers\.get\("x-real-ip"\)/);
+  assert.doesNotMatch(ipFunction, /req\.headers\.get\("true-client-ip"\)/);
   assert.match(ipFunction, /: "unknown"/);
 });
 
