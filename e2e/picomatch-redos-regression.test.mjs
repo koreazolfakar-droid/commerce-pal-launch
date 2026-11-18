@@ -47,8 +47,9 @@ test("deep nested extglobs are rejected before they can stall the parser", { tim
 
 test("the dependency lockfile resolves every picomatch copy to the hardened local fork", async () => {
   const lock = await readFile(new URL("../bun.lock", import.meta.url), "utf8");
-  const references = [...lock.matchAll(/"[^"]*\\/picomatch": \\["picomatch@([^"]+)"/g)]
-    .map((match) => match[1]);
+  const references = lock.split("\n")
+    .filter((line) => line.includes('/picomatch":') && line.includes('"picomatch@'))
+    .map((line) => line.match(/picomatch@([^"]+)"/)?.[1]);
   assert.ok(references.length >= 3, "Expected transitive picomatch resolutions");
   assert.ok(references.every((value) => value === "file:vendor/picomatch"),
     "A registry picomatch copy bypasses the hardened fork: " + references.join(", "));
