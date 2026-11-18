@@ -393,6 +393,11 @@ const assertSafeRepeatedExtglob = input => {
     if (ch === '(') {
       const repeated = previous === '+' || previous === '*' ||
         (repeatFrames.length > 0 && repeatFrames[repeatFrames.length - 1]);
+      // A thousand nested repeat groups can exhaust the parser even when the
+      // body does not contain a star. Limit the depth before generating regexes.
+      if (repeated && repeatFrames.length >= 32) {
+        throw new SyntaxError('Nested repeated extglob exceeds safe depth');
+      }
       repeatFrames.push(Boolean(repeated));
       previous = '';
       continue;
