@@ -1,9 +1,9 @@
 name: Security dependency lockfile sync (temporary)
 
 on:
-  push:
+  pull_request:
     branches:
-      - security/dashboard-login-throttle-atomic-20261118
+      - main
     paths:
       - 'package.json'
       - 'vendor/picomatch/**'
@@ -19,11 +19,13 @@ concurrency:
 
 jobs:
   regenerate:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'security/dashboard-login-throttle-atomic-20261118' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6.1.0
         with:
+          ref: ${{ github.head_ref }}
           persist-credentials: true
       - uses: oven-sh/setup-bun@v2.2.0
         with:
