@@ -112,13 +112,17 @@ Deno.serve(async (req: Request) => {
 
   try {
     if (!hero?.image_url) {
-      const blank = new Blob(
-        ['<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'],
-        { type: "image/svg+xml" },
+      // Existing Storage policy only permits raster images. Upload an inert
+      // 1x1 transparent PNG instead of SVG, which Storage rejects and can be
+      // active content when viewed as an independent document.
+      const transparentPng = Uint8Array.from(
+        atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNgYGBgAAAABQABeqhXUAAAAABJRU5ErkJggg=="),
+        (character) => character.charCodeAt(0),
       );
+      const blank = new Blob([transparentPng], { type: "image/png" });
       await Promise.all([
-        upload(DESKTOP_TARGET, blank, "image/svg+xml"),
-        upload(MOBILE_TARGET, blank, "image/svg+xml"),
+        upload(DESKTOP_TARGET, blank, "image/png"),
+        upload(MOBILE_TARGET, blank, "image/png"),
       ]);
       return new Response(JSON.stringify({ ok: true, active: false }), {
         status: 200,
