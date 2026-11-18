@@ -50,13 +50,14 @@ function json(req: Request, body: Record<string, unknown>, status = 200) {
 }
 
 function clientIp(req: Request) {
-  return (
-    req.headers.get("cf-connecting-ip")?.trim() ||
-    req.headers.get("true-client-ip")?.trim() ||
-    req.headers.get("x-real-ip")?.trim() ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown"
-  ).slice(0, 160);
+  // This function is hosted behind Supabase's Cloudflare gateway. Do not use
+  // the first X-Forwarded-For value or client-provided X-Real-IP/True-Client-IP:
+  // these unverified fallback headers can be forged to evade throttling.
+  // A missing or malformed trusted header shares a conservative fallback bucket.
+  const trustedIp = req.headers.get("cf-connecting-ip")?.trim() ?? "";
+  return trustedIp && trustedIp.length <= 64 && !trustedIp.includes(",")
+    ? trustedIp
+    : "unknown";
 }
 
 async function sha256(value: string) {
