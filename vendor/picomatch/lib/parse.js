@@ -361,30 +361,52 @@ const analyzeRepeatedExtglob = (body, options) => {
 const assertSafeRepeatedExtglob = input => {
   let escaped = false;
   let inClass = false;
-  for (let i = 0; i < input.length; i++) {
-    const ch = input[i];
-    if (escaped) { escaped = false; continue; }
-    if (ch === '\\') { escaped = true; continue; }
-    if (ch === '[') { inClass = true; continue; }
-    if (ch === ']' && inClass) { inClass = false; continue; }
-    if (inClass || (ch !== '+' && ch !== '*') || input[i + 1] !== '(') continue;
+  // Each parenthesis frame inherits an active repeated-extglob boundary.
+  // Single-pass detection avoids the quadratic rescanning that deep inputs
+  // could trigger with naive look-ahead for every +( / *( opener.
+  const repeatFrames = [];
+  let previous = '';
 
-    let depth = 1;
-    let subClass = false;
-    let subEscaped = false;
-    for (let j = i + 2; j < input.length; j++) {
-      const token = input[j];
-      if (subEscaped) { subEscaped = false; continue; }
-      if (token === '\\') { subEscaped = true; continue; }
-      if (token === '[') { subClass = true; continue; }
-      if (token === ']' && subClass) { subClass = false; continue; }
-      if (subClass) continue;
-      if (token === '*') {
-        throw new SyntaxError('Unsafe repeated extglob rejected: CVE-2026-112366');
-      }
-      if (token === '(') depth++;
-      if (token === ')' && --depth === 0) break;
+  for (const ch of input) {
+    if (escaped) {
+      escaped = false;
+      previous = '';
+      continue;
     }
+    if (ch === '\\') {
+      escaped = true;
+      previous = '';
+      continue;
+    }
+    if (ch === '[' && !inClass) {
+      inClass = true;
+      previous = '';
+      continue;
+    }
+    if (ch === ']' && inClass) {
+      inClass = false;
+      previous = '';
+      continue;
+    }
+    if (inClass) continue;
+
+    if (ch === '(') {
+      const repeated = previous === '+' || previous === '*' ||
+        (repeatFrames.length > 0 && repeatFrames[repeatFrames.length - 1]);
+      repeatFrames.push(Boolean(repeated));
+      previous = '';
+      continue;
+    }
+    if (ch === ')') {
+      repeatFrames.pop();
+      previous = '';
+      continue;
+    }
+    if (ch === '*' && repeatFrames.length > 0 &&
+        repeatFrames[repeatFrames.length - 1]) {
+      throw new SyntaxError('Unsafe repeated extglob rejected: CVE-2026-112366');
+    }
+    previous = ch;
   }
 };
 
