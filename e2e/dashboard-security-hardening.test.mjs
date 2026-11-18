@@ -36,6 +36,10 @@ const throttleMigration = await readFile(
   new URL("../supabase/migrations/20260919064000_dashboard_login_throttle.sql", import.meta.url),
   "utf8",
 );
+const atomicThrottleMigration = await readFile(
+  new URL("../supabase/migrations/20261118090000_atomic_dashboard_login_throttle.sql", import.meta.url),
+  "utf8",
+);
 const hardenedPolicies = await readFile(
   new URL("../supabase/migrations/20260919065000_harden_dashboard_security_policies.sql", import.meta.url),
   "utf8",
@@ -69,10 +73,11 @@ test("pre-auth throttle uses opaque pair/IP buckets without account enumeration"
   assert.match(catalog, /dashboardLoginThrottle\(email, "attempt"\)/);
   assert.doesNotMatch(catalog, /dashboardLoginThrottle\(email, "failure"\)/);
   assert.match(catalog, /dashboardLoginThrottle\(email, "success"\)/);
-  assert.match(throttle, /PAIR_SOFT_FAILURES = 5/);
-  assert.match(throttle, /PAIR_HARD_FAILURES = 10/);
-  assert.match(throttle, /IP_SOFT_FAILURES = 25/);
-  assert.match(throttle, /IP_HARD_FAILURES = 50/);
+  assert.match(atomicThrottleMigration, /v_soft_threshold := case when v_index = 1 then 5 else 25 end/);
+  assert.match(atomicThrottleMigration, /v_hard_threshold := case when v_index = 1 then 10 else 50 end/);
+  assert.match(throttle, /supabase\\.rpc\("consume_dashboard_login_attempt"/);
+  assert.match(throttle, /readBoundedText\(req, 1024\)/);
+  assert.doesNotMatch(throttle, /readBucket\(|recordAttempt\(|resetExpired\(/);
   assert.match(throttle, /outcome === "attempt" \|\| outcome === "check"/);
   assert.match(throttle, /outcome === "failure"/);
   assert.doesNotMatch(throttle, /dashboard_staff_email_exists/);
@@ -96,6 +101,19 @@ test("pre-auth throttle uses opaque pair/IP buckets without account enumeration"
   assert.ok(pairHash > authCheck, "success must bind the pair bucket after authenticated identity");
   assert.ok(successDelete > pairHash, "pair bucket reset must happen after authentication");
 });
+test("atomic throttle RPC serializes concurrent requests and cannot be called by browser roles", () => {
+  assert.match(atomicThrottleMigration, /pg_catalog\\.pg_advisory_xact_lock/);
+  assert.match(atomicThrottleMigration, /on conflict \(key_hash\) do update/);
+  assert.match(atomicThrottleMigration, /security invoker/);
+  assert.match(atomicThrottleMigration, /revoke all on function public\\.consume_dashboard_login_attempt\(text, text\)/);
+  assert.match(atomicThrottleMigration, /from public, anon, authenticated/);
+  assert.match(atomicThrottleMigration, /to service_role/);
+  assert.match(throttle, /typeof decision\\.allowed !== "boolean"/);
+  assert.match(throttle, /invalid_atomic_throttle_response/);
+  assert.match(throttle, /RequestBodyTooLargeError/);
+  assert.match(throttle, /payload_too_large/);
+});
+
 test("throttle storage is denied to browser roles", () => {
   assert.match(hardenedPolicies, /dashboard_login_throttle_deny_clients/);
   assert.match(hardenedPolicies, /to anon, authenticated/);
