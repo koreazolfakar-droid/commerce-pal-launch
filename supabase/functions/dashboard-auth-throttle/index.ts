@@ -69,6 +69,13 @@ async function sha256(value: string) {
 type Outcome = "attempt" | "check" | "failure" | "success";
 
 Deno.serve(async (req) => {
+  // Reject browser cross-origin requests before consuming the public login
+  // attempt bucket. CORS response headers alone do not stop a POST from being
+  // sent, so explicitly deny untrusted Origin values as defense in depth.
+  const requestOrigin = req.headers.get("origin")?.trim();
+  if (requestOrigin && !originAllowed(requestOrigin)) {
+    return json(req, { error: "origin_not_allowed" }, 403);
+  }
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   if (req.method !== "POST") return json(req, { error: "method_not_allowed" }, 405);
 
