@@ -69,7 +69,7 @@ function harness(config = {}) {
       })[key] },
       serve(fn) { handler = fn; },
     },
-    URL, Request, Response, Headers, Blob, AbortController, console: { error() {} },
+    URL, Request, Response, Headers, Blob, AbortController, atob, Uint8Array, console: { error() {} },
   }, { timeout: 5000 });
   return { handler, log };
 }
@@ -139,6 +139,7 @@ test("valid staff may reset inactive hero to a non-executable placeholder", asyn
   assert.equal(res.status, 200);
   assert.equal(res.body.active, false);
   assert.equal(res.log.filter(x => x.action === "upload").length, 2);
+  assert.ok(res.log.filter(x => x.action === "upload").every(x => x.type === "image/png"));
 });
 
 test("oversized claimed body rejects before auth processing", async () => {
