@@ -31,7 +31,7 @@ test("CVE-2026-112366 repeated extglob exploits are rejected at parse time", () 
 });
 
 test("escaped and class-contained stars are not rejected", () => {
-  assert.doesNotThrow(() => patched.makeRe(String.raw`+(a\\*b)`));
+  assert.doesNotThrow(() => patched.makeRe(String.raw`+(a\*b)`));
   assert.doesNotThrow(() => patched.makeRe("+([*]|a)"));
   assert.doesNotThrow(() => patched.makeRe("+(foo|bar)"));
 });
