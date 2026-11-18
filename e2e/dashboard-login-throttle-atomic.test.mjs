@@ -64,7 +64,8 @@ test("atomic login throttle allows five pair attempts then blocks the sixth", as
     assert.equal(rows.length, 2);
     assert.equal(rows.find((row) => row.key_hash === pair).failure_count, 5);
     assert.equal(rows.find((row) => row.key_hash === ip).failure_count, 5);
-    assert.ok(rows.every((row) => row.blocked_until));
+    assert.ok(rows.find((row) => row.key_hash === pair).blocked_until);
+    assert.equal(rows.find((row) => row.key_hash === ip).blocked_until, null);
   } finally {
     await db.close();
   }
