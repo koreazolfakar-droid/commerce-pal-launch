@@ -75,7 +75,7 @@ test("pre-auth throttle uses opaque pair/IP buckets without account enumeration"
   assert.match(catalog, /dashboardLoginThrottle\(email, "success"\)/);
   assert.match(atomicThrottleMigration, /v_soft_threshold := case when v_index = 1 then 5 else 25 end/);
   assert.match(atomicThrottleMigration, /v_hard_threshold := case when v_index = 1 then 10 else 50 end/);
-  assert.match(throttle, /supabase\\.rpc\("consume_dashboard_login_attempt"/);
+  assert.match(throttle, /supabase\.rpc\("consume_dashboard_login_attempt"/);
   assert.match(throttle, /readBoundedText\(req, 1024\)/);
   assert.doesNotMatch(throttle, /readBucket\(|recordAttempt\(|resetExpired\(/);
   assert.match(throttle, /outcome === "attempt" \|\| outcome === "check"/);
@@ -102,13 +102,13 @@ test("pre-auth throttle uses opaque pair/IP buckets without account enumeration"
   assert.ok(successDelete > pairHash, "pair bucket reset must happen after authentication");
 });
 test("atomic throttle RPC serializes concurrent requests and cannot be called by browser roles", () => {
-  assert.match(atomicThrottleMigration, /pg_catalog\\.pg_advisory_xact_lock/);
+  assert.match(atomicThrottleMigration, /pg_catalog\.pg_advisory_xact_lock/);
   assert.match(atomicThrottleMigration, /on conflict \(key_hash\) do update/);
   assert.match(atomicThrottleMigration, /security invoker/);
-  assert.match(atomicThrottleMigration, /revoke all on function public\\.consume_dashboard_login_attempt\(text, text\)/);
+  assert.match(atomicThrottleMigration, /revoke all on function public\.consume_dashboard_login_attempt\(text, text\)/);
   assert.match(atomicThrottleMigration, /from public, anon, authenticated/);
   assert.match(atomicThrottleMigration, /to service_role/);
-  assert.match(throttle, /typeof decision\\.allowed !== "boolean"/);
+  assert.match(throttle, /typeof decision\.allowed !== "boolean"/);
   assert.match(throttle, /invalid_atomic_throttle_response/);
   assert.match(throttle, /RequestBodyTooLargeError/);
   assert.match(throttle, /payload_too_large/);
