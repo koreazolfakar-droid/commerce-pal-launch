@@ -57,7 +57,7 @@ Supabase's native **Leaked Password Protection** is still recommended if the pro
 The project-level dashboard auth throttle is deployed as `dashboard-auth-throttle`.
 Keep Supabase Auth's native rate limits enabled as an independent defense layer.
 
-Dashboard login throttling remains fail-open at the browser integration boundary if the Edge Function is unavailable, while TOTP MFA, Supabase Auth, RLS, and (when configured) Turnstile remain independent controls.
+Dashboard login throttling **fails closed**: if the pre-auth Edge Function or the transactional database RPC cannot be reached or returns an invalid decision, the app does not initiate password sign-in. TOTP MFA, Supabase Auth, RLS, and (when configured) Turnstile remain independent controls. Direct calls to Supabase Auth do not pass through this application-side throttle; native Auth provider rate limiting is therefore essential.
 
 The application server's global mutation limiter no longer uses process-local memory. It consumes the shared `consume_edge_rate_limit` database RPC through the server-only Supabase admin client, with the source address stored only as a SHA-256-derived bucket key. Mutating requests fail closed with HTTP 503 if that shared protection cannot be reached, avoiding per-instance bypasses during production scaling.
 
@@ -96,3 +96,16 @@ Auth0's additional dashboard token cache remains memory-only.
 - Current CMS URL data was checked before this change and contained no unsafe navigation, brand, or canonical destinations.
 - Production Supabase logs for `dashboard-auth-throttle` showed successful requests and no observed function errors during the inspected window.
 - Sensitive dashboard Edge endpoints now return browser CORS access only to Space Call production origins, localhost development, and trusted Lovable preview zones; arbitrary origins receive no `Access-Control-Allow-Origin`.
+
+## Atomic login hardening (security PR #517, 2026-11-18)
+
+The security change on this branch is **not active in production merely because the GitHub pull request is merged**. Deploy the two dependent components in this exact order:
+
+1. Apply `supabase/migrations/20261118090000_atomic_dashboard_login_throttle.sql`, including the `service_role`-only EXECUTE grant. Never grant this RPC to `anon` or `authenticated`.
+2. Deploy `dashboard-auth-throttle` with `_shared/requestBody.ts`. Keep `verify_jwt = false` for the pre-auth attempt API; authenticated success resets verify a real JWT and the staff role inside the handler.
+3. Execute read-only checks of function privileges, then perform bounded smoke tests with an isolated dashboard test account for valid login + MFA, failed password, pair/IP throttling, malformed JSON, and oversized request rejection.
+4. Observe Edge Function 4xx/5xx rates and login failures, and verify the fallback bucket is not shared by normal traffic because trusted gateway client-IP information is missing.
+
+The pre-auth limiter increments IP/email and IP-wide counters in a single PostgreSQL transaction protected by an advisory lock. This removes a lost-update race under concurrent requests. The public handler rejects bodies exceeding 1024 streamed bytes, rejects disallowed browser Origin values, and no longer trusts user-supplied forwarded-IP fallbacks. These controls reduce abuse but cannot substitute for Supabase Auth provider rate limits or server-enforced MFA/RLS.
+
+**Outstanding independent release conditions:** Supabase Auth Security Advisor reports its native leaked-password protection disabled (separate from dashboard HIBP). The full `bun audit --audit-level=high` security gate currently reports high-severity `GHSA-fc5q-39xc-vjpf` in the build dependency `picomatch`. Do not silently ignore the advisory or misreport a red security gate as a passing test; track the upstream fix and reassess the dependency's build-time exposure before a production release.
