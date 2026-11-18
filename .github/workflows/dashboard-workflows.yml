@@ -50,6 +50,8 @@ jobs:
       - run: bun run lint
       - name: Dashboard behavior and safety checks
         run: node --test e2e/dashboard-analytics.test.mjs e2e/dashboard-analytics-database.test.mjs e2e/dashboard-professional-workflows.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-release-readiness-regressions.test.mjs e2e/dashboard-ai-form-fill.test.mjs e2e/dashboard-ai-assist.test.mjs e2e/dashboard-product-specifications.test.mjs e2e/dashboard-mutation-flow.test.mjs e2e/dashboard-edge-cors-security.test.mjs
+      - name: Atomic login throttle and dashboard authentication security regressions
+        run: node --test e2e/dashboard-login-throttle-atomic.test.mjs e2e/dashboard-security-hardening.test.mjs e2e/dashboard-auth-provider-gates.test.mjs
       - run: ./node_modules/.bin/playwright install --with-deps chromium
       - run: bun run build
       - name: Desktop, mobile, Arabic and workflow checks
