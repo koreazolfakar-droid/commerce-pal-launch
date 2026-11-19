@@ -105,6 +105,18 @@ test("missing bearer cannot read hero or write images", async () => {
   assert.equal(res.log.length, 0);
 });
 
+test("Bearer parser accepts standard base64url tokens containing s and rejects embedded whitespace", async () => {
+  const allowed = await invoke({}, { authorization: "Bearer session-sample-token" });
+  assert.equal(allowed.status, 200);
+  assert.equal(allowed.log.find(x => x.action === "getUser")?.token, "session-sample-token");
+
+  for (const authorization of ["Bearer abc def", "Bearer abc\\\\def", "Bearer abc,def"]) {
+    const denied = await invoke({}, { authorization });
+    assert.equal(denied.status, 401, authorization);
+    assert.equal(denied.log.length, 0, authorization);
+  }
+});
+
 test("invalid Supabase identity cannot call privileged database queries", async () => {
   const res = await invoke({ identityMissing: true });
   assert.equal(res.status, 401);
