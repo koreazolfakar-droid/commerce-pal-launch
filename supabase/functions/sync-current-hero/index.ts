@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const authorization = req.headers.get("authorization")?.trim() ?? "";
-  const token = /^Bearer ([^\\s,]+)$/i.exec(authorization)?.[1];
+  const token = /^Bearer ([^\s,]+)$/i.exec(authorization)?.[1];
   const url = Deno.env.get("SUPABASE_URL")?.trim() || "";
   const publicKey =
     Deno.env.get("SUPABASE_ANON_KEY")?.trim() ||
