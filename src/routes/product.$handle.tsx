@@ -27,9 +27,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInformation } from "@/components/product/ProductInformation";
-import "@/components/product/product-detail.css";
 import { VariantPicker } from "@/components/product/VariantPicker";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
@@ -129,26 +129,26 @@ function ProductPending() {
   return (
     <StoreLayout>
       <div
-        className="mx-auto w-full max-w-7xl px-4 pb-6 pt-12 sm:px-5 lg:px-8"
+        className="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-6 pt-12 sm:px-5 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-8 lg:px-8 xl:gap-12"
         role="status"
         aria-live="polite"
       >
         <span className="sr-only">
           {language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}
         </span>
-        <div className="product-showcase" aria-hidden="true">
-          <div className="product-heading grid gap-3 py-2">
-            <div className="shimmer h-5 w-24 rounded-full bg-surface" />
-            <div className="shimmer h-9 w-4/5 rounded-lg bg-surface" />
-          </div>
-          <div className="product-showcase-gallery">
-            <div className="product-gallery-stage shimmer rounded-2xl bg-surface" />
-          </div>
-          <div className="product-buy-panel space-y-5">
-            <div className="shimmer h-8 w-28 rounded-lg bg-surface" />
-            <div className="shimmer h-5 w-2/3 rounded-lg bg-surface" />
-            <div className="shimmer h-12 w-full rounded-xl bg-surface" />
-          </div>
+        <div
+          className="shimmer aspect-[4/3] self-start rounded-2xl bg-surface sm:aspect-square"
+          aria-hidden="true"
+        />
+        <div
+          className="space-y-4 rounded-2xl border border-border/70 bg-card p-4 sm:p-6"
+          aria-hidden="true"
+        >
+          <div className="shimmer h-3 w-20 rounded bg-surface" />
+          <div className="shimmer h-7 w-4/5 rounded bg-surface" />
+          <div className="shimmer h-5 w-2/3 rounded bg-surface" />
+          <div className="shimmer h-5 w-24 rounded bg-surface" />
+          <div className="shimmer h-11 w-full rounded-xl bg-surface" />
         </div>
       </div>
     </StoreLayout>
@@ -387,6 +387,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
   const brand = resolveBrand(product);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
+  const isPhone = category?.slug === "smartphone" || category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
     title: displayTitle,
     url: absoluteUrl(`/product/${node.handle}`),
@@ -476,19 +477,6 @@ function ProductDetails({ product }: { product: StoreProduct }) {
     details.querySelector("summary")?.focus({ preventScroll: true });
   };
 
-  const specificationsLink = specGroups.length > 0 && (
-    <a
-      href="#product-specifications"
-      data-testid="product-specifications-link"
-      aria-controls="product-specifications"
-      onClick={showSpecifications}
-      className="product-spec-link"
-    >
-      {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
-      <ChevronDown aria-hidden className="size-4" strokeWidth={1.65} />
-    </a>
-  );
-
   const displayOverview = useMemo(
     () => buildDisplayOverview(content.overview, node.title, node.vendor, language),
     [content.overview, node.title, node.vendor, language],
@@ -508,7 +496,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
 
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 py-4 pb-6 sm:px-5 sm:pb-16 lg:px-8 lg:pt-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 pb-6 sm:px-5 sm:pb-12 lg:px-8 lg:pt-7">
         <nav
           aria-label={language === "ar" ? "مسار التنقل" : "Breadcrumb"}
           className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground sm:text-sm"
@@ -538,50 +526,80 @@ function ProductDetails({ product }: { product: StoreProduct }) {
           </span>
         </nav>
 
-        <div data-testid="product-detail-canvas" className="product-showcase mt-4 sm:mt-6">
-          <div className="product-heading">
-            <div className="product-identity-row">
-              {brand && (
-                <Link
-                  to="/brand/$slug"
-                  params={{ slug: brand.slug }}
-                  className="product-brand-link"
-                >
-                  <bdi>{brand.label}</bdi>
-                </Link>
-              )}
-              <span
-                className={cn("product-availability", inStock && "product-availability-in-stock")}
-                aria-live="polite"
-              >
-                <span aria-hidden="true" />
-                {t(inStock ? "inStock" : "outOfStock")}
-              </span>
-            </div>
-            <h1 className="product-title">{displayTitle}</h1>
-          </div>
-
+        <div
+          data-testid="product-detail-canvas"
+          className="mt-4 grid items-start gap-4 sm:mt-5 sm:gap-6 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-8 xl:gap-12"
+        >
           <ProductGallery
-            className="product-showcase-gallery"
             images={galleryImages}
             title={displayTitle}
             activeIndex={activeImage}
             onSelect={(index) => setViewedImage(galleryImages[index]?.url)}
+            badge={
+              discount !== null ? (
+                <span className="absolute start-3 top-3 rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-semibold text-destructive-foreground sm:start-4 sm:top-4">
+                  -{discount}%
+                </span>
+              ) : null
+            }
           />
 
-          <div data-testid="product-buy-box" className="product-buy-panel">
-            <div data-testid="product-price" className="product-price-line" aria-live="polite">
-              <bdi className="product-current-price">{priceLabel}</bdi>
-              {discount !== null && compareAt && (
-                <del className="text-sm text-muted-foreground">
-                  <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
-                </del>
+          <div
+            data-testid="product-buy-box"
+            className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border/70 bg-card p-4 sm:gap-5 sm:p-6 lg:p-7"
+          >
+            <div className="min-w-0">
+              {brand && (
+                <Link
+                  to="/brand/$slug"
+                  params={{ slug: brand.slug }}
+                  className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {brand.label}
+                </Link>
               )}
-              {discount !== null && (
-                <span className="product-price-savings">
-                  {language === "ar" ? "خصم" : "Save"} <bdi>{discount}%</bdi>
-                </span>
-              )}
+              <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
+                {displayTitle}
+              </h1>
+              <p
+                className={cn(
+                  "mt-2 inline-flex items-center gap-2 text-xs font-medium",
+                  inStock ? "text-success" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    inStock ? "bg-success" : "bg-muted-foreground",
+                  )}
+                />
+                {t(inStock ? "inStock" : "outOfStock")}
+              </p>
+            </div>
+
+            <div
+              data-testid="product-price"
+              className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-border/60 pb-4"
+              aria-live="polite"
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                  <bdi className="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
+                    {priceLabel}
+                  </bdi>
+                  {discount !== null && compareAt && (
+                    <del className="text-sm text-muted-foreground">
+                      <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
+                    </del>
+                  )}
+                  {discount !== null && (
+                    <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                      {language === "ar" ? "خصم" : "Save"} {discount}%
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <VariantPicker
@@ -599,13 +617,13 @@ function ProductDetails({ product }: { product: StoreProduct }) {
               <div
                 data-testid="product-quantity"
                 role="group"
-                className="product-quantity-stepper"
+                className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
                 aria-label={language === "ar" ? "الكمية" : "Quantity"}
               >
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 rounded-full"
+                  className="h-11 w-11 rounded-xl"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
                   disabled={busy || quantity <= 1}
                   aria-label={t("decreaseQuantity")}
@@ -621,7 +639,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 rounded-full"
+                  className="h-11 w-11 rounded-xl"
                   onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
                   disabled={busy || !inStock || quantity >= maxQuantity}
                   aria-label={t("increaseQuantity")}
@@ -631,12 +649,12 @@ function ProductDetails({ product }: { product: StoreProduct }) {
               </div>
             </div>
 
-            <div className="product-order-actions">
+            <div className="grid gap-2 sm:grid-cols-2">
               <Button
                 size="lg"
                 onClick={() => handleAddToCart()}
                 disabled={busy || !inStock}
-                className="product-order-button product-order-primary press hidden sm:inline-flex"
+                className="press hidden min-h-11 rounded-xl sm:inline-flex"
               >
                 {pending === "cart" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -650,7 +668,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
                 variant="outline"
                 onClick={() => handleAddToCart(true)}
                 disabled={busy || !inStock}
-                className="product-order-button press"
+                className="press min-h-11 rounded-xl"
               >
                 {pending === "buy" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -661,8 +679,72 @@ function ProductDetails({ product }: { product: StoreProduct }) {
               </Button>
             </div>
 
+            {highlights.length > 0 && (
+              <section
+                data-testid="product-key-features"
+                aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
+                className="min-w-0 border-t border-border/60 pt-4"
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <h2 className="text-base font-semibold tracking-tight text-foreground">
+                    {language === "ar" ? "أبرز المميزات" : "Key features"}
+                  </h2>
+                  {specGroups.length > 0 && (
+                    <a
+                      href="#product-specifications"
+                      data-testid="product-specifications-link"
+                      aria-controls="product-specifications"
+                      onClick={showSpecifications}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
+                      <ChevronDown aria-hidden className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {highlights.map((highlight) => {
+                    const HighlightIcon =
+                      FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
+                    return (
+                      <div
+                        key={highlight.key}
+                        className="min-w-0 rounded-lg border border-border/60 bg-surface/30 p-3"
+                      >
+                        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                          <HighlightIcon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                          <span className="min-w-0 break-words text-xs leading-snug">
+                            {language === "ar" ? highlight.labelAr : highlight.label}
+                          </span>
+                        </div>
+                        <strong
+                          title={highlight.value}
+                          className="block break-words text-sm font-semibold leading-snug text-foreground"
+                        >
+                          {formatProductHighlight(highlight.key, highlight.value)}
+                        </strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {highlights.length === 0 && specGroups.length > 0 && (
+              <a
+                href="#product-specifications"
+                data-testid="product-specifications-link"
+                aria-controls="product-specifications"
+                onClick={showSpecifications}
+                className="inline-flex min-h-11 items-center gap-2 self-start rounded-lg text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
+                <ChevronDown aria-hidden className="h-4 w-4" />
+              </a>
+            )}
+
             <div
-              className="product-utility-actions"
+              className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/70"
               role="group"
               aria-label={language === "ar" ? "إجراءات المنتج" : "Product actions"}
             >
@@ -672,24 +754,35 @@ function ProductDetails({ product }: { product: StoreProduct }) {
                 onClick={() => toggleWishlist(node.handle)}
                 aria-pressed={wishlisted}
                 aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
-                className="product-utility-action"
+                className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
                 <Heart
                   className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")}
                 />
-                <span>{t(wishlisted ? "saved" : "wishlistShort")}</span>
+                <span className="truncate sm:hidden">
+                  {t(wishlisted ? "saved" : "wishlistShort")}
+                </span>
+                <span className="hidden truncate sm:inline">
+                  {t(wishlisted ? "saved" : "saveWishlist")}
+                </span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleShare}
                 aria-label={t("shareProduct")}
-                className="product-utility-action"
+                className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
                 <Share2 aria-hidden className="h-4 w-4 shrink-0" />
-                <span>{t("shareShort")}</span>
+                <span className="truncate sm:hidden">{t("shareShort")}</span>
+                <span className="hidden truncate sm:inline">{t("shareProduct")}</span>
               </Button>
-              <Button asChild variant="ghost" size="sm" className="product-utility-action">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-11 min-w-0 rounded-lg px-2 text-xs text-success hover:bg-success/10 hover:text-success sm:text-sm"
+              >
                 <a
                   href={whatsappOrderUrl}
                   target="_blank"
@@ -697,55 +790,34 @@ function ProductDetails({ product }: { product: StoreProduct }) {
                   aria-label={language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
                 >
                   <MessageCircle className="h-4 w-4" />
-                  <span>{language === "ar" ? "اسألنا" : "Ask us"}</span>
+                  <span className="sm:hidden">{language === "ar" ? "اسألنا" : "Ask us"}</span>
+                  <span className="hidden sm:inline">
+                    {language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
+                  </span>
                 </a>
               </Button>
             </div>
+
+            {isPhone && (
+              <div className="-mt-2 flex justify-start">
+                <CompareButton handle={node.handle} />
+              </div>
+            )}
+
+            <ul className="grid grid-cols-2 items-start gap-x-4 gap-y-3 text-xs text-muted-foreground xl:grid-cols-3">
+              {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
+                <li key={item.title} className="flex min-w-0 items-center gap-1.5">
+                  <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="font-medium text-foreground">
+                    {language === "ar"
+                      ? ["منتجات أصلية", "توصيل سريع", "سهولة الإرجاع"][index]
+                      : item.title}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-
-        <ul
-          className="product-assurances"
-          aria-label={language === "ar" ? "خدمات المتجر" : "Store services"}
-        >
-          {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
-            <li key={item.title}>
-              <item.icon aria-hidden strokeWidth={1.65} />
-              <span>
-                {language === "ar"
-                  ? ["منتجات أصلية", "توصيل سريع", "سهولة الإرجاع"][index]
-                  : item.title}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        {highlights.length > 0 && (
-          <section className="product-feature-section" aria-labelledby="product-features-title">
-            <div className="product-section-heading">
-              <h2 id="product-features-title" className="product-section-title">
-                {language === "ar" ? "أبرز المواصفات" : "Key features"}
-              </h2>
-              {specificationsLink}
-            </div>
-            <dl data-testid="product-key-features" className="product-feature-grid">
-              {highlights.map((highlight) => {
-                const Icon = FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
-                return (
-                  <div key={highlight.key} className="product-feature">
-                    <dt>
-                      <Icon aria-hidden strokeWidth={1.65} />
-                      {language === "ar" ? highlight.labelAr : highlight.label}
-                    </dt>
-                    <dd title={highlight.value}>
-                      <bdi>{formatProductHighlight(highlight.key, highlight.value)}</bdi>
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
-          </section>
-        )}
 
         <ProductInformation
           key={node.handle}
@@ -753,7 +825,6 @@ function ProductDetails({ product }: { product: StoreProduct }) {
           specifications={specGroups}
           box={displayBox}
           shipping={content.shipping}
-          headingAction={highlights.length === 0 ? specificationsLink : undefined}
           language={language}
         />
 
@@ -762,21 +833,21 @@ function ProductDetails({ product }: { product: StoreProduct }) {
 
       <div
         data-testid="product-purchase-bar"
-        className="product-purchase-dock fixed inset-x-0 bottom-0 z-40 sm:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
       >
         <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-2.5 px-3 pt-2.5 min-[375px]:gap-4 min-[375px]:px-4 pb-[calc(.625rem+env(safe-area-inset-bottom,0px))]">
           <div className="min-w-0 shrink-0">
-            <span className="block text-xs font-medium text-muted-foreground">
+            <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
               {language === "ar" ? "السعر" : "Price"}
             </span>
-            <bdi className="block text-base font-bold tabular-nums text-foreground">
+            <bdi className="block text-sm font-semibold tabular-nums text-foreground min-[375px]:text-base">
               {priceLabel}
             </bdi>
           </div>
           <Button
             onClick={() => handleAddToCart()}
             disabled={busy || !inStock}
-            className="product-order-primary press h-11 min-w-0 flex-1 whitespace-normal rounded-full px-2 text-center text-sm font-semibold leading-tight"
+            className="press h-11 min-w-0 flex-1 whitespace-normal rounded-xl px-2 text-center text-sm font-semibold leading-tight"
           >
             {pending === "cart" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -795,7 +866,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
             data-testid="product-open-bag"
             aria-label={`${t("openBag")}, ${cartCount}`}
             onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
-            className="relative h-11 w-11 shrink-0 rounded-full"
+            className="relative h-11 w-11 shrink-0 rounded-xl"
           >
             <ShoppingBag aria-hidden className="h-4 w-4" />
             {cartCount > 0 && (
