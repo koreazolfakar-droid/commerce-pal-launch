@@ -1,23 +1,30 @@
 import { useId, useState } from "react";
-import { Check, ChevronDown, Search, X } from "lucide-react";
+import { Check, ChevronDown, Pipette, Search, X } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
-import { findProductColor, PRODUCT_COLOR_PRESETS, searchProductColors } from "@/lib/productColorPalette";
+import ProductImageColorSampler from "./ProductImageColorSampler";
+import { explicitProductColorHex, findProductColor, PRODUCT_COLOR_PRESETS, searchProductColors } from "@/lib/productColorPalette";
 
 const COMMON_COUNT = 12;
 
 export default function ProductColorPicker({
   value,
   onChange,
+  imageSources = [],
+  imageFile,
 }: {
   value: string;
   onChange: (value: string) => void;
+  imageSources?: string[];
+  imageFile?: File | null;
 }) {
   const { lang, t } = useLanguage();
   const ar = lang === "ar";
   const paletteId = useId();
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [sampling, setSampling] = useState(false);
   const selected = findProductColor(value);
+  const selectedHex = explicitProductColorHex(value) ?? selected?.hex;
   const results = searchProductColors(query);
   const searching = Boolean(query.trim());
   const visible = searching || expanded ? results : results.slice(0, COMMON_COUNT);
@@ -34,8 +41,8 @@ export default function ProductColorPicker({
           {value.trim() ? (
             <span
               aria-hidden="true"
-              className={`size-6 shrink-0 rounded-full border border-foreground/25 ${selected ? "" : "border-dashed bg-muted"}`}
-              style={selected ? { backgroundColor: selected.hex } : undefined}
+              className={`size-6 shrink-0 rounded-full border border-foreground/25 ${selectedHex ? "" : "border-dashed bg-muted"}`}
+              style={selectedHex ? { backgroundColor: selectedHex } : undefined}
             />
           ) : null}
           <span className="break-all text-xs font-medium text-foreground" dir="auto">{value.trim() || (ar ? "لم يتم تحديد لون" : "No color selected")}</span>
@@ -47,6 +54,13 @@ export default function ProductColorPicker({
           ) : null}
         </div>
       </div>
+      <button type="button" aria-expanded={sampling} onClick={() => setSampling(current => !current)}
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary">
+        <Pipette aria-hidden="true" className="size-4" />
+        {ar ? "نسخ لون من صورة المنتج" : "Pick color from product image"}
+      </button>
+      {sampling ? <ProductImageColorSampler imageSources={imageSources} imageFile={imageFile}
+        onApply={(color) => { onChange(color); setSampling(false); }} onCancel={() => setSampling(false)} /> : null}
       <label className="relative block">
         <Search aria-hidden="true" className="pointer-events-none absolute start-3 top-3.5 size-4 text-muted-foreground" />
         <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
