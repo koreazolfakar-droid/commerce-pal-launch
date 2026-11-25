@@ -57,6 +57,7 @@ const tables = {
       is_active: true,
       sort_order: i,
       sku: variant.sku,
+      image_url: variant.image?.url,
     })),
   ),
   store_product_images: products.flatMap(({ node }) =>
@@ -64,6 +65,7 @@ const tables = {
       id: `${node.id}-image-${i}`,
       product_id: node.id,
       url: picture.url,
+      thumbnail_url: picture.thumbnailUrl ?? null,
       alt_text: picture.altText,
       sort_order: i,
       is_primary: i === 0,
@@ -108,8 +110,12 @@ export function fixtureResponse(input, init = {}) {
     });
   if (!url.pathname.startsWith("/rest/v1/")) return null;
   if (!["GET", "HEAD"].includes(method)) return json({ error: "Read-only visual fixture" }, 403);
-  let rows = [...(tables[url.pathname.split("/").at(-1)] || [])];
+  const table = url.pathname.split("/").at(-1);
+  const detail = table === "store_products" &&
+    url.searchParams.get("select")?.includes("variants:store_product_variants(");
+  let rows = [...(tables[table] || [])];
   for (const [key, value] of url.searchParams) {
+    if (detail && key.includes(".")) continue;
     if (value.startsWith("eq.")) rows = rows.filter((r) => String(r[key]) === value.slice(3));
     if (value.startsWith("in.(")) {
       const values = value
@@ -123,6 +129,22 @@ export function fixtureResponse(input, init = {}) {
     offset = Number(url.searchParams.get("offset") || 0),
     limit = Number(url.searchParams.get("limit") || rows.length);
   rows = rows.slice(offset, offset + limit);
+  if (detail) {
+    rows = rows.map((row) => ({
+      ...row,
+      variants: tables.store_product_variants.filter((v) => v.product_id === row.id && v.is_active),
+      images: tables.store_product_images.filter((i) => i.product_id === row.id),
+      links: tables.store_collection_products
+        .filter((link) => link.product_id === row.id)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .flatMap((link) => {
+          const collection = collections.find((c) => c.id === link.collection_id && c.is_active);
+          return collection ? [{ collection }] : [];
+        }),
+      brand: brands.find((brand) => brand.id === row.brand_id && brand.is_visible) ?? null,
+      category: categories.find((category) => category.id === row.category_id) ?? null,
+    }));
+  }
   headers["content-range"] = rows.length
     ? `${offset}-${offset + rows.length - 1}/${total}`
     : `*/${total}`;

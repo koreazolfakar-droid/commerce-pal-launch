@@ -48,6 +48,6 @@ test("public storefront refuses Supabase runtime drift and degrades category tem
 
   assert.match(nativeStore, /isMissingCategorySpecTemplate/);
   assert.match(nativeStore, /categoryRowsOrEmpty/);
-  assert.match(nativeStore, /categoryRowOrUndefined/);
+  assert.match(nativeStore, /if \(isMissingCategorySpecTemplate\(result\.error\)\) \{\s*result = await readProduct\("id,name,slug,is_active"\)/);
   assert.match(nativeStore, /continuing without category templates/);
 });

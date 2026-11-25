@@ -10,6 +10,7 @@ const compiled = ts.transpileModule(helperSource, {
 const { buildProductSuggestions, buildProductHighlights } =
   await import(`data:text/javascript,${encodeURIComponent(compiled)}`);
 const route = await readFile(new URL("../src/routes/product.$handle.tsx", import.meta.url), "utf8");
+const suggestions = await readFile(new URL("../src/components/product/ProductSuggestions.tsx", import.meta.url), "utf8");
 const product = (handle, id, vendor = "ACEFAST") => ({ node: { id, handle, vendor } });
 
 test("recommendations never repeat the current item or a handle / ID across sections", () => {
@@ -60,7 +61,7 @@ test("highlights never invent unlisted specifications and de-duplicate title fac
 });
 
 test("product page uses unique suggestions and no generic catalogue SEO filler", () => {
-  assert.match(route, /buildProductSuggestions/);
+  assert.match(suggestions, /buildProductSuggestions/);
   assert.match(route, /buildProductHighlights/);
   assert.doesNotMatch(route, /needsSeoOverview/);
   assert.doesNotMatch(route, /<OfficialProductResearch/);

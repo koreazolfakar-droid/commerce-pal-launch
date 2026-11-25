@@ -7,6 +7,8 @@ test("product has title and price, adds to cart and shows same-brand products", 
   await addFixtureProduct(page);
   await expect(page.getByText("$499.00", { exact: true }).first()).toBeVisible();
   const related = page.getByRole("region", { name: "More from Samsung" });
+  await page.getByTestId("product-information").scrollIntoViewIfNeeded();
+  await page.locator("#main-content").press("End");
   await expect(related).toBeVisible();
   await expect(related.locator('a[href="/product/fixture-phone-1"]')).toHaveCount(0);
   await expect(await openCart(page)).toContainText("256GB");

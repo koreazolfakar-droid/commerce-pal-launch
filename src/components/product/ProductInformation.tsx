@@ -71,22 +71,22 @@ export function ProductInformation({
   return (
     <section
       data-testid="product-information"
-      className="mt-8 min-w-0 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
+      className="mt-8 min-w-0 sm:mt-12"
       aria-label={ar ? "معلومات المنتج" : "Product details"}
     >
-      <h2 className="mb-3 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+      <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
         {ar ? "معلومات المنتج" : "Product information"}
       </h2>
-      <div className="divide-y divide-border/60">
+      <div className="divide-y divide-border/60 rounded-2xl border border-border/70 bg-card px-4 sm:px-6">
         {sections.map((section, index) => (
           <details
             key={section.key}
             id={section.key === "specifications" ? "product-specifications" : undefined}
             data-product-detail={section.key}
             open={index === 0 && section.key !== "delivery"}
-            className="group min-w-0 scroll-mt-4"
+            className="group min-w-0 scroll-mt-24"
           >
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-foreground outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-lg py-4 text-base font-semibold text-foreground outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
               <span>{section.label}</span>
               <ChevronDown
                 aria-hidden

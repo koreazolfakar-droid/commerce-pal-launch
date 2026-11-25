@@ -1,13 +1,50 @@
 import { useLanguage } from "@/lib/i18n";
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useRef, useState, type ImgHTMLAttributes, type TouchEvent } from "react";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 
-import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { productImageSource } from "@/lib/image";
 import { cn } from "@/lib/utils";
 
 export interface GalleryImage {
   url: string;
+  thumbnailUrl?: string;
   altText: string | null;
+}
+
+function GalleryMedia({
+  url,
+  fallbackUrl,
+  placeholder,
+  ...props
+}: Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "onError"> & {
+  url?: string;
+  fallbackUrl?: string;
+  placeholder?: string;
+}) {
+  const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const source = productImageSource(url, fallbackUrl, failedUrls);
+  const markFailed = () => {
+    if (source)
+      setFailedUrls((current) => (current.includes(source) ? current : [...current, source]));
+  };
+
+  return source ? (
+    <img
+      {...props}
+      key={source}
+      src={source}
+      draggable={false}
+      decoding="async"
+      ref={(element) => {
+        if (element?.complete && element.naturalWidth === 0) markFailed();
+      }}
+      onError={markFailed}
+    />
+  ) : placeholder ? (
+    <span className="grid h-full min-h-32 place-items-center px-4 text-center text-sm text-muted-foreground">
+      {placeholder}
+    </span>
+  ) : null;
 }
 
 /**
@@ -31,9 +68,11 @@ export function ProductGallery({
   badge?: React.ReactNode;
   compact?: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, direction } = useLanguage();
   const [zoomed, setZoomed] = useState(false);
-  const touchStartX = useRef<number | null>(null);
+  const zoomDialog = useRef<HTMLDialogElement>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const nextDirection = direction === "rtl" ? -1 : 1;
   const index = images.length > 0 ? Math.min(activeIndex, images.length - 1) : 0;
   const image = images[index];
 
@@ -43,30 +82,19 @@ export function ProductGallery({
   };
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = event.touches[0]?.clientX ?? null;
+    const touch = event.touches[0];
+    touchStart.current = event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY } : null;
   };
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-    const start = touchStartX.current;
-    const end = event.changedTouches[0]?.clientX;
-    touchStartX.current = null;
-    if (start == null || end == null || images.length < 2) return;
-    const distance = start - end;
-    if (Math.abs(distance) < 48) return;
-    step(distance > 0 ? 1 : -1);
+    const start = touchStart.current;
+    const end = event.changedTouches[0];
+    touchStart.current = null;
+    if (!start || !end || images.length < 2) return;
+    const distance = start.x - end.clientX;
+    if (Math.abs(distance) < 48 || Math.abs(distance) <= Math.abs(start.y - end.clientY)) return;
+    step(Math.sign(distance) * nextDirection);
   };
-
-  useEffect(() => {
-    if (!zoomed) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setZoomed(false);
-      if (event.key === "ArrowRight") step(1);
-      if (event.key === "ArrowLeft") step(-1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoomed, index, images.length]);
 
   return (
     <div
@@ -78,37 +106,32 @@ export function ProductGallery({
     >
       <div
         className={cn(
-          "group relative aspect-[1/0.82] touch-pan-y overflow-hidden rounded-xl bg-image-stage/60 sm:aspect-square sm:rounded-2xl sm:bg-image-stage lg:order-2",
-          !compact && "max-sm:aspect-[4/3]",
+          "relative aspect-[1/0.82] touch-pan-y overflow-hidden rounded-xl bg-image-stage sm:aspect-square sm:rounded-2xl lg:order-2",
+          !compact && "border border-border/70 max-sm:aspect-[4/3]",
         )}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          touchStart.current = null;
+        }}
       >
-        {image ? (
-          <img
-            src={cdnImage(image.url, 900)}
-            srcSet={cdnSrcSet(image.url, 900)}
-            sizes="(min-width: 1024px) 560px, 92vw"
-            alt={image.altText ?? title}
-            fetchPriority="high"
-            decoding="async"
-            width={900}
-            height={900}
-            draggable={false}
-            className="h-full w-full select-none object-contain p-2 transition-transform duration-300 sm:p-4 lg:p-7"
-          />
-        ) : (
-          <div className="grid h-full place-items-center px-4 text-center text-sm text-muted-foreground">
-            {t("galleryEmpty")}
-          </div>
-        )}
+        <GalleryMedia
+          url={image?.url}
+          fallbackUrl={image?.thumbnailUrl}
+          placeholder={t("galleryEmpty")}
+          alt={image?.altText || title}
+          fetchPriority={compact ? "auto" : "high"}
+          width={900}
+          height={900}
+          className="h-full w-full select-none object-contain p-2 transition-transform duration-300 sm:p-4 lg:p-7"
+        />
 
         {badge}
 
         {images.length > 1 && !compact && (
           <div
             data-testid="product-gallery-counter"
-            className="pointer-events-none absolute right-3 top-3 rounded-lg border border-border/50 bg-background/88 px-2 py-1 text-[11px] font-semibold tabular-nums text-foreground shadow-sm backdrop-blur sm:right-4 sm:top-4"
+            className="pointer-events-none absolute end-3 top-3 rounded-lg border border-border/50 bg-background/88 px-2 py-1 text-[11px] font-semibold tabular-nums text-foreground shadow-sm backdrop-blur sm:end-4 sm:top-4"
             dir="ltr"
           >
             {index + 1} / {images.length}
@@ -118,9 +141,12 @@ export function ProductGallery({
         {image && !compact && (
           <button
             type="button"
-            onClick={() => setZoomed(true)}
+            onClick={() => {
+              zoomDialog.current?.showModal();
+              setZoomed(true);
+            }}
             aria-label={t("galleryZoom")}
-            className="press absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:bottom-4 sm:right-4 sm:h-11 sm:w-11"
+            className="press absolute bottom-3 end-3 grid h-11 w-11 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:bottom-4 sm:end-4"
           >
             <Expand className="h-4 w-4" />
           </button>
@@ -132,17 +158,17 @@ export function ProductGallery({
               type="button"
               onClick={() => step(-1)}
               aria-label={t("galleryPrevious")}
-              className="press absolute left-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:grid"
+              className="press absolute start-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:grid"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft aria-hidden className="h-4 w-4 rtl:rotate-180" />
             </button>
             <button
               type="button"
               onClick={() => step(1)}
               aria-label={t("galleryNext")}
-              className="press absolute right-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:grid"
+              className="press absolute end-3 top-1/2 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:grid"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
             </button>
           </>
         )}
@@ -175,14 +201,14 @@ export function ProductGallery({
                   : "border-border/60 opacity-70 hover:border-primary/40 hover:opacity-100",
               )}
             >
-              <img
-                src={cdnImage(thumb.url, 160)}
+              <GalleryMedia
+                url={thumb.thumbnailUrl ?? thumb.url}
+                fallbackUrl={thumb.url}
                 alt=""
                 loading="lazy"
-                decoding="async"
+                fetchPriority="low"
                 width={80}
                 height={80}
-                draggable={false}
                 className="h-full w-full select-none object-contain p-1"
               />
             </button>
@@ -190,47 +216,67 @@ export function ProductGallery({
         </div>
       )}
 
-      {zoomed && image && (
-        <div
-          role="dialog"
-          aria-modal="true"
+      {!compact && image && (
+        <dialog
+          ref={zoomDialog}
           aria-label={`${title} — ${t("galleryEnlarged")}`}
-          className="fixed inset-0 z-50 grid place-items-center bg-foreground/80 p-4 backdrop-blur-sm"
-          onClick={() => setZoomed(false)}
+          className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-4xl overflow-auto rounded-xl border border-border bg-image-stage p-0 shadow-float backdrop:bg-black/75"
+          onClose={() => setZoomed(false)}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowRight") step(nextDirection);
+            if (event.key === "ArrowLeft") step(-nextDirection);
+          }}
         >
-          <div
-            className="relative max-h-full w-full max-w-4xl overflow-hidden rounded-lg border bg-image-stage shadow-float"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <img
-              src={cdnImage(image.url, 1400)}
-              alt={image.altText ?? title}
-              draggable={false}
-              className="mx-auto max-h-[84vh] w-full select-none object-contain p-4 sm:p-6"
-            />
+          <div className="relative">
             <button
               type="button"
-              onClick={() => setZoomed(false)}
+              onClick={() => zoomDialog.current?.close()}
               aria-label={t("galleryClose")}
-              className="press absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-full border border-border bg-card text-foreground shadow-card transition-colors hover:border-primary/40 sm:right-4 sm:top-4"
+              className="press absolute end-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:border-primary/40"
             >
-              <X className="h-4 w-4" />
+              <X aria-hidden className="h-4 w-4" />
             </button>
+            {zoomed && (
+              <GalleryMedia
+                url={image.url}
+                fallbackUrl={image.thumbnailUrl}
+                placeholder={t("galleryEmpty")}
+                alt={image.altText || title}
+                className="mx-auto max-h-[calc(100dvh-2rem)] w-full select-none object-contain p-4 sm:p-6"
+              />
+            )}
             {images.length > 1 && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center gap-1.5">
-                {images.map((dot, dotIndex) => (
-                  <span
-                    key={`${dot.url}-dot-${dotIndex}`}
-                    className={cn(
-                      "h-1.5 rounded-full transition-all",
-                      dotIndex === index ? "w-6 bg-primary" : "w-1.5 bg-border",
-                    )}
-                  />
-                ))}
+              <div className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  aria-label={t("galleryPrevious")}
+                  className="press grid h-11 w-11 place-items-center rounded-xl border border-border bg-card text-foreground"
+                >
+                  <ChevronLeft aria-hidden className="h-4 w-4 rtl:rotate-180" />
+                </button>
+                <span
+                  dir="ltr"
+                  aria-live="polite"
+                  className="rounded-lg bg-card px-3 py-2 text-xs tabular-nums text-foreground"
+                >
+                  {index + 1} / {images.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  aria-label={t("galleryNext")}
+                  className="press grid h-11 w-11 place-items-center rounded-xl border border-border bg-card text-foreground"
+                >
+                  <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
+                </button>
               </div>
             )}
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );
