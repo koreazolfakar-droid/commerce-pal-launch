@@ -37,12 +37,12 @@ export default function ProductSuggestions({
     <>
       {similar.length > 0 && (
         <section
-          className="mt-8 border-t border-border pt-6 sm:mt-14 sm:pt-8"
+          className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
           aria-labelledby="similar-products"
         >
           <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 sm:mb-5">
             <div className="min-w-0">
-              <h2 id="similar-products" className="product-section-title">
+              <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
                 {language === "ar" ? "منتجات قد تعجبك" : "You may also like"}
               </h2>
             </div>
@@ -73,11 +73,11 @@ export default function ProductSuggestions({
 
       {sameVendor.length > 0 && (
         <section
-          className="mt-8 border-t border-border pt-6 sm:mt-14 sm:pt-8"
+          className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
           aria-labelledby="more-from-brand"
         >
-          <div className="product-section-heading mb-4 sm:mb-5">
-            <h2 id="more-from-brand" className="product-section-title min-w-0">
+          <div className="home-section-header">
+            <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
               {t("moreFromBrand")} {brand?.label}
             </h2>
             {brand && (

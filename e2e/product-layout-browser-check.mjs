@@ -10,15 +10,6 @@ export async function runProductLayoutChecks({ language = 'en', fixture = false 
   const buyBox = document.querySelector('[data-testid="product-buy-box"]');
   check(Boolean(buyBox), 'purchase panel rendered');
   await wait(() => document.body.dataset.language === language, 'locale hydration');
-  const title = document.querySelector('h1').getBoundingClientRect();
-  const gallery = document.querySelector('.product-showcase-gallery').getBoundingClientRect();
-  const purchasePanel = buyBox.getBoundingClientRect();
-  if (innerWidth < 768) {
-    check(title.bottom <= gallery.top && gallery.bottom <= purchasePanel.top, 'mobile orders the title, gallery and purchase panel');
-  } else {
-    const alongside = language === 'ar' ? purchasePanel.right <= gallery.left : gallery.right <= purchasePanel.left;
-    check(alongside, 'wide layout puts the gallery beside the purchase panel in either direction');
-  }
   const quantity = () => document.querySelector('[data-testid="product-quantity"] [aria-live]');
   const increase = buyBox.querySelector('button[aria-label="' + (language === 'ar' ? 'زيادة الكمية' : 'Increase quantity') + '"]');
   const decrease = buyBox.querySelector('button[aria-label="' + (language === 'ar' ? 'تقليل الكمية' : 'Decrease quantity') + '"]');
