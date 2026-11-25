@@ -33,7 +33,7 @@ jobs:
       - name: Reproducible dependencies
         run: bun install --frozen-lockfile
       - name: Migration safety regression
-        run: node --test e2e/cloudflare-workers-migration.test.mjs
+        run: node --test e2e/cloudflare-workers-migration.test.mjs e2e/dashboard-analytics-release.test.mjs
       - name: TypeScript and security gate
         run: |
           bun run typecheck

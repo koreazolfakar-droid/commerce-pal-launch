@@ -23,6 +23,14 @@ const product = {
 await context.route("**/rest/v1/rpc/get_dashboard_analytics_snapshot", async (route) => {
   const args = route.request().postDataJSON();
   requests.push(args);
+  if (mode === "schema")
+    return route.fulfill({
+      status: 404,
+      json: {
+        code: "PGRST202",
+        message: "Could not find the function public.get_dashboard_analytics_snapshot",
+      },
+    });
   if (mode === "error")
     return route.fulfill({ status: 500, json: { message: "Analytics temporarily unavailable" } });
   const days = Math.ceil((Date.parse(args.p_end) - Date.parse(args.p_start)) / 86400000);
@@ -246,6 +254,28 @@ try {
     await page.locator(".analytics-alert-row").count(),
     1,
     "inventory loads independently",
+  );
+  mode = "schema";
+  await page.getByRole("button", { name: "Retry", exact: true }).click();
+  await page
+    .getByText("Analytics is being updated. Please try again shortly.", { exact: true })
+    .waitFor();
+  assert.equal(
+    await page.locator(".analytics-alert-row").count(),
+    1,
+    "schema failure must not hide inventory",
+  );
+  assert.equal(
+    await page.getByRole("button", { name: "Export report", exact: true }).isDisabled(),
+    true,
+  );
+  assert.equal(
+    await page
+      .getByText("Could not find the function public.get_dashboard_analytics_snapshot", {
+        exact: true,
+      })
+      .count(),
+    0,
   );
   mode = "normal";
   await page.getByRole("button", { name: "Retry", exact: true }).click();

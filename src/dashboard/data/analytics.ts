@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { looseSupabase } from "@/integrations/supabase/looseClient";
+import { analyticsErrorMessage } from "@/dashboard/lib/analyticsErrors";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import type { AnalyticsRange } from "@/dashboard/lib/analytics";
 
@@ -104,7 +105,7 @@ async function read<T>(
 ) {
   if (!(await getDashboardRole())) throw new Error("Dashboard authentication is required.");
   const { data, error } = await looseSupabase.rpc(name, args).abortSignal(signal);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(analyticsErrorMessage(error));
   const result = schema.safeParse(data);
   if (!result.success)
     throw new Error("Analytics returned an invalid response. Refresh and try again.");
