@@ -50,7 +50,7 @@ test("sampler uses local file fallback, cleans object URLs, and requires confirm
 
 test("create and edit variant pickers use actual product images and storefront renders exact HEX", () => {
   assert.match(form, /imageSources=\{\[\.\.\.pendingImages\.map/);
-  assert.match(variants, /imageSources=\{\[draft\.imageUrl\]\}/);
+  assert.match(variants, /imageSources=\{\[draft\.imageUrl, \.\.\.productImageSources\]\}/);
   assert.match(variants, /imageFile=\{pendingImageFile\}/);
   assert.match(picker, /explicitProductColorHex\(value\) \?\? selected\?\.hex/);
   assert.match(storefront, /const sampled = explicitProductColorHex\(value\);\s*if \(sampled\) return sampled;/);
