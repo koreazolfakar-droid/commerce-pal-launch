@@ -12,6 +12,7 @@ export const products = Array.from({ length: 9 }, (_, i) => {
     primary.thumbnailUrl = primary.url;
     primary.url = "/logo.svg?fixture-gallery-full=1";
   }
+  const battery = [undefined, 5000, 5000, 3000][i];
   const compareAtPrice = i < 2 ? { amount: String(599 + i * 50), currencyCode: "USD" } : null;
   return {
     node: {
@@ -37,7 +38,9 @@ export const products = Array.from({ length: 9 }, (_, i) => {
         "Local test product for catalog verification." +
         (i === 0
           ? "\nSpecifications\nStorage: 128GB\nDisplay: 6.72-inch FHD+ LCD with 120Hz refresh rate\nProcessor: Qualcomm Snapdragon 695 5G\nMain camera: 108MP main camera with additional depth and macro sensors\nBattery capacity: 5000mAh"
-          : ""),
+          : battery
+            ? `\nSpecifications\nBattery capacity: ${battery}mAh`
+            : ""),
       descriptionHtml:
         "<p>Local test product for catalog verification.</p>" +
         (i === 0

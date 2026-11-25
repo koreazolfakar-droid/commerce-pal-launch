@@ -43,7 +43,13 @@ export default function ProductSuggestions({
           <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 sm:mb-5">
             <div className="min-w-0">
               <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
-                {language === "ar" ? "منتجات قد تعجبك" : "You may also like"}
+                {sameVendor.length
+                  ? language === "ar"
+                    ? "منتجات قد تعجبك"
+                    : "You may also like"
+                  : language === "ar"
+                    ? "بدائل من الفئة نفسها"
+                    : "Alternatives in this category"}
               </h2>
             </div>
             <div className="flex shrink-0 items-center gap-3">

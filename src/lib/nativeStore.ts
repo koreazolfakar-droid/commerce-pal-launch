@@ -1509,28 +1509,16 @@ export async function fetchProductsByHandles(handles: string[]) {
 }
 
 export async function fetchProductRecommendations(handle: string, first = 8) {
-  const snapshot = await loadSnapshot();
-  const current = snapshot.products.find((entry) => entry.product.node.handle === handle);
-  if (!current) return [];
+  const normalizedHandle = handle.trim().toLowerCase();
+  if (!normalizedHandle || first <= 0) return [];
 
-  const vendor = current.product.node.vendor?.toLowerCase();
-  const type = current.product.node.productType?.toLowerCase();
-  return snapshot.products
-    .filter((entry) => entry.product.node.handle !== handle)
-    .map((entry) => ({
-      product: entry.product,
-      score:
-        (type && entry.product.node.productType?.toLowerCase() === type ? 2 : 0) +
-        (vendor && entry.product.node.vendor?.toLowerCase() === vendor ? 1 : 0),
-    }))
-    .filter((entry) => entry.score > 0)
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        a.product.node.title.localeCompare(b.product.node.title, "en", { numeric: true }),
-    )
-    .slice(0, first)
-    .map((entry) => entry.product);
+  const [snapshot, { rankProductRecommendations }] = await Promise.all([
+    loadSnapshot(),
+    import("@/lib/productRecommendations"),
+  ]);
+  const products = publicProducts(snapshot);
+  const current = products.find((product) => product.node.handle === normalizedHandle);
+  return current ? rankProductRecommendations(current, products, first) : [];
 }
 
 export async function searchStorefront(term: string) {
