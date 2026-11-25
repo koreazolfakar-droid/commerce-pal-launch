@@ -708,16 +708,18 @@
     bottom: var(--floating-offset);
     max-height: min(42.5rem, calc(100dvh - var(--floating-offset) - 1rem));
   }
-  .store-layout[data-product-page="true"] {
-    --floating-offset: calc(11rem + env(safe-area-inset-bottom, 0px));
+  @media (width < 40rem) {
+    .store-layout[data-product-purchase-bar="true"] {
+      --floating-offset: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    }
+    .store-layout[data-product-purchase-bar="true"] [data-testid="bottom-nav"] {
+      display: none;
+    }
   }
 
   @media (min-width: 640px) {
     .hero-campaign-slide {
       padding: 2rem;
-    }
-    .store-layout[data-product-page="true"] {
-      --floating-offset: calc(var(--mobile-nav-height) + 0.75rem);
     }
   }
   @media (min-width: 768px) {
@@ -734,8 +736,7 @@
     }
   }
   @media (min-width: 1024px) {
-    .store-layout,
-    .store-layout[data-product-page="true"] {
+    .store-layout {
       --floating-offset: 1.5rem;
       padding-bottom: 0;
     }

@@ -1,9 +1,8 @@
-import { ProductRail } from "@/components/ProductRail";
 import { useLanguage } from "@/lib/i18n";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import {
   ChevronRight,
   ChevronDown,
@@ -31,27 +30,18 @@ import { toast } from "sonner";
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInformation } from "@/components/product/ProductInformation";
-import "@/components/product/product-page.css";
 import { VariantPicker } from "@/components/product/VariantPicker";
-import { ProductGrid } from "@/components/ProductGrid";
-import { ProductViewToggle } from "@/components/ProductViewToggle";
-import { useProductViewMode } from "@/hooks/useProductViewMode";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
 import { productOptionKind } from "@/lib/productOptionDisplay";
-import {
-  buildProductHighlights,
-  buildProductSuggestions,
-  formatProductHighlight,
-} from "@/lib/productPresentation";
+import { buildProductHighlights, formatProductHighlight } from "@/lib/productPresentation";
 import {
   buildDisplayOverview,
   buildDisplaySpecificationGroups,
   inferredBoxContents,
   reconcileVariantSpecifications,
 } from "@/lib/productDetailDisplay";
-import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
 import { subscribeStorefrontRefresh } from "@/lib/nativeStore";
@@ -79,7 +69,7 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 export const Route = createFileRoute("/product/$handle")({
   loader: async ({ params }) => {
     const product = await fetchProductByHandle(params.handle);
-    if (!product) throw notFound();
+    if (!product) throw notFound({ routeId: Route.id });
     return { product };
   },
   head: ({ params, loaderData }) => {
@@ -128,6 +118,8 @@ export const Route = createFileRoute("/product/$handle")({
   },
   component: ProductPage,
   pendingComponent: ProductPending,
+  notFoundComponent: ProductUnavailable,
+  errorComponent: ProductLoadError,
   pendingMs: 200,
   pendingMinMs: 0,
 });
@@ -137,7 +129,7 @@ function ProductPending() {
   return (
     <StoreLayout>
       <div
-        className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-4 sm:px-5 lg:grid-cols-2 lg:gap-12 lg:px-6 lg:py-10"
+        className="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-6 pt-12 sm:px-5 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-8 lg:px-8 xl:gap-12"
         role="status"
         aria-live="polite"
       >
@@ -145,10 +137,13 @@ function ProductPending() {
           {language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}
         </span>
         <div
-          className="shimmer aspect-[4/3] rounded-xl bg-surface sm:aspect-square"
+          className="shimmer aspect-[4/3] self-start rounded-2xl bg-surface sm:aspect-square"
           aria-hidden="true"
         />
-        <div className="space-y-4" aria-hidden="true">
+        <div
+          className="space-y-4 rounded-2xl border border-border/70 bg-card p-4 sm:p-6"
+          aria-hidden="true"
+        >
           <div className="shimmer h-3 w-20 rounded bg-surface" />
           <div className="shimmer h-7 w-4/5 rounded bg-surface" />
           <div className="shimmer h-5 w-2/3 rounded bg-surface" />
@@ -175,7 +170,94 @@ const FEATURE_ICONS = {
   color: Palette,
 } as const;
 
+function ProductUnavailable() {
+  return <ProductStatus />;
+}
+
+function ProductLoadError() {
+  const router = useRouter();
+  return <ProductStatus onRetry={() => void router.invalidate()} />;
+}
+
+function ProductStatus({ onRetry }: { onRetry?: () => void }) {
+  const { t, language } = useLanguage();
+  const ar = language === "ar";
+  const title = onRetry
+    ? ar
+      ? "تعذّر تحميل المنتج"
+      : "Unable to load this product"
+    : ar
+      ? "هذا المنتج غير متاح"
+      : "This product is unavailable";
+
+  return (
+    <StoreLayout>
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-5 px-4 py-16 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <div className="flex flex-wrap justify-center gap-3">
+          {onRetry && <Button onClick={onRetry}>{ar ? "حاول مجددًا" : "Try again"}</Button>}
+          <Button asChild variant={onRetry ? "outline" : "default"}>
+            <Link to="/shop">{t("shop")}</Link>
+          </Button>
+        </div>
+      </div>
+    </StoreLayout>
+  );
+}
+
+// Suggestions can fail independently of the purchase experience.
+const LazyProductSuggestions = lazy(() =>
+  import("@/components/product/ProductSuggestions").catch(() => ({ default: () => null })),
+);
+
+function DeferredProductSuggestions(props: {
+  product: StoreProduct;
+  brand: ReturnType<typeof resolveBrand>;
+  category: ReturnType<typeof primaryCategory>;
+}) {
+  const marker = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(false);
+
+  useEffect(() => {
+    const element = marker.current;
+    if (!element) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setNearViewport(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setNearViewport(true);
+        observer.disconnect();
+      },
+      { rootMargin: "0px 0px 480px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={marker} className="min-h-px">
+      {nearViewport && (
+        <Suspense fallback={null}>
+          <LazyProductSuggestions {...props} />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
 function ProductPage() {
+  const { product } = Route.useLoaderData();
+  return (
+    <StoreLayout productPurchaseBar>
+      <ProductDetails key={product.node.handle} product={product} />
+    </StoreLayout>
+  );
+}
+
+function ProductDetails({ product }: { product: StoreProduct }) {
   const { t, language } = useLanguage();
   const router = useRouter();
   const { data: cms } = useQuery(cmsQueryOptions());
@@ -185,7 +267,6 @@ function ProductPage() {
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const whatsappNumber =
     typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
-  const { product } = Route.useLoaderData() as { product: StoreProduct };
   const node = product.node;
   const displayTitle = language === "ar" && node.titleAr?.trim() ? node.titleAr : node.title;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
@@ -207,8 +288,7 @@ function ProductPage() {
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
     () => productPrimaryVariant(product)?.id,
   );
-  const [activeImage, setActiveImage] = useState(0);
-  const [recommendationViewMode, setRecommendationViewMode] = useProductViewMode();
+  const [viewedImage, setViewedImage] = useState<string>();
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState<"cart" | "buy" | null>(null);
 
@@ -219,6 +299,11 @@ function ProductPage() {
     [variants, selectedVariantId, product],
   );
   const selectedOptions = useMemo(() => optionsForVariant(selectedVariant), [selectedVariant]);
+  const preferredImage = viewedImage ?? selectedVariant?.image?.url;
+  const activeImage = Math.max(
+    0,
+    galleryImages.findIndex((image) => image.url === preferredImage),
+  );
 
   const addItem = useCartStore((state) => state.addItem);
   const cartLoading = useCartStore((state) => state.isLoading);
@@ -228,16 +313,9 @@ function ProductPage() {
   const wishlisted = useWishlistStore((state) => state.handles.includes(node.handle));
   const toggleWishlist = useWishlistToggle();
   const addRecentlyViewed = useRecentlyViewedStore((state) => state.add);
-  const { data: recommended } = useQuery(recommendationsQueryOptions(node.handle));
-  const { data: vendorProducts } = useQuery(vendorProductsQueryOptions(node.vendor ?? ""));
-
   useEffect(() => {
     addRecentlyViewed(node.handle);
-    setActiveImage(0);
-    setQuantity(1);
-    setSelectedVariantId(productPrimaryVariant(product)?.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node.handle]);
+  }, [addRecentlyViewed, node.handle]);
 
   // Dashboard edits invalidate the native cache and re-run this route's direct
   // Supabase loader, including changes made in another tab of this browser.
@@ -250,17 +328,11 @@ function ProductPage() {
     };
   }, [router]);
 
-  useEffect(() => {
-    const variantImage = selectedVariant?.image?.url;
-    if (!variantImage) return;
-    const index = galleryImages.findIndex((image) => image.url === variantImage);
-    if (index >= 0) setActiveImage(index);
-  }, [selectedVariant?.image?.url, galleryImages]);
-
   const handleOptionSelect = (name: string, value: string) => {
     const next = selectProductVariant(variants, selectedVariant, name, value);
     if (!next) return;
     setSelectedVariantId(next.id);
+    setViewedImage(undefined);
     setQuantity(1);
   };
 
@@ -296,7 +368,7 @@ function ProductPage() {
       }
       toast.success(`${displayTitle}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
-        window.location.assign("/cart");
+        await router.navigate({ to: "/cart" });
       }
     } catch {
       toast.error(t("addToCartFailed"));
@@ -305,10 +377,12 @@ function ProductPage() {
     }
   };
 
-  const compareAt =
-    selectedVariant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
-  const discount = discountPercent(selectedVariant?.price.amount, compareAt);
-  const currency = selectedVariant?.price.currencyCode ?? "USD";
+  const price = selectedVariant?.price ?? node.priceRange.minVariantPrice;
+  const priceLabel = formatPrice(price.amount, price.currencyCode);
+  const compareAt = selectedVariant
+    ? selectedVariant.compareAtPrice?.amount
+    : node.compareAtPriceRange?.minVariantPrice.amount;
+  const discount = discountPercent(price.amount, compareAt);
   const inStock = Boolean(selectedVariant?.availableForSale);
   const brand = resolveBrand(product);
   const category = primaryCategory(product);
@@ -382,11 +456,6 @@ function ProductPage() {
     language,
   ]);
 
-  const { similar, sameVendor } = useMemo(
-    () =>
-      buildProductSuggestions({ current: product, recommendations: recommended, vendorProducts }),
-    [product, recommended, vendorProducts],
-  );
   const highlights = useMemo(() => {
     const optionKeys = new Set<string>(
       (node.options ?? []).map((option) => productOptionKind(option.name)),
@@ -426,47 +495,49 @@ function ProductPage() {
   }, [maxQuantity, selectedVariant?.id]);
 
   return (
-    <StoreLayout>
-      <div className="mx-auto max-w-7xl px-4 py-4 pb-6 sm:px-5 sm:pb-16 lg:px-6 lg:py-10 lg:pb-14">
+    <>
+      <div className="mx-auto max-w-7xl px-4 py-4 pb-6 sm:px-5 sm:pb-12 lg:px-8 lg:pt-7">
         <nav
-          aria-label="Breadcrumb"
-          className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex"
+          aria-label={language === "ar" ? "مسار التنقل" : "Breadcrumb"}
+          className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground sm:text-sm"
         >
-          <Link to="/" className="transition-colors hover:text-primary">
-            Home
+          <Link to="/" className="shrink-0 transition-colors hover:text-primary">
+            {t("home")}
           </Link>
-          <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-          <Link to="/shop" className="transition-colors hover:text-primary">
-            Shop
+          <ChevronRight aria-hidden className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />
+          <Link to="/shop" className="shrink-0 transition-colors hover:text-primary">
+            {t("shop")}
           </Link>
           {category && (
             <>
-              <ChevronRight aria-hidden className="h-3.5 w-3.5" />
+              <ChevronRight aria-hidden className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />
               <Link
                 to="/category/$slug"
                 params={{ slug: category.slug }}
-                className="transition-colors hover:text-primary"
+                className="min-w-0 truncate transition-colors hover:text-primary"
               >
                 {category.label}
               </Link>
             </>
           )}
-          <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-          <span className="truncate text-foreground">{displayTitle}</span>
+          <ChevronRight aria-hidden className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />
+          <span aria-current="page" className="min-w-0 truncate text-foreground">
+            {displayTitle}
+          </span>
         </nav>
 
         <div
           data-testid="product-detail-canvas"
-          className="mt-0 grid gap-4 sm:mt-4 sm:gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,.95fr)] lg:gap-12"
+          className="mt-4 grid items-start gap-4 sm:mt-5 sm:gap-6 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-8 xl:gap-12"
         >
           <ProductGallery
             images={galleryImages}
             title={displayTitle}
             activeIndex={activeImage}
-            onSelect={setActiveImage}
+            onSelect={(index) => setViewedImage(galleryImages[index]?.url)}
             badge={
               discount !== null ? (
-                <span className="absolute left-3 top-3 rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-semibold text-destructive-foreground sm:left-4 sm:top-4">
+                <span className="absolute start-3 top-3 rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-semibold text-destructive-foreground sm:start-4 sm:top-4">
                   -{discount}%
                 </span>
               ) : null
@@ -475,14 +546,14 @@ function ProductPage() {
 
           <div
             data-testid="product-buy-box"
-            className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2"
+            className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border/70 bg-card p-4 sm:gap-5 sm:p-6 lg:p-7"
           >
             <div className="min-w-0">
               {brand && (
                 <Link
                   to="/brand/$slug"
                   params={{ slug: brand.slug }}
-                  className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
+                  className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
                 >
                   {brand.label}
                 </Link>
@@ -510,16 +581,17 @@ function ProductPage() {
             <div
               data-testid="product-price"
               className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-border/60 pb-4"
+              aria-live="polite"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                  <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground sm:text-2xl">
-                    {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
-                  </span>
+                  <bdi className="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
+                    {priceLabel}
+                  </bdi>
                   {discount !== null && compareAt && (
-                    <span className="text-sm text-muted-foreground line-through">
-                      {formatPrice(compareAt, currency)}
-                    </span>
+                    <del className="text-sm text-muted-foreground">
+                      <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
+                    </del>
                   )}
                   {discount !== null && (
                     <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
@@ -544,6 +616,7 @@ function ProductPage() {
               </span>
               <div
                 data-testid="product-quantity"
+                role="group"
                 className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
                 aria-label={language === "ar" ? "الكمية" : "Quantity"}
               >
@@ -576,12 +649,12 @@ function ProductPage() {
               </div>
             </div>
 
-            <div className="hidden gap-2 sm:flex">
+            <div className="grid gap-2 sm:grid-cols-2">
               <Button
                 size="lg"
                 onClick={() => handleAddToCart()}
                 disabled={busy || !inStock}
-                className="press flex-1 rounded-xl"
+                className="press hidden min-h-11 rounded-xl sm:inline-flex"
               >
                 {pending === "cart" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -595,7 +668,7 @@ function ProductPage() {
                 variant="outline"
                 onClick={() => handleAddToCart(true)}
                 disabled={busy || !inStock}
-                className="press rounded-xl"
+                className="press min-h-11 rounded-xl"
               >
                 {pending === "buy" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -646,7 +719,7 @@ function ProductPage() {
                         </div>
                         <strong
                           title={highlight.value}
-                          className="line-clamp-2 break-words text-sm font-semibold leading-snug text-foreground"
+                          className="block break-words text-sm font-semibold leading-snug text-foreground"
                         >
                           {formatProductHighlight(highlight.key, highlight.value)}
                         </strong>
@@ -671,7 +744,8 @@ function ProductPage() {
             )}
 
             <div
-              className="grid grid-cols-3 border-y border-border/60 py-1"
+              className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/70"
+              role="group"
               aria-label={language === "ar" ? "إجراءات المنتج" : "Product actions"}
             >
               <Button
@@ -730,12 +804,9 @@ function ProductPage() {
               </div>
             )}
 
-            <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs text-muted-foreground">
+            <ul className="grid grid-cols-2 items-start gap-x-4 gap-y-3 text-xs text-muted-foreground xl:grid-cols-3">
               {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
-                <li
-                  key={item.title}
-                  className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5"
-                >
+                <li key={item.title} className="flex min-w-0 items-center gap-1.5">
                   <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
                   <span className="font-medium text-foreground">
                     {language === "ar"
@@ -757,86 +828,26 @@ function ProductPage() {
           language={language}
         />
 
-        {similar.length > 0 && (
-          <section
-            className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
-            aria-labelledby="similar-products"
-          >
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 sm:mb-5">
-              <div className="min-w-0">
-                <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
-                  {language === "ar" ? "منتجات قد تعجبك" : "You may also like"}
-                </h2>
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {language === "ar" ? "اكتشف منتجات مشابهة" : "Discover similar products"}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                {category && (
-                  <Link
-                    to="/category/$slug"
-                    params={{ slug: category.slug }}
-                    className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                  >
-                    {t("viewAll")} <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
-                  </Link>
-                )}
-                <ProductViewToggle
-                  mode={recommendationViewMode}
-                  onChange={setRecommendationViewMode}
-                />
-              </div>
-            </div>
-            <ProductGrid
-              products={similar}
-              viewMode={recommendationViewMode}
-              onViewModeChange={setRecommendationViewMode}
-              showViewToggle={false}
-            />
-          </section>
-        )}
-
-        {sameVendor.length > 0 && (
-          <section
-            className="mt-7 border-t border-border/60 pt-6 sm:mt-12 sm:pt-8"
-            aria-labelledby="more-from-brand"
-          >
-            <div className="home-section-header">
-              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
-                {t("moreFromBrand")} {brand?.label}
-              </h2>
-              {brand && (
-                <Link
-                  to="/brand/$slug"
-                  params={{ slug: brand.slug }}
-                  className="shrink-0 text-sm font-semibold text-primary hover:underline"
-                >
-                  {t("viewAll")}
-                </Link>
-              )}
-            </div>
-            <ProductRail products={sameVendor} storageKey={`more-from-${node.vendor}`} />
-          </section>
-        )}
+        <DeferredProductSuggestions product={product} brand={brand} category={category} />
       </div>
 
       <div
         data-testid="product-purchase-bar"
         className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
       >
-        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-4 px-4 pt-2.5 pb-[calc(.625rem+env(safe-area-inset-bottom,0px))]">
+        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-2.5 px-3 pt-2.5 min-[375px]:gap-4 min-[375px]:px-4 pb-[calc(.625rem+env(safe-area-inset-bottom,0px))]">
           <div className="min-w-0 shrink-0">
             <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
               {language === "ar" ? "السعر" : "Price"}
             </span>
-            <span className="block truncate text-base font-semibold tabular-nums text-foreground">
-              {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
-            </span>
+            <bdi className="block text-sm font-semibold tabular-nums text-foreground min-[375px]:text-base">
+              {priceLabel}
+            </bdi>
           </div>
           <Button
             onClick={() => handleAddToCart()}
             disabled={busy || !inStock}
-            className="press h-11 min-w-0 flex-1 rounded-xl text-sm font-semibold"
+            className="press h-11 min-w-0 flex-1 whitespace-normal rounded-xl px-2 text-center text-sm font-semibold leading-tight"
           >
             {pending === "cart" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -869,6 +880,6 @@ function ProductPage() {
           </Button>
         </div>
       </div>
-    </StoreLayout>
+    </>
   );
 }

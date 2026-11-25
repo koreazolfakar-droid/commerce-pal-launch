@@ -138,7 +138,7 @@ test("native cart keeps local totals and native checkout", async () => {
   assert.match(store, /cartItemMaxQuantity/);
   assert.match(drawer, /\bto="\/cart"/);
   assert.doesNotMatch(drawer, /checkoutShopify|getCheckoutUrl|myshopify/);
-  assert.match(productRoute, /window\.location\.assign\("\/cart"\)/);
+  assert.match(productRoute, /router\.navigate\(\{ to: "\/cart" \}\)/);
 });
 
 test("server blocks Shopify runtime secrets and applies hardened browser headers", async () => {

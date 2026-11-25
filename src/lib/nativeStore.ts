@@ -239,20 +239,6 @@ function categoryRowsOrEmpty(
   return assertResult(result, label);
 }
 
-function categoryRowOrUndefined(
-  result: { data: StorefrontCategoryRow | null; error: PublicReadError | null },
-  label: string,
-): StorefrontCategoryRow | undefined {
-  if (isMissingCategorySpecTemplate(result.error)) {
-    console.warn(
-      `Supabase ${label} is temporarily missing spec_template; continuing without the category template.`,
-    );
-    return undefined;
-  }
-  if (result.error) throw new Error(`Supabase ${label} failed: ${result.error.message}`);
-  return result.data ?? undefined;
-}
-
 function normalizeOptionName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
@@ -1110,83 +1096,46 @@ export async function fetchProductByHandle(handle: string): Promise<StoreProduct
   const normalized = handle.trim().toLowerCase();
   if (!normalized) return null;
 
-  const productResult = await publicSupabase
-    .from("store_products")
-    .select(STOREFRONT_PRODUCT_SELECT)
-    .eq("handle", normalized)
-    .eq("status", "active")
-    .maybeSingle();
-  if (productResult.error) {
-    throw new Error(`Supabase product failed: ${productResult.error.message}`);
-  }
-  const row = productResult.data as StorefrontProductRow | null;
-  if (!row) return null;
-
-  const [variantResult, imageResult, linkResult, brandResult, categoryResult] = await Promise.all([
+  const readProduct = (
+    categoryColumns: typeof STOREFRONT_CATEGORY_SELECT | "id,name,slug,is_active",
+  ) =>
     publicSupabase
-      .from("store_product_variants")
-      .select(STOREFRONT_VARIANT_SELECT)
-      .eq("product_id", row.id)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_product_images")
-      .select(STOREFRONT_IMAGE_SELECT)
-      .eq("product_id", row.id)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .eq("product_id", row.id)
-      .order("sort_order", { ascending: true }),
-    row.brand_id
-      ? publicSupabase
-          .from("cms_brands")
-          .select(STOREFRONT_BRAND_SELECT)
-          .eq("id", row.brand_id)
-          .eq("is_visible", true)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    row.category_id
-      ? publicSupabase
-          .from("store_categories")
-          .select(STOREFRONT_CATEGORY_SELECT)
-          .eq("id", row.category_id)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+      .from("store_products")
+      .select(
+        `${STOREFRONT_PRODUCT_SELECT},
+         variants:store_product_variants(${STOREFRONT_VARIANT_SELECT}),
+         images:store_product_images(${STOREFRONT_IMAGE_SELECT}),
+         links:store_collection_products(collection:store_collections!inner(${STOREFRONT_COLLECTION_SELECT})),
+         brand:cms_brands!store_products_brand_id_fkey(${STOREFRONT_BRAND_SELECT}),
+         category:store_categories!store_products_category_id_fkey(${categoryColumns})`,
+      )
+      .eq("handle", normalized)
+      .eq("status", "active")
+      .eq("variants.is_active", true)
+      .eq("brand.is_visible", true)
+      .eq("links.collection.is_active", true)
+      .order("sort_order", { referencedTable: "variants" })
+      .order("sort_order", { referencedTable: "images" })
+      .order("sort_order", { referencedTable: "links" })
+      .maybeSingle();
 
-  const variants = assertResult(variantResult, "product variants");
-  const images = assertResult(imageResult, "product images");
-  const links = assertResult(linkResult, "product collection links");
-  if (brandResult.error) {
-    throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
+  // All relations use the public client's existing access rules. Keep the
+  // top-level product even when it has no public category, brand, or media.
+  let result = await readProduct(STOREFRONT_CATEGORY_SELECT);
+  if (isMissingCategorySpecTemplate(result.error)) {
+    result = await readProduct("id,name,slug,is_active");
   }
-  const category = categoryRowOrUndefined(categoryResult, "product category");
+  if (result.error) throw new Error(`Supabase product failed: ${result.error.message}`);
+  if (!result.data) return null;
 
-  const collectionIds = links.map((link) => link.collection_id);
-  let collections: StorefrontCollectionRow[] = [];
-  if (collectionIds.length) {
-    const collectionResult = await publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .in("id", collectionIds)
-      .eq("is_active", true);
-    collections = assertResult(collectionResult, "product collections");
-    const order = new Map(links.map((link, index) => [link.collection_id, index]));
-    collections.sort(
-      (a, b) =>
-        (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
-    );
-  }
-
+  const { variants, images, links, brand, category, ...row } = result.data;
   return buildProduct(
     row,
     variants,
     images,
-    collections,
-    (brandResult.data as StorefrontBrandRow | null) ?? undefined,
-    category,
+    links.map(({ collection }) => collection),
+    brand ?? undefined,
+    category ? { spec_template: null, ...category } : undefined,
   );
 }
 

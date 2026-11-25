@@ -7,6 +7,11 @@ const vendors = ["Samsung", "Apple", "Xiaomi", "Samsung", "POCO", "Apple", "Spig
 export const products = Array.from({ length: 9 }, (_, i) => {
   const money = { amount: String(499 + i * 50), currencyCode: "USD" };
   const images = { edges: ["Front", "Back", "Side"].map((label) => ({ node: image(label) })) };
+  if (i === 0) {
+    const primary = images.edges[0].node;
+    primary.thumbnailUrl = primary.url;
+    primary.url = "/logo.svg?fixture-gallery-full=1";
+  }
   const compareAtPrice = i < 2 ? { amount: String(599 + i * 50), currencyCode: "USD" } : null;
   return {
     node: {
