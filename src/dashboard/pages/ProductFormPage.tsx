@@ -1782,6 +1782,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
               <ProductVariantManager
                 key={variantRevision}
                 productId={id}
+                productImageSources={[form.imageUrl, existing?.image ?? ""]}
                 onCountChange={setVariantCount}
                 onSingleVariantChange={handleSingleVariantChange}
                 onBusyChange={setVariantsBusy}
