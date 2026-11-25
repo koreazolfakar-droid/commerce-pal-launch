@@ -598,6 +598,8 @@ export default function ProductVariantManager({
               <div className="sm:col-span-2">
                 <ProductColorPicker
                   value={draft.color}
+                  imageSources={[draft.imageUrl]}
+                  imageFile={pendingImageFile}
                   onChange={(value) => setDraft((current) => ({ ...current, color: value }))}
                 />
               </div>
