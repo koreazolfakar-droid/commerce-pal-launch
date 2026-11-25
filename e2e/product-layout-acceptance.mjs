@@ -66,6 +66,24 @@ try {
   await expect(page.getByTestId('product-purchase-bar')).toHaveCount(0);
   console.log('PASS gallery fallback, variant media, accessible zoom, deferred suggestions, mobile checkout, retry and unavailable product');
   await page.close();
+
+  const alternatives = await createStorefrontPage(browser, { viewport: { width: 390, height: 844 } });
+  await alternatives.addInitScript(() => localStorage.setItem('space-cell-language', 'ar'));
+  await alternatives.goto(base+'/product/fixture-phone-3');
+  await alternatives.waitForFunction(() => document.body.dataset.language === 'ar');
+  await alternatives.getByTestId('product-information').scrollIntoViewIfNeeded();
+  await alternatives.locator('#main-content').press('End');
+  const section = alternatives.getByRole('region', {name:'بدائل من الفئة نفسها'});
+  await expect(section).toBeVisible();
+  const candidates = section.locator('article a[href^="/product/"]');
+  const links = await candidates.evaluateAll(anchors => anchors.map(anchor => anchor.getAttribute('href')));
+  const handles = [...new Set(links)];
+  assert.equal(handles[0], '/product/fixture-phone-2', 'matching battery wins over an equally priced phone');
+  assert.ok(handles.includes('/product/fixture-phone-4'), 'other in-stock phones are also offered');
+  assert.deepEqual(handles.toSorted(), [1, 2, 4, 5, 6].map(id => `/product/fixture-phone-${id}`));
+  await expect(alternatives.locator('[aria-labelledby="more-from-brand"]')).toHaveCount(0);
+  console.log('PASS category alternatives in Arabic, with comparable price and specifications');
+  await alternatives.close();
  }
  writeFileSync(`${output}/results.json`,JSON.stringify(reports,null,2)+'\n');
 }finally{await browser.close();}
