@@ -1760,6 +1760,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   </div>
                   <ProductColorPicker
                     value={newVariantColor}
+                    imageSources={[...pendingImages.map((image) => image.preview), form.imageUrl]}
                     onChange={(value) => {
                       setSaved(false);
                       setNewVariantColor(value);
