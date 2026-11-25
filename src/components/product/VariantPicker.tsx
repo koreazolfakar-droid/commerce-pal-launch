@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { explicitProductColorHex, findProductColor } from "@/lib/productColorPalette";
 import { useLanguage } from "@/lib/i18n";
 import { productOptionLabel, productOptionValue } from "@/lib/productOptionDisplay";
 
@@ -103,6 +104,10 @@ const ARABIC_COLORS: Record<string, string> = {
 };
 
 function swatchColor(value: string) {
+  const sampled = explicitProductColorHex(value);
+  if (sampled) return sampled;
+  const preset = findProductColor(value);
+  if (preset) return preset.hex;
   const arabic = Object.entries(ARABIC_COLORS).find(([name]) => value.includes(name));
   if (arabic) return arabic[1];
   const normalized = value.toLowerCase().replace(/[^a-z]/g, "");

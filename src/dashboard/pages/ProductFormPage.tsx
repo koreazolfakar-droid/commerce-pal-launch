@@ -698,18 +698,22 @@ export default function ProductFormPage({ id }: { id?: string }) {
       }));
     }
     requestAnimationFrame(() => {
-      target?.scrollIntoView({
-        block: "start",
+      const field = issue.fieldKey
+        ? target?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+            `[data-product-field="${issue.fieldKey}"]`,
+          )
+        : null;
+      // A translated field may be nested inside a collapsed disclosure.
+      for (let ancestor = field?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        if (ancestor instanceof HTMLDetailsElement) ancestor.open = true;
+        if (ancestor === target) break;
+      }
+      const destination = field && !field.disabled ? field : target;
+      destination?.scrollIntoView({
+        block: "center",
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
       });
-      if (issue.fieldKey) {
-        const field = document.querySelector<HTMLInputElement>(
-          `[data-product-field="${issue.fieldKey}"]`,
-        );
-        (field ?? target)?.focus({ preventScroll: true });
-      } else if (!issue.specKey) {
-        target?.focus({ preventScroll: true });
-      }
+      if (!issue.specKey) destination?.focus({ preventScroll: true });
     });
   };
   const handleSave = async (statusOverride?: ProductStatus) => {
@@ -1345,7 +1349,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           {
             id: "product-inventory",
             label: "Inventory",
-            complete: !variantLocked && form.stock.trim() !== "",
+            complete: variantLocked || (form.stock.trim() !== "" && !validateProductDraft(form).errors.stock),
           },
           {
             id: "product-media",
@@ -1362,7 +1366,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           {
             id: "product-specifications",
             label: "Specifications",
-            complete: Object.keys(specifications).length > 0,
+            complete: specificationKeys(specificationTemplate).some((key) => Boolean(specifications[key]?.trim())),
           },
           {
             id: "product-seo",
@@ -1373,7 +1377,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
           {
             id: "product-pricing",
             label: "Pricing",
-            complete: variantLocked || validateProductDraft(form).valid,
+            complete: variantLocked || (!validateProductDraft(form).errors.price && !validateProductDraft(form).errors.compareAt),
           },
           { id: "product-advanced", label: "Advanced", complete: Boolean(id) },
         ]}
@@ -1429,6 +1433,9 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     {t("Arabic description")}
                     <textarea
                       aria-label={t("Arabic description")}
+                      data-product-field="descriptionAr"
+                      aria-invalid={Boolean(fieldErrors.descriptionAr)}
+                      aria-describedby={fieldErrors.descriptionAr ? "product-descriptionAr-error" : undefined}
                       value={form.descriptionAr}
                       rows={4}
                       maxLength={5000}
@@ -1439,6 +1446,11 @@ export default function ProductFormPage({ id }: { id?: string }) {
                     <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
                       مثال: {productFormExample("descriptionAr", "ar")}
                     </span>
+                    {fieldErrors.descriptionAr ? (
+                      <span id="product-descriptionAr-error" className="mt-1 block text-xs font-semibold text-rose-700 dark:text-rose-300">
+                        {t(fieldErrors.descriptionAr)}
+                      </span>
+                    ) : null}
                   </label>
                 </div>
               </details>
@@ -1748,6 +1760,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
                   </div>
                   <ProductColorPicker
                     value={newVariantColor}
+                    imageSources={[...pendingImages.map((image) => image.preview), form.imageUrl]}
                     onChange={(value) => {
                       setSaved(false);
                       setNewVariantColor(value);
@@ -1769,6 +1782,7 @@ export default function ProductFormPage({ id }: { id?: string }) {
               <ProductVariantManager
                 key={variantRevision}
                 productId={id}
+                productImageSources={[form.imageUrl, existing?.image ?? ""]}
                 onCountChange={setVariantCount}
                 onSingleVariantChange={handleSingleVariantChange}
                 onBusyChange={setVariantsBusy}
@@ -1875,61 +1889,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
           </OptionalPanel>
         </div>
         <aside className="dashboard-product-aside space-y-4">
-          <Panel id="product-organization" title={t("Product organization")}>
-            <div className="space-y-4 p-5">
-              <Field
-                label={t("Product type")}
-                value={form.productType}
-                onChange={(value) => update("productType", value)}
-                fieldKey="productType"
-                error={fieldErrors.productType}
-              />
-              <Field
-                label={t("Tags")}
-                value={form.tags}
-                onChange={(value) => update("tags", value)}
-                fieldKey="tags"
-                error={fieldErrors.tags}
-              />
-              <p className="text-xs leading-5 text-muted-foreground">
-                {t("Separate tags with commas. Tags are used by storefront search.")}
-              </p>
-            </div>
-          </Panel>
-          <Panel
-            id="product-publishing"
-            title={t("Publishing")}
-            subtitle={t("Storefront visibility")}
-          >
-            <div className="space-y-4 p-5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm text-muted-foreground">{t("Current status")}</span>
-                <span
-                  role="status"
-                  className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground"
-                >
-                  {t(existing?.status ?? "Draft")}
-                </span>
-              </div>
-              {id ? (
-                <SelectField
-                  label={t("Status")}
-                  exampleKey="status"
-                  value={form.status}
-                  onChange={(value) => update("status", value as ProductStatus)}
-                >
-                  <option value="Active">{t("Active")}</option>
-                  <option value="Draft">{t("Draft")}</option>
-                  <option value="Archived">{t("Archived")}</option>
-                </SelectField>
-              ) : null}
-              <p className="text-xs leading-5 text-muted-foreground">
-                {t(
-                  "Only published products appear in the public catalog. Saving a draft keeps it hidden.",
-                )}
-              </p>
-            </div>
-          </Panel>
           <Panel
             id="product-pricing"
             title={t("Pricing")}
@@ -2021,6 +1980,74 @@ export default function ProductFormPage({ id }: { id?: string }) {
               </div>
             ) : null}
           </Panel>
+          {
+            <ProductCreatePreview
+              title={form.title}
+              brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
+              price={form.price}
+              compareAt={form.compareAt}
+              stock={form.stock}
+              imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
+              color={newVariantColor}
+              storage={newVariantStorage}
+              status={form.status}
+            />
+          }
+          <Panel id="product-organization" title={t("Product organization")}>
+            <div className="space-y-4 p-5">
+              <Field
+                label={t("Product type")}
+                value={form.productType}
+                onChange={(value) => update("productType", value)}
+                fieldKey="productType"
+                error={fieldErrors.productType}
+              />
+              <Field
+                label={t("Tags")}
+                value={form.tags}
+                onChange={(value) => update("tags", value)}
+                fieldKey="tags"
+                error={fieldErrors.tags}
+              />
+              <p className="text-xs leading-5 text-muted-foreground">
+                {t("Separate tags with commas. Tags are used by storefront search.")}
+              </p>
+            </div>
+          </Panel>
+          <Panel
+            id="product-publishing"
+            title={t("Publishing")}
+            subtitle={t("Storefront visibility")}
+          >
+            <div className="space-y-4 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">{t("Current status")}</span>
+                <span
+                  role="status"
+                  className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-foreground"
+                >
+                  {t(existing?.status ?? "Draft")}
+                </span>
+              </div>
+              {id ? (
+                <SelectField
+                  label={t("Status")}
+                  exampleKey="status"
+                  value={form.status}
+                  onChange={(value) => update("status", value as ProductStatus)}
+                >
+                  <option value="Active">{t("Active")}</option>
+                  <option value="Draft">{t("Draft")}</option>
+                  <option value="Archived">{t("Archived")}</option>
+                </SelectField>
+              ) : null}
+              <p className="text-xs leading-5 text-muted-foreground">
+                {t(
+                  "Only published products appear in the public catalog. Saving a draft keeps it hidden.",
+                )}
+              </p>
+            </div>
+          </Panel>
           <Panel
             id="product-shipping"
             title={t("Shipping")}
@@ -2038,19 +2065,6 @@ export default function ProductFormPage({ id }: { id?: string }) {
               </a>
             </div>
           </Panel>
-          {
-            <ProductCreatePreview
-              title={form.title}
-              brand={brands.find((brand) => brand.id === form.brandId)?.name ?? ""}
-              price={form.price}
-              compareAt={form.compareAt}
-              stock={form.stock}
-              imageUrl={pendingImages[0]?.preview ?? form.imageUrl}
-              color={newVariantColor}
-              storage={newVariantStorage}
-              status={form.status}
-            />
-          }
           {existing ? (
             <Panel id="product-advanced" title={t("Product settings")}>
               <div className="space-y-2 p-5 text-[10px] text-slate-500">

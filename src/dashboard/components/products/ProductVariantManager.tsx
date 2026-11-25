@@ -141,11 +141,13 @@ function formatMoney(value: number) {
 
 export default function ProductVariantManager({
   productId,
+  productImageSources = [],
   onCountChange,
   onSingleVariantChange,
   onBusyChange,
 }: {
   productId: string;
+  productImageSources?: string[];
   onCountChange?: (count: number) => void;
   onSingleVariantChange?: (variant: DashboardProductVariant | null) => void;
   onBusyChange?: (busy: boolean) => void;
@@ -598,6 +600,8 @@ export default function ProductVariantManager({
               <div className="sm:col-span-2">
                 <ProductColorPicker
                   value={draft.color}
+                  imageSources={[draft.imageUrl, ...productImageSources]}
+                  imageFile={pendingImageFile}
                   onChange={(value) => setDraft((current) => ({ ...current, color: value }))}
                 />
               </div>
