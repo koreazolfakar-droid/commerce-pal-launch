@@ -9,7 +9,7 @@ const output=process.env.PRODUCT_LAYOUT_REPORT_DIR || '/tmp/spacecall-product-la
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 const reports=[];
 try {
- for(const [width,height,language,theme] of [[320,720,'en','light'],[360,800,'ar','light'],[390,844,'en','light'],[430,932,'ar','dark'],[768,1024,'ar','light'],[1440,1000,'en','dark']]){
+ for(const [width,height,language,theme] of [[320,720,'en','light'],[360,800,'ar','light'],[390,844,'en','light'],[430,932,'ar','dark'],[768,1024,'ar','light'],[1024,768,'en','light'],[1440,1000,'en','dark']]){
   const page=live?await browser.newPage({viewport:{width,height}}):await createStorefrontPage(browser,{viewport:{width,height}});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(({language,theme})=>{localStorage.setItem('space-cell-language',language);localStorage.setItem('space-cell:theme',theme);localStorage.removeItem('space-call-cart');},{language,theme});
@@ -65,6 +65,17 @@ try {
   await expect(page.getByTestId('bottom-nav')).toBeVisible();
   await expect(page.getByTestId('product-purchase-bar')).toHaveCount(0);
   console.log('PASS gallery fallback, variant media, accessible zoom, deferred suggestions, mobile checkout, retry and unavailable product');
+  await page.close();
+ }
+ if (!live) {
+  const page = await createStorefrontPage(browser, {javaScriptEnabled:false,viewport:{width:1440,height:1000}});
+  await page.goto(base+'/product/fixture-phone-1');
+  const header = page.getByTestId('desktop-header-fallback');
+  await expect(header.getByRole('link', {name:'Space Call'})).toBeVisible();
+  await expect(header.locator('a[href="/search"]')).toBeVisible();
+  await expect(header.locator('a[href="/cart"]')).toBeVisible();
+  await expect(header.getByRole('link', {name:'Shop'})).toBeVisible();
+  console.log('PASS desktop navigation is visible with JavaScript disabled');
   await page.close();
  }
  writeFileSync(`${output}/results.json`,JSON.stringify(reports,null,2)+'\n');

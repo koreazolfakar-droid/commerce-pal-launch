@@ -50,25 +50,25 @@ function GalleryMedia({
 /**
  * Product image stage + thumbnail rail + lightbox.
  * Images are always the real catalog media, rendered with object-contain so
- * nothing is cropped or stretched. Product pages use swipe plus a compact
- * thumbnail filmstrip on mobile, while desktop keeps a vertical thumbnail rail.
+ * nothing is cropped or stretched. The filmstrip keeps the full stage width
+ * available for the selected photo on every screen.
  */
 export function ProductGallery({
   images,
   title,
   activeIndex,
   onSelect,
-  badge,
+  className,
   compact = false,
 }: {
   images: GalleryImage[];
   title: string;
   activeIndex: number;
   onSelect: (index: number) => void;
-  badge?: React.ReactNode;
+  className?: string;
   compact?: boolean;
 }) {
-  const { t, direction } = useLanguage();
+  const { t, direction, language } = useLanguage();
   const [zoomed, setZoomed] = useState(false);
   const zoomDialog = useRef<HTMLDialogElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -97,17 +97,13 @@ export function ProductGallery({
   };
 
   return (
-    <div
-      className={cn(
-        "min-w-0",
-        !compact && "lg:sticky lg:top-24 lg:self-start",
-        !compact && images.length > 1 && "lg:grid lg:grid-cols-[4.75rem_minmax(0,1fr)] lg:gap-4",
-      )}
-    >
+    <div className={cn("min-w-0", !compact && "product-gallery", className)}>
       <div
         className={cn(
-          "relative aspect-[1/0.82] touch-pan-y overflow-hidden rounded-xl bg-image-stage sm:aspect-square sm:rounded-2xl lg:order-2",
-          !compact && "border border-border/70 max-sm:aspect-[4/3]",
+          "relative touch-pan-y overflow-hidden bg-image-stage",
+          compact
+            ? "aspect-[1/0.82] rounded-xl sm:aspect-square sm:rounded-2xl"
+            : "product-gallery-stage",
         )}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -123,36 +119,46 @@ export function ProductGallery({
           fetchPriority={compact ? "auto" : "high"}
           width={900}
           height={900}
-          className="h-full w-full select-none object-contain p-2 transition-transform duration-300 sm:p-4 lg:p-7"
+          className={cn(
+            "h-full w-full select-none object-contain p-2 transition-transform duration-300 sm:p-4 lg:p-7",
+            !compact && "product-gallery-main-image",
+          )}
         />
 
-        {badge}
-
-        {images.length > 1 && !compact && (
-          <div
-            data-testid="product-gallery-counter"
-            className="pointer-events-none absolute end-3 top-3 rounded-lg border border-border/50 bg-background/88 px-2 py-1 text-[11px] font-semibold tabular-nums text-foreground shadow-sm backdrop-blur sm:end-4 sm:top-4"
-            dir="ltr"
-          >
-            {index + 1} / {images.length}
+        {!compact && image && (
+          <div className="product-gallery-controls">
+            {images.length > 1 && (
+              <div
+                className="product-gallery-pagination"
+                role="group"
+                aria-label={language === "ar" ? "التنقل بين الصور" : "Gallery navigation"}
+              >
+                <button type="button" onClick={() => step(-1)} aria-label={t("galleryPrevious")}>
+                  <ChevronLeft aria-hidden className="size-4 rtl:rotate-180" strokeWidth={1.65} />
+                </button>
+                <span data-testid="product-gallery-counter" dir="ltr" aria-live="polite">
+                  {index + 1} / {images.length}
+                </span>
+                <button type="button" onClick={() => step(1)} aria-label={t("galleryNext")}>
+                  <ChevronRight aria-hidden className="size-4 rtl:rotate-180" strokeWidth={1.65} />
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                zoomDialog.current?.showModal();
+                setZoomed(true);
+              }}
+              aria-label={t("galleryZoom")}
+              className="product-gallery-expand"
+            >
+              <Expand aria-hidden className="size-4" strokeWidth={1.65} />
+            </button>
           </div>
         )}
 
-        {image && !compact && (
-          <button
-            type="button"
-            onClick={() => {
-              zoomDialog.current?.showModal();
-              setZoomed(true);
-            }}
-            aria-label={t("galleryZoom")}
-            className="press absolute bottom-3 end-3 grid h-11 w-11 place-items-center rounded-xl border border-border/60 bg-background/85 text-foreground shadow-sm backdrop-blur transition-[border-color,background-color] hover:border-primary/40 hover:bg-background sm:bottom-4 sm:end-4"
-          >
-            <Expand className="h-4 w-4" />
-          </button>
-        )}
-
-        {images.length > 1 && (
+        {compact && images.length > 1 && (
           <>
             <button
               type="button"
@@ -178,10 +184,8 @@ export function ProductGallery({
         <div
           data-testid={compact ? undefined : "product-gallery-thumbnails"}
           className={cn(
-            "scroll-rail mt-3 flex snap-x gap-2 overflow-x-auto pb-1",
-            compact ? "" : "px-0.5 sm:mt-3",
-            !compact &&
-              "lg:order-1 lg:mt-0 lg:max-h-[34rem] lg:snap-none lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:px-0 lg:pb-0",
+            "scroll-rail flex snap-x gap-2 overflow-x-auto",
+            compact ? "mt-3 pb-1" : "product-gallery-filmstrip",
           )}
           role="group"
           aria-label={t("galleryImages")}
@@ -196,6 +200,7 @@ export function ProductGallery({
               data-gallery-index={thumbIndex}
               className={cn(
                 "press h-14 w-14 shrink-0 snap-center overflow-hidden rounded-lg border bg-image-stage transition-[border-color,box-shadow,opacity] sm:h-16 sm:w-16 lg:h-[4.75rem] lg:w-[4.75rem]",
+                !compact && "product-gallery-thumb",
                 thumbIndex === index
                   ? "border-primary ring-1 ring-primary/20 opacity-100"
                   : "border-border/60 opacity-70 hover:border-primary/40 hover:opacity-100",

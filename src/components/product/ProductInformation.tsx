@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
+import { ChevronDown, ClipboardList, FileText, PackageOpen, Truck } from "lucide-react";
 import type { ContentSection, SpecGroup } from "@/lib/productContent";
 import { ProseSections } from "./ProseSection";
 import { SpecSheet } from "./SpecSheet";
@@ -9,18 +10,21 @@ export function ProductInformation({
   specifications,
   box,
   shipping,
+  headingAction,
   language,
 }: {
   overview: ContentSection[];
   specifications: SpecGroup[];
   box: ContentSection[];
   shipping: ContentSection[];
+  headingAction?: ReactNode;
   language: "ar" | "en";
 }) {
   const ar = language === "ar";
   const sections = [
     {
       key: "description",
+      icon: FileText,
       label: ar ? "الوصف" : "Description",
       content: overview.length ? (
         <ProseSections sections={overview} plain language={language} />
@@ -28,6 +32,7 @@ export function ProductInformation({
     },
     {
       key: "specifications",
+      icon: ClipboardList,
       label: ar ? "المواصفات التقنية" : "Specifications",
       content: specifications.length ? (
         <SpecSheet groups={specifications} language={language} />
@@ -35,11 +40,13 @@ export function ProductInformation({
     },
     {
       key: "box",
+      icon: PackageOpen,
       label: ar ? "محتويات العلبة" : "What's in the box",
       content: box.length ? <ProseSections sections={box} plain language={language} /> : null,
     },
     {
       key: "delivery",
+      icon: Truck,
       label: ar ? "التوصيل والضمان والإرجاع" : "Delivery, warranty & returns",
       content: (
         <div className="grid gap-4">
@@ -51,15 +58,24 @@ export function ProductInformation({
           </p>
           <nav
             aria-label={ar ? "سياسات المتجر" : "Store policies"}
-            className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-primary"
+            className="flex flex-wrap gap-2 text-sm font-semibold text-primary"
           >
-            <Link to="/shipping" className="inline-flex min-h-11 items-center hover:underline">
+            <Link
+              to="/shipping"
+              className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 hover:underline"
+            >
               {ar ? "التوصيل" : "Shipping"}
             </Link>
-            <Link to="/warranty" className="inline-flex min-h-11 items-center hover:underline">
+            <Link
+              to="/warranty"
+              className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 hover:underline"
+            >
               {ar ? "الضمان" : "Warranty"}
             </Link>
-            <Link to="/returns" className="inline-flex min-h-11 items-center hover:underline">
+            <Link
+              to="/returns"
+              className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 hover:underline"
+            >
               {ar ? "الإرجاع" : "Returns"}
             </Link>
           </nav>
@@ -71,13 +87,11 @@ export function ProductInformation({
   return (
     <section
       data-testid="product-information"
-      className="mt-8 min-w-0 sm:mt-12"
+      className="product-information"
       aria-label={ar ? "معلومات المنتج" : "Product details"}
     >
-      <h2 className="mb-4 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-        {ar ? "معلومات المنتج" : "Product information"}
-      </h2>
-      <div className="divide-y divide-border/60 rounded-2xl border border-border/70 bg-card px-4 sm:px-6">
+      <h2 className="product-section-title">{ar ? "معلومات المنتج" : "Product information"}</h2>
+      <div className="min-w-0 divide-y divide-border rounded-2xl border border-border bg-card px-4 sm:px-6">
         {sections.map((section, index) => (
           <details
             key={section.key}
@@ -86,11 +100,17 @@ export function ProductInformation({
             open={index === 0 && section.key !== "delivery"}
             className="group min-w-0 scroll-mt-24"
           >
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 rounded-lg py-4 text-base font-semibold text-foreground outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
-              <span>{section.label}</span>
+            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-3 text-sm font-semibold text-foreground outline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary sm:text-base [&::-webkit-details-marker]:hidden">
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-surface text-primary">
+                  <section.icon aria-hidden className="size-[1.125rem]" strokeWidth={1.65} />
+                </span>
+                {section.label}
+              </span>
               <ChevronDown
                 aria-hidden
-                className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none"
+                className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180 motion-reduce:transition-none"
+                strokeWidth={1.65}
               />
             </summary>
             <div className="min-w-0 pb-5 sm:pb-6">{section.content}</div>
