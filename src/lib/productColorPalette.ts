@@ -41,7 +41,7 @@ export const PRODUCT_COLOR_PRESETS = [
 ] as const;
 
 function normalizeColor(value: string) {
-  return value.trim().toLowerCase().replace(/[أإآ]/g, "ا").replace(/\\s+/g, " ");
+  return value.trim().toLowerCase().replace(/[أإآ]/g, "ا").replace(/\s+/g, " ");
 }
 
 export function findProductColor(value: string) {
