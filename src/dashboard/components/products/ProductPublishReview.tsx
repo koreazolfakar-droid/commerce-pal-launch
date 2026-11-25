@@ -67,6 +67,31 @@ export default function ProductPublishReview({
           <strong className="ms-auto tabular-nums">{result.recommendations.length}</strong>
         </div>
       </div>
+      {!expanded && result.blockers.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-foreground">
+              {ar ? "الخطوة التالية" : "Next required step"}
+            </p>
+            <p className="mt-1 break-words text-xs text-muted-foreground">
+              {title(result.blockers[0])} · {detail(result.blockers[0])}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onJump(result.blockers[0])}
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 text-xs font-semibold text-primary hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50"
+          >
+            {ar ? "انتقل إلى الخانة" : "Go to field"}
+            <ExternalLink aria-hidden="true" className="size-3.5" />
+          </button>
+        </div>
+      ) : !expanded && result.canPublish ? (
+        <p className="border-t border-border px-4 py-3 text-xs font-medium text-foreground sm:px-5">
+          {ar ? "لا توجد أخطاء تمنع النشر. يمكنك مراجعة المنتج قبل التأكيد." : "No publish blockers. Review your product before confirming."}
+        </p>
+      ) : null}
       <div className="px-4 pb-3 sm:px-5">
         <div
           role="progressbar"
