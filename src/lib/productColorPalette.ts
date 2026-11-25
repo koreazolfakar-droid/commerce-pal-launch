@@ -60,3 +60,9 @@ export function searchProductColors(query: string) {
     (key === "grey" && color.name === "Gray"),
   );
 }
+
+/** Strict CSS-safe color values, optionally paired with a merchant's display name. */
+export function explicitProductColorHex(value: string): string | null {
+  const match = value.trim().match(/^(?:#[0-9a-f]{6}|[^\r\n]+ \(#[0-9a-f]{6}\))$/i);
+  return match ? match[0].match(/#[0-9a-f]{6}(?=\)?$)/i)![0].toUpperCase() : null;
+}
