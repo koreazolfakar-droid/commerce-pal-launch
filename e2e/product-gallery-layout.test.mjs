@@ -5,14 +5,14 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const source = (file) => readFile(new URL(file, root), "utf8");
 
-test("product gallery uses premium multi-image hierarchy", async () => {
+test("product gallery groups pagination and keeps an overflow-safe filmstrip", async () => {
   const gallery = await source("src/components/product/ProductGallery.tsx");
 
   assert.match(gallery, /data-testid="product-gallery-counter"/);
   assert.match(gallery, /data-testid=\{compact \? undefined : "product-gallery-thumbnails"\}/);
   assert.match(gallery, /aspect-\[1\/0\.82\]/);
   assert.match(gallery, /snap-x/);
-  assert.match(gallery, /lg:flex-col/);
+  assert.match(gallery, /product-gallery-filmstrip/);
   assert.match(gallery, /\{index \+ 1\} \/ \{images\.length\}/);
   assert.doesNotMatch(gallery, /mobile-dot-/);
 });
