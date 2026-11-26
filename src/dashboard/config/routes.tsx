@@ -50,15 +50,33 @@ type DashboardRouteDefinition = {
 };
 
 const NAVIGATION_GROUPS: { label: string; items: string[] }[] = [
-  { label: "Overview", items: ["Dashboard", "Analytics", "Sales"] },
+  { label: "Overview", items: ["Dashboard", "Analytics"] },
   {
-    label: "Commerce",
-    items: ["Orders", "Customers", "Inventory", "Receiving", "Purchase Orders", "Suppliers", "Procurement"],
+    label: "Sales & customers",
+    items: ["Orders", "Customers", "Sales"],
   },
-  { label: "Catalog", items: ["Add New Product", "Products", "Brands", "Collections", "Categories"] },
+  {
+    label: "Stock & purchasing",
+    items: ["Inventory", "Purchase Orders", "Receiving", "Suppliers", "Procurement"],
+  },
+  {
+    label: "Catalog",
+    items: ["Add New Product", "Products", "Brands", "Collections", "Categories"],
+  },
   {
     label: "Storefront & marketing",
-    items: ["Homepage", "Hero banners", "Navigation", "Media library", "Promotions", "Campaigns", "Coupons", "SEO", "Reviews", "Messages"],
+    items: [
+      "Homepage",
+      "Hero banners",
+      "Navigation",
+      "Media library",
+      "Promotions",
+      "Campaigns",
+      "Coupons",
+      "SEO",
+      "Reviews",
+      "Messages",
+    ],
   },
   { label: "Administration", items: ["Users", "Activity logs", "Security", "Settings"] },
 ];

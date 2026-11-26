@@ -66,6 +66,7 @@ function harness() {
     recharts: new Proxy({}, { get: (_, key) => String(key) }),
     sonner: { toast: { success() {}, error() {} } },
     wouter: { useLocation: () => ["/dashboard", () => {}] },
+    "@/dashboard/components/layout/DashboardWorkTools": { default: "DashboardWorkTools" },
     "@/dashboard/i18n": { useLanguage: () => ({ t, lang: "en" }) },
     "@/dashboard/components/layout/PageTitle": { PageTitle: "PageTitle" },
     "@/dashboard/lib/exportCsv": { downloadCsv: (...args) => downloads.push(args) },
@@ -89,7 +90,7 @@ function harness() {
     downloads,
     render() {
       cursor = 0;
-      const tree = module.exports.default({});
+      const tree = module.exports.DashboardReport({});
       for (const effect of effects.splice(0)) effect();
       return tree;
     },
