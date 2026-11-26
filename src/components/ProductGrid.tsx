@@ -35,6 +35,7 @@ export function ProductGrid({
   action,
   eagerCount = 0,
   showViewToggle = true,
+  recommendation = false,
   viewMode: controlledViewMode,
   onViewModeChange,
 }: {
@@ -45,6 +46,7 @@ export function ProductGrid({
   action?: React.ReactNode;
   eagerCount?: number;
   showViewToggle?: boolean;
+  recommendation?: boolean;
   viewMode?: ProductViewMode;
   onViewModeChange?: (mode: ProductViewMode) => void;
 }) {
@@ -85,6 +87,7 @@ export function ProductGrid({
             product={product}
             eager={index < eagerCount}
             borderless
+            recommendation={recommendation}
             className={viewMode === "dense" ? "catalog-dense-product-card dense-product-card" : undefined}
           />
         ))}
