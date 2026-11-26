@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { addFixtureProduct, expectCartCount, openCart } from "./helpers";
+import { installStorefrontFixture } from "./helpers/storefront-fixture-fetch.mjs";
 
 test("product has title and price, adds to cart and shows same-brand products", async ({
   page,
@@ -18,6 +19,7 @@ test("quick view selects a variant and quantity and restores focus on Escape", a
   page,
   isMobile,
 }) => {
+  await installStorefrontFixture(page);
   await page.goto("/shop");
   const trigger = page
     .getByRole("button", { name: /^Quick view Samsung Fixture Phone 512GB/ })
@@ -28,13 +30,13 @@ test("quick view selects a variant and quantity and restores focus on Escape", a
   await expect(dialog).toBeVisible();
   await expect(
     dialog.getByRole("group", { name: "Product images" }).getByRole("button"),
-  ).toHaveCount(2);
+  ).toHaveCount(3);
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
   await trigger.click();
   dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name: "512GB", exact: true }).click();
+  await dialog.getByRole("button", { name: "Storage: 512GB", exact: true }).click();
   await expect(dialog.getByText("$599.00", { exact: true })).toBeVisible();
   await dialog.getByLabel("Quantity", { exact: true }).fill("0");
   await expect(dialog.getByRole("button", { name: "Add to cart", exact: true })).toBeDisabled();
