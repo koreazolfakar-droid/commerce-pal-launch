@@ -46,10 +46,24 @@ test("hero conversion happens before any storage upload", () => {
   assert.ok(conversion < upload, "hero file must be converted before it is uploaded");
 });
 
-test("hero preserves animation/vector formats instead of falsely labeling them WebP", () => {
+test("hero preserves supported animation formats without falsely labeling them WebP", () => {
   assert.match(heroData, /GIF preserved to keep animation/);
-  assert.match(heroData, /SVG preserved to keep vector quality/);
   assert.match(heroData, /mode: "passthrough"/);
+});
+
+test("hero rejects SVG before conversion or Storage upload", () => {
+  const allowed = heroData.match(/const ALLOWED_HERO_MIME_TYPES = new Set\(\[([\s\S]*?)\]\);/);
+  assert.ok(allowed, "Hero MIME allowlist is missing");
+  assert.doesNotMatch(allowed[1], /image\/svg\+xml/i);
+  assert.match(allowed[1], /"image\/gif"/);
+  const start = heroData.indexOf("export async function uploadDashboardHeroImage");
+  assert.ok(start >= 0);
+  const body = heroData.slice(start);
+  const rejection = body.match(/if \(!ALLOWED_HERO_MIME_TYPES\.has\(file\.type\)\) \{\s*throw new Error\("Unsupported image type\.[^"]*SVG is blocked for security\."\);\s*\}/);
+  assert.ok(rejection, "Unsupported MIME types must be rejected");
+  const conversion = body.indexOf("await convertProductImageToWebp(");
+  const upload = body.search(/supabase\.storage\s*\.from\(HERO_BUCKET\)\s*\.upload/);
+  assert.ok(conversion > rejection.index && upload > rejection.index);
 });
 
 test("hero dashboard exposes real before and after optimization metadata", () => {
