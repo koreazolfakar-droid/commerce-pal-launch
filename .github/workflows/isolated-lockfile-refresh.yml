@@ -1,0 +1,34 @@
+name: Isolated dependency lockfile refresh
+on:
+  push:
+    branches: [security/isolated-lockfile-refresh-20261126]
+    paths: [.github/workflows/isolated-lockfile-refresh.yml]
+permissions:
+  contents: read
+concurrency:
+  group: space-call-isolated-lockfile-refresh
+  cancel-in-progress: false
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+      - name: Regenerate lockfile without lifecycle scripts
+        run: |
+          bun install --lockfile-only --ignore-scripts
+          bun install --frozen-lockfile --lockfile-only --ignore-scripts
+          git diff --exit-code -- package.json
+          sha256sum bun.lock
+      - name: Export generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-bun-lock
+          path: bun.lock
+          retention-days: 1
+          if-no-files-found: error
