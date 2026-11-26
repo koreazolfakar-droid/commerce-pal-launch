@@ -1,16 +1,15 @@
+import DashboardWorkTools from "@/dashboard/components/layout/DashboardWorkTools";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
 import { useLanguage } from "@/dashboard/i18n";
 import {
   Activity,
+  ChevronDown,
   Download,
   Inbox,
   BarChart3,
   Boxes,
   Package,
-  PackagePlus,
-  PackageCheck,
-  LayoutTemplate,
   AlertTriangle,
   RefreshCw,
   ShoppingBag,
@@ -92,6 +91,16 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardHomePage({ analyticsView = false }: { analyticsView?: boolean }) {
+  return (
+    <div className="dashboard-home-page space-y-5">
+      <PageTitle eyebrow="Space Call" title={analyticsView ? "Analytics" : "Dashboard"} />
+      {!analyticsView && <DashboardWorkTools />}
+      <DashboardReport analyticsView={analyticsView} />
+    </div>
+  );
+}
+
+export function DashboardReport({ analyticsView = false }: { analyticsView?: boolean }) {
   const { t, lang } = useLanguage();
   const locale = lang === "ar" ? "ar" : "en-US";
   const money = (value: number, currency = "USD") =>
@@ -191,7 +200,10 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
 
   if (error && !snapshot) {
     return (
-      <div role="alert" className="rounded-2xl border border-rose-100 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/30">
+      <div
+        role="alert"
+        className="rounded-2xl border border-rose-100 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/30"
+      >
         <div className="text-sm font-bold text-rose-700">
           {t("Dashboard data could not be loaded.")}
         </div>
@@ -212,15 +224,9 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
   if (!snapshot) return null;
 
   return (
-    <div className="dashboard-home-page" aria-busy={loading || refreshing}>
+    <div aria-busy={loading || refreshing}>
       <div className="dashboard-overview-header dashboard-home-header">
-        <div>
-          <PageTitle
-            eyebrow="Store performance"
-            title={analyticsView ? "Analytics" : "Dashboard"}
-            description="Your sales, catalog and daily operations in one place."
-          />
-        </div>
+        <h2 className="text-lg font-semibold text-foreground">{t("Store performance")}</h2>
         <div className="dashboard-overview-tools">
           <label>
             <span className="sr-only">{t("Report period")}</span>
@@ -241,7 +247,10 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
             disabled={loading || refreshing}
             className="dashboard-button"
           >
-            <RefreshCw aria-hidden="true" className={`size-4 ${loading || refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              aria-hidden="true"
+              className={`size-4 ${loading || refreshing ? "animate-spin" : ""}`}
+            />
             {t("Refresh")}
           </button>
           <button
@@ -277,7 +286,10 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         </div>
       </div>
       {loading || refreshing ? (
-        <div role="status" className="mb-3 rounded-xl border border-border bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
+        <div
+          role="status"
+          className="mb-3 rounded-xl border border-border bg-muted/50 px-4 py-3 text-xs text-muted-foreground"
+        >
           {lang === "ar"
             ? "جارٍ تحديث التقرير… الأرقام المعروضة من آخر تحديث ناجح."
             : "Updating report… Showing the last successfully loaded figures."}
@@ -347,58 +359,9 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         />
       </div>
 
-      <div className="dashboard-overview-metrics dashboard-overview-secondary dashboard-home-secondary-metrics mt-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <KpiCard
-          icon={Boxes}
-          label={t("Units on hand")}
-          value={integer(snapshot.totalUnits)}
-          detail="Tracked active variants"
-        />
-        <KpiCard
-          icon={Activity}
-          label={t("Low stock")}
-          value={integer(snapshot.lowStockVariants)}
-          detail="Tracked variants with 1–10 units"
-        />
-        <KpiCard
-          icon={Package}
-          label={t("Out of stock")}
-          value={integer(snapshot.outOfStockVariants)}
-          detail="Tracked active variants at zero"
-        />
-        <KpiCard
-          icon={Tags}
-          label={t("Visible brands")}
-          value={integer(snapshot.visibleBrandCount)}
-          detail="Brands currently visible"
-        />
-      </div>
-
-      {!analyticsView ? (
-        <div className="dashboard-home-priority-grid mt-5 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-          <Panel title="Quick actions">
-            <div className="dashboard-quick-actions-grid grid grid-cols-2 gap-2 p-4 sm:grid-cols-4">
-              {[
-                { label: "Add New Product", href: "/dashboard/products/new", icon: PackagePlus },
-                { label: "View orders", href: "/dashboard/orders", icon: ShoppingBag },
-                { label: "Receive stock", href: "/dashboard/receiving", icon: PackageCheck },
-                { label: "Edit homepage", href: "/dashboard/homepage", icon: LayoutTemplate },
-              ].map(({ label, href, icon: Icon }) => (
-                <button
-                  key={href}
-                  type="button"
-                  onClick={() => navigate(href)}
-                  className="dashboard-quick-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex min-h-[88px] flex-col items-start justify-between gap-3 rounded-xl border border-slate-200/80 p-3 text-start text-[12px] font-bold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50 active:scale-[.98]"
-                >
-                  <span className="grid size-9 place-items-center rounded-lg bg-indigo-50 text-[#5968ea]">
-                    <Icon className="size-[18px]" />
-                  </span>
-                  {t(label)}
-                </button>
-              ))}
-            </div>
-          </Panel>
-          <Panel title="Needs attention" className="dashboard-attention-panel">
+      <div className="mt-4 grid items-start gap-4 xl:grid-cols-2">
+        {!analyticsView && (
+          <Panel title="Stock alerts" className="dashboard-attention-panel">
             {snapshot.lowStockVariants || snapshot.outOfStockVariants ? (
               <div className="dashboard-attention-list divide-y divide-slate-100">
                 {[
@@ -438,11 +401,73 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
                   ))}
               </div>
             ) : (
-              <EmptyState>{t("All clear — nothing needs attention.")}</EmptyState>
+              <EmptyState>{t("No low-stock or out-of-stock variants.")}</EmptyState>
             )}
           </Panel>
+        )}
+        <Panel title={t("Recent orders")}>
+          {snapshot.recentOrders.length ? (
+            <div className="dashboard-recent-orders divide-y divide-slate-100">
+              {snapshot.recentOrders.map((order) => (
+                <button
+                  key={order.id}
+                  type="button"
+                  onClick={() => navigate(`/dashboard/orders/${order.id}`)}
+                  className="dashboard-recent-order-row grid w-full grid-cols-[minmax(0,1fr)_auto] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
+                >
+                  <div className="min-w-0">
+                    <div className="dashboard-recent-order-title break-words text-[12px] font-bold text-slate-700">
+                      #{order.orderNumber} · {order.customer}
+                    </div>
+                    <div className="mt-1 break-words text-[10px] text-slate-400">
+                      {new Date(order.createdAt).toLocaleString(locale)} · {order.status} ·{" "}
+                      {order.paymentStatus}
+                    </div>
+                  </div>
+                  <div className="text-[12px] font-bold text-[#14203a]">
+                    {money(order.total, order.currency || "USD")}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <EmptyState>{t("No orders exist yet. New orders will appear here.")}</EmptyState>
+          )}
+        </Panel>
+      </div>
+
+      <details className="dashboard-panel dashboard-stock-summary mt-4">
+        <summary>
+          {t("Stock and catalog totals")}
+          <ChevronDown size={18} aria-hidden="true" />
+        </summary>
+        <div className="dashboard-overview-metrics dashboard-overview-secondary dashboard-home-secondary-metrics grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <KpiCard
+            icon={Boxes}
+            label={t("Units on hand")}
+            value={integer(snapshot.totalUnits)}
+            detail="Tracked active variants"
+          />
+          <KpiCard
+            icon={Activity}
+            label={t("Low stock")}
+            value={integer(snapshot.lowStockVariants)}
+            detail="Tracked variants with 1–10 units"
+          />
+          <KpiCard
+            icon={Package}
+            label={t("Out of stock")}
+            value={integer(snapshot.outOfStockVariants)}
+            detail="Tracked active variants at zero"
+          />
+          <KpiCard
+            icon={Tags}
+            label={t("Visible brands")}
+            value={integer(snapshot.visibleBrandCount)}
+            detail="Brands currently visible"
+          />
         </div>
-      ) : null}
+      </details>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <Panel title={t("Revenue trend")} subtitle={`${t("Completed sales")} · ${periodLabel}`}>
@@ -518,99 +543,66 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
         </Panel>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <Panel title={t("Recent orders")} subtitle={t("Latest real orders")}>
-          {snapshot.recentOrders.length ? (
-            <div className="dashboard-recent-orders divide-y divide-slate-100">
-              {snapshot.recentOrders.map((order) => (
-                <button
-                  key={order.id}
-                  type="button"
-                  onClick={() => navigate(`/dashboard/orders/${order.id}`)}
-                  className="dashboard-recent-order-row grid w-full grid-cols-[minmax(0,1fr)_auto] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <Panel
+          title={t("Top selling products")}
+          subtitle={`${t("Completed sales")} · ${periodLabel}`}
+        >
+          {snapshot.topProducts.length ? (
+            <div className="divide-y divide-slate-100 px-5">
+              {snapshot.topProducts.map((product, index) => (
+                <div
+                  key={product.productId ?? product.title}
+                  className="flex items-center gap-3 py-3"
                 >
-                  <div className="min-w-0">
-                    <div className="dashboard-recent-order-title break-words text-[12px] font-bold text-slate-700">
-                      #{order.orderNumber} · {order.customer}
+                  <span className="w-4 text-center text-[11px] font-bold text-slate-400">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[11px] font-bold text-slate-700">
+                      {product.title}
                     </div>
-                    <div className="mt-1 break-words text-[10px] text-slate-400">
-                      {new Date(order.createdAt).toLocaleString(locale)} · {order.status} ·{" "}
-                      {order.paymentStatus}
+                    <div className="mt-0.5 text-[10px] text-slate-400">
+                      {product.quantity} {t("sold")}
                     </div>
                   </div>
-                  <div className="text-[12px] font-bold text-[#14203a]">
-                    {money(order.total, order.currency || "USD")}
+                  <div className="text-[11px] font-bold text-slate-600">
+                    {money(product.revenue)}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           ) : (
-            <EmptyState>{t("No orders exist yet. New orders will appear here.")}</EmptyState>
+            <EmptyState>{t("No sales data yet.")}</EmptyState>
           )}
         </Panel>
 
-        <div className="grid gap-4">
-          <Panel
-            title={t("Top selling products")}
-            subtitle={`${t("Completed sales")} · ${periodLabel}`}
-          >
-            {snapshot.topProducts.length ? (
-              <div className="divide-y divide-slate-100 px-5">
-                {snapshot.topProducts.map((product, index) => (
-                  <div
-                    key={product.productId ?? product.title}
-                    className="flex items-center gap-3 py-3"
-                  >
-                    <span className="w-4 text-center text-[11px] font-bold text-slate-400">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[11px] font-bold text-slate-700">
-                        {product.title}
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-slate-400">
-                        {product.quantity} {t("sold")}
-                      </div>
-                    </div>
-                    <div className="text-[11px] font-bold text-slate-600">
-                      {money(product.revenue)}
-                    </div>
+        <Panel
+          title={t("Top brands")}
+          subtitle={`${t("By completed sale value")} · ${periodLabel}`}
+        >
+          {snapshot.topBrands.length ? (
+            <div className="space-y-3 px-5 py-4">
+              {snapshot.topBrands.map((brand) => (
+                <div key={brand.brandId}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[11px] font-semibold text-slate-600">{brand.name}</span>
+                    <span className="text-[10px] font-bold text-slate-500">{brand.share}%</span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState>{t("No sales data yet.")}</EmptyState>
-            )}
-          </Panel>
-
-          <Panel
-            title={t("Top brands")}
-            subtitle={`${t("By completed sale value")} · ${periodLabel}`}
-          >
-            {snapshot.topBrands.length ? (
-              <div className="space-y-3 px-5 py-4">
-                {snapshot.topBrands.map((brand) => (
-                  <div key={brand.brandId}>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-semibold text-slate-600">{brand.name}</span>
-                      <span className="text-[10px] font-bold text-slate-500">{brand.share}%</span>
-                    </div>
-                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full bg-[#5968ea]"
-                        style={{ width: `${brand.share}%` }}
-                      />
-                    </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-[#5968ea]"
+                      style={{ width: `${brand.share}%` }}
+                    />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState>{t("No brand sales data yet.")}</EmptyState>
-            )}
-          </Panel>
-        </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState>{t("No brand sales data yet.")}</EmptyState>
+          )}
+        </Panel>
       </div>
-
     </div>
   );
 }

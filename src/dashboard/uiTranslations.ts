@@ -1,4 +1,11 @@
 export const dashboardUiArabic: Record<string, string> = {
+  "Work tools": "أدوات العمل",
+  "Work area": "مجال العمل",
+  "Daily work": "العمل اليومي",
+  "Sales & customers": "المبيعات والعملاء",
+  "Stock alerts": "تنبيهات المخزون",
+  "Stock and catalog totals": "إجماليات المخزون والكتالوج",
+  "No low-stock or out-of-stock variants.": "لا توجد أصناف منخفضة المخزون أو نافدة.",
   "Tracked active variants": "المتغيرات النشطة المتتبعة",
   "Tracked active variants at zero": "المتغيرات النشطة المتتبعة النافدة",
   "Brands currently visible": "العلامات الظاهرة حاليًا",

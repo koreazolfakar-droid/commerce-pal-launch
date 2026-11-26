@@ -154,10 +154,12 @@ test("dashboard command navigation keeps five reachable mobile actions and conte
   assert.match(workspace, /\[dir="rtl"\]/);
   assert.match(workspace, /prefers-reduced-motion: reduce/);
   assert.match(routes, /label: "Overview"/);
-  assert.match(routes, /label: "Commerce"/);
+  assert.match(routes, /label: "Sales & customers"/);
+  assert.match(routes, /label: "Stock & purchasing"/);
   assert.match(routes, /label: "Administration"/);
   assert.match(translations, /Overview: "نظرة عامة"/);
-  assert.match(translations, /Commerce: "المبيعات والعمليات"/);
+  assert.match(translations, /"Sales & customers": "المبيعات والعملاء"/);
+  assert.match(translations, /"Stock & purchasing": "المخزون والمشتريات"/);
   assert.match(translations, /Administration: "الإدارة والإعدادات"/);
 });
 
