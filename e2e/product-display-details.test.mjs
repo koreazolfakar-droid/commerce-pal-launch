@@ -98,7 +98,7 @@ test("product route renders the new product information hierarchy", async () => 
   assert.match(information, /<SpecSheet groups=\{specifications\} language=\{language\}/);
   assert.match(sheet, /grid-cols-\[minmax\(0,0\.88fr\)_minmax\(0,1\.12fr\)\]/);
   assert.match(prose, /Read full description/);
-  assert.match(route, /data-testid="product-purchase-bar"/);
+  assert.match(route, /data-testid="product-purchase-actions"/);
   assert.doesNotMatch(route, /<OfficialProductResearch/);
 });
 

@@ -251,7 +251,7 @@ function DeferredProductSuggestions(props: {
 function ProductPage() {
   const { product } = Route.useLoaderData();
   return (
-    <StoreLayout productPurchaseBar>
+    <StoreLayout>
       <ProductDetails key={product.node.handle} product={product} />
     </StoreLayout>
   );
@@ -307,9 +307,6 @@ function ProductDetails({ product }: { product: StoreProduct }) {
 
   const addItem = useCartStore((state) => state.addItem);
   const cartLoading = useCartStore((state) => state.isLoading);
-  const cartCount = useCartStore((state) =>
-    state.items.reduce((total, item) => total + item.quantity, 0),
-  );
   const wishlisted = useWishlistStore((state) => state.handles.includes(node.handle));
   const toggleWishlist = useWishlistToggle();
   const addRecentlyViewed = useRecentlyViewedStore((state) => state.add);
@@ -546,7 +543,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
 
           <div
             data-testid="product-buy-box"
-            className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border/70 bg-card p-4 sm:gap-5 sm:p-6 lg:p-7"
+            className="flex min-w-0 flex-col gap-3.5 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:gap-4 sm:p-6 lg:p-7"
           >
             <div className="min-w-0">
               {brand && (
@@ -561,16 +558,38 @@ function ProductDetails({ product }: { product: StoreProduct }) {
               <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
                 {displayTitle}
               </h1>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border/60 pb-3.5 sm:pb-4">
+              <div
+                data-testid="product-price"
+                className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1"
+                aria-live="polite"
+              >
+                <bdi className="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
+                  {priceLabel}
+                </bdi>
+                {discount !== null && compareAt && (
+                  <del className="text-sm text-muted-foreground">
+                    <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
+                  </del>
+                )}
+                {discount !== null && (
+                  <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                    {language === "ar" ? "خصم" : "Save"} {discount}%
+                  </span>
+                )}
+              </div>
               <p
                 className={cn(
-                  "mt-2 inline-flex items-center gap-2 text-xs font-medium",
-                  inStock ? "text-success" : "text-muted-foreground",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                  inStock ? "bg-success/10 text-success" : "bg-surface text-muted-foreground",
                 )}
               >
                 <span
                   aria-hidden
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full",
+                    "size-1.5 shrink-0 rounded-full",
                     inStock ? "bg-success" : "bg-muted-foreground",
                   )}
                 />
@@ -578,88 +597,67 @@ function ProductDetails({ product }: { product: StoreProduct }) {
               </p>
             </div>
 
-            <div
-              data-testid="product-price"
-              className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-border/60 pb-4"
-              aria-live="polite"
-            >
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                  <bdi className="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
-                    {priceLabel}
-                  </bdi>
-                  {discount !== null && compareAt && (
-                    <del className="text-sm text-muted-foreground">
-                      <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
-                    </del>
-                  )}
-                  {discount !== null && (
-                    <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                      {language === "ar" ? "خصم" : "Save"} {discount}%
-                    </span>
-                  )}
+            <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3">
+              <VariantPicker
+                className="min-w-0 flex-1 basis-36"
+                compactSingleValues
+                options={node.options ?? []}
+                variants={variants}
+                selected={selectedOptions}
+                onSelect={handleOptionSelect}
+              />
+
+              <div className="flex shrink-0 flex-col gap-1.5 max-[350px]:w-full max-[350px]:flex-row max-[350px]:items-center max-[350px]:justify-between only:w-full only:flex-row only:items-center only:justify-between">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {language === "ar" ? "الكمية" : "Quantity"}
+                </span>
+                <div
+                  data-testid="product-quantity"
+                  role="group"
+                  className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-surface/50"
+                  aria-label={language === "ar" ? "الكمية" : "Quantity"}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 rounded-xl"
+                    onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                    disabled={busy || quantity <= 1}
+                    aria-label={t("decreaseQuantity")}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span
+                    className="w-6 text-center text-sm font-semibold tabular-nums"
+                    aria-live="polite"
+                  >
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 rounded-xl"
+                    onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+                    disabled={busy || !inStock || quantity >= maxQuantity}
+                    aria-label={t("increaseQuantity")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
 
-            <VariantPicker
-              compactSingleValues
-              options={node.options ?? []}
-              variants={variants}
-              selected={selectedOptions}
-              onSelect={handleOptionSelect}
-            />
-
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-foreground">
-                {language === "ar" ? "الكمية" : "Quantity"}
-              </span>
-              <div
-                data-testid="product-quantity"
-                role="group"
-                className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
-                aria-label={language === "ar" ? "الكمية" : "Quantity"}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 rounded-xl"
-                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  disabled={busy || quantity <= 1}
-                  aria-label={t("decreaseQuantity")}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span
-                  className="w-8 text-center text-sm font-semibold tabular-nums"
-                  aria-live="polite"
-                >
-                  {quantity}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 rounded-xl"
-                  onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
-                  disabled={busy || !inStock || quantity >= maxQuantity}
-                  aria-label={t("increaseQuantity")}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div data-testid="product-purchase-actions" className="grid grid-cols-2 gap-2.5">
               <Button
                 size="lg"
                 onClick={() => handleAddToCart()}
                 disabled={busy || !inStock}
-                className="press hidden min-h-11 rounded-xl sm:inline-flex"
+                className="press h-auto min-h-12 gap-1.5 whitespace-normal rounded-xl px-2 py-2 text-center leading-tight sm:gap-2 sm:px-3"
               >
                 {pending === "cart" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
                 ) : (
-                  <ShoppingBag className="h-4 w-4" />
+                  <ShoppingBag aria-hidden className="h-4 w-4" />
                 )}
                 {t(inStock ? "addToCart" : "soldOut")}
               </Button>
@@ -668,12 +666,12 @@ function ProductDetails({ product }: { product: StoreProduct }) {
                 variant="outline"
                 onClick={() => handleAddToCart(true)}
                 disabled={busy || !inStock}
-                className="press min-h-11 rounded-xl"
+                className="press h-auto min-h-12 gap-1.5 whitespace-normal rounded-xl border-border bg-card px-2 py-2 text-center leading-tight sm:gap-2 sm:px-3"
               >
                 {pending === "buy" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Zap className="h-4 w-4" />
+                  <Zap aria-hidden className="h-4 w-4" />
                 )}
                 {language === "ar" ? "اشترِ الآن" : "Buy now"}
               </Button>
@@ -736,7 +734,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
                 data-testid="product-specifications-link"
                 aria-controls="product-specifications"
                 onClick={showSpecifications}
-                className="inline-flex min-h-11 items-center gap-2 self-start rounded-lg text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="-my-1 inline-flex min-h-11 items-center gap-1.5 self-start rounded-lg text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
                 <ChevronDown aria-hidden className="h-4 w-4" />
@@ -744,7 +742,7 @@ function ProductDetails({ product }: { product: StoreProduct }) {
             )}
 
             <div
-              className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/70"
+              className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/70 bg-surface/35"
               role="group"
               aria-label={language === "ar" ? "إجراءات المنتج" : "Product actions"}
             >
@@ -804,11 +802,11 @@ function ProductDetails({ product }: { product: StoreProduct }) {
               </div>
             )}
 
-            <ul className="grid grid-cols-2 items-start gap-x-4 gap-y-3 text-xs text-muted-foreground xl:grid-cols-3">
+            <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground sm:gap-x-4">
               {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
                 <li key={item.title} className="flex min-w-0 items-center gap-1.5">
                   <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium">
                     {language === "ar"
                       ? ["منتجات أصلية", "توصيل سريع", "سهولة الإرجاع"][index]
                       : item.title}
@@ -829,56 +827,6 @@ function ProductDetails({ product }: { product: StoreProduct }) {
         />
 
         <DeferredProductSuggestions product={product} brand={brand} category={category} />
-      </div>
-
-      <div
-        data-testid="product-purchase-bar"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
-      >
-        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-2.5 px-3 pt-2.5 min-[375px]:gap-4 min-[375px]:px-4 pb-[calc(.625rem+env(safe-area-inset-bottom,0px))]">
-          <div className="min-w-0 shrink-0">
-            <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-              {language === "ar" ? "السعر" : "Price"}
-            </span>
-            <bdi className="block text-sm font-semibold tabular-nums text-foreground min-[375px]:text-base">
-              {priceLabel}
-            </bdi>
-          </div>
-          <Button
-            onClick={() => handleAddToCart()}
-            disabled={busy || !inStock}
-            className="press h-11 min-w-0 flex-1 whitespace-normal rounded-xl px-2 text-center text-sm font-semibold leading-tight"
-          >
-            {pending === "cart" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : inStock ? (
-              <>
-                <ShoppingBag className="h-4 w-4" />
-                {t("addToCart")}
-              </>
-            ) : (
-              t("soldOut")
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            data-testid="product-open-bag"
-            aria-label={`${t("openBag")}, ${cartCount}`}
-            onClick={() => document.dispatchEvent(new CustomEvent("space-cell:open-cart"))}
-            className="relative h-11 w-11 shrink-0 rounded-xl"
-          >
-            <ShoppingBag aria-hidden className="h-4 w-4" />
-            {cartCount > 0 && (
-              <span
-                aria-hidden
-                className="absolute -end-1 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground"
-              >
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            )}
-          </Button>
-        </div>
       </div>
     </>
   );

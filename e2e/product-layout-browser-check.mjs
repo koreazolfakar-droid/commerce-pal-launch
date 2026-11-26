@@ -51,33 +51,34 @@ export async function runProductLayoutChecks({ language = 'en', fixture = false 
   }
   const bar = document.querySelector('[data-testid="product-purchase-bar"]');
   const bottomNav = document.querySelector('[data-testid="bottom-nav"]');
-  if (innerWidth < 640) {
-    check(visible(bar) && !visible(bottomNav), 'only one mobile bottom bar');
-    check(Math.abs(bar.getBoundingClientRect().bottom - innerHeight) <= 1, 'purchase bar sits at the viewport bottom');
-    check(visible(bar.querySelector('[data-testid="product-open-bag"]')), 'mobile cart remains reachable');
-    check(bar.querySelector('button').getBoundingClientRect().height >= 44, 'mobile purchase button meets touch target');
-  } else { check(!visible(bar), 'desktop and tablet use inline purchase controls'); }
+  check(!visible(bar), 'no sticky purchase bar');
+  check(visible(bottomNav) === (innerWidth < 1024), 'standard responsive navigation');
   check(document.documentElement.scrollWidth <= innerWidth + 1, 'no horizontal overflow');
   check(document.documentElement.dir === (language === 'ar' ? 'rtl' : 'ltr'), 'correct writing direction');
-  const panel = innerWidth < 640 ? bar : buyBox;
-  const add = [...panel.querySelectorAll('button')].find(el => visible(el) && el.textContent.includes(language === 'ar' ? 'أضف إلى السلة' : 'Add to cart'));
-  check(Boolean(add && !add.disabled), 'purchase action is enabled');
+  const [add, buy] = buyBox.querySelectorAll('[data-testid="product-purchase-actions"] button');
+  check(visible(add) && visible(buy) && !add.disabled && !buy.disabled, 'both inline purchase actions are available');
+  const addBox = add.getBoundingClientRect();
+  const buyBoxRect = buy.getBoundingClientRect();
+  check(addBox.top === buyBoxRect.top && addBox.height === buyBoxRect.height && addBox.height >= 44, 'purchase buttons align with accessible touch targets');
+  check(language === 'ar' ? addBox.left >= buyBoxRect.right : addBox.right <= buyBoxRect.left, 'purchase buttons sit side by side in reading order');
   add.click();
   await wait(() => JSON.parse(localStorage.getItem('space-call-cart') || '{}').state?.items?.some(item => item.quantity === 2), 'persisted cart');
   const cart = JSON.parse(localStorage.getItem('space-call-cart')).state;
   check(cart.items.length === 1 && cart.items[0].quantity === 2, 'cart stores exact requested quantity');
   const cartTotal = (Number(cart.items[0].price.amount) * 2).toFixed(2);
-  if (innerWidth >= 640 && innerWidth < 1024) {
-    check(visible(bottomNav?.querySelector('a[href="/cart"]')), 'tablet cart remains reachable');
+  if (innerWidth < 1024) {
+    const cartLink = bottomNav?.querySelector('a[href="/cart"]');
+    check(visible(cartLink), 'cart is available from mobile navigation');
+    await wait(() => cartLink.querySelector('[data-testid="bottom-nav-cart-badge"]')?.textContent === '2', 'mobile cart badge reflects the selected quantity');
   } else {
-  const openBag = innerWidth < 640 ? document.querySelector('[data-testid="product-open-bag"]') : [...document.querySelectorAll('button')].find(el => visible(el) && (el.getAttribute('aria-label') || '').startsWith(language === 'ar' ? 'فتح السلة,' : 'Open bag,'));
-  check(Boolean(openBag), 'cart opener remains accessible'); openBag.click();
-  await wait(() => visible(document.querySelector('[role="dialog"]')), 'cart drawer opens');
-  const dialog = document.querySelector('[role="dialog"]');
-  const formattedTotal = new Intl.NumberFormat('en-US', {style:'currency',currency:cart.items[0].price.currencyCode}).format(Number(cartTotal));
-  check(dialog.textContent.includes(formattedTotal), 'cart drawer displays the correct total');
-  dialog.querySelector('button').click();
-  await wait(() => !visible(document.querySelector('[role="dialog"]')), 'cart drawer closes');
+    const openBag = [...document.querySelectorAll('button')].find(el => visible(el) && (el.getAttribute('aria-label') || '').startsWith(language === 'ar' ? 'فتح السلة,' : 'Open bag,'));
+    check(Boolean(openBag), 'cart opener remains accessible'); openBag.click();
+    await wait(() => visible(document.querySelector('[role="dialog"]')), 'cart drawer opens');
+    const dialog = document.querySelector('[role="dialog"]');
+    const formattedTotal = new Intl.NumberFormat('en-US', {style:'currency',currency:cart.items[0].price.currencyCode}).format(Number(cartTotal));
+    check(dialog.textContent.includes(formattedTotal), 'cart drawer displays the correct total');
+    dialog.querySelector('button').click();
+    await wait(() => !visible(document.querySelector('[role="dialog"]')), 'cart drawer closes');
   }
   if (fixture) check(cart.items[0].selectedOptions.some(option => option.value === '512GB'), 'cart stores the selected variant');
   return { width: innerWidth, height: innerHeight, language, fixture, checks: results, cartTotal };

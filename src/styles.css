@@ -708,15 +708,6 @@
     bottom: var(--floating-offset);
     max-height: min(42.5rem, calc(100dvh - var(--floating-offset) - 1rem));
   }
-  @media (width < 40rem) {
-    .store-layout[data-product-purchase-bar="true"] {
-      --floating-offset: calc(5.5rem + env(safe-area-inset-bottom, 0px));
-    }
-    .store-layout[data-product-purchase-bar="true"] [data-testid="bottom-nav"] {
-      display: none;
-    }
-  }
-
   @media (min-width: 640px) {
     .hero-campaign-slide {
       padding: 2rem;

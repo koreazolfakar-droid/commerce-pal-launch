@@ -137,12 +137,14 @@ export function VariantPicker({
   selected,
   onSelect,
   compactSingleValues = false,
+  className,
 }: {
   options: Array<{ name: string; values: string[] }>;
   variants: VariantLike[];
   selected: Record<string, string>;
   onSelect: (name: string, value: string) => void;
   compactSingleValues?: boolean;
+  className?: string;
 }) {
   const { language } = useLanguage();
   const real = options.filter(
@@ -164,7 +166,7 @@ export function VariantPicker({
     );
 
   return (
-    <div className="grid gap-3 sm:gap-4">
+    <div className={cn("grid gap-3 sm:gap-4", className)}>
       {real.map((option) => {
         const color = isColorOption(option.name);
         const label = productOptionLabel(option.name, language);

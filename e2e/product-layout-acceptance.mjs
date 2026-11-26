@@ -43,6 +43,12 @@ try {
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(zoom).toBeFocused();
+  const purchaseActions = page.getByTestId('product-purchase-actions');
+  await purchaseActions.getByRole('button', {name:'Add to cart'}).click();
+  await page.getByTestId('bottom-nav').locator('a[href="/cart"]').click();
+  await expect(page).toHaveURL(/\/cart$/);
+  await expect(page.getByRole('list', {name:'Shopping bag'}).getByText('512GB', {exact:true})).toBeVisible();
+  await page.goBack();
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(page.getByRole('region', {name:'More from Samsung'})).toBeVisible();
   assert.equal(recommendationRequests.length, 1);
@@ -63,7 +69,7 @@ try {
   assert.equal(unavailable?.status(), 404);
   await expect(page.getByRole('heading', {name:'This product is unavailable'})).toBeVisible();
   await expect(page.getByTestId('bottom-nav')).toBeVisible();
-  await expect(page.getByTestId('product-purchase-bar')).toHaveCount(0);
+  await expect(page.getByTestId('product-purchase-actions')).toHaveCount(0);
   console.log('PASS gallery fallback, variant media, accessible zoom, deferred suggestions, mobile checkout, retry and unavailable product');
   await page.close();
 

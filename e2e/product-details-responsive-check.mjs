@@ -105,15 +105,15 @@ try {
     );
     assert.ok((metrics.tabsWidth ?? 0) <= metrics.width + 1);
     if (item.width < 640) {
-      const purchase = await page.getByTestId("product-purchase-bar").boundingBox();
+      const nav = await page.getByTestId("bottom-nav").boundingBox();
       assert.ok(
-        purchase && Math.abs(purchase.y + purchase.height - item.height) <= 1,
-        "Purchase bar must sit at the viewport bottom at " + item.width,
+        nav && Math.abs(nav.y + nav.height - item.height) <= 1,
+        "Mobile navigation must sit at the viewport bottom at " + item.width,
       );
       assert.equal(
-        await page.getByTestId("bottom-nav").isVisible(),
-        false,
-        "Product page must have only one bottom bar on mobile",
+        await page.getByTestId("product-purchase-bar").count(),
+        0,
+        "Product page must use inline purchase actions",
       );
     }
     const recommendationHandles = new Set();

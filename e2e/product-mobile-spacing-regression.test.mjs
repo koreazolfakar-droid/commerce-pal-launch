@@ -4,13 +4,15 @@ import test from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("product page reserves mobile purchase-bar space only once", () => {
+test("product page uses inline purchase actions and shared bottom navigation spacing", () => {
   const product = read("src/routes/product.$handle.tsx");
   const layout = read("src/components/StoreLayout.tsx");
-  assert.match(layout, /productPurchaseBar \? "max-sm:pb-\[calc\(4\.75rem\+env\(safe-area-inset-bottom,0px\)\)\]"/);
+  assert.match(layout, /<BottomNav\s*\/>/);
+  assert.doesNotMatch(layout, /productPurchaseBar/);
   assert.match(product, /max-w-7xl px-4 py-4 pb-6 sm:px-5/);
   assert.doesNotMatch(product, /pb-\[calc\(var\(--mobile-nav-height\)\+/);
-  assert.match(product, /data-testid="product-purchase-bar"/);
+  assert.match(product, /data-testid="product-purchase-actions" className="grid grid-cols-2/);
+  assert.doesNotMatch(product, /data-testid="product-purchase-bar"/);
 });
 
 test("recommendation view controls stay in the heading without a separate empty row", () => {

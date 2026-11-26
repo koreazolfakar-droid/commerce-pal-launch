@@ -423,14 +423,14 @@ async function runRoutes(browser) {
           `${engineName} ${testCase.width}px live product route ${href}`,
         );
 
-        const purchaseBar = page.locator('[data-testid="product-purchase-bar"]:visible');
-        await purchaseBar.waitFor({ state: "visible", timeout: 5000 });
-        const purchaseBox = await purchaseBar.boundingBox();
-        assert.ok(purchaseBox, `${engineName} ${testCase.width}px: purchase bar has no box`);
-        assert.equal(await page.getByTestId("bottom-nav").isVisible(), false,
-          `${engineName} ${testCase.width}px: product page shows duplicate bottom bars`);
-        assert.ok(Math.abs(purchaseBox.y + purchaseBox.height - testCase.height) <= 1,
-          `${engineName} ${testCase.width}px: purchase bar must sit at the viewport bottom`);
+        const bottomNav = page.getByTestId("bottom-nav");
+        await bottomNav.waitFor({ state: "visible", timeout: 5000 });
+        const navBox = await bottomNav.boundingBox();
+        assert.ok(navBox, `${engineName} ${testCase.width}px: navigation has no box`);
+        assert.equal(await page.getByTestId("product-purchase-bar").count(), 0,
+          `${engineName} ${testCase.width}px: product page shows a redundant purchase bar`);
+        assert.ok(Math.abs(navBox.y + navBox.height - testCase.height) <= 1,
+          `${engineName} ${testCase.width}px: mobile navigation must sit at the viewport bottom`);
       }
     }
   }

@@ -12,13 +12,7 @@ import "../ui-overhaul.css";
 import "../design-consistency.css";
 
 /** Shared store chrome: desktop header, mobile app bar, footer and bottom nav. */
-export function StoreLayout({
-  children,
-  productPurchaseBar = false,
-}: {
-  children: ReactNode;
-  productPurchaseBar?: boolean;
-}) {
+export function StoreLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const onHomePage = pathname === "/";
   const onCartPage = pathname === "/cart";
@@ -31,8 +25,7 @@ export function StoreLayout({
 
   return (
     <div
-      className={`store-layout flex min-h-[100dvh] min-w-0 flex-col bg-background ${productPurchaseBar ? "max-sm:pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]" : ""}`}
-      data-product-purchase-bar={productPurchaseBar}
+      className="store-layout flex min-h-[100dvh] min-w-0 flex-col bg-background"
       data-cart-page={onCartPage}
       style={mobileNavStyle}
     >
