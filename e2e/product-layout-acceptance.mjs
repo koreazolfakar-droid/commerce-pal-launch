@@ -82,6 +82,35 @@ try {
   assert.ok(handles.includes('/product/fixture-phone-4'), 'other in-stock phones are also offered');
   assert.deepEqual(handles.toSorted(), [1, 2, 4, 5, 6].map(id => `/product/fixture-phone-${id}`));
   await expect(alternatives.locator('[aria-labelledby="more-from-brand"]')).toHaveCount(0);
+
+  const cards = section.locator('.recommendation-card');
+  const geometry = () => cards.evaluateAll(items => items.map(card => {
+    const rect = card.getBoundingClientRect();
+    const prices = card.querySelector('.recommendation-card-prices');
+    const price = prices.querySelector('bdi').getBoundingClientRect();
+    const media = card.querySelector('.recommendation-card-media').getBoundingClientRect();
+    return {
+      cardTop: Math.round(rect.top),
+      cardWidth: Math.round(rect.width),
+      priceTop: Math.round(price.top),
+      priceAtStart: Math.abs(price.right - prices.getBoundingClientRect().right) < 2,
+      mediaSquare: Math.abs(media.width - media.height) < 2,
+    };
+  }));
+  const mobileCards = await geometry();
+  assert.equal(mobileCards[0].cardTop, mobileCards[1].cardTop);
+  assert.ok(mobileCards[2].cardTop > mobileCards[0].cardTop);
+  assert.equal(mobileCards[0].priceTop, mobileCards[1].priceTop);
+  assert.ok(mobileCards.every(card => card.priceAtStart && card.mediaSquare));
+  await section.getByRole('button', { name: 'عرض 3 أعمدة' }).click();
+  await expect(section.getByRole('button', { name: 'عرض 3 أعمدة' })).toHaveAttribute('aria-pressed', 'true');
+  assert.equal((await geometry())[0].cardTop, (await geometry())[2].cardTop);
+  await section.getByRole('button', { name: 'عرض عمودين' }).click();
+  await alternatives.setViewportSize({ width: 1440, height: 900 });
+  const desktopCards = await geometry();
+  assert.ok(desktopCards.every(card => card.cardTop === desktopCards[0].cardTop));
+  assert.ok(desktopCards.every(card => card.cardWidth === desktopCards[0].cardWidth));
+  console.log('PASS recommendation cards align prices, media and columns on mobile and desktop');
   console.log('PASS category alternatives in Arabic, with comparable price and specifications');
   await alternatives.close();
  }

@@ -29,6 +29,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   eager = false,
   market = false,
   borderless = false,
+  recommendation = false,
 }: {
   product: StoreProduct;
   className?: string;
@@ -36,6 +37,7 @@ export const CompactProductCard = memo(function CompactProductCard({
   eager?: boolean;
   market?: boolean;
   borderless?: boolean;
+  recommendation?: boolean;
 }) {
   const { t, language } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
@@ -53,7 +55,12 @@ export const CompactProductCard = memo(function CompactProductCard({
   const price = variant?.price ?? node.priceRange.minVariantPrice;
   const compareAt = productCompareAt(product);
   const discount = discountPercent(price.amount, compareAt);
-  const summary = variantSummary(variant?.selectedOptions);
+  const selectedOptions = variant?.selectedOptions;
+  const summary = variantSummary(
+    recommendation
+      ? selectedOptions?.filter(({ value }) => !/^default(?:\s+title)?$/i.test(value.trim()))
+      : selectedOptions,
+  );
   const inStock = variant?.availableForSale ?? node.availableForSale ?? true;
   const brand = resolveBrand(product);
   const cartQuantity = variant
@@ -161,13 +168,18 @@ export const CompactProductCard = memo(function CompactProductCard({
   );
 
   if (borderless) {
+    const currentPrice = formatPrice(price.amount, price.currencyCode);
     return (
       <article
         data-testid="product-card"
         role={listItem ? "listitem" : undefined}
-        className={cn("group flex h-full min-w-0 w-full flex-col", className)}
+        className={cn(
+          "group flex h-full min-w-0 w-full flex-col",
+          recommendation && "recommendation-card",
+          className,
+        )}
       >
-        <div className="relative min-w-0">
+        <div className={cn("relative min-w-0", recommendation && "recommendation-card-media")}>
           <Link
             to="/product/$handle"
             params={{ handle: node.handle }}
@@ -198,17 +210,32 @@ export const CompactProductCard = memo(function CompactProductCard({
           )}
 
           {discount !== null && (
-            <span className="absolute start-0 top-0 rounded-md bg-destructive px-1.5 py-0.5 text-[8px] font-bold text-destructive-foreground">
-              -{discount}%
+            <span
+              className={cn(
+                "absolute rounded-md bg-destructive px-1.5 py-0.5 text-[8px] font-bold text-destructive-foreground",
+                recommendation ? "start-2 top-2 text-[11px]" : "start-0 top-0",
+              )}
+            >
+              <bdi>-{discount}%</bdi>
             </span>
           )}
           <QuickViewButton product={product} />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col pt-1.5 sm:pt-2">
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col",
+            recommendation ? "recommendation-card-body" : "pt-1.5 sm:pt-2",
+          )}
+        >
           <div className="flex min-h-4 items-center">
             {brand ? (
-              <p className="truncate text-[10px] font-medium leading-4 text-muted-foreground sm:text-[11px]">
+              <p
+                className={cn(
+                  "truncate font-medium leading-4 text-muted-foreground",
+                  recommendation ? "text-xs" : "text-[10px] sm:text-[11px]",
+                )}
+              >
                 {brand.label}
               </p>
             ) : (
@@ -218,27 +245,57 @@ export const CompactProductCard = memo(function CompactProductCard({
             )}
           </div>
 
-          <bdi className="mt-0.5 whitespace-nowrap text-[0.86rem] font-semibold leading-[1.2] tabular-nums tracking-tight text-foreground sm:text-[0.95rem]">
-            {formatPrice(price.amount, price.currencyCode)}
-          </bdi>
+          {!recommendation && (
+            <bdi className="mt-0.5 whitespace-nowrap text-[0.86rem] font-semibold leading-[1.2] tabular-nums tracking-tight text-foreground sm:text-[0.95rem]">
+              {currentPrice}
+            </bdi>
+          )}
 
           <Link to="/product/$handle" params={{ handle: node.handle }} className="mt-1 min-w-0">
-            <h3 className="product-card-title line-clamp-2 min-h-[2.1rem] break-words text-[0.72rem] font-medium leading-[1.42] text-foreground sm:min-h-[2.45rem] sm:text-sm">
+            <h3
+              dir={recommendation ? "auto" : undefined}
+              title={recommendation ? displayTitle : undefined}
+              className={cn(
+                "product-card-title line-clamp-2 break-words text-foreground",
+                recommendation
+                  ? "recommendation-card-title"
+                  : "min-h-[2.1rem] text-[0.72rem] font-medium leading-[1.42] sm:min-h-[2.45rem] sm:text-sm",
+              )}
+            >
               {displayTitle}
             </h3>
           </Link>
 
           <p
             className={cn(
-              "mt-0.5 min-h-4 truncate text-[9px] leading-4 text-muted-foreground sm:text-[10px]",
-              !summary && "invisible",
+              "mt-0.5 min-h-4 truncate leading-4 text-muted-foreground",
+              recommendation ? "text-xs" : "text-[9px] sm:text-[10px]",
+              !summary && (recommendation ? "hidden" : "invisible"),
             )}
             aria-hidden={!summary ? "true" : undefined}
           >
             {summary || "\u00a0"}
           </p>
 
-          <div className="mt-1.5 flex min-h-9 items-center justify-between gap-2">
+          {recommendation && (
+            <div className="recommendation-card-prices">
+              <bdi className="font-bold tabular-nums tracking-tight text-foreground">
+                {currentPrice}
+              </bdi>
+              {discount !== null && compareAt && (
+                <del className="text-xs tabular-nums text-muted-foreground">
+                  <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
+                </del>
+              )}
+            </div>
+          )}
+
+          <div
+            className={cn(
+              "mt-1.5 flex min-h-9 items-center justify-between gap-2",
+              recommendation && "recommendation-card-footer",
+            )}
+          >
             <span
               className={cn(
                 "inline-flex min-w-0 items-center gap-1.5 truncate text-[10px] font-medium leading-4 sm:text-[11px]",
