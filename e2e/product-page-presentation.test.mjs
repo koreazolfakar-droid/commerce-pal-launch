@@ -65,7 +65,7 @@ test("product page uses unique suggestions and no generic catalogue SEO filler",
   assert.match(route, /buildProductHighlights/);
   assert.doesNotMatch(route, /needsSeoOverview/);
   assert.doesNotMatch(route, /<OfficialProductResearch/);
-  assert.match(route, /data-testid="product-purchase-bar"/);
+  assert.match(route, /data-testid="product-purchase-actions"/);
   assert.match(route, /<VariantPicker/);
   assert.match(route, /productWhatsAppUrl/);
 });
