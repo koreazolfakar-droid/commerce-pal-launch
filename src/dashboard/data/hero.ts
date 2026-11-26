@@ -121,7 +121,6 @@ const ALLOWED_HERO_MIME_TYPES = new Set([
   "image/webp",
   "image/avif",
   "image/gif",
-  "image/svg+xml",
   "image/heic",
   "image/heif",
 ]);
@@ -430,7 +429,7 @@ export async function uploadDashboardHeroImage(
   await requireFreshHeroWriteVerification();
 
   if (!ALLOWED_HERO_MIME_TYPES.has(file.type)) {
-    throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, SVG, HEIC or HEIF.");
+    throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, HEIC or HEIF. SVG is blocked for security.");
   }
   if (file.size <= 0) throw new Error("Image file is empty.");
   if (file.size > MAX_HERO_SOURCE_BYTES)
@@ -465,9 +464,7 @@ export async function uploadDashboardHeroImage(
       note:
         file.type === "image/gif"
           ? "GIF preserved to keep animation."
-          : file.type === "image/svg+xml"
-            ? "SVG preserved to keep vector quality."
-            : "HEIC/HEIF preserved because browser-side WebP conversion support is not reliable.",
+          : "HEIC/HEIF preserved because browser-side WebP conversion support is not reliable.",
     };
   }
 

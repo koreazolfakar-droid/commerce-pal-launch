@@ -1280,7 +1280,7 @@ export default function HeroBannersPage() {
                       <input
                         ref={isDesktop ? desktopFileRef : mobileFileRef}
                         type="file"
-                        accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/svg+xml,image/heic,image/heif"
+                        accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif"
                         className="hidden"
                         onChange={(event) => {
                           const file = event.target.files?.[0];
