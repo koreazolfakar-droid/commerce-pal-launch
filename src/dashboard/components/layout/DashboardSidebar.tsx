@@ -68,14 +68,13 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
 };
 
 function Logo() {
+  const { t } = useLanguage();
   return (
     <div className="dashboard-brand flex min-w-0 items-center gap-3">
-      <div className="dashboard-brand-mark grid size-11 shrink-0 place-items-center rounded-xl" aria-hidden="true">
-        <span>SC</span>
-      </div>
+      <img className="dashboard-store-logo shrink-0" src="/logo.svg" alt="" width="48" height="34" />
       <div className="dashboard-sidebar-brand-copy min-w-0">
-        <div className="dashboard-brand-name truncate">Space Call<span className="dashboard-brand-dot">.</span></div>
-        <div className="dashboard-brand-caption truncate">COMMAND WORKSPACE</div>
+        <div className="dashboard-brand-name truncate" lang="en" dir="ltr">Space Call</div>
+        <div className="dashboard-brand-caption truncate">{t("Store management")}</div>
       </div>
     </div>
   );

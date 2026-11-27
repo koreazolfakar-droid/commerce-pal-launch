@@ -1,4 +1,12 @@
 export const dashboardUiArabic: Record<string, string> = {
+  Confirmed: "مؤكّد",
+  Done: "مكتمل",
+  Refunded: "مستردّ",
+  "Partially Refunded": "مستردّ جزئيًا",
+  Lebanon: "لبنان",
+  "Store operations": "عمليات المتجر",
+  "Store management": "إدارة المتجر",
+  "Completed paid sales · full refunds excluded": "المبيعات المدفوعة المكتملة بعد استبعاد المستردّة بالكامل",
   "Work tools": "أدوات العمل",
   "Work area": "مجال العمل",
   "Daily work": "العمل اليومي",

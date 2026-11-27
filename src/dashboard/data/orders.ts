@@ -452,14 +452,14 @@ export function nextOrderStatus(status: DashboardOrderStatus): DashboardOrderSta
   return null;
 }
 
-export function orderStatusLabel(status: DashboardOrderStatus) {
+export function orderStatusLabel(status: string) {
   if (status === "out_for_delivery") return "Out for delivery";
   if (status === "done") return "Done";
   if (status === "new") return "New";
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
-export function paymentStatusLabel(status: DashboardPaymentStatus) {
+export function paymentStatusLabel(status: string) {
   return status
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))

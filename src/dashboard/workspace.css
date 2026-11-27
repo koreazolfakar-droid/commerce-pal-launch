@@ -2020,13 +2020,6 @@
 
 
 /* Phase 2: clearer operational hierarchy and mobile-first data presentation. */
-.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi:first-child {
-  background:
-    linear-gradient(140deg, color-mix(in oklab, var(--color-primary) 13%, var(--color-card)), var(--color-card) 62%),
-    var(--color-card);
-  border-color: color-mix(in oklab, var(--color-primary) 23%, var(--sc-redesign-line));
-}
-
 .dashboard-theme-scope .dashboard-home-secondary-metrics {
   opacity: 0.92;
 }
@@ -2194,9 +2187,95 @@
   }
 }
 
+.dashboard-home-page {
+  container: store-dashboard / inline-size;
+}
+
+.dashboard-operations {
+  overflow: hidden;
+  border: 1px solid var(--sc-redesign-line);
+  border-radius: 1rem;
+  background: var(--sc-redesign-surface-raised);
+}
+
+.dashboard-store-masthead {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: .55rem;
+  min-height: clamp(11rem, 20cqi, 14rem);
+  padding: 1.45rem clamp(1.25rem, 3.4cqi, 2.6rem);
+  color: #fff;
+  background: #071324;
+}
+
+.dashboard-store-masthead::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, #081728 4%, transparent 68%),
+    url("./assets/phone-workbench.webp") center 48% / cover no-repeat;
+}
+
+[dir="rtl"] .dashboard-store-masthead::before {
+  transform: scaleX(-1);
+}
+
+.dashboard-store-identity {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  color: #c1d5e8;
+  font-size: .8125rem;
+  font-weight: 600;
+}
+
+.dashboard-store-identity > [lang="en"] {
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.dashboard-store-identity > [aria-hidden] {
+  color: #74baff;
+}
+
+.dashboard-store-masthead h1 {
+  font-size: clamp(1.875rem, 3.8cqi, 3rem);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -.045em;
+}
+
+[dir="rtl"] .dashboard-store-masthead h1 {
+  letter-spacing: normal;
+}
+
+.dashboard-store-masthead a {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 44px;
+  margin-block-start: .35rem;
+  padding: .4rem .85rem;
+  border: 1px solid #75869b;
+  border-radius: .5rem;
+  background: #142236;
+  color: white;
+  font-size: .8125rem;
+  font-weight: 600;
+}
+
+.dashboard-store-masthead a:is(:focus-visible, :hover) {
+  background: #243b55;
+  border-color: #c0ddff;
+}
+
 .dashboard-theme-scope .dashboard-work-tools {
-  padding: clamp(0.875rem, 2vw, 1.375rem);
-  border-block-start: 3px solid var(--color-primary);
+  padding: 1rem clamp(1rem, 2.25cqi, 1.75rem) 1.25rem;
 }
 
 .dashboard-work-heading,
@@ -2222,8 +2301,8 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   padding: 0.25rem;
-  border-radius: 0.875rem;
-  background: var(--color-muted);
+  border-radius: .625rem;
+  background: color-mix(in srgb, var(--color-muted) 76%, var(--color-card));
 }
 
 .dashboard-work-switch button {
@@ -2259,6 +2338,12 @@
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.4;
+}
+
+.dashboard-work-arrow {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  color: var(--color-muted-foreground);
 }
 
 .dashboard-work-links a:hover {
@@ -2302,7 +2387,121 @@
   padding: 0 1rem 1rem;
 }
 
-@media (max-width: 640px) {
+.dashboard-report-columns,
+.dashboard-report-charts,
+.dashboard-report-activity {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.dashboard-report-columns {
+  margin-block-start: 1rem;
+  align-items: start;
+}
+
+.dashboard-theme-scope .dashboard-home-primary-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--sc-redesign-line);
+  border-radius: .875rem;
+  background: var(--sc-redesign-line);
+}
+
+.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi {
+  min-height: auto;
+  padding: 1.15rem clamp(.9rem, 1.9cqi, 1.5rem);
+  border: 0;
+  border-radius: 0;
+  background: var(--sc-redesign-surface-raised);
+  box-shadow: none;
+}
+
+.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi:first-child {
+  background: color-mix(in srgb, var(--dashboard-accent) 7%, var(--sc-redesign-surface-raised));
+}
+
+.dashboard-home-primary-metrics .dashboard-kpi-top {
+  flex-direction: row-reverse;
+  justify-content: start;
+  gap: .5rem;
+}
+
+.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi-icon {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.dashboard-home-primary-metrics .dashboard-kpi-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi-value {
+  margin-block: .6rem .2rem;
+  font-size: clamp(1.65rem, 3.25cqi, 2.4rem);
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.dashboard-home-primary-metrics .dashboard-kpi-detail {
+  font-size: .75rem;
+  line-height: 1.55;
+}
+
+.dashboard-theme-scope .dashboard-home-page .dashboard-report-caption {
+  justify-content: space-between;
+  margin-block: .65rem 1rem;
+}
+
+.dashboard-theme-scope .dashboard-home-header {
+  margin-block: .25rem 1rem;
+}
+
+@container store-dashboard (min-width: 46rem) {
+  .dashboard-theme-scope .dashboard-home-primary-metrics {
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard-report-columns {
+    grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
+  }
+
+  .dashboard-report-charts { grid-area: 1 / 1; }
+  .dashboard-report-activity { grid-area: 1 / 2; }
+}
+
+@container store-dashboard (max-width: 38rem) {
+  .dashboard-store-masthead { min-height: 9.5rem; padding-block: 1rem; }
+
+  .dashboard-work-heading { gap: .5rem; }
+
+  .dashboard-theme-scope .dashboard-home-header .dashboard-overview-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: .45rem;
+    width: 100%;
+  }
+
+  .dashboard-theme-scope .dashboard-home-header .dashboard-overview-tools label { grid-column: auto; }
+
+  .dashboard-home-header select { width: 100%; min-width: 0; }
+
+  .dashboard-theme-scope .dashboard-home-header .dashboard-report-refresh {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-size: 0;
+    gap: 0;
+  }
+
   .dashboard-work-switch,
   .dashboard-work-links {
     display: grid;
@@ -2310,8 +2509,25 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .dashboard-work-links { margin-block-start: .65rem; }
+
   .dashboard-work-links a {
-    flex-direction: column;
-    align-items: start;
+    min-height: 44px;
+    padding: .55rem;
+    gap: .45rem;
+    font-size: .8125rem;
+  }
+
+  .dashboard-work-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: none;
+  }
+
+  .dashboard-work-arrow { display: none; }
+  .dashboard-store-masthead::before {
+    background-position: center, 55% center;
+    background-image: linear-gradient(90deg, #081728 5%, #081728dc 38%, transparent 86%),
+      url("./assets/phone-workbench.webp");
   }
 }

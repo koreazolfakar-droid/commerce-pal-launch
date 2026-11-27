@@ -1,4 +1,6 @@
 import {
+  ChevronRight,
+  ExternalLink,
   Boxes,
   ClipboardList,
   FolderOpen,
@@ -15,6 +17,7 @@ import {
   Truck,
 } from "lucide-react";
 import { useState } from "react";
+import { SITE_URL } from "@/lib/storeConfig";
 import { Link } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
 import { readPreference, writePreference } from "@/dashboard/lib/preferenceStorage";
@@ -71,43 +74,60 @@ export default function DashboardWorkTools() {
   });
 
   return (
-    <section
-      aria-labelledby="dashboard-work-title"
-      className="dashboard-panel dashboard-work-tools"
-    >
-      <div className="dashboard-work-heading">
-        <h2 id="dashboard-work-title">{t("Work tools")}</h2>
-        <div role="group" aria-label={t("Work area")} className="dashboard-work-switch">
-          {sections.map((section) => (
-            <button
-              key={section.label}
-              type="button"
-              aria-pressed={section === selected}
-              aria-controls="dashboard-work-links"
-              onClick={() => {
-                setSelected(section);
-                writePreference(preference, section.label);
-              }}
-            >
-              {t(section.label)}
-            </button>
-          ))}
+    <div className="dashboard-operations">
+      <header className="dashboard-store-masthead">
+        <div className="dashboard-store-identity">
+          <span lang="en" dir="ltr">
+            Space Call
+          </span>
+          <span aria-hidden="true">/</span>
+          <span>{t("Lebanon")}</span>
         </div>
-      </div>
-      <nav
-        id="dashboard-work-links"
-        aria-label={t(selected.label)}
-        className="dashboard-work-links"
-      >
-        {selected.tools.map(({ label, href, icon: Icon }) => (
-          <Link key={href} href={href}>
-            <span className="dashboard-work-icon">
-              <Icon size={20} aria-hidden="true" />
-            </span>
-            <span>{t(label)}</span>
-          </Link>
-        ))}
-      </nav>
-    </section>
+        <h1>{t("Store operations")}</h1>
+        <a href={SITE_URL} target="_blank" rel="noopener noreferrer">
+          {t("View storefront")} <ExternalLink size={15} aria-hidden="true" />
+        </a>
+      </header>
+      <section aria-labelledby="dashboard-work-title" className="dashboard-work-tools">
+        <div className="dashboard-work-heading">
+          <h2 id="dashboard-work-title">{t("Work tools")}</h2>
+          <div role="group" aria-label={t("Work area")} className="dashboard-work-switch">
+            {sections.map((section) => (
+              <button
+                key={section.label}
+                type="button"
+                aria-pressed={section === selected}
+                aria-controls="dashboard-work-links"
+                onClick={() => {
+                  setSelected(section);
+                  writePreference(preference, section.label);
+                }}
+              >
+                {t(section.label)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <nav
+          id="dashboard-work-links"
+          aria-label={t(selected.label)}
+          className="dashboard-work-links"
+        >
+          {selected.tools.map(({ label, href, icon: Icon }) => (
+            <Link key={href} href={href}>
+              <span className="dashboard-work-icon">
+                <Icon size={20} aria-hidden="true" />
+              </span>
+              <span>{t(label)}</span>
+              <ChevronRight
+                className="dashboard-work-arrow dashboard-directional"
+                size={16}
+                aria-hidden="true"
+              />
+            </Link>
+          ))}
+        </nav>
+      </section>
+    </div>
   );
 }
