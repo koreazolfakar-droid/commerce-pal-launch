@@ -47,7 +47,7 @@ test("Deep Security Scan has one aggregator job", async () => {
   assert.match(workflow, /if: always\(\)/);
   assert.match(workflow, /APPLICATION_SECURITY: \$\{\{ needs\.application-security\.result \}\}/);
   for (const result of ["QUALITY", "APPLICATION_SECURITY", "SECRETS", "SAST", "SUPPLY_CHAIN"]) {
-    assert.ok(workflow.includes(`"${result}" != "success"`), `${result} must fail closed`);
+    assert.ok(workflow.includes(`"$${result}" != "success"`), `${result} must fail closed`);
   }
   assert.match(workflow, /exit 1/);
   assert.match(workflow, /Deep Security Scan blocked this run/);
