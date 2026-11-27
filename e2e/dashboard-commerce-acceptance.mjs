@@ -88,6 +88,8 @@ async function verifiedStaff(client, name, role) {
   );
   // The role alone must never bypass MFA.
   assert.equal(await rpc(client, "dashboard_staff_access_ready"), false);
+  assert.equal(await rpc(client, "is_staff", { _user_id: operator.id }), false);
+  assert.equal(await rpc(client, "has_role", { _user_id: operator.id, _role: role }), false);
   for (const inventoryRpc of ["dashboard_inventory_page", "dashboard_inventory_summary"]) {
     const { error } = await client.rpc(inventoryRpc);
     assert.match(error?.message ?? "", /dashboard authentication is required/);
@@ -164,6 +166,8 @@ try {
     "aal2",
   );
   assert.equal(await rpc(staff, "dashboard_staff_access_ready"), true);
+  assert.equal(await rpc(staff, "is_staff", { _user_id: session.user.id }), true);
+  assert.equal(await rpc(staff, "has_role", { _user_id: session.user.id, _role: "admin" }), true);
   await rpc(staff, "dashboard_inventory_page");
   await rpc(staff, "dashboard_inventory_summary");
   checked("real password + TOTP staff authentication and database authorization");
@@ -297,7 +301,12 @@ try {
     });
     assert.equal(declined.error?.message, "pricing_changed");
   }
-  const historicalPayload = { ...payload, idempotency_key: randomUUID() };
+  // Keep the historical guest separate from the buyer's CRM record.
+  const historicalPayload = {
+    ...payload,
+    customer: { ...payload.customer, phone: payload.customer.phone.replace("+96171", "+96170") },
+    idempotency_key: randomUUID(),
+  };
   const historical = await rpc(admin, "create_store_order_internal", { payload: historicalPayload });
   const ownership = await admin.rpc("create_store_order_for_customer_internal", {
     payload: historicalPayload,
