@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 const HIBP_RANGE_URL = "https://api.pwnedpasswords.com/range/";
 const HIBP_TIMEOUT_MS = 8_000;
@@ -199,6 +199,16 @@ Deno.serve(async (req) => {
   if (compromised) {
     return json(req, { error: "compromised_password" }, 422);
   }
+
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!anonKey) return json(req, { error: "server_not_configured" }, 503);
+  const caller = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: ready, error: sessionError } = await caller.rpc("dashboard_staff_access_ready");
+  if (sessionError) return json(req, { error: "authorization_unavailable" }, 503);
+  if (ready !== true) return json(req, { error: "dashboard_access_required" }, 403);
 
   const { error: updateError } = await admin.auth.admin.updateUserById(user.id, {
     password,
