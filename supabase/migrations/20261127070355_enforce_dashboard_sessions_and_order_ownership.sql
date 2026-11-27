@@ -40,6 +40,33 @@ as $$
   );
 $$;
 
+-- Older permissive policies are ORed with the dashboard policies. Role
+-- management must go through the current admin and self-enrollment rules.
+drop policy if exists "admins manage roles" on public.user_roles;
+drop policy if exists "admins read all roles" on public.user_roles;
+
+-- Legacy CMS and media policies call these functions. Use the same live MFA
+-- check and let the existing user_roles RLS govern which roles may be read.
+create or replace function public.has_role(_user_id uuid, _role public.app_role)
+returns boolean
+language sql stable security invoker
+set search_path = ''
+as $$
+  select (select private.is_dashboard_staff()) and exists (
+    select 1 from public.user_roles r where r.user_id = _user_id and r.role = _role
+  );
+$$;
+
+create or replace function public.is_staff(_user_id uuid)
+returns boolean
+language sql stable security invoker
+set search_path = ''
+as $$
+  select (select private.is_dashboard_staff()) and exists (
+    select 1 from public.user_roles r where r.user_id = _user_id and r.role in ('admin', 'editor')
+  );
+$$;
+
 create or replace function private.dashboard_inventory_page_impl(
   p_search text default null,
   p_category_id uuid default null,

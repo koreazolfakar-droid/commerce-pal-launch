@@ -17,7 +17,8 @@ test("dashboard access requires the current user's live session for either secon
       create role service_role;
       create table auth.users (id uuid primary key);
       create table auth.sessions (id uuid primary key, user_id uuid, not_after timestamptz);
-      create table public.user_roles (user_id uuid, role text);
+      create type public.app_role as enum ('admin', 'editor');
+      create table public.user_roles (user_id uuid, role public.app_role);
       create function auth.jwt() returns jsonb language sql as $$
         select current_setting('test.claims')::jsonb
       $$;
@@ -41,9 +42,11 @@ test("dashboard access requires the current user's live session for either secon
       ]);
     async function access(staff, admin) {
       const result = await db.query(
-        "select private.is_dashboard_staff() as staff, private.is_dashboard_admin() as admin",
+        `select private.is_dashboard_staff() as staff, private.is_dashboard_admin() as admin,
+                  public.is_staff(auth.uid()) as legacy_staff,
+                  public.has_role(auth.uid(), 'admin') as legacy_admin`,
       );
-      assert.deepEqual(result.rows[0], { staff, admin });
+      assert.deepEqual(result.rows[0], { staff, admin, legacy_staff: staff, legacy_admin: admin });
     }
     await claims("aal1");
     await access(false, false);
