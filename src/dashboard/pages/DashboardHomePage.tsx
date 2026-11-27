@@ -1,5 +1,6 @@
 import DashboardWorkTools from "@/dashboard/components/layout/DashboardWorkTools";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
+import { orderStatusLabel, paymentStatusLabel } from "@/dashboard/data/orders";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
 import { useLanguage } from "@/dashboard/i18n";
 import {
@@ -52,7 +53,9 @@ function KpiCard({
           <Icon className="size-5" />
         </span>
       </div>
-      <div className="dashboard-kpi-value">{value}</div>
+      <div className="dashboard-kpi-value">
+        <bdi>{value}</bdi>
+      </div>
       <div className="dashboard-kpi-detail">{t(detail)}</div>
     </div>
   );
@@ -93,8 +96,11 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 export default function DashboardHomePage({ analyticsView = false }: { analyticsView?: boolean }) {
   return (
     <div className="dashboard-home-page space-y-5">
-      <PageTitle eyebrow="Space Call" title={analyticsView ? "Analytics" : "Dashboard"} />
-      {!analyticsView && <DashboardWorkTools />}
+      {analyticsView ? (
+        <PageTitle eyebrow="Space Call" title="Analytics" />
+      ) : (
+        <DashboardWorkTools />
+      )}
       <DashboardReport analyticsView={analyticsView} />
     </div>
   );
@@ -102,11 +108,14 @@ export default function DashboardHomePage({ analyticsView = false }: { analytics
 
 export function DashboardReport({ analyticsView = false }: { analyticsView?: boolean }) {
   const { t, lang } = useLanguage();
-  const locale = lang === "ar" ? "ar" : "en-US";
+  const locale = lang === "ar" ? "ar-LB" : "en-US";
   const money = (value: number, currency = "USD") =>
-    new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 2 }).format(
-      value,
-    );
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      currencyDisplay: currency === "USD" ? "narrowSymbol" : "symbol",
+      maximumFractionDigits: 2,
+    }).format(value);
   const integer = (value: number) => value.toLocaleString(locale);
   const [period, setPeriod] = useState<7 | 30 | 90>(30);
   // Keep report labels tied to the data that actually loaded, including after a failed range change.
@@ -171,6 +180,18 @@ export function DashboardReport({ analyticsView = false }: { analyticsView?: boo
     return `${start} – ${end}`;
   }, [snapshot, locale]);
 
+  const trend = useMemo(() => {
+    const day = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+    return (snapshot?.trend ?? []).map((point) => {
+      const timestamp = Date.parse(point.date);
+      return { ...point, label: Number.isFinite(timestamp) ? day.format(timestamp) : point.label };
+    });
+  }, [locale, snapshot]);
+
   if (loading && !snapshot) {
     return (
       <div className="space-y-5" aria-busy="true">
@@ -226,7 +247,10 @@ export function DashboardReport({ analyticsView = false }: { analyticsView?: boo
   return (
     <div aria-busy={loading || refreshing}>
       <div className="dashboard-overview-header dashboard-home-header">
-        <h2 className="text-lg font-semibold text-foreground">{t("Store performance")}</h2>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">{t("Store performance")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{rangeLabel}</p>
+        </div>
         <div className="dashboard-overview-tools">
           <label>
             <span className="sr-only">{t("Report period")}</span>
@@ -245,7 +269,9 @@ export function DashboardReport({ analyticsView = false }: { analyticsView?: boo
             type="button"
             onClick={() => void load(true)}
             disabled={loading || refreshing}
-            className="dashboard-button"
+            title={t("Refresh")}
+            aria-label={t("Refresh")}
+            className="dashboard-button dashboard-report-refresh"
           >
             <RefreshCw
               aria-hidden="true"
@@ -318,20 +344,6 @@ export function DashboardReport({ analyticsView = false }: { analyticsView?: boo
           </button>
         </div>
       ) : null}
-      <div className="dashboard-report-caption">
-        <span>{rangeLabel}</span>
-        <span aria-hidden="true">·</span>
-        <span>
-          {t("Sales and orders follow the selected period; catalog and stock show current totals.")}
-        </span>
-        {updatedAt && (
-          <time dateTime={updatedAt.toISOString()}>
-            {t(error ? "Last successful update" : "Updated")}{" "}
-            {updatedAt.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
-          </time>
-        )}
-      </div>
-
       <div className="dashboard-overview-metrics dashboard-home-primary-metrics grid grid-cols-2 gap-4 xl:grid-cols-4">
         <KpiCard
           icon={BarChart3}
@@ -359,81 +371,185 @@ export function DashboardReport({ analyticsView = false }: { analyticsView?: boo
         />
       </div>
 
-      <div className="mt-4 grid items-start gap-4 xl:grid-cols-2">
-        {!analyticsView && (
-          <Panel title="Stock alerts" className="dashboard-attention-panel">
-            {snapshot.lowStockVariants || snapshot.outOfStockVariants ? (
-              <div className="dashboard-attention-list divide-y divide-slate-100">
-                {[
-                  {
-                    label: "Out of stock",
-                    value: snapshot.outOfStockVariants,
-                    tone: "text-rose-600 bg-rose-50",
-                  },
-                  {
-                    label: "Low stock",
-                    value: snapshot.lowStockVariants,
-                    tone: "text-amber-600 bg-amber-50",
-                  },
-                ]
-                  .filter((row) => row.value > 0)
-                  .map((row) => (
-                    <button
-                      key={row.label}
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/inventory?attention=${row.label === "Out of stock" ? "out" : "low"}`,
-                        )
-                      }
-                      className="dashboard-attention-row flex w-full items-center gap-3 px-5 py-3.5 text-start hover:bg-slate-50"
-                    >
-                      <span className={`grid size-8 place-items-center rounded-lg ${row.tone}`}>
-                        <AlertTriangle className="size-4" />
-                      </span>
-                      <span className="dashboard-attention-label flex-1 text-[12px] font-semibold text-slate-700">
-                        {t(row.label)}
-                      </span>
-                      <span className="dashboard-attention-value text-[13px] font-bold text-[#14203a]">
-                        {integer(row.value)}
-                      </span>
-                    </button>
-                  ))}
+      <div className="dashboard-report-caption">
+        <span>
+          {t("Sales and orders follow the selected period; catalog and stock show current totals.")}
+        </span>
+        {updatedAt && (
+          <time dateTime={updatedAt.toISOString()}>
+            {t(error ? "Last successful update" : "Updated")}{" "}
+            {updatedAt.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+          </time>
+        )}
+      </div>
+
+      <div className="dashboard-report-columns">
+        <div className="dashboard-report-activity">
+          {!analyticsView && (
+            <Panel title="Stock alerts" className="dashboard-attention-panel">
+              {snapshot.lowStockVariants || snapshot.outOfStockVariants ? (
+                <div className="dashboard-attention-list divide-y divide-slate-100">
+                  {[
+                    {
+                      label: "Out of stock",
+                      value: snapshot.outOfStockVariants,
+                      tone: "text-rose-600 bg-rose-50",
+                    },
+                    {
+                      label: "Low stock",
+                      value: snapshot.lowStockVariants,
+                      tone: "text-amber-600 bg-amber-50",
+                    },
+                  ]
+                    .filter((row) => row.value > 0)
+                    .map((row) => (
+                      <button
+                        key={row.label}
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/inventory?attention=${row.label === "Out of stock" ? "out" : "low"}`,
+                          )
+                        }
+                        className="dashboard-attention-row flex w-full items-center gap-3 px-5 py-3.5 text-start hover:bg-slate-50"
+                      >
+                        <span className={`grid size-8 place-items-center rounded-lg ${row.tone}`}>
+                          <AlertTriangle className="size-4" />
+                        </span>
+                        <span className="dashboard-attention-label flex-1 text-sm font-semibold text-foreground">
+                          {t(row.label)}
+                        </span>
+                        <span className="dashboard-attention-value text-[13px] font-bold text-[#14203a]">
+                          {integer(row.value)}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <EmptyState>{t("No low-stock or out-of-stock variants.")}</EmptyState>
+              )}
+            </Panel>
+          )}
+          <Panel title={t("Recent orders")}>
+            {snapshot.recentOrders.length ? (
+              <div className="dashboard-recent-orders divide-y divide-slate-100">
+                {snapshot.recentOrders.map((order) => (
+                  <button
+                    key={order.id}
+                    type="button"
+                    onClick={() => navigate(`/dashboard/orders/${order.id}`)}
+                    className="dashboard-recent-order-row grid w-full grid-cols-[minmax(0,1fr)_auto] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
+                  >
+                    <div className="min-w-0">
+                      <div className="dashboard-recent-order-title break-words text-sm font-semibold text-foreground">
+                        <bdi>#{order.orderNumber}</bdi> · <bdi>{order.customer}</bdi>
+                      </div>
+                      <div className="mt-1 break-words text-xs text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleString(locale)} ·{" "}
+                        {t(orderStatusLabel(order.status))} ·{" "}
+                        {t(paymentStatusLabel(order.paymentStatus))}
+                      </div>
+                    </div>
+                    <div className="text-sm font-semibold text-foreground">
+                      <bdi>{money(order.total, order.currency || "USD")}</bdi>
+                    </div>
+                  </button>
+                ))}
               </div>
             ) : (
-              <EmptyState>{t("No low-stock or out-of-stock variants.")}</EmptyState>
+              <EmptyState>{t("No orders exist yet. New orders will appear here.")}</EmptyState>
             )}
           </Panel>
-        )}
-        <Panel title={t("Recent orders")}>
-          {snapshot.recentOrders.length ? (
-            <div className="dashboard-recent-orders divide-y divide-slate-100">
-              {snapshot.recentOrders.map((order) => (
-                <button
-                  key={order.id}
-                  type="button"
-                  onClick={() => navigate(`/dashboard/orders/${order.id}`)}
-                  className="dashboard-recent-order-row grid w-full grid-cols-[minmax(0,1fr)_auto] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary items-center gap-4 px-5 py-4 text-start hover:bg-slate-50"
-                >
-                  <div className="min-w-0">
-                    <div className="dashboard-recent-order-title break-words text-[12px] font-bold text-slate-700">
-                      #{order.orderNumber} · {order.customer}
-                    </div>
-                    <div className="mt-1 break-words text-[10px] text-slate-400">
-                      {new Date(order.createdAt).toLocaleString(locale)} · {order.status} ·{" "}
-                      {order.paymentStatus}
-                    </div>
-                  </div>
-                  <div className="text-[12px] font-bold text-[#14203a]">
-                    {money(order.total, order.currency || "USD")}
-                  </div>
-                </button>
-              ))}
+        </div>
+        <div className="dashboard-report-charts">
+          <Panel title={t("Revenue trend")} subtitle={`${t("Completed sales")} · ${periodLabel}`}>
+            <div className="dashboard-chart h-[280px] p-4" dir="ltr">
+              {snapshot.trend.some((point) => point.revenue > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={trend}
+                    accessibilityLayer
+                    margin={{ top: 10, right: 8, left: -10, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="dashboardRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--dashboard-accent)" stopOpacity={0.2} />
+                        <stop
+                          offset="100%"
+                          stopColor="var(--dashboard-accent)"
+                          stopOpacity={0.02}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      vertical={false}
+                      strokeDasharray="3 3"
+                      stroke="var(--dashboard-line)"
+                    />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={12}
+                      minTickGap={28}
+                    />
+                    <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                    <Tooltip formatter={(value) => money(Number(value))} />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      isAnimationActive={false}
+                      stroke="var(--dashboard-accent)"
+                      fill="url(#dashboardRevenueFill)"
+                      name={t("Revenue")}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState>{t("No sales in this period.")}</EmptyState>
+              )}
             </div>
-          ) : (
-            <EmptyState>{t("No orders exist yet. New orders will appear here.")}</EmptyState>
-          )}
-        </Panel>
+          </Panel>
+
+          <Panel title={t("Orders trend")} subtitle={periodLabel}>
+            <div className="dashboard-chart h-[280px] p-4" dir="ltr">
+              {snapshot.trend.some((point) => point.orders > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={trend}
+                    accessibilityLayer
+                    margin={{ top: 10, right: 8, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      vertical={false}
+                      strokeDasharray="3 3"
+                      stroke="var(--dashboard-line)"
+                    />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={12}
+                      minTickGap={28}
+                    />
+                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={12} />
+                    <Tooltip />
+                    <Bar
+                      dataKey="orders"
+                      isAnimationActive={false}
+                      fill="var(--dashboard-accent)"
+                      name={t("Orders")}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState>{t("No orders in this period.")}</EmptyState>
+              )}
+            </div>
+          </Panel>
+        </div>
       </div>
 
       <details className="dashboard-panel dashboard-stock-summary mt-4">
@@ -468,80 +584,6 @@ export function DashboardReport({ analyticsView = false }: { analyticsView?: boo
           />
         </div>
       </details>
-
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <Panel title={t("Revenue trend")} subtitle={`${t("Completed sales")} · ${periodLabel}`}>
-          <div className="dashboard-chart h-[280px] p-4" dir="ltr">
-            {snapshot.trend.some((point) => point.revenue > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={snapshot.trend}
-                  margin={{ top: 10, right: 8, left: -10, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="dashboardRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--dashboard-accent)" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="var(--dashboard-accent)" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eef1f6" />
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    fontSize={10}
-                    minTickGap={28}
-                  />
-                  <YAxis tickLine={false} axisLine={false} fontSize={10} />
-                  <Tooltip formatter={(value) => money(Number(value))} />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="var(--dashboard-accent)"
-                    fill="url(#dashboardRevenueFill)"
-                    className="text-[#5968ea]"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState>{t("No sales in this period.")}</EmptyState>
-            )}
-          </div>
-        </Panel>
-
-        <Panel title={t("Orders trend")} subtitle={periodLabel}>
-          <div className="dashboard-chart h-[280px] p-4" dir="ltr">
-            {snapshot.trend.some((point) => point.orders > 0) ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={snapshot.trend}
-                  margin={{ top: 10, right: 8, left: -10, bottom: 0 }}
-                >
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eef1f6" />
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    fontSize={10}
-                    minTickGap={28}
-                  />
-                  <YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={10} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="orders"
-                    fill="var(--dashboard-accent)"
-                    className="text-[#7c6ee6]"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState>{t("No orders in this period.")}</EmptyState>
-            )}
-          </div>
-        </Panel>
-      </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <Panel

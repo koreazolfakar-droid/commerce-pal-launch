@@ -70,6 +70,7 @@ function harness() {
     "@/dashboard/i18n": { useLanguage: () => ({ t, lang: "en" }) },
     "@/dashboard/components/layout/PageTitle": { PageTitle: "PageTitle" },
     "@/dashboard/lib/exportCsv": { downloadCsv: (...args) => downloads.push(args) },
+    "@/dashboard/data/orders": { orderStatusLabel: t, paymentStatusLabel: t },
     "@/dashboard/data/home": {
       loadDashboardHomeSnapshot(period) {
         return new Promise((resolve, reject) => requests.push({ period, resolve, reject }));

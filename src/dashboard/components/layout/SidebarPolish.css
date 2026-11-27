@@ -12,7 +12,7 @@
   --sc-side-active: #eaf3ff;
   --sc-side-focus: #a2c4ff;
   color: var(--sc-side-text);
-  background: linear-gradient(165deg, #192c48 0%, #13233d 42%, #101b2d 100%);
+  background: #111c2c;
   border-inline-end: 1px solid var(--sc-side-line);
   box-shadow: 2px 0 20px rgba(10, 20, 39, 0.08);
   font-size: 13px;
@@ -29,19 +29,10 @@
 .dashboard-theme-scope .sidebar-polished .dashboard-brand {
   gap: 10px;
 }
-.dashboard-theme-scope .sidebar-polished .dashboard-brand-mark {
-  inline-size: 38px;
-  block-size: 38px;
-  flex: 0 0 38px;
-  border: 1px solid rgba(178, 207, 255, 0.27);
-  border-radius: 11px;
-  background: linear-gradient(145deg, #3465b5, #244787);
-  box-shadow: 0 2px 8px rgba(4, 13, 35, 0.17), inset 0 1px 0 rgba(255,255,255,.16);
-  color: #fff;
-}
-.dashboard-theme-scope .sidebar-polished .dashboard-brand-mark span {
-  font-size: 12px;
-  font-weight: 800;
+.dashboard-theme-scope .sidebar-polished .dashboard-store-logo {
+  width: 48px;
+  height: 36px;
+  object-fit: contain;
 }
 .dashboard-theme-scope .sidebar-polished .dashboard-brand-name {
   color: #f8fbff;
@@ -55,10 +46,10 @@
 }
 .dashboard-theme-scope .sidebar-polished .dashboard-brand-caption {
   color: #a5b7d1;
-  font-size: 9px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.5;
-  letter-spacing: 0.13em;
+  letter-spacing: normal;
   margin-block-start: 3px;
 }
 
