@@ -7,7 +7,6 @@ import { getDashboardRole } from "@/dashboard/data/catalog";
 type OrderRow = Tables<"store_orders"> & {
   public_order_number: string;
   delivery_type: string | null;
-  delivery_location: string | null;
   version: number;
   completed_at: string | null;
 };
@@ -26,17 +25,9 @@ export type DashboardOrderStatus =
 
 export type DashboardDeliveryType = "pending" | "paid" | "free";
 
-export type DashboardPaymentStatus =
-  | "unpaid"
-  | "paid"
-  | "refunded"
-  | "partially_refunded";
+export type DashboardPaymentStatus = "unpaid" | "paid" | "refunded" | "partially_refunded";
 
-export type DashboardOrdersSort =
-  | "newest"
-  | "oldest"
-  | "total_high"
-  | "total_low";
+export type DashboardOrdersSort = "newest" | "oldest" | "total_high" | "total_low";
 
 export type DashboardOrderListItem = {
   id: string;
@@ -156,28 +147,36 @@ function paymentFromRow(value: string): DashboardPaymentStatus {
   return "unpaid";
 }
 
-async function countOrders(status?: DashboardOrderStatus) {
-  let query = supabase.from("store_orders").select("id", { count: "exact", head: true });
-  if (status) query = query.eq("status", status);
-  const { count, error } = await query;
-  throwIfError(error, `Counting ${status ?? "all"} orders failed`);
-  return count ?? 0;
-}
+type DashboardOrderStatsRpcRow = {
+  all_count: number | string;
+  new_count: number | string;
+  confirmed_count: number | string;
+  processing_count: number | string;
+  ready_count: number | string;
+  out_for_delivery_count: number | string;
+  delivered_count: number | string;
+  done_count: number | string;
+  cancelled_count: number | string;
+};
 
 async function loadOrderStats(): Promise<DashboardOrderStats> {
-  const [all, fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled] =
-    await Promise.all([
-      countOrders(),
-      countOrders("new"),
-      countOrders("confirmed"),
-      countOrders("processing"),
-      countOrders("ready"),
-      countOrders("out_for_delivery"),
-      countOrders("delivered"),
-      countOrders("done"),
-      countOrders("cancelled"),
-    ]);
-  return { all, new: fresh, confirmed, processing, ready, outForDelivery, delivered, done, cancelled };
+  const { data, error } = await looseSupabase.rpc("get_dashboard_order_stats");
+  throwIfError(error, "Loading order stats failed");
+
+  const row = (Array.isArray(data) ? data[0] : data) as DashboardOrderStatsRpcRow | null;
+  const count = (value: number | string | undefined) => Number(value ?? 0) || 0;
+
+  return {
+    all: count(row?.all_count),
+    new: count(row?.new_count),
+    confirmed: count(row?.confirmed_count),
+    processing: count(row?.processing_count),
+    ready: count(row?.ready_count),
+    outForDelivery: count(row?.out_for_delivery_count),
+    delivered: count(row?.delivered_count),
+    done: count(row?.done_count),
+    cancelled: count(row?.cancelled_count),
+  };
 }
 
 export async function listDashboardOrders(input?: {
@@ -227,13 +226,9 @@ export async function listDashboardOrders(input?: {
   if (sort === "oldest") {
     query = query.order("created_at", { ascending: true });
   } else if (sort === "total_high") {
-    query = query
-      .order("total", { ascending: false })
-      .order("created_at", { ascending: false });
+    query = query.order("total", { ascending: false }).order("created_at", { ascending: false });
   } else if (sort === "total_low") {
-    query = query
-      .order("total", { ascending: true })
-      .order("created_at", { ascending: false });
+    query = query.order("total", { ascending: true }).order("created_at", { ascending: false });
   } else {
     query = query.order("created_at", { ascending: false });
   }
@@ -297,8 +292,7 @@ export async function listDashboardOrders(input?: {
         customerName: row.customer_name,
         customerPhone: row.customer_phone,
         customerEmail: row.customer_email,
-        itemSummary:
-          preview + (orderItems.length > 2 ? ` +${orderItems.length - 2} more` : ""),
+        itemSummary: preview + (orderItems.length > 2 ? ` +${orderItems.length - 2} more` : ""),
         itemCount,
         total: Number(row.total) || 0,
         currency: row.currency,
@@ -368,7 +362,9 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
     total: Number(order.total) || 0,
     source: order.source,
     deliveryType:
-      order.delivery_type === "paid" || order.delivery_type === "free" ? order.delivery_type : "pending",
+      order.delivery_type === "paid" || order.delivery_type === "free"
+        ? order.delivery_type
+        : "pending",
     deliveryLocation: order.delivery_location,
     version: order.version,
     completedAt: order.completed_at,
@@ -385,7 +381,7 @@ export async function getDashboardOrder(id: string): Promise<DashboardOrderDetai
       quantity: item.quantity,
       lineTotal: Number(item.line_total) || 0,
       options: item.options,
-      imageUrl: item.product_id ? imageByProduct.get(item.product_id) ?? "" : "",
+      imageUrl: item.product_id ? (imageByProduct.get(item.product_id) ?? "") : "",
     })),
   };
 }
@@ -396,11 +392,14 @@ export async function updateDashboardOrderStatus(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_status", rpcArgs({
-    p_order_id: id,
-    p_status: status,
-    p_expected_version: expectedVersion,
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_order_status",
+    rpcArgs({
+      p_order_id: id,
+      p_status: status,
+      p_expected_version: expectedVersion,
+    }),
+  );
   throwIfError(error, "Updating order status failed");
   return getDashboardOrder(id);
 }
@@ -411,11 +410,14 @@ export async function updateDashboardOrderPaymentStatus(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("update_store_order_payment_status", rpcArgs({
-    p_order_id: id,
-    p_payment_status: paymentStatus,
-    p_expected_version: expectedVersion,
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_order_payment_status",
+    rpcArgs({
+      p_order_id: id,
+      p_payment_status: paymentStatus,
+      p_expected_version: expectedVersion,
+    }),
+  );
   throwIfError(error, "Updating order payment status failed");
   return getDashboardOrder(id);
 }
@@ -427,12 +429,15 @@ export async function updateDashboardOrderDelivery(
   expectedVersion: number,
 ): Promise<DashboardOrderDetail | null> {
   await requireDashboardStaff();
-  const { error } = await looseSupabase.rpc("update_store_order_delivery", rpcArgs({
-    p_order_id: id,
-    p_delivery_type: deliveryType,
-    p_shipping_total: deliveryType === "free" ? 0 : shippingTotal,
-    p_expected_version: expectedVersion,
-  }));
+  const { error } = await looseSupabase.rpc(
+    "update_store_order_delivery",
+    rpcArgs({
+      p_order_id: id,
+      p_delivery_type: deliveryType,
+      p_shipping_total: deliveryType === "free" ? 0 : shippingTotal,
+      p_expected_version: expectedVersion,
+    }),
+  );
   throwIfError(error, "Updating order delivery failed");
   return getDashboardOrder(id);
 }

@@ -121,7 +121,6 @@ const ALLOWED_HERO_MIME_TYPES = new Set([
   "image/webp",
   "image/avif",
   "image/gif",
-  "image/svg+xml",
   "image/heic",
   "image/heif",
 ]);
@@ -132,7 +131,9 @@ function throwIfError(error: { message: string } | null, label: string) {
 
 export class DashboardHeroVerificationRequiredError extends Error {
   constructor() {
-    super("Dashboard verification expired. Complete MFA or passkey verification, then try this Hero action again.");
+    super(
+      "Dashboard verification expired. Complete MFA or passkey verification, then try this Hero action again.",
+    );
     this.name = "DashboardHeroVerificationRequiredError";
   }
 }
@@ -151,6 +152,15 @@ async function requireFreshHeroWriteVerification() {
 export async function ensureDashboardHeroSessionReady() {
   await requireDashboardStaff();
   await requireFreshHeroWriteVerification();
+}
+
+async function syncStorefrontCriticalHero() {
+  const { error } = await supabase.functions.invoke("sync-current-hero", {
+    body: {},
+  });
+  if (error) {
+    console.warn("Hero saved, but critical storefront hero sync failed.", error);
+  }
 }
 
 function cleanText(value: string) {
@@ -260,8 +270,12 @@ export async function createDashboardHeroSlide(
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
   await requireFreshHeroWriteVerification();
-  const { data, error } = await supabase.rpc("create_cms_hero_slide_v3", rpcArgs(heroRpcPayload(input)));
+  const { data, error } = await supabase.rpc(
+    "create_cms_hero_slide_v3",
+    rpcArgs(heroRpcPayload(input)),
+  );
   throwIfError(error, "Creating hero slide failed");
+  await syncStorefrontCriticalHero();
   return data ? mapHero(data as HeroRow) : null;
 }
 
@@ -271,11 +285,15 @@ export async function updateDashboardHeroSlide(
 ): Promise<DashboardHeroSlide | null> {
   await requireDashboardStaff();
   await requireFreshHeroWriteVerification();
-  const { data, error } = await supabase.rpc("update_cms_hero_slide_v3", rpcArgs({
-    p_slide_id: id,
-    ...heroRpcPayload(input),
-  }));
+  const { data, error } = await supabase.rpc(
+    "update_cms_hero_slide_v3",
+    rpcArgs({
+      p_slide_id: id,
+      ...heroRpcPayload(input),
+    }),
+  );
   throwIfError(error, "Updating hero slide failed");
+  await syncStorefrontCriticalHero();
   return data ? mapHero(data as HeroRow) : null;
 }
 
@@ -284,6 +302,7 @@ export async function deleteDashboardHeroSlide(id: string): Promise<void> {
   await requireFreshHeroWriteVerification();
   const { error } = await supabase.rpc("delete_cms_hero_slide", rpcArgs({ p_slide_id: id }));
   throwIfError(error, "Deleting hero slide failed");
+  await syncStorefrontCriticalHero();
 }
 
 export async function reorderDashboardHeroSlides(
@@ -291,10 +310,14 @@ export async function reorderDashboardHeroSlides(
 ): Promise<void> {
   await requireDashboardStaff();
   await requireFreshHeroWriteVerification();
-  const { error } = await supabase.rpc("reorder_cms_hero_slides", rpcArgs({
-    p_items: slides.map((slide) => ({ id: slide.id, sort_order: slide.sortOrder })),
-  }));
+  const { error } = await supabase.rpc(
+    "reorder_cms_hero_slides",
+    rpcArgs({
+      p_items: slides.map((slide) => ({ id: slide.id, sort_order: slide.sortOrder })),
+    }),
+  );
   throwIfError(error, "Reordering hero slides failed");
+  await syncStorefrontCriticalHero();
 }
 
 export async function listDashboardHeroLinkOptions(): Promise<{
@@ -361,9 +384,16 @@ export async function listDashboardHeroMedia(): Promise<DashboardHeroMediaAsset[
 }
 
 function safeFileExtension(file: File) {
-  const fromName = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const fromName = file.name
+    .split(".")
+    .pop()
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
   if (fromName) return fromName;
-  const subtype = file.type.split("/")[1]?.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const subtype = file.type
+    .split("/")[1]
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
   return subtype || "bin";
 }
 
@@ -399,10 +429,11 @@ export async function uploadDashboardHeroImage(
   await requireFreshHeroWriteVerification();
 
   if (!ALLOWED_HERO_MIME_TYPES.has(file.type)) {
-    throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, SVG, HEIC or HEIF.");
+    throw new Error("Unsupported image type. Use JPG, PNG, WebP, AVIF, GIF, HEIC or HEIF. SVG is blocked for security.");
   }
   if (file.size <= 0) throw new Error("Image file is empty.");
-  if (file.size > MAX_HERO_SOURCE_BYTES) throw new Error("Hero source images must be 20MB or smaller.");
+  if (file.size > MAX_HERO_SOURCE_BYTES)
+    throw new Error("Hero source images must be 20MB or smaller.");
 
   const targetResolution: ProductImageResolution = target === "mobile" ? "1080" : "1920";
   let storedFile = file;
@@ -433,9 +464,7 @@ export async function uploadDashboardHeroImage(
       note:
         file.type === "image/gif"
           ? "GIF preserved to keep animation."
-          : file.type === "image/svg+xml"
-            ? "SVG preserved to keep vector quality."
-            : "HEIC/HEIF preserved because browser-side WebP conversion support is not reliable.",
+          : "HEIC/HEIF preserved because browser-side WebP conversion support is not reliable.",
     };
   }
 
@@ -443,30 +472,32 @@ export async function uploadDashboardHeroImage(
     throw new Error("Optimized hero image must be 10MB or smaller.");
   }
 
-  const unique = typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const unique =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const objectPath = `${HERO_PREFIX}/${new Date().toISOString().slice(0, 10)}/${unique}.${extension}`;
 
-  const { error: uploadError } = await supabase.storage.from(HERO_BUCKET).upload(
-    objectPath,
-    storedFile,
-    {
+  const { error: uploadError } = await supabase.storage
+    .from(HERO_BUCKET)
+    .upload(objectPath, storedFile, {
       cacheControl: "31536000",
       upsert: false,
       contentType: storedFile.type,
-    },
-  );
+    });
   throwIfError(uploadError, "Uploading hero image failed");
 
   try {
-    const { data: asset, error: assetError } = await supabase.rpc("register_cms_media_asset", rpcArgs({
-      p_object_path: objectPath,
-      p_file_name: storedFile.name,
-      p_mime_type: storedFile.type,
-      p_size_bytes: storedFile.size,
-      p_alt_text: altText || null,
-    }));
+    const { data: asset, error: assetError } = await supabase.rpc(
+      "register_cms_media_asset",
+      rpcArgs({
+        p_object_path: objectPath,
+        p_file_name: storedFile.name,
+        p_mime_type: storedFile.type,
+        p_size_bytes: storedFile.size,
+        p_alt_text: altText || null,
+      }),
+    );
     throwIfError(assetError, "Registering hero image failed");
 
     const row = asset as MediaRow;
@@ -490,10 +521,9 @@ export async function uploadDashboardHeroImage(
   }
 }
 
-export function getHeroScheduleState(slide: Pick<
-  DashboardHeroSlide,
-  "isPublished" | "startsAt" | "endsAt"
->) {
+export function getHeroScheduleState(
+  slide: Pick<DashboardHeroSlide, "isPublished" | "startsAt" | "endsAt">,
+) {
   if (!slide.isPublished) return "draft" as const;
   const now = Date.now();
   const start = slide.startsAt ? new Date(slide.startsAt).getTime() : null;
@@ -502,4 +532,3 @@ export function getHeroScheduleState(slide: Pick<
   if (end && end <= now) return "expired" as const;
   return "live" as const;
 }
-

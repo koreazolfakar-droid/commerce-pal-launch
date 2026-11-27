@@ -1,5 +1,5 @@
 import { SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ProductGrid } from "@/components/ProductGrid";
 import { ProductViewToggle } from "@/components/ProductViewToggle";
@@ -197,6 +197,8 @@ function FilterControls({
   );
 }
 
+const CATALOG_RENDER_PAGE_SIZE = 24;
+
 export function CatalogView({
   title,
   description,
@@ -231,6 +233,31 @@ export function CatalogView({
   const { t, direction, language } = useLanguage();
   const activeCount = activeFilterCount(filters);
   const [viewMode, setViewMode] = useProductViewMode("grid", "space-call-catalog-view-mode");
+  const [visibleCount, setVisibleCount] = useState(CATALOG_RENDER_PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const filterSignature = JSON.stringify(filters);
+
+  useEffect(() => {
+    setVisibleCount(CATALOG_RENDER_PAGE_SIZE);
+  }, [filterSignature]);
+
+  const visibleProducts = products.slice(0, visibleCount);
+  const hasMoreProducts = visibleProducts.length < products.length;
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!hasMoreProducts || !target || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setVisibleCount((count) => Math.min(products.length, count + CATALOG_RENDER_PAGE_SIZE));
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMoreProducts, products.length]);
 
   return (
     <div className="catalog-page mx-auto w-full max-w-[80rem] bg-white px-3 py-4 min-[390px]:px-4 sm:px-5 sm:py-6 lg:px-6 lg:py-8 xl:px-7 dark:bg-background">
@@ -274,9 +301,14 @@ export function CatalogView({
 
         <div>
           <div className="-mx-3 mb-3.5 flex items-center gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[390px]:-mx-4 min-[390px]:px-4 sm:mx-0 sm:mb-4 sm:px-0 lg:hidden">
-            <span className="shrink-0 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground">
+            <button
+              type="button"
+              onClick={() => onChange({ category: undefined })}
+              aria-pressed={!filters.category?.length}
+              className="shrink-0 rounded-full border bg-card px-3.5 py-2 text-xs font-semibold text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+            >
               {t("all")}
-            </span>
+            </button>
             {(facets.categories ?? []).slice(0, 6).map((category) => {
               const pressed = filters.category?.includes(category.slug) ?? false;
               return (
@@ -428,7 +460,7 @@ export function CatalogView({
 
           <ProductGrid
             eagerCount={4}
-            products={products}
+            products={visibleProducts}
             showViewToggle={false}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -440,6 +472,23 @@ export function CatalogView({
               ) : undefined
             }
           />
+
+          {hasMoreProducts ? (
+            <div ref={loadMoreRef} className="mt-6 flex justify-center sm:mt-8">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 min-w-44 rounded-md px-5"
+                onClick={() =>
+                  setVisibleCount((current) =>
+                    Math.min(products.length, current + CATALOG_RENDER_PAGE_SIZE),
+                  )
+                }
+              >
+                {t("loadMoreProducts")}
+              </Button>
+            </div>
+          ) : null}
 
           {header ? <div className="mt-8 border-t pt-6 sm:mt-10 sm:pt-7">{header}</div> : null}
         </div>

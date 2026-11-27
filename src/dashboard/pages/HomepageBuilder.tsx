@@ -1,3 +1,6 @@
+import { confirmDashboardDiscard } from "@/dashboard/lib/unsavedChanges";
+import { useLanguage } from "@/dashboard/i18n";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -24,7 +27,12 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { listDashboardBrands, type DashboardBrand } from "@/dashboard/data/catalog";
+import {
+  listDashboardBrands,
+  listDashboardProducts,
+  type DashboardBrand,
+  type DashboardProduct,
+} from "@/dashboard/data/catalog";
 import { loadHomepagePreviewProducts, type PreviewProduct } from "@/dashboard/data/homepagePreview";
 import {
   createSection,
@@ -49,7 +57,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (value: boo
       className={`relative h-6 w-11 rounded-full transition ${checked ? "bg-[#5968ea]" : "bg-slate-200"}`}
     >
       <span
-        className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${checked ? "left-6" : "left-1"}`}
+        className={`absolute top-1 size-4 rounded-full bg-white shadow transition ${checked ? "start-6" : "start-1"}`}
       />
     </button>
   );
@@ -65,9 +73,10 @@ function Field({
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -86,9 +95,10 @@ function TextareaField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -107,6 +117,7 @@ function RichTextField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const { t } = useLanguage();
   const ref = useRef<HTMLTextAreaElement>(null);
   const wrap = (before: string, after = before) => {
     const el = ref.current;
@@ -123,7 +134,7 @@ function RichTextField({
   };
   return (
     <div>
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#6974eb] focus-within:ring-4 focus-within:ring-[#6974eb]/10">
         <div className="flex flex-wrap gap-1 border-b border-slate-100 bg-slate-50 p-2">
           <button
@@ -152,17 +163,17 @@ function RichTextField({
             onClick={() => wrap("- ", "")}
             className="rounded-md px-2 py-1 text-[10px] text-slate-600 hover:bg-white"
           >
-            List
+            {t("List")}
           </button>
           <button
             type="button"
             onClick={() => wrap("[", "](https://)")}
             className="rounded-md px-2 py-1 text-[10px] text-slate-600 hover:bg-white"
           >
-            Link
+            {t("Link")}
           </button>
           <span className="ml-auto px-2 py-1 text-[9px] text-slate-400">
-            Safe rich text markers only
+            {t("Safe rich text markers only")}
           </span>
         </div>
         <textarea
@@ -194,6 +205,7 @@ function SectionCard({
   onDelete: () => void;
   onMove: (direction: "up" | "down") => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div
       draggable
@@ -216,7 +228,7 @@ function SectionCard({
         <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
           <Layers3 className="size-4" />
         </div>
-        <button onClick={onSelect} className="min-w-0 flex-1 text-left">
+        <button onClick={onSelect} className="min-w-0 flex-1 text-start">
           <div className="truncate text-[12px] font-bold text-slate-700">{section.name}</div>
           <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
             <span>{sectionTypeLabels[section.type]}</span>
@@ -224,35 +236,35 @@ function SectionCard({
             <span>#{section.order}</span>
             {section.status === "published" && (
               <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 font-bold text-emerald-600">
-                Published
+                {t("Published")}
               </span>
             )}
           </div>
         </button>
         <div className="flex shrink-0 items-center gap-1">
           <button
-            title="Move up"
+            title={t("Move up")}
             onClick={() => onMove("up")}
             className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
           >
             <ArrowUp className="size-3.5" />
           </button>
           <button
-            title="Move down"
+            title={t("Move down")}
             onClick={() => onMove("down")}
             className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
           >
             <ArrowDown className="size-3.5" />
           </button>
           <button
-            title="Duplicate"
+            title={t("Duplicate")}
             onClick={onDuplicate}
             className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-50"
           >
             <Copy className="size-3.5" />
           </button>
           <button
-            title="Delete"
+            title={t("Delete")}
             onClick={onDelete}
             className="grid size-7 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"
           >
@@ -262,7 +274,7 @@ function SectionCard({
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
         <span className="text-[10px] font-semibold text-slate-400">
-          {section.enabled ? "Visible in preview" : "Hidden from preview"}
+          {section.enabled ? t("Visible in preview") : t("Hidden from preview")}
         </span>
         <Toggle checked={section.enabled} onChange={onToggle} />
       </div>
@@ -277,6 +289,7 @@ function TrustItems({
   section: HomepageSection;
   update: (patch: Partial<HomepageSection>) => void;
 }) {
+  const { t } = useLanguage();
   const items =
     (section.settings.items as {
       icon: string;
@@ -296,7 +309,7 @@ function TrustItems({
                 setItems(items.map((x, i) => (i === index ? { ...x, icon: e.target.value } : x)))
               }
               className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]"
-              placeholder="Icon"
+              placeholder={t("Icon")}
             />
             <input
               value={item.title}
@@ -304,7 +317,7 @@ function TrustItems({
                 setItems(items.map((x, i) => (i === index ? { ...x, title: e.target.value } : x)))
               }
               className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]"
-              placeholder="Title"
+              placeholder={t("Title")}
             />
             <input
               value={item.description}
@@ -314,7 +327,7 @@ function TrustItems({
                 )
               }
               className="h-9 rounded-lg border border-slate-200 px-2 text-[11px]"
-              placeholder="Description"
+              placeholder={t("Description")}
             />
             <button
               onClick={() => setItems(items.filter((_, i) => i !== index))}
@@ -338,7 +351,7 @@ function TrustItems({
         }
         className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"
       >
-        <Plus className="size-3.5" /> Add item
+        <Plus className="size-3.5" /> {t("Add item")}
       </button>
     </div>
   );
@@ -350,6 +363,7 @@ function FaqItems({
   section: HomepageSection;
   update: (patch: Partial<HomepageSection>) => void;
 }) {
+  const { t } = useLanguage();
   const items = (section.settings.items as { question: string; answer: string }[]) ?? [];
   const setItems = (next: typeof items) =>
     update({ settings: { ...section.settings, items: next } });
@@ -367,7 +381,7 @@ function FaqItems({
                   )
                 }
                 className="h-9 w-full rounded-lg border border-slate-200 px-2 text-[11px]"
-                placeholder="Question"
+                placeholder={t("Question")}
               />
               <textarea
                 value={item.answer}
@@ -378,7 +392,7 @@ function FaqItems({
                 }
                 rows={2}
                 className="w-full rounded-lg border border-slate-200 p-2 text-[11px]"
-                placeholder="Answer"
+                placeholder={t("Answer")}
               />
             </div>
             <button
@@ -396,8 +410,183 @@ function FaqItems({
         }
         className="flex items-center gap-1 text-[11px] font-bold text-[#5968ea]"
       >
-        <Plus className="size-3.5" /> Add FAQ
+        <Plus className="size-3.5" /> {t("Add FAQ")}
       </button>
+    </div>
+  );
+}
+
+function ManualProductPicker({
+  products,
+  selectedIds,
+  onChange,
+}: {
+  products: DashboardProduct[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const { t } = useLanguage();
+  const [query, setQuery] = useState("");
+  const ids = [...new Set(selectedIds)].slice(0, 10);
+  const byId = new Map(products.map((product) => [product.id, product]));
+  const selectedProducts = ids
+    .map((id) => byId.get(id))
+    .filter((product): product is DashboardProduct => Boolean(product));
+  const normalizedQuery = query.trim().toLowerCase();
+  const available =
+    ids.length >= 10
+      ? []
+      : products
+          .filter((product) => product.status === "Active" && !ids.includes(product.id))
+          .filter((product) => {
+            if (!normalizedQuery) return true;
+            return [product.name, product.brand, product.category, product.sku]
+              .join(" ")
+              .toLowerCase()
+              .includes(normalizedQuery);
+          })
+          .slice(0, 8);
+
+  const reorder = (from: number, to: number) => {
+    if (from < 0 || to < 0 || from >= ids.length || to >= ids.length || from === to) return;
+    const next = [...ids];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(next);
+  };
+
+  const move = (index: number, direction: -1 | 1) => {
+    reorder(index, index + direction);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2.5">
+        <div className="text-[11px] font-bold text-indigo-700">
+          {t("Manual order · the first product here is the first product customers see.")}
+        </div>
+        <div className="mt-0.5 text-[10px] text-indigo-500">
+          {t(
+            "Drag to reorder on desktop, or use ↑ ↓ on mobile. You can add up to 10 active products.",
+          )}
+        </div>
+      </div>
+
+      {selectedProducts.length ? (
+        <div className="space-y-2">
+          {selectedProducts.map((product, index) => (
+            <div
+              key={product.id}
+              draggable
+              onDragStart={(event) => event.dataTransfer.setData("manual-product-id", product.id)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const sourceId = event.dataTransfer.getData("manual-product-id");
+                reorder(ids.indexOf(sourceId), ids.indexOf(product.id));
+              }}
+              className="flex cursor-grab items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 active:cursor-grabbing"
+            >
+              <div className="grid size-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[10px] font-black text-slate-500">
+                {index + 1}
+              </div>
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt=""
+                  className="size-10 shrink-0 rounded-lg border border-slate-100 object-contain"
+                />
+              ) : (
+                <div className="size-10 shrink-0 rounded-lg bg-slate-50" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[11px] font-bold text-slate-700">{product.name}</div>
+                <div className="truncate text-[9px] text-slate-400">
+                  {[product.brand, product.category].filter(Boolean).join(" · ")}
+                </div>
+              </div>
+              <button
+                type="button"
+                title={t("Move up")}
+                disabled={index === 0}
+                onClick={() => move(index, -1)}
+                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
+              >
+                <ArrowUp className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                title={t("Move down")}
+                disabled={index === selectedProducts.length - 1}
+                onClick={() => move(index, 1)}
+                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-25"
+              >
+                <ArrowDown className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                title={t("Remove")}
+                onClick={() => onChange(ids.filter((id) => id !== product.id))}
+                className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-[11px] text-slate-400">
+          {t("No products selected yet. Search below and tap Add.")}
+        </div>
+      )}
+
+      <div>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("Search product name, brand, category or SKU…")}
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] outline-none focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10"
+        />
+        {ids.length >= 10 ? (
+          <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">
+            {t("Product limit reached. Remove one product before adding another.")}
+          </div>
+        ) : null}
+        <div className="mt-2 max-h-64 space-y-1 overflow-y-auto">
+          {available.map((product) => (
+            <button
+              key={product.id}
+              type="button"
+              onClick={() => {
+                onChange([...ids, product.id]);
+                setQuery("");
+              }}
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-start hover:bg-slate-50"
+            >
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt=""
+                  className="size-9 shrink-0 rounded-lg border border-slate-100 object-contain"
+                />
+              ) : (
+                <div className="size-9 shrink-0 rounded-lg bg-slate-50" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[11px] font-semibold text-slate-700">
+                  {product.name}
+                </div>
+                <div className="truncate text-[9px] text-slate-400">
+                  {[product.brand, product.category, product.sku].filter(Boolean).join(" · ")}
+                </div>
+              </div>
+              <span className="rounded-lg bg-indigo-50 px-2 py-1 text-[9px] font-bold text-indigo-600">
+                {t("Add")}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -406,23 +595,37 @@ function Editor({
   section,
   update,
   brands,
+  products,
+  productsReady,
 }: {
   brands: DashboardBrand[];
+  products: DashboardProduct[];
+  productsReady: boolean;
   section: HomepageSection;
   update: (patch: Partial<HomepageSection>) => void;
 }) {
+  const { t } = useLanguage();
   const set = (key: keyof HomepageSection, value: unknown) => update({ [key]: value });
   const settings = section.settings;
   const setSetting = (key: string, value: unknown) =>
     update({ settings: { ...settings, [key]: value } });
+  const productSource = String(
+    settings.source ?? (section.sectionId === "featured_products" ? "best_sellers" : "collection"),
+  );
+  const manualProductIds = Array.isArray(settings.manualProductIds)
+    ? settings.manualProductIds.filter((id): id is string => typeof id === "string")
+    : String(settings.sourceValue ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-[13px] font-bold text-[#14203a]">Section settings</div>
+            <div className="text-[13px] font-bold text-[#14203a]">{t("Section settings")}</div>
             <div className="mt-1 text-[11px] text-slate-400">
-              Common fields shared by every section type.
+              {t("Common fields shared by every section type.")}
             </div>
           </div>
           <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-600">
@@ -430,71 +633,73 @@ function Editor({
           </span>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Internal name" value={section.name} onChange={(v) => set("name", v)} />
+          <Field label={t("Internal name")} value={section.name} onChange={(v) => set("name", v)} />
           {["hero", "categories", "brands", "featured_products", "trust"].includes(
             section.sectionId,
           ) ? (
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Section ID</span>
+              <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                {t("Section ID")}
+              </span>
               <input
                 value={section.sectionId}
                 readOnly
                 className="h-10 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3 text-[12px] text-slate-500 outline-none"
               />
               <span className="mt-1 block text-[9px] text-slate-400">
-                Core storefront key — locked for safety.
+                {t("Core storefront key — locked for safety.")}
               </span>
             </label>
           ) : (
             <Field
-              label="Section ID"
+              label={t("Section ID")}
               value={section.sectionId}
               onChange={(v) => set("sectionId", v)}
             />
           )}
           <Field
-            label="Display order"
+            label={t("Display order")}
             value={String(section.order)}
             onChange={(v) => set("order", Number(v) || 1)}
           />
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-bold text-slate-600">Status</span>
+            <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t("Status")}</span>
             <select
               value={section.status}
               onChange={(e) => set("status", e.target.value)}
               className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"
             >
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
+              <option value="draft">{t("Draft")}</option>
+              <option value="published">{t("Published")}</option>
             </select>
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-              Background style
+              {t("Background style")}
             </span>
             <select
               value={section.background}
               onChange={(e) => set("background", e.target.value)}
               className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"
             >
-              <option value="surface">White surface</option>
-              <option value="mist">Soft gray</option>
-              <option value="navy">Dark navy</option>
-              <option value="purple">Purple campaign</option>
+              <option value="surface">{t("White surface")}</option>
+              <option value="mist">{t("Soft gray")}</option>
+              <option value="navy">{t("Dark navy")}</option>
+              <option value="purple">{t("Purple campaign")}</option>
             </select>
           </label>
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-              Text alignment
+              {t("Text alignment")}
             </span>
             <select
               value={section.alignment}
               onChange={(e) => set("alignment", e.target.value)}
               className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px] outline-none"
             >
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
+              <option value="left">{t("Left")}</option>
+              <option value="center">{t("Center")}</option>
+              <option value="right">{t("Right")}</option>
             </select>
           </label>
         </div>
@@ -509,7 +714,7 @@ function Editor({
               key={key}
               className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5"
             >
-              <span className="text-[11px] font-semibold text-slate-600">{label}</span>
+              <span className="text-[11px] font-semibold text-slate-600">{t(label)}</span>
               <Toggle
                 checked={Boolean(section[key as keyof HomepageSection])}
                 onChange={(v) => set(key as keyof HomepageSection, v)}
@@ -519,13 +724,13 @@ function Editor({
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field
-            label="Start date (optional)"
+            label={t("Start date (optional)")}
             value={section.startDate}
             onChange={(v) => set("startDate", v)}
             placeholder="2026-11-27"
           />
           <Field
-            label="End date (optional)"
+            label={t("End date (optional)")}
             value={section.endDate}
             onChange={(v) => set("endDate", v)}
             placeholder="2026-12-01"
@@ -533,38 +738,42 @@ function Editor({
         </div>
       </div>
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-        <div className="mb-4 text-[13px] font-bold text-[#14203a]">Content and CTAs</div>
+        <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Content and CTAs")}</div>
         <div className="space-y-4">
           <Field
-            label="Small label / eyebrow"
+            label={t("Small label / eyebrow")}
             value={section.eyebrow}
             onChange={(v) => set("eyebrow", v)}
           />
-          <Field label="Title" value={section.title} onChange={(v) => set("title", v)} />
-          <Field label="Subtitle" value={section.subtitle} onChange={(v) => set("subtitle", v)} />
+          <Field label={t("Title")} value={section.title} onChange={(v) => set("title", v)} />
+          <Field
+            label={t("Subtitle")}
+            value={section.subtitle}
+            onChange={(v) => set("subtitle", v)}
+          />
           <RichTextField
-            label="Description / rich text"
+            label={t("Description / rich text")}
             value={section.description}
             onChange={(v) => set("description", v)}
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Button text"
+              label={t("Button text")}
               value={section.buttonText}
               onChange={(v) => set("buttonText", v)}
             />
             <Field
-              label="Button link"
+              label={t("Button link")}
               value={section.buttonLink}
               onChange={(v) => set("buttonLink", v)}
             />
             <Field
-              label="Secondary button"
+              label={t("Secondary button")}
               value={section.secondaryButtonText}
               onChange={(v) => set("secondaryButtonText", v)}
             />
             <Field
-              label="Secondary link"
+              label={t("Secondary link")}
               value={section.secondaryButtonLink}
               onChange={(v) => set("secondaryButtonLink", v)}
             />
@@ -573,36 +782,36 @@ function Editor({
       </div>
       {["hero", "text", "image-text", "banner", "promo", "custom"].includes(section.type) && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Media</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Media")}</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <DashboardMediaPicker
-              label="Desktop image"
+              label={t("Desktop image")}
               value={String(settings.media ?? "")}
               onChange={(v) => setSetting("media", v)}
             />
             <DashboardMediaPicker
-              label="Mobile image (optional)"
+              label={t("Mobile image (optional)")}
               value={String(settings.mobileMedia ?? "")}
               onChange={(v) => setSetting("mobileMedia", v)}
             />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field
-              label="Overlay opacity"
+              label={t("Overlay opacity")}
               value={String(settings.overlay ?? 0)}
               onChange={(v) => setSetting("overlay", Number(v) || 0)}
             />
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                Image position
+                {t("Image position")}
               </span>
               <select
                 value={String(settings.imagePosition ?? "right")}
                 onChange={(e) => setSetting("imagePosition", e.target.value)}
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
               >
-                <option>left</option>
-                <option>right</option>
+                <option value="left">{t("left")}</option>
+                <option value="right">{t("right")}</option>
               </select>
             </label>
           </div>
@@ -610,45 +819,94 @@ function Editor({
       )}
       {["product-carousel", "featured-products"].includes(section.type) && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Product source</div>
+          <div className="mb-1 text-[13px] font-bold text-[#14203a]">{t("Products and order")}</div>
+          <div className="mb-4 text-[10px] text-slate-400">
+            {t(
+              "Choose an automatic source or take full manual control of exactly what appears first.",
+            )}
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                Products source
+                {t("Products source")}
               </span>
               <select
-                value={String(settings.source ?? "collection")}
-                onChange={(e) => setSetting("source", e.target.value)}
+                value={productSource}
+                onChange={(e) => update({ settings: { ...settings, source: e.target.value } })}
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
               >
-                <option value="manual">Manual products</option>
-                <option value="collection">Collection</option>
-                <option value="brand">Brand</option>
-                <option value="category">Category</option>
+                <option value="best_sellers">{t("Automatic · Best sellers")}</option>
+                <option value="newest">{t("Automatic · Newest products")}</option>
+                <option value="manual">{t("Manual · I choose and order products")}</option>
+                <option value="collection">{t("Collection")}</option>
+                <option value="brand">{t("Brand")}</option>
+                <option value="category">{t("Category")}</option>
               </select>
             </label>
-            <Field
-              label="Source"
-              value={String(settings.sourceValue ?? "")}
-              onChange={(v) => setSetting("sourceValue", v)}
-              placeholder="Name, slug, or comma-separated product IDs"
-            />
-            <Field
-              label="Number of products"
-              value={String(settings.count ?? 5)}
-              onChange={(v) => setSetting("count", Number(v) || 1)}
-            />
+
+            {productSource === "best_sellers" || productSource === "newest" ? (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2.5">
+                <div className="text-[11px] font-bold text-emerald-700">{t("Automatic mode")}</div>
+                <div className="mt-0.5 text-[10px] leading-4 text-emerald-600">
+                  {productSource === "best_sellers"
+                    ? t("Uses products marked Best Seller and keeps their storefront sort order.")
+                    : t("Uses the newest active products automatically.")}
+                </div>
+              </div>
+            ) : productSource !== "manual" ? (
+              <Field
+                label={t("Source")}
+                value={String(settings.sourceValue ?? "")}
+                onChange={(v) => setSetting("sourceValue", v)}
+                placeholder={t("Collection, brand or category name / slug")}
+              />
+            ) : null}
+
+            {productSource === "manual" ? (
+              <div className="sm:col-span-2">
+                {productsReady ? (
+                  <ManualProductPicker
+                    products={products}
+                    selectedIds={manualProductIds}
+                    onChange={(ids) =>
+                      update({
+                        settings: {
+                          ...settings,
+                          source: "manual",
+                          manualProductIds: ids,
+                          sourceValue: ids.join(","),
+                          count: ids.length,
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-[11px] font-semibold text-slate-500">
+                    <Loader2 className="size-4 animate-spin text-indigo-500" />
+                    {t("Loading products only when you need manual ordering…")}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {productSource !== "manual" ? (
+              <Field
+                label={t("Number of products")}
+                value={String(settings.count ?? 5)}
+                onChange={(v) => setSetting("count", Number(v) || 1)}
+              />
+            ) : null}
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
-                Display layout
+                {t("Display layout")}
               </span>
               <select
                 value={String(settings.layout ?? "carousel")}
                 onChange={(e) => setSetting("layout", e.target.value)}
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[12px]"
               >
-                <option value="carousel">Horizontal carousel</option>
-                <option value="grid">Product grid</option>
+                <option value="carousel">{t("Horizontal carousel")}</option>
+                <option value="grid">{t("Product grid")}</option>
               </select>
             </label>
           </div>
@@ -656,20 +914,20 @@ function Editor({
       )}
       {["collection", "collection-grid"].includes(section.type) && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Collection source</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Collection source")}</div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field
-              label="Collection"
+              label={t("Collection")}
               value={String(settings.collection ?? "")}
               onChange={(v) => setSetting("collection", v)}
             />
             <Field
-              label="Number of products"
+              label={t("Number of products")}
               value={String(settings.count ?? 8)}
               onChange={(v) => setSetting("count", Number(v) || 1)}
             />
             <Field
-              label="Layout"
+              label={t("Layout")}
               value={String(settings.layout ?? "carousel")}
               onChange={(v) => setSetting("layout", v)}
             />
@@ -678,7 +936,7 @@ function Editor({
       )}
       {section.type === "brands" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Brands selection</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Brands selection")}</div>
           <div className="grid gap-2 sm:grid-cols-2">
             {brands
               .map((item) => item.name)
@@ -708,12 +966,12 @@ function Editor({
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field
-              label="Layout"
+              label={t("Layout")}
               value={String(settings.layout ?? "grid")}
               onChange={(v) => setSetting("layout", v)}
             />
             <Field
-              label="Logo size"
+              label={t("Logo size")}
               value={String(settings.logoSize ?? "medium")}
               onChange={(v) => setSetting("logoSize", v)}
             />
@@ -722,9 +980,11 @@ function Editor({
       )}
       {section.type === "categories" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Categories selection</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">
+            {t("Categories selection")}
+          </div>
           <Field
-            label="Categories (comma separated)"
+            label={t("Categories (comma separated)")}
             value={((settings.categories as string[]) ?? []).join(", ")}
             onChange={(v) =>
               setSetting(
@@ -738,13 +998,13 @@ function Editor({
           />
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field
-              label="Grid columns"
+              label={t("Grid columns")}
               value={String(settings.columns ?? 4)}
               onChange={(v) => setSetting("columns", Number(v) || 2)}
             />
             <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-3">
               <span className="text-[11px] font-semibold text-slate-600">
-                Horizontal scroll on mobile
+                {t("Horizontal scroll on mobile")}
               </span>
               <Toggle
                 checked={Boolean(settings.mobileScroll)}
@@ -756,31 +1016,33 @@ function Editor({
       )}
       {section.type === "trust" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Benefits</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Benefits")}</div>
           <TrustItems section={section} update={update} />
         </div>
       )}
       {section.type === "announcement" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Announcement settings</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">
+            {t("Announcement settings")}
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Icon name"
+              label={t("Icon name")}
               value={String(settings.icon ?? "Zap")}
               onChange={(v) => setSetting("icon", v)}
             />
             <Field
-              label="Link"
+              label={t("Link")}
               value={String(settings.link ?? "#")}
               onChange={(v) => setSetting("link", v)}
             />
             <Field
-              label="Background"
+              label={t("Background")}
               value={String(settings.background ?? "navy")}
               onChange={(v) => setSetting("background", v)}
             />
             <Field
-              label="Text color"
+              label={t("Text color")}
               value={String(settings.textColor ?? "light")}
               onChange={(v) => setSetting("textColor", v)}
             />
@@ -789,15 +1051,15 @@ function Editor({
       )}
       {section.type === "countdown" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Countdown settings</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Countdown settings")}</div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Target date and time"
+              label={t("Target date and time")}
               value={String(settings.targetDate ?? "")}
               onChange={(v) => setSetting("targetDate", v)}
             />
             <Field
-              label="Timezone label"
+              label={t("Timezone label")}
               value={String(settings.timezone ?? "Local time")}
               onChange={(v) => setSetting("timezone", v)}
             />
@@ -806,18 +1068,18 @@ function Editor({
       )}
       {section.type === "video" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">Video settings</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("Video settings")}</div>
           <Field
-            label="Safe video URL"
+            label={t("Safe video URL")}
             value={String(settings.videoUrl ?? "")}
             onChange={(v) => setSetting("videoUrl", v)}
-            placeholder="https://video.example.com/..."
+            placeholder={t("https://video.example.com/...")}
           />
         </div>
       )}
       {section.type === "faq" && (
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
-          <div className="mb-4 text-[13px] font-bold text-[#14203a]">FAQ items</div>
+          <div className="mb-4 text-[13px] font-bold text-[#14203a]">{t("FAQ items")}</div>
           <FaqItems section={section} update={update} />
         </div>
       )}
@@ -832,14 +1094,15 @@ function HomepageSectionRenderer({
   section: HomepageSection;
   mode: DisplayMode;
 }) {
+  const { t } = useLanguage();
   const settings = section.settings;
   const isDark = section.background === "navy" || section.background === "purple";
   const align =
     section.alignment === "center"
       ? "text-center items-center"
       : section.alignment === "right"
-        ? "text-right items-end"
-        : "text-left items-start";
+        ? "text-end items-end"
+        : "text-start items-start";
   const [productsToShow, setProductsToShow] = useState<PreviewProduct[]>([]);
   const [previewError, setPreviewError] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -874,7 +1137,7 @@ function HomepageSectionRenderer({
   if (section.type === "announcement")
     return (
       <div className="bg-[#14203a] px-4 py-2 text-center text-[11px] font-semibold text-white">
-        {section.title} <span className="ml-2 text-indigo-200">{section.buttonText}</span>
+        {section.title} <span className="ms-2 text-indigo-200">{section.buttonText}</span>
       </div>
     );
   return (
@@ -885,7 +1148,7 @@ function HomepageSectionRenderer({
       }}
     >
       <div
-        className={`relative z-10 flex max-w-2xl flex-col ${align} ${section.spacing === "spacious" ? "gap-4 py-8" : section.spacing === "compact" ? "gap-1" : "gap-2"} ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "right" ? "sm:mr-[42%]" : ""}`}
+        className={`relative z-10 flex max-w-2xl flex-col ${align} ${section.spacing === "spacious" ? "gap-4 py-8" : section.spacing === "compact" ? "gap-1" : "gap-2"} ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "right" ? "sm:me-[42%]" : ""}`}
       >
         {section.eyebrow && (
           <div
@@ -911,7 +1174,7 @@ function HomepageSectionRenderer({
           <button
             className={`rounded-lg px-3 py-2 text-[10px] font-bold ${isDark ? "bg-white text-[#25315c]" : "bg-[#5968ea] text-white"}`}
           >
-            {section.buttonText || "Explore section"}
+            {section.buttonText || t("Explore section")}
           </button>
           {section.secondaryButtonText && (
             <button
@@ -926,7 +1189,7 @@ function HomepageSectionRenderer({
         <img
           src={media}
           alt="Section media"
-          className={`absolute inset-y-0 h-full w-[42%] object-cover ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "left" ? "left-0" : "right-0"}`}
+          className={`absolute inset-y-0 h-full w-[42%] object-cover ${section.type === "image-text" && String(settings.imagePosition ?? "right") === "left" ? "start-0" : "end-0"}`}
           style={{ opacity: 0.84 }}
         />
       )}
@@ -947,11 +1210,11 @@ function HomepageSectionRenderer({
       ) && (
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
           {previewLoading ? (
-            <p role="status">Loading products…</p>
+            <p role="status">{t("Loading products…")}</p>
           ) : previewError ? (
             <p role="alert">{previewError}</p>
           ) : !productsToShow.length ? (
-            <p>No matching active products. Choose an existing source.</p>
+            <p>{t("No matching active products. Choose an existing source.")}</p>
           ) : (
             productsToShow.map((product) => (
               <div
@@ -965,7 +1228,7 @@ function HomepageSectionRenderer({
                     className="h-20 w-full object-contain"
                   />
                 ) : (
-                  <div className="h-20 p-3 text-xs text-slate-400">No image</div>
+                  <div className="h-20 p-3 text-xs text-slate-400">{t("No image")}</div>
                 )}
                 <div className="p-2">
                   <div className="truncate text-[10px] font-bold text-slate-700">
@@ -1021,7 +1284,7 @@ function HomepageSectionRenderer({
           ))}
         </div>
       )}
-      <div className="absolute right-3 top-3 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider opacity-70">
+      <div className="absolute end-3 top-3 rounded-full bg-black/5 px-2 py-1 text-[9px] font-bold uppercase tracking-wider opacity-70">
         {mode}
       </div>
     </div>
@@ -1051,7 +1314,12 @@ function createHomepageSectionKey(type: string, suffix = Date.now()) {
 }
 
 export default function HomepageBuilderPage() {
+  const { t, lang } = useLanguage();
   const [brands, setBrands] = useState<DashboardBrand[]>([]);
+  const [products, setProducts] = useState<DashboardProduct[]>([]);
+  const [productsReady, setProductsReady] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productsError, setProductsError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [reload, setReload] = useState(0);
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -1060,7 +1328,9 @@ export default function HomepageBuilderPage() {
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const mutationLock = useRef(false);
   const [dirty, setDirty] = useState(false);
+  useDashboardUnsavedChanges(dirty);
   const [mode, setMode] = useState<DisplayMode>("desktop");
   const [showAdd, setShowAdd] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -1097,8 +1367,66 @@ export default function HomepageBuilderPage() {
     };
   }, [reload]);
 
+  const selectedProductSource = selected
+    ? String(
+        selected.settings.source ??
+          (selected.sectionId === "featured_products" ? "best_sellers" : "collection"),
+      )
+    : "";
+  const needsManualProducts =
+    Boolean(selected) &&
+    ["product-carousel", "featured-products"].includes(selected.type) &&
+    selectedProductSource === "manual";
+
+  useEffect(() => {
+    if (!needsManualProducts || productsReady) return;
+
+    let cancelled = false;
+    setProductsLoading(true);
+    setProductsError("");
+    listDashboardProducts()
+      .then((liveProducts) => {
+        if (!cancelled) {
+          setProducts(liveProducts);
+          setProductsReady(true);
+        }
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          const message = cause instanceof Error ? cause.message : "Unable to load products.";
+          setProductsError(message);
+          toast.error(message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setProductsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsManualProducts, productsReady]);
+
+  const retryProducts = async () => {
+    if (productsLoading) return;
+    setProductsLoading(true);
+    setProductsError("");
+    try {
+      const liveProducts = await listDashboardProducts();
+      setProducts(liveProducts);
+      setProductsReady(true);
+    } catch (cause) {
+      setProductsError(cause instanceof Error ? cause.message : "Unable to load products.");
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const handler = (event: Event) => {
+      if (mutationLock.current) return;
       const detail = (event as CustomEvent<{ source: string; target: string }>).detail;
       setSections((current) => {
         const from = current.findIndex((item) => item.id === detail.source);
@@ -1117,7 +1445,7 @@ export default function HomepageBuilderPage() {
   }, []);
 
   const updateSelected = (patch: Partial<HomepageSection>) => {
-    if (!selected) return;
+    if (!selected || mutationLock.current) return;
     setDirty(true);
     setSections((current) =>
       current.map((section) => (section.id === selected.id ? { ...section, ...patch } : section)),
@@ -1125,6 +1453,7 @@ export default function HomepageBuilderPage() {
   };
 
   const move = (id: string, direction: "up" | "down") => {
+    if (mutationLock.current) return;
     setSections((current) => {
       const index = current.findIndex((item) => item.id === id);
       const target = direction === "up" ? index - 1 : index + 1;
@@ -1137,6 +1466,7 @@ export default function HomepageBuilderPage() {
   };
 
   const addSection = (type: SectionType) => {
+    if (mutationLock.current) return;
     const base = createSection(type, sections.length + 1);
     const item: HomepageSection = {
       ...base,
@@ -1154,6 +1484,7 @@ export default function HomepageBuilderPage() {
   };
 
   const duplicate = (section: HomepageSection) => {
+    if (mutationLock.current) return;
     const copy: HomepageSection = {
       ...section,
       id: createHomepageUuid(),
@@ -1184,6 +1515,7 @@ export default function HomepageBuilderPage() {
   };
 
   const deleteSection = async (id: string) => {
+    if (mutationLock.current) return;
     if (sections.length <= 1) {
       toast.error("Keep at least one homepage section.");
       return;
@@ -1208,6 +1540,13 @@ export default function HomepageBuilderPage() {
       return;
     }
 
+    if (!window.confirm(
+      lang === "ar"
+        ? `حذف القسم «${section.name}» نهائيًا؟`
+        : `Permanently delete “${section.name}”?`,
+    )) return;
+    mutationLock.current = true;
+    setSaving(true);
     try {
       await deleteDashboardHomepageSection(id);
       setPersistedIds((current) => {
@@ -1219,11 +1558,15 @@ export default function HomepageBuilderPage() {
       toast.success("Homepage section deleted from Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Deleting homepage section failed.");
+    } finally {
+      mutationLock.current = false;
+      setSaving(false);
     }
   };
 
   const persist = async (nextSections: HomepageSection[], message: string) => {
-    if (saving) return;
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       const saved = await saveDashboardHomepageSections(nextSections);
@@ -1237,6 +1580,7 @@ export default function HomepageBuilderPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Saving homepage sections failed.");
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
@@ -1244,12 +1588,11 @@ export default function HomepageBuilderPage() {
   const saveChanges = () => persist(sections, "Homepage changes saved to Supabase.");
 
   const publishAll = async () => {
+    if (mutationLock.current) return;
     const next = sections.map((section) => ({
       ...section,
       status: "published" as const,
     }));
-    setSections(next);
-    setDirty(true);
     await persist(next, "Homepage sections published to the live CMS.");
   };
 
@@ -1269,24 +1612,26 @@ export default function HomepageBuilderPage() {
 
   if (loadError)
     return (
-      <div role="alert" className="rounded-2xl border bg-white p-6">
+      <div role="alert" className="rounded-2xl border border-border bg-card p-6 text-foreground">
         <p>{loadError}</p>
         <button
           className="mt-4 rounded-xl border px-4 py-2"
-          onClick={() => setReload((n) => n + 1)}
+          onClick={() => {
+            if (confirmDashboardDiscard()) setReload((n) => n + 1);
+          }}
         >
-          Retry
+          {t("Retry")}
         </button>
       </div>
     );
 
   if (loading) {
     return (
-      <div className="grid min-h-[460px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status" aria-busy="true" className="grid min-h-[460px] place-items-center rounded-2xl border border-border bg-card">
         <div className="text-center">
           <Loader2 className="mx-auto size-6 animate-spin text-[#5968ea]" />
           <div className="mt-3 text-[11px] font-semibold text-slate-400">
-            Loading live homepage sections…
+            {t("Loading live homepage sections…")}
           </div>
         </div>
       </div>
@@ -1294,18 +1639,18 @@ export default function HomepageBuilderPage() {
   }
 
   return (
-    <div>
+    <fieldset disabled={saving} aria-busy={saving} className="m-0 min-w-0 border-0 p-0">
       <div className="mb-7 flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
             <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            Store content / Live CMS
+            {t("Store content / Live CMS")}
           </div>
           <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
-            Homepage section builder
+            {t("Homepage section builder")}
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            Manage homepage order, visibility and section content from the Supabase CMS.
+            {t("Manage homepage order, visibility and section content from the Supabase CMS.")}
           </p>
         </div>
 
@@ -1315,29 +1660,29 @@ export default function HomepageBuilderPage() {
               dirty ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
             }`}
           >
-            {dirty ? "Unsaved changes" : "Synced to Supabase"}
+            {saving ? t("Saving…") : dirty ? t("Unsaved changes") : t("Synced to Supabase")}
           </span>
           <button
             onClick={() => void saveChanges()}
             disabled={!dirty || saving}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            Save changes
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{" "}
+            {t("Save changes")}
           </button>
           <button
             onClick={() => void publishAll()}
             disabled={!sections.length || saving}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-            Publish all
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{" "}
+            {t("Publish all")}
           </button>
           <button
             onClick={() => setShowAdd(true)}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
           >
-            <Plus className="size-4" /> Add section
+            <Plus className="size-4" /> {t("Add section")}
           </button>
         </div>
       </div>
@@ -1345,24 +1690,39 @@ export default function HomepageBuilderPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] px-4 py-3">
         <div className="flex items-center gap-2 text-[11px] font-semibold text-[#5962b8]">
           <Check className="size-4" />
-          Save writes to cms_sections. Published and visible sections are served through public-cms.
+          {t(
+            "Save writes to cms_sections. Published and visible sections are served through public-cms.",
+          )}
         </div>
         <button
           onClick={() => setPreviewOpen(true)}
           className="flex items-center gap-2 rounded-lg bg-[#14203a] px-3 py-2 text-[10px] font-bold text-white"
         >
-          <Monitor className="size-3.5" /> Draft preview
+          <Monitor className="size-3.5" /> {t("Draft preview")}
         </button>
       </div>
 
+      {needsManualProducts && productsError ? (
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <span className="min-w-0 break-words">
+            {lang === "ar" ? "تعذّر تحميل المنتجات للاختيار اليدوي." : "Products could not be loaded for manual selection."} {productsError}
+          </span>
+          <button type="button" disabled={productsLoading} onClick={() => void retryProducts()} className="min-h-10 rounded-lg border border-current px-3 disabled:opacity-50">
+            {t("Retry")}
+          </button>
+        </div>
+      ) : null}
+
       {!sections.length ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <div className="text-sm font-bold text-slate-600">No homepage CMS sections found.</div>
+          <div className="text-sm font-bold text-slate-600">
+            {t("No homepage CMS sections found.")}
+          </div>
           <button
             onClick={() => setShowAdd(true)}
             className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
           >
-            <Plus className="size-4" /> Add first section
+            <Plus className="size-4" /> {t("Add first section")}
           </button>
         </div>
       ) : (
@@ -1375,6 +1735,7 @@ export default function HomepageBuilderPage() {
                 selected={selected?.id === section.id}
                 onSelect={() => setSelectedId(section.id)}
                 onToggle={() => {
+                  if (mutationLock.current) return;
                   setDirty(true);
                   setSections((current) =>
                     current.map((item) =>
@@ -1390,10 +1751,16 @@ export default function HomepageBuilderPage() {
           </div>
           <div>
             {selected ? (
-              <Editor brands={brands} section={selected} update={updateSelected} />
+              <Editor
+                brands={brands}
+                products={products}
+                productsReady={productsReady}
+                section={selected}
+                update={updateSelected}
+              />
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-400">
-                Select a section to edit it.
+                {t("Select a section to edit it.")}
               </div>
             )}
           </div>
@@ -1412,10 +1779,12 @@ export default function HomepageBuilderPage() {
             <div className="mb-5 flex items-start justify-between">
               <div>
                 <div className="text-xl font-bold tracking-[-.04em] text-[#14203a]">
-                  Add homepage section
+                  {t("Add homepage section")}
                 </div>
                 <div className="mt-1 text-sm text-slate-400">
-                  New sections start as Draft and are saved to Supabase only after Save changes.
+                  {t(
+                    "New sections start as Draft and are saved to Supabase only after Save changes.",
+                  )}
                 </div>
               </div>
               <button
@@ -1430,7 +1799,7 @@ export default function HomepageBuilderPage() {
                 <button
                   key={type}
                   onClick={() => addSection(type)}
-                  className="group rounded-2xl border border-slate-200 p-4 text-left transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50/30"
+                  className="group rounded-2xl border border-slate-200 p-4 text-start transition hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50/30"
                 >
                   <div className="mb-3 flex items-center justify-between">
                     <div className="grid size-9 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
@@ -1462,9 +1831,11 @@ export default function HomepageBuilderPage() {
           >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-lg font-bold text-[#14203a]">Draft Preview</div>
+                <div className="text-lg font-bold text-[#14203a]">{t("Draft Preview")}</div>
                 <div className="text-[11px] text-slate-400">
-                  Preview reflects the current unsaved editor state and device visibility rules.
+                  {t(
+                    "Preview reflects the current unsaved editor state and device visibility rules.",
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1507,13 +1878,13 @@ export default function HomepageBuilderPage() {
               ))}
               {!visibleSections.length && (
                 <div className="rounded-2xl bg-white p-16 text-center text-sm text-slate-400">
-                  No visible sections for this mode.
+                  {t("No visible sections for this mode.")}
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }

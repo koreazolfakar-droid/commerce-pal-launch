@@ -8,38 +8,33 @@ import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
 import { categoryDefinition, displayCollections, productsInCategory } from "@/lib/taxonomy";
+import { productsInManagedCategory } from "@/lib/categoryAssignments";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
-import type { CatalogIndex } from "@/lib/taxonomy";
 
 type ManagedStoreCategory = {
+  id: string;
   name: string;
   name_ar: string | null;
   slug: string;
   description: string | null;
   image_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
 };
-
-function normalizeCategoryName(value: string | undefined) {
-  return value?.trim().toLocaleLowerCase() ?? "";
-}
-
-function productsInManagedCategory(catalog: CatalogIndex, categoryName: string) {
-  const normalized = normalizeCategoryName(categoryName);
-  return catalog.products.filter(
-    (product) => normalizeCategoryName(product.node.productType) === normalized,
-  );
-}
 
 async function fetchManagedCategory(slug: string): Promise<ManagedStoreCategory | null> {
   const { data, error } = await publicSupabase
     .from("store_categories")
-    .select("name,name_ar,slug,description,image_url")
+    .select("id,name,name_ar,slug,description,image_url,seo_title,seo_description")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
 
-  if (error) throw new Error(`Loading storefront category failed: ${error.message}`);
+  if (error) {
+    console.warn("Loading optional storefront category metadata failed.", error);
+    return null;
+  }
   return (data as ManagedStoreCategory | null) ?? null;
 }
 
@@ -72,15 +67,18 @@ export const Route = createFileRoute("/category/$slug")({
     ]);
 
     if (managedCategory) {
-      const products = productsInManagedCategory(catalog, managedCategory.name);
+      const products = productsInManagedCategory(catalog.products, managedCategory);
 
       void context.queryClient.prefetchQuery(collectionsQueryOptions());
       return {
         label: managedCategory.name,
         labelAr: managedCategory.name_ar,
+        managedCategoryId: managedCategory.id,
         managedCategoryName: managedCategory.name,
         description: managedCategory.description,
         imageUrl: managedCategory.image_url,
+        seoTitle: managedCategory.seo_title,
+        seoDescription: managedCategory.seo_description,
         products,
       };
     }
@@ -97,9 +95,12 @@ export const Route = createFileRoute("/category/$slug")({
     return {
       label: definition.label,
       labelAr: null,
+      managedCategoryId: null,
       managedCategoryName: null,
       description: null,
       imageUrl: null,
+      seoTitle: null,
+      seoDescription: null,
       products: productsInCategory(catalog, params.slug),
     };
   },
@@ -113,8 +114,10 @@ export const Route = createFileRoute("/category/$slug")({
       };
     }
     const label = loaderData.label ?? categoryDefinition(params.slug)?.label ?? "Category";
-    const title = `${label} in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
+    const title = loaderData.seoTitle?.trim() || `${label} in Lebanon | ${STORE_NAME}`;
+    const description =
+      loaderData.seoDescription?.trim() ||
+      `Shop ${label.toLowerCase()} in Lebanon at ${STORE_NAME} with live stock, clear pricing and direct Space Call checkout.`;
     const path = `/category/${params.slug}`;
     return {
       meta: [
@@ -157,8 +160,11 @@ function CategoryPage() {
     : definition
       ? categoryLabel(definition, language)
       : loaderData.label;
-  const inCategory = loaderData.managedCategoryName
-    ? productsInManagedCategory(catalog, loaderData.managedCategoryName)
+  const inCategory = loaderData.managedCategoryId
+    ? productsInManagedCategory(catalog.products, {
+        id: loaderData.managedCategoryId,
+        name: loaderData.managedCategoryName ?? "",
+      })
     : productsInCategory(catalog, slug);
   const products = applyFilters(inCategory, catalog, filters);
 

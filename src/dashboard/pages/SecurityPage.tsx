@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -12,7 +13,8 @@ import {
   Smartphone,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDashboardDialogFocus } from "@/dashboard/hooks/useDashboardDialogFocus";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import {
@@ -50,20 +52,27 @@ function eventLabel(type: string) {
 
 function deviceLabel(userAgent: string) {
   const ua = userAgent.toLowerCase();
-  const platform =
-    ua.includes("android") ? "Android" :
-    ua.includes("iphone") || ua.includes("ipad") ? "iOS / iPadOS" :
-    ua.includes("windows") ? "Windows" :
-    ua.includes("mac os") || ua.includes("macintosh") ? "macOS" :
-    ua.includes("linux") ? "Linux" :
-    "Unknown device";
+  const platform = ua.includes("android")
+    ? "Android"
+    : ua.includes("iphone") || ua.includes("ipad")
+      ? "iOS / iPadOS"
+      : ua.includes("windows")
+        ? "Windows"
+        : ua.includes("mac os") || ua.includes("macintosh")
+          ? "macOS"
+          : ua.includes("linux")
+            ? "Linux"
+            : "Unknown device";
 
-  const browser =
-    ua.includes("edg/") ? "Edge" :
-    ua.includes("chrome/") ? "Chrome" :
-    ua.includes("firefox/") ? "Firefox" :
-    ua.includes("safari/") ? "Safari" :
-    "Browser";
+  const browser = ua.includes("edg/")
+    ? "Edge"
+    : ua.includes("chrome/")
+      ? "Chrome"
+      : ua.includes("firefox/")
+        ? "Firefox"
+        : ua.includes("safari/")
+          ? "Safari"
+          : "Browser";
 
   return `${platform} · ${browser}`;
 }
@@ -85,6 +94,7 @@ function SecurityEventRow({ event }: { event: DashboardSecurityEvent }) {
 }
 
 export default function SecurityPage() {
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [snapshot, setSnapshot] = useState<DashboardSecuritySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +111,7 @@ export default function SecurityPage() {
   const [passkeyStepUpError, setPasskeyStepUpError] = useState("");
   const [passkeyStepUpBusy, setPasskeyStepUpBusy] = useState(false);
   const passkeySupported = useMemo(() => isDashboardPasskeySupported(), []);
+  const passkeyDialogRef = useRef<HTMLDivElement>(null);
 
   const loadPasskeys = useCallback(async () => {
     if (!passkeySupported) {
@@ -153,7 +164,12 @@ export default function SecurityPage() {
   };
 
   const signOutOthers = async () => {
-    if (!window.confirm("Sign out every other Space Call dashboard session and keep this device signed in?")) return;
+    if (
+      !window.confirm(
+        "Sign out every other Space Call dashboard session and keep this device signed in?",
+      )
+    )
+      return;
     setAction("others");
     try {
       await signOutOtherDashboardSessions();
@@ -193,6 +209,12 @@ export default function SecurityPage() {
     setPasskeyTotpCode("");
     setPasskeyStepUpError("");
   };
+
+  useDashboardDialogFocus(
+    Boolean(passkeyStepUp),
+    passkeyDialogRef,
+    passkeyStepUpBusy ? undefined : closePasskeyStepUp,
+  );
 
   const addPasskey = () => {
     openPasskeyStepUp({ type: "register" });
@@ -265,18 +287,27 @@ export default function SecurityPage() {
   };
 
   const removePasskey = (passkey: DashboardPasskey) => {
-    if (!window.confirm(`Remove ${passkey.friendlyName || "this passkey"}? You will no longer be able to use it to sign in.`)) return;
+    if (
+      !window.confirm(
+        `Remove ${passkey.friendlyName || "this passkey"}? You will no longer be able to use it to sign in.`,
+      )
+    )
+      return;
     openPasskeyStepUp({ type: "delete", passkey });
   };
 
   if (loading && !snapshot) {
-    return <div className="grid min-h-[460px] place-items-center"><Loader2 className="size-6 animate-spin text-[#5968ea]" /></div>;
+    return (
+      <div className="grid min-h-[460px] place-items-center">
+        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      </div>
+    );
   }
 
   if (!snapshot) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-        Security information is unavailable for this session.
+        {t("Security information is unavailable for this session.")}
       </div>
     );
   }
@@ -285,62 +316,91 @@ export default function SecurityPage() {
     <div>
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">System / Security</div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Security Center</h1>
-          <p className="mt-1.5 text-sm text-slate-500">MFA, passkeys, bot protection, session controls and security activity in one place.</p>
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
+            {t("System / Security")}
+          </div>
+          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
+            {t("Security Center")}
+          </h1>
+          <p className="mt-1.5 text-sm text-slate-500">
+            {t(
+              "MFA, passkeys, bot protection, session controls and security activity in one place.",
+            )}
+          </p>
         </div>
-        <button onClick={() => void load()} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600">
-          <RefreshCw className="size-3.5" /> Refresh
+        <button
+          onClick={() => void load()}
+          className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
+        >
+          <RefreshCw className="size-3.5" /> {t("Refresh")}
         </button>
       </div>
 
       <div className="mb-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-emerald-100 bg-white p-5">
           <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold text-slate-500">MFA protection</div>
+            <div className="text-[11px] font-bold text-slate-500">{t("MFA protection")}</div>
             <CheckCircle2 className="size-5 text-emerald-500" />
           </div>
           <div className="mt-3 text-xl font-bold text-[#14203a]">
             {snapshot.passkeyStepUpReady
-              ? "Passkey verified"
+              ? t("Passkey verified")
               : snapshot.mfaRequired && snapshot.currentLevel === "aal2"
-                ? "AAL2 active"
-                : "Attention required"}
+                ? t("AAL2 active")
+                : t("Attention required")}
           </div>
           <div className="mt-1 text-[10px] text-slate-400">
             {snapshot.passkeyStepUpReady
-              ? "This password session completed a server-verified WebAuthn second step."
+              ? t("This password session completed a server-verified WebAuthn second step.")
               : snapshot.mfaEnrolledAt
                 ? `Enrolled ${new Date(snapshot.mfaEnrolledAt).toLocaleDateString()}`
-                : "Authenticator enrollment incomplete"}
+                : t("Authenticator enrollment incomplete")}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold text-slate-500">Bot protection</div>
-            {snapshot.turnstileConfigured ? <CheckCircle2 className="size-5 text-emerald-500" /> : <AlertTriangle className="size-5 text-amber-500" />}
+            <div className="text-[11px] font-bold text-slate-500">{t("Bot protection")}</div>
+            {snapshot.turnstileConfigured ? (
+              <CheckCircle2 className="size-5 text-emerald-500" />
+            ) : (
+              <AlertTriangle className="size-5 text-amber-500" />
+            )}
           </div>
-          <div className="mt-3 text-xl font-bold text-[#14203a]">{snapshot.turnstileConfigured ? "Client configured" : "Site key missing"}</div>
-          <div className="mt-1 text-[10px] text-slate-400">Site key status only. Supabase Auth must also have Cloudflare Turnstile enabled with the matching Secret Key.</div>
+          <div className="mt-3 text-xl font-bold text-[#14203a]">
+            {snapshot.turnstileConfigured ? t("Client configured") : t("Site key missing")}
+          </div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {t(
+              "Site key status only. Supabase Auth must also have Cloudflare Turnstile enabled with the matching Secret Key.",
+            )}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold text-slate-500">Current session</div>
+            <div className="text-[11px] font-bold text-slate-500">{t("Current session")}</div>
             <Laptop className="size-5 text-indigo-500" />
           </div>
           <div className="mt-3 truncate text-[13px] font-bold text-[#14203a]">{snapshot.email}</div>
-          <div className="mt-1 text-[10px] text-slate-400">Access token expiry: {sessionExpiry}</div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {t("Access token expiry:")} {sessionExpiry}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-indigo-100 bg-white p-5">
           <div className="flex items-center justify-between">
-            <div className="text-[11px] font-bold text-slate-500">Passkeys</div>
+            <div className="text-[11px] font-bold text-slate-500">{t("Passkeys")}</div>
             <Fingerprint className="size-5 text-indigo-500" />
           </div>
-          <div className="mt-3 text-xl font-bold text-[#14203a]">{passkeyError ? "Needs attention" : `${passkeys.length} registered`}</div>
-          <div className="mt-1 text-[10px] text-slate-400">{passkeyError ? "Passkey service is not ready on this device or project." : "Phishing-resistant sign-in credentials."}</div>
+          <div className="mt-3 text-xl font-bold text-[#14203a]">
+            {passkeyError ? t("Needs attention") : `${passkeys.length} registered`}
+          </div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {passkeyError
+              ? t("Passkey service is not ready on this device or project.")
+              : t("Phishing-resistant sign-in credentials.")}
+          </div>
         </div>
       </div>
 
@@ -348,10 +408,12 @@ export default function SecurityPage() {
         <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2 text-[13px] font-bold text-[#14203a]">
-              <Fingerprint className="size-4 text-indigo-500" /> Passkeys & biometrics
+              <Fingerprint className="size-4 text-indigo-500" /> {t("Passkeys & biometrics")}
             </div>
             <div className="mt-1 text-[10px] text-slate-400">
-              Use fingerprint, face unlock, device PIN or a hardware security key. Your biometric data never leaves your device.
+              {t(
+                "Use fingerprint, face unlock, device PIN or a hardware security key. Your biometric data never leaves your device.",
+              )}
             </div>
           </div>
           <button
@@ -360,8 +422,12 @@ export default function SecurityPage() {
             disabled={passkeyAction !== null || Boolean(passkeyError) || !passkeySupported}
             className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {passkeyAction === "register" ? <Loader2 className="size-3.5 animate-spin" /> : <Fingerprint className="size-3.5" />}
-            Add passkey
+            {passkeyAction === "register" ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Fingerprint className="size-3.5" />
+            )}{" "}
+            {t("Add passkey")}
           </button>
         </div>
 
@@ -375,7 +441,10 @@ export default function SecurityPage() {
               const renaming = editingPasskeyId === passkey.id;
               const busy = passkeyAction?.endsWith(passkey.id) ?? false;
               return (
-                <div key={passkey.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                <div
+                  key={passkey.id}
+                  className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"
+                >
                   <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
                     <Fingerprint className="size-4" />
                   </div>
@@ -403,7 +472,7 @@ export default function SecurityPage() {
                             onClick={() => void savePasskeyName(passkey.id)}
                             className="h-9 rounded-lg bg-slate-900 px-3 text-[10px] font-bold text-white disabled:opacity-50"
                           >
-                            Save
+                            {t("Save")}
                           </button>
                           <button
                             type="button"
@@ -414,18 +483,20 @@ export default function SecurityPage() {
                             }}
                             className="h-9 rounded-lg border border-slate-200 px-3 text-[10px] font-bold text-slate-600"
                           >
-                            Cancel
+                            {t("Cancel")}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <>
                         <div className="truncate text-[12px] font-bold text-slate-700">
-                          {passkey.friendlyName || "Passkey"}
+                          {passkey.friendlyName || t("Passkey")}
                         </div>
                         <div className="mt-1 text-[10px] text-slate-400">
-                          Added {new Date(passkey.createdAt).toLocaleString()}
-                          {passkey.lastUsedAt ? ` · Last used ${new Date(passkey.lastUsedAt).toLocaleString()}` : ""}
+                          {t("Added")} {new Date(passkey.createdAt).toLocaleString()}
+                          {passkey.lastUsedAt
+                            ? ` · Last used ${new Date(passkey.lastUsedAt).toLocaleString()}`
+                            : ""}
                         </div>
                       </>
                     )}
@@ -437,8 +508,8 @@ export default function SecurityPage() {
                         disabled={busy || passkeyAction === "register"}
                         onClick={() => beginRenamePasskey(passkey)}
                         className="grid size-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-50"
-                        aria-label="Rename passkey"
-                        title="Rename passkey"
+                        aria-label={t("Rename passkey")}
+                        title={t("Rename passkey")}
                       >
                         <Pencil className="size-3.5" />
                       </button>
@@ -447,10 +518,14 @@ export default function SecurityPage() {
                         disabled={busy || passkeyAction === "register"}
                         onClick={() => void removePasskey(passkey)}
                         className="grid size-9 place-items-center rounded-lg border border-rose-200 text-rose-500 transition hover:bg-rose-50 disabled:opacity-50"
-                        aria-label="Remove passkey"
-                        title="Remove passkey"
+                        aria-label={t("Remove passkey")}
+                        title={t("Remove passkey")}
                       >
-                        {passkeyAction === `delete:${passkey.id}` ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                        {passkeyAction === `delete:${passkey.id}` ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3.5" />
+                        )}
                       </button>
                     </div>
                   ) : null}
@@ -461,8 +536,12 @@ export default function SecurityPage() {
         ) : (
           <div className="px-5 py-10 text-center">
             <Fingerprint className="mx-auto size-7 text-slate-300" />
-            <div className="mt-3 text-[12px] font-bold text-slate-600">No passkeys registered</div>
-            <div className="mt-1 text-[10px] text-slate-400">Add one after MFA verification to enable passwordless sign-in.</div>
+            <div className="mt-3 text-[12px] font-bold text-slate-600">
+              {t("No passkeys registered")}
+            </div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Add one after MFA verification to enable passwordless sign-in.")}
+            </div>
           </div>
         )}
       </section>
@@ -470,39 +549,96 @@ export default function SecurityPage() {
       <div className="grid gap-4 xl:grid-cols-[.9fr_1.1fr]">
         <section className="rounded-2xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
-            <div className="text-[13px] font-bold text-[#14203a]">Session controls</div>
-            <div className="mt-1 text-[10px] text-slate-400">Revoke refresh sessions without exposing session tokens to the UI.</div>
+            <div className="text-[13px] font-bold text-[#14203a]">{t("Session controls")}</div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Revoke refresh sessions without exposing session tokens to the UI.")}
+            </div>
           </div>
           <div className="space-y-3 p-5">
-            <button onClick={() => void signOutCurrent()} disabled={action !== null} className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition hover:border-indigo-200 hover:bg-indigo-50/30 disabled:opacity-50">
-              <div className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-600"><Smartphone className="size-4" /></div>
-              <div className="flex-1"><div className="text-[12px] font-bold text-slate-700">Sign out this device</div><div className="mt-1 text-[10px] text-slate-400">Only end the current browser session.</div></div>
-              {action === "local" ? <Loader2 className="size-4 animate-spin" /> : <LogOut className="size-4 text-slate-400" />}
+            <button
+              onClick={() => void signOutCurrent()}
+              disabled={action !== null}
+              className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-start transition hover:border-indigo-200 hover:bg-indigo-50/30 disabled:opacity-50"
+            >
+              <div className="grid size-10 place-items-center rounded-xl bg-slate-100 text-slate-600">
+                <Smartphone className="size-4" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[12px] font-bold text-slate-700">
+                  {t("Sign out this device")}
+                </div>
+                <div className="mt-1 text-[10px] text-slate-400">
+                  {t("Only end the current browser session.")}
+                </div>
+              </div>
+              {action === "local" ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <LogOut className="size-4 text-slate-400" />
+              )}
             </button>
 
-            <button onClick={() => void signOutOthers()} disabled={action !== null} className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition hover:border-amber-200 hover:bg-amber-50/30 disabled:opacity-50">
-              <div className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-600"><KeyRound className="size-4" /></div>
-              <div className="flex-1"><div className="text-[12px] font-bold text-slate-700">Sign out all other sessions</div><div className="mt-1 text-[10px] text-slate-400">Keep this device, revoke refresh tokens elsewhere.</div></div>
+            <button
+              onClick={() => void signOutOthers()}
+              disabled={action !== null}
+              className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-start transition hover:border-amber-200 hover:bg-amber-50/30 disabled:opacity-50"
+            >
+              <div className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-600">
+                <KeyRound className="size-4" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[12px] font-bold text-slate-700">
+                  {t("Sign out all other sessions")}
+                </div>
+                <div className="mt-1 text-[10px] text-slate-400">
+                  {t("Keep this device, revoke refresh tokens elsewhere.")}
+                </div>
+              </div>
               {action === "others" ? <Loader2 className="size-4 animate-spin" /> : null}
             </button>
 
-            <button onClick={() => void signOutAll()} disabled={action !== null} className="flex w-full items-center gap-3 rounded-xl border border-rose-200 p-4 text-left transition hover:bg-rose-50/40 disabled:opacity-50">
-              <div className="grid size-10 place-items-center rounded-xl bg-rose-50 text-rose-600"><ShieldCheck className="size-4" /></div>
-              <div className="flex-1"><div className="text-[12px] font-bold text-rose-700">Sign out all sessions</div><div className="mt-1 text-[10px] text-rose-400">Revoke refresh sessions on every device, including this one.</div></div>
-              {action === "global" ? <Loader2 className="size-4 animate-spin text-rose-500" /> : null}
+            <button
+              onClick={() => void signOutAll()}
+              disabled={action !== null}
+              className="flex w-full items-center gap-3 rounded-xl border border-rose-200 p-4 text-start transition hover:bg-rose-50/40 disabled:opacity-50"
+            >
+              <div className="grid size-10 place-items-center rounded-xl bg-rose-50 text-rose-600">
+                <ShieldCheck className="size-4" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[12px] font-bold text-rose-700">
+                  {t("Sign out all sessions")}
+                </div>
+                <div className="mt-1 text-[10px] text-rose-400">
+                  {t("Revoke refresh sessions on every device, including this one.")}
+                </div>
+              </div>
+              {action === "global" ? (
+                <Loader2 className="size-4 animate-spin text-rose-500" />
+              ) : null}
             </button>
           </div>
         </section>
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-4">
-            <div className="text-[13px] font-bold text-[#14203a]">Recent security activity</div>
-            <div className="mt-1 text-[10px] text-slate-400">Only authenticated Space Call dashboard security events are shown.</div>
+            <div className="text-[13px] font-bold text-[#14203a]">
+              {t("Recent security activity")}
+            </div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {t("Only authenticated Space Call dashboard security events are shown.")}
+            </div>
           </div>
           {snapshot.events.length ? (
-            <div>{snapshot.events.map((event) => <SecurityEventRow key={event.id} event={event} />)}</div>
+            <div>
+              {snapshot.events.map((event) => (
+                <SecurityEventRow key={event.id} event={event} />
+              ))}
+            </div>
           ) : (
-            <div className="px-5 py-12 text-center text-[11px] text-slate-400">No security events recorded yet.</div>
+            <div className="px-5 py-12 text-center text-[11px] text-slate-400">
+              {t("No security events recorded yet.")}
+            </div>
           )}
         </section>
       </div>
@@ -517,7 +653,11 @@ export default function SecurityPage() {
             if (event.target === event.currentTarget) closePasskeyStepUp();
           }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div
+            ref={passkeyDialogRef}
+            tabIndex={-1}
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+          >
             <div className="flex items-start gap-3">
               <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
                 <ShieldCheck className="size-4" />
@@ -525,18 +665,22 @@ export default function SecurityPage() {
               <div className="min-w-0">
                 <h2 id="passkey-step-up-title" className="text-[15px] font-bold text-slate-800">
                   {passkeyStepUp.type === "register"
-                    ? "Verify before adding a passkey"
-                    : "Verify before removing this passkey"}
+                    ? t("Verify before adding a passkey")
+                    : t("Verify before removing this passkey")}
                 </h2>
                 <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                  Enter a fresh code from your authenticator app. This verification is required for this
-                  operation only and is not reused.
+                  {t(
+                    "Enter a fresh code from your authenticator app. This verification is required for this operation only and is not reused.",
+                  )}
                 </p>
               </div>
             </div>
 
-            <label className="mt-5 block text-[11px] font-bold text-slate-600" htmlFor="passkey-totp-code">
-              Authenticator code
+            <label
+              className="mt-5 block text-[11px] font-bold text-slate-600"
+              htmlFor="passkey-totp-code"
+            >
+              {t("Authenticator code")}
             </label>
             <input
               id="passkey-totp-code"
@@ -572,7 +716,7 @@ export default function SecurityPage() {
                 disabled={passkeyStepUpBusy}
                 className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
               >
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 type="button"
@@ -580,8 +724,12 @@ export default function SecurityPage() {
                 disabled={passkeyStepUpBusy || !/^\d{6,10}$/.test(passkeyTotpCode)}
                 className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {passkeyStepUpBusy ? <Loader2 className="size-3.5 animate-spin" /> : <KeyRound className="size-3.5" />}
-                Verify & continue
+                {passkeyStepUpBusy ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <KeyRound className="size-3.5" />
+                )}{" "}
+                {t("Verify & continue")}
               </button>
             </div>
           </div>

@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 
-const app = await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8");
+const app = await readDashboardShellSource();
 const settings = await readFile(
   new URL("../src/dashboard/pages/SettingsPage.tsx", import.meta.url),
   "utf8",
@@ -11,7 +12,7 @@ const settings = await readFile(
 test("dashboard shell exposes only truthful live actions", () => {
   assert.match(app, /import \{ SITE_URL \} from "@\/lib\/storeConfig"/);
   assert.match(app, /window\.open\(SITE_URL, "_blank", "noopener,noreferrer"\)/);
-  assert.match(app, /placeholder=\{t\("Search products\.\.\."\)\}/);
+  assert.match(app, /DashboardCommandCenter/);
   assert.doesNotMatch(app, /Search orders, products, customers/);
   assert.doesNotMatch(app, /Store preview link is available in the next integration phase/);
   assert.doesNotMatch(app, /You are all caught up/);

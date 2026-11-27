@@ -6,18 +6,23 @@ import { ArrowRight, Timer } from "lucide-react";
 
 import { HomeCategorySection } from "@/components/HomeCategorySection";
 import { HomeHero } from "@/components/HomeHero";
+import { BrandRailSkeleton, HomeCategorySkeleton, ProductRailSkeleton } from "@/components/LoadingSkeletons";
+import { DeferredTopBrands } from "@/components/DeferredTopBrands";
 import { StoreLayout } from "@/components/StoreLayout";
 import { applyCmsBrands, buildStoreBrands } from "@/lib/brandDirectory";
-import { cmsSeoPage, cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
+import { cmsText, EMPTY_CMS, localizeSection, type CmsSection } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
+import { CRITICAL_HERO_DESKTOP_URL, CRITICAL_HERO_MOBILE_URL } from "@/lib/criticalHero";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import {
-  bestSellingQueryOptions,
   newestQueryOptions,
   homepageCatalogQueryOptions,
+  homepageConfiguredProductsQueryOptions,
   navigationCatalogQueryOptions,
-  collectionQueryOptions,
   collectionsQueryOptions,
 } from "@/lib/queries";
+import type { HomepageProductSource } from "@/lib/storefrontData";
+import { findFacetMerchandising } from "@/lib/homeMerchandising";
 import { productDiscountPercent } from "@/lib/productPricing";
 import {
   canonicalLink,
@@ -30,43 +35,45 @@ import {
 } from "@/lib/seo";
 
 const LazyDealSpotlight = lazy(() =>
-  import("@/components/DealSpotlight").then((module) => ({ default: module.DealSpotlight })),
+  importWithChunkRecovery("deal-spotlight", () =>
+    import("@/components/DealSpotlight").then((module) => ({ default: module.DealSpotlight })),
+  ),
 );
 const LazyProductRail = lazy(() =>
-  import("@/components/ProductRail").then((module) => ({ default: module.ProductRail })),
+  importWithChunkRecovery("product-rail", () =>
+    import("@/components/ProductRail").then((module) => ({ default: module.ProductRail })),
+  ),
 );
 const LazyRecentlyViewed = lazy(() =>
-  import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
-);
-const LazyServicesStrip = lazy(() =>
-  import("@/components/HomeSections").then((module) => ({ default: module.ServicesStrip })),
-);
-const LazyTopBrands = lazy(() =>
-  import("@/components/TopBrands").then((module) => ({ default: module.TopBrands })),
+  importWithChunkRecovery("recently-viewed", () =>
+    import("@/components/HomeSections").then((module) => ({ default: module.RecentlyViewed })),
+  ),
 );
 const LazyWhyShop = lazy(() =>
-  import("@/components/WhyShop").then((module) => ({ default: module.WhyShop })),
+  importWithChunkRecovery("why-shop", () =>
+    import("@/components/WhyShop").then((module) => ({ default: module.WhyShop })),
+  ),
 );
 const LazyBundleSection = lazy(() =>
-  import("@/components/BrandShowcaseSections").then((module) => ({
-    default: module.BundleSection,
-  })),
+  importWithChunkRecovery("bundle-section", () =>
+    import("@/components/BrandShowcaseSections").then((module) => ({
+      default: module.BundleSection,
+    })),
+  ),
 );
 const LazyBrandShowcase = lazy(() =>
-  import("@/components/BrandShowcaseSections").then((module) => ({
-    default: module.BrandShowcase,
-  })),
+  importWithChunkRecovery("brand-showcase", () =>
+    import("@/components/BrandShowcaseSections").then((module) => ({
+      default: module.BrandShowcase,
+    })),
+  ),
 );
 
-const HOME_HERO_COLLECTION_HANDLE = "homepage-hero";
-const HOME_SECONDARY_IDLE_TIMEOUT_MS = 160;
-const HOME_SECONDARY_FALLBACK_DELAY_MS = 40;
+const HOME_SECONDARY_IDLE_TIMEOUT_MS = 2_500;
+const HOME_SECONDARY_FALLBACK_DELAY_MS = 900;
 
 type IdleCapableWindow = Window & {
-  requestIdleCallback?: (
-    callback: IdleRequestCallback,
-    options?: IdleRequestOptions,
-  ) => number;
+  requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
   cancelIdleCallback?: (handle: number) => void;
 };
 
@@ -105,53 +112,25 @@ function useDeferredHomepageWork() {
   return ready;
 }
 
-export const Route = createFileRoute("/")({
-  loader: async ({ context }) => {
-    // The CMS hero is the storefront's only visual hero source. Keep legacy
-    // merchandising reads out of the SSR/LCP critical path.
-    const cms = await context.queryClient.ensureQueryData(cmsQueryOptions());
-    const firstCmsHero = cms.heroSlides[0];
-    const desktopHeroPreload = firstCmsHero?.image_url?.trim() || undefined;
-    const mobileHeroPreload =
-      firstCmsHero?.mobile_image_url?.trim() || desktopHeroPreload;
+function takeUniqueProducts<T extends { node: { id: string } }>(
+  products: T[],
+  seenProductIds: Set<string>,
+  limit = 10,
+) {
+  const unique: T[] = [];
+  for (const product of products) {
+    if (seenProductIds.has(product.node.id)) continue;
+    seenProductIds.add(product.node.id);
+    unique.push(product);
+    if (unique.length >= limit) break;
+  }
+  return unique;
+}
 
-    return {
-      heroPreload:
-        desktopHeroPreload && mobileHeroPreload
-          ? { desktop: desktopHeroPreload, mobile: mobileHeroPreload }
-          : undefined,
-      cmsSeo: cmsSeoPage(cms, "home"),
-    };
-  },
-  head: ({ loaderData }) => {
-    const cmsSeo = loaderData?.cmsSeo;
-    const title =
-      cmsSeo?.title?.trim() || `${SITE_NAME} Lebanon | Official Online Electronics Store`;
-    const description =
-      cmsSeo?.description?.trim() ||
-      `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
-    const image = cmsSeo?.og_image_url?.trim() || loaderData?.heroPreload?.desktop;
-    const canonicalUrl = cmsSeo?.canonical_url?.trim();
-    const customJsonLd = cmsSeo?.json_ld;
-    const heroPreload = loaderData?.heroPreload;
-    const heroPreloadLinks = heroPreload
-      ? heroPreload.mobile === heroPreload.desktop
-        ? [{ rel: "preload" as const, as: "image" as const, href: heroPreload.desktop }]
-        : [
-            {
-              rel: "preload" as const,
-              as: "image" as const,
-              href: heroPreload.mobile,
-              media: "(max-width: 639px)",
-            },
-            {
-              rel: "preload" as const,
-              as: "image" as const,
-              href: heroPreload.desktop,
-              media: "(min-width: 640px)",
-            },
-          ]
-      : [];
+export const Route = createFileRoute("/")({
+  head: () => {
+    const title = `${SITE_NAME} Lebanon | Official Online Electronics Store`;
+    const description = `${SITE_NAME} Lebanon is an online electronics store for smartphones, tablets, laptops, headphones, smartwatches and accessories with live availability and direct Space Call checkout.`;
 
     return {
       meta: [
@@ -161,27 +140,33 @@ export const Route = createFileRoute("/")({
         { name: "apple-mobile-web-app-title", content: SITE_NAME },
         {
           name: "robots",
-          content:
-            cmsSeo?.robots?.trim() ||
-            "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+          content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
         },
         ...socialMeta({
           title,
           description,
           path: "/",
-          ...(image ? { image } : {}),
+          image: CRITICAL_HERO_DESKTOP_URL,
         }),
       ],
       links: [
-        ...heroPreloadLinks,
-        canonicalUrl ? { rel: "canonical", href: canonicalUrl } : canonicalLink("/"),
+        {
+          rel: "preload" as const,
+          as: "image" as const,
+          href: CRITICAL_HERO_MOBILE_URL,
+          media: "(max-width: 639px)",
+        },
+        {
+          rel: "preload" as const,
+          as: "image" as const,
+          href: CRITICAL_HERO_DESKTOP_URL,
+          media: "(min-width: 640px)",
+          fetchPriority: "high" as const,
+        },
+        canonicalLink("/"),
         ...languageAlternateLinks({ path: "/", arabicPath: "/ar" }),
       ],
-      scripts: [
-        jsonLd(websiteJsonLd()),
-        jsonLd(organizationJsonLd()),
-        ...(customJsonLd && Object.keys(customJsonLd).length ? [jsonLd(customJsonLd)] : []),
-      ],
+      scripts: [jsonLd(websiteJsonLd()), jsonLd(organizationJsonLd())],
     };
   },
   component: Index,
@@ -217,8 +202,8 @@ function SectionHeader({
   );
 }
 
-function SectionFallback({ className = "h-52" }: { className?: string }) {
-  return <div className={`${className} rounded-lg bg-surface`} aria-hidden="true" />;
+function SectionFallback() {
+  return <ProductRailSkeleton />;
 }
 
 function DealsCountdown() {
@@ -261,7 +246,9 @@ function cmsBuilderState(section: CmsSection) {
       ? (section.content as Record<string, unknown>)
       : {};
   const builder =
-    content["builder"] && typeof content["builder"] === "object" && !Array.isArray(content["builder"])
+    content["builder"] &&
+    typeof content["builder"] === "object" &&
+    !Array.isArray(content["builder"])
       ? (content["builder"] as Record<string, unknown>)
       : {};
 
@@ -274,6 +261,62 @@ function cmsSectionIsScheduled(section: CmsSection) {
   const endDate = typeof builder["endDate"] === "string" ? builder["endDate"] : "";
   const today = new Date().toISOString().slice(0, 10);
   return (!startDate || today >= startDate) && (!endDate || today <= endDate);
+}
+
+function cmsManualProductIds(section?: CmsSection) {
+  if (!section) return [];
+
+  const builder = cmsBuilderState(section);
+  const settings =
+    builder["settings"] &&
+    typeof builder["settings"] === "object" &&
+    !Array.isArray(builder["settings"])
+      ? (builder["settings"] as Record<string, unknown>)
+      : {};
+
+  if (settings["source"] !== "manual") return [];
+
+  const configured = Array.isArray(settings["manualProductIds"])
+    ? settings["manualProductIds"].filter((id): id is string => typeof id === "string")
+    : typeof settings["sourceValue"] === "string"
+      ? settings["sourceValue"].split(",")
+      : [];
+
+  return [...new Set(configured.map((id) => id.trim()).filter(Boolean))].slice(0, 10);
+}
+
+function cmsFeaturedProductConfig(section?: CmsSection) {
+  const builder = section ? cmsBuilderState(section) : {};
+  const settings =
+    builder["settings"] &&
+    typeof builder["settings"] === "object" &&
+    !Array.isArray(builder["settings"])
+      ? (builder["settings"] as Record<string, unknown>)
+      : {};
+  const allowed = new Set<HomepageProductSource>([
+    "best_sellers",
+    "newest",
+    "manual",
+    "collection",
+    "brand",
+    "category",
+  ]);
+  const requestedSource =
+    typeof settings["source"] === "string" ? settings["source"] : "best_sellers";
+  const source: HomepageProductSource = allowed.has(requestedSource as HomepageProductSource)
+    ? (requestedSource as HomepageProductSource)
+    : "best_sellers";
+  const manualProductIds = source === "manual" ? cmsManualProductIds(section) : [];
+  const sourceValue =
+    source === "collection" && typeof settings["collection"] === "string"
+      ? settings["collection"].trim()
+      : typeof settings["sourceValue"] === "string"
+        ? settings["sourceValue"].trim()
+        : "";
+  const rawCount = Number(settings["count"] ?? (manualProductIds.length || 5));
+  const count = Math.min(10, Math.max(1, Number.isFinite(rawCount) ? Math.trunc(rawCount) : 5));
+
+  return { source, sourceValue, manualProductIds, count };
 }
 
 function cmsSectionDeviceClass(section?: CmsSection) {
@@ -328,7 +371,9 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
   const localized = localizeSection(section, language);
   const builder = cmsBuilderState(section);
   const settings =
-    builder["settings"] && typeof builder["settings"] === "object" && !Array.isArray(builder["settings"])
+    builder["settings"] &&
+    typeof builder["settings"] === "object" &&
+    !Array.isArray(builder["settings"])
       ? (builder["settings"] as Record<string, unknown>)
       : {};
   const type =
@@ -404,7 +449,9 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
       ) : null}
       <div className={`relative z-10 flex max-w-2xl flex-col gap-3 ${alignmentClass}`}>
         {eyebrow ? (
-          <div className={`text-xs font-semibold uppercase tracking-[.06em] ${dark ? "text-indigo-200" : "text-primary"}`}>
+          <div
+            className={`text-xs font-semibold uppercase tracking-[.06em] ${dark ? "text-indigo-200" : "text-primary"}`}
+          >
             {eyebrow}
           </div>
         ) : null}
@@ -412,12 +459,16 @@ function CmsBuilderSection({ section }: { section: CmsSection }) {
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{displayTitle}</h2>
         ) : null}
         {displaySubtitle ? (
-          <p className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}>
+          <p
+            className={`text-sm font-semibold ${dark ? "text-white/80" : "text-muted-foreground"}`}
+          >
             {displaySubtitle}
           </p>
         ) : null}
         {description ? (
-          <p className={`max-w-xl text-sm leading-6 ${dark ? "text-white/75" : "text-muted-foreground"}`}>
+          <p
+            className={`max-w-xl text-sm leading-6 ${dark ? "text-white/75" : "text-muted-foreground"}`}
+          >
             {description}
           </p>
         ) : null}
@@ -473,42 +524,40 @@ function Index() {
   const { t, language } = useLanguage();
   const deferredWorkReady = useDeferredHomepageWork();
   const { data: cms = EMPTY_CMS } = useQuery(cmsQueryOptions());
+  const homeSections = cms.sections.filter((section) => section.page_slug === "home");
+  const featuredMerchSection = homeSections.find(
+    (section) => section.section_key === "featured_products",
+  );
+  const featuredProductConfig = cmsFeaturedProductConfig(featuredMerchSection);
   const { data: navigationCatalog } = useQuery(navigationCatalogQueryOptions());
-  const { data: catalog } = useQuery({
+  const {
+    data: catalog,
+    isError: catalogFailed,
+    refetch: retryCatalog,
+  } = useQuery({
     ...homepageCatalogQueryOptions(),
-    enabled: deferredWorkReady,
+    enabled: typeof window !== "undefined",
   });
   const { data: collections = [] } = useQuery({
     ...collectionsQueryOptions(),
     enabled: deferredWorkReady,
   });
-  const {
-    data: heroCollection,
-    isFetched: heroCollectionFetched,
-    isError: heroCollectionFailed,
-  } = useQuery({
-    ...collectionQueryOptions(HOME_HERO_COLLECTION_HANDLE, 4),
-    enabled: deferredWorkReady,
-  });
-  const catalogReady =
-    Boolean(catalog) && (heroCollectionFetched || heroCollectionFailed);
-  const secondaryQueriesReady = catalogReady && deferredWorkReady;
+  const catalogReady = Boolean(catalog);
+  // Start curated rails once the catalog has loaded, rather than waiting for
+  // the browser's idle window; avoid competing with the first product request.
+  const secondaryQueriesReady = catalogReady;
   const { data: newItems = [] } = useQuery({
     ...newestQueryOptions(),
     enabled: secondaryQueriesReady,
   });
-  const { data: bestSellers = [] } = useQuery({
-    ...bestSellingQueryOptions(),
+  const { data: configuredFeaturedProducts = [] } = useQuery({
+    ...homepageConfiguredProductsQueryOptions(featuredProductConfig),
     enabled: secondaryQueriesReady,
   });
 
-  const heroOnlyProductIds = new Set(
-    (heroCollection?.products ?? [])
-      .filter((product) => Number(product.node.priceRange.minVariantPrice.amount) <= 0)
-      .map((product) => product.node.id),
-  );
   const isHomepageMerchandise = (product: NonNullable<typeof catalog>["products"][number]) =>
-    !heroOnlyProductIds.has(product.node.id);
+    Number(product.node.priceRange.minVariantPrice.amount) > 0 ||
+    !product.node.collections?.edges.some(({ node }) => node.handle === "homepage-hero");
 
   const products = catalog?.products ?? [];
   const merchandiseProducts = products.filter(isHomepageMerchandise);
@@ -524,12 +573,28 @@ function Index() {
   const navigationBrands = navigationCatalog?.brands ?? catalog?.brands ?? [];
   const navigationReady = Boolean(navigationCatalog || catalog);
   const brands = applyCmsBrands(buildStoreBrands(navigationBrands, collections), cms.brands);
-  const deals = merchandiseProducts.filter((product) => productDiscountPercent(product) !== null);
-  const best = (bestSellers ?? []).filter(isHomepageMerchandise);
-  const latest = newItems.filter(isHomepageMerchandise);
+  const brandFeatureFlagsAvailable = cms.brands.some(
+    (brand) => typeof brand.is_featured === "boolean",
+  );
+  const showcaseBrands = brandFeatureFlagsAvailable
+    ? brands.filter(
+        (brand) =>
+          brand.featured === true ||
+          Boolean(findFacetMerchandising(collections, "brand", brand.slug)),
+      )
+    : brands;
 
+  const seenHomepageProductIds = new Set<string>();
+  const best = takeUniqueProducts(
+    configuredFeaturedProducts.filter(isHomepageMerchandise),
+    seenHomepageProductIds,
+  );
+  const deals = takeUniqueProducts(
+    merchandiseProducts.filter((product) => productDiscountPercent(product) !== null),
+    seenHomepageProductIds,
+  );
+  const latest = takeUniqueProducts(newItems.filter(isHomepageMerchandise), seenHomepageProductIds);
 
-  const homeSections = cms.sections.filter((section) => section.page_slug === "home");
   const sectionByKey = new Map(homeSections.map((section) => [section.section_key, section]));
   const coreKeys = new Set(["hero", "categories", "brands", "featured_products", "trust"]);
   const coreSection = (key: string) => sectionByKey.get(key);
@@ -542,9 +607,19 @@ function Index() {
     ? localizeSection(featuredSection, language)
     : undefined;
   const featuredTitle =
-    localizedFeaturedSection?.title?.trim() || t("bestSellers");
+    localizedFeaturedSection?.title?.trim() ||
+    (featuredProductConfig.source === "best_sellers"
+      ? t("bestSellers")
+      : featuredProductConfig.source === "newest"
+        ? t("newItems")
+        : t("featured"));
   const featuredSubtitle =
-    localizedFeaturedSection?.subtitle?.trim() || t("bestSellersDescription");
+    localizedFeaturedSection?.subtitle?.trim() ||
+    (featuredProductConfig.source === "best_sellers"
+      ? t("bestSellersDescription")
+      : featuredProductConfig.source === "newest"
+        ? t("newItemsDescription")
+        : undefined);
 
   const blocks: Array<{
     key: string;
@@ -568,7 +643,7 @@ function Index() {
       node: navigationReady ? (
         <HomeCategorySection categories={navigationCategories} collections={collections} />
       ) : (
-        <div className="h-28 rounded-lg bg-surface" aria-hidden="true" />
+        <HomeCategorySkeleton />
       ),
     },
     {
@@ -576,13 +651,7 @@ function Index() {
       order: orderOf("brands", 20),
       section: coreSection("brands"),
       visible: isLive(coreSection("brands")),
-      node: navigationReady ? (
-        <Suspense fallback={<SectionFallback className="h-24" />}>
-          <LazyTopBrands brands={brands} />
-        </Suspense>
-      ) : (
-        <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
-      ),
+      node: navigationReady ? <DeferredTopBrands brands={brands} /> : <BrandRailSkeleton />,
     },
     {
       key: "featured_products",
@@ -607,7 +676,7 @@ function Index() {
                 subtitle={t("dealsDescription")}
                 action={<DealsCountdown />}
               />
-              <Suspense fallback={<SectionFallback className="h-72" />}>
+              <Suspense fallback={<SectionFallback />}>
                 {deals.length <= 2 ? (
                   <LazyDealSpotlight products={deals} />
                 ) : (
@@ -648,16 +717,36 @@ function Index() {
           ) : null}
 
           {deferredWorkReady ? (
-            <Suspense fallback={<SectionFallback className="h-64" />}>
+            <Suspense fallback={<SectionFallback />}>
               <LazyBundleSection collections={collections} />
               {homepageCatalog ? (
-                <LazyBrandShowcase catalog={homepageCatalog} collections={collections} />
+                <LazyBrandShowcase
+                  catalog={homepageCatalog}
+                  collections={collections}
+                  brands={showcaseBrands}
+                  excludedProductIds={seenHomepageProductIds}
+                />
               ) : null}
             </Suspense>
           ) : null}
         </>
+      ) : catalogFailed ? (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm" role="alert">
+          <p>
+            {language === "ar"
+              ? "تعذّر تحميل المنتجات حاليًا."
+              : "Products could not be loaded right now."}
+          </p>
+          <button
+            type="button"
+            onClick={() => void retryCatalog()}
+            className="mt-2 min-h-11 font-semibold text-primary hover:underline"
+          >
+            {language === "ar" ? "حاول مجددًا" : "Try again"}
+          </button>
+        </div>
       ) : (
-        <div className="h-52 rounded-lg bg-surface" aria-hidden="true" />
+        <ProductRailSkeleton />
       ),
     },
     {
@@ -677,7 +766,6 @@ function Index() {
       visible: deferredWorkReady && isLive(coreSection("trust")),
       node: (
         <Suspense fallback={null}>
-          <LazyServicesStrip />
           <LazyWhyShop />
         </Suspense>
       ),
@@ -699,6 +787,7 @@ function Index() {
 
   return (
     <StoreLayout>
+      <h1 className="sr-only">{t("homeTitle")}</h1>
       <div className="home-page">
         {orderedBlocks.map((block) => (
           <div key={block.key} className={cmsSectionDeviceClass(block.section)}>
@@ -708,5 +797,4 @@ function Index() {
       </div>
     </StoreLayout>
   );
-
 }

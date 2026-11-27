@@ -2,15 +2,11 @@ import { type CSSProperties, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 import { BottomNav, MOBILE_NAV_HEIGHT } from "@/components/BottomNav";
-import {
-  CmsAnnouncementBar,
-  CmsNavigationStrip,
-  CmsTrustStrip,
-} from "@/components/CmsStoreControls";
+import { CmsAnnouncementBar, CmsNavigationStrip } from "@/components/CmsStoreControls";
 import { DeferredCartDrawer } from "@/components/DeferredCartDrawer";
 import { DeferredDesktopHeader } from "@/components/DeferredDesktopHeader";
 import { MobileTopBar } from "@/components/MobileTopBar";
-import { SiteFooter } from "@/components/SiteFooter";
+import { DeferredSiteFooter } from "@/components/DeferredSiteFooter";
 import "../dark-black.css";
 import "../ui-overhaul.css";
 import "../design-consistency.css";
@@ -29,8 +25,7 @@ export function StoreLayout({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="store-layout flex min-h-screen min-w-0 flex-col bg-background"
-      data-product-page={onProductPage}
+      className="store-layout flex min-h-[100dvh] min-w-0 flex-col bg-background"
       data-cart-page={onCartPage}
       style={mobileNavStyle}
     >
@@ -44,16 +39,16 @@ export function StoreLayout({ children }: { children: ReactNode }) {
       <DeferredDesktopHeader />
       <MobileTopBar
         showSearch={!onOrdersPage}
-        showCategoryRail={!onHomePage && !onCartPage && !onShopPage && !onOrdersPage}
+        showCategoryRail={
+          !onHomePage && !onCartPage && !onShopPage && !onOrdersPage && !onProductPage
+        }
       />
       <CmsNavigationStrip area="header" className="hidden lg:block" />
       <CmsNavigationStrip area="mobile_menu" className="lg:hidden" />
       <main id="main-content" tabIndex={-1} className={onCartPage ? "min-w-0" : "min-w-0 flex-1"}>
         {children}
       </main>
-      <CmsTrustStrip />
-      <CmsNavigationStrip area="footer" />
-      {onHomePage ? <SiteFooter /> : null}
+      {onHomePage && <DeferredSiteFooter />}
       <BottomNav />
       <DeferredCartDrawer />
     </div>

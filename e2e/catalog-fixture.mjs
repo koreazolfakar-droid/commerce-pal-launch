@@ -7,6 +7,12 @@ const vendors = ["Samsung", "Apple", "Xiaomi", "Samsung", "POCO", "Apple", "Spig
 export const products = Array.from({ length: 9 }, (_, i) => {
   const money = { amount: String(499 + i * 50), currencyCode: "USD" };
   const images = { edges: ["Front", "Back", "Side"].map((label) => ({ node: image(label) })) };
+  if (i === 0) {
+    const primary = images.edges[0].node;
+    primary.thumbnailUrl = primary.url;
+    primary.url = "/logo.svg?fixture-gallery-full=1";
+  }
+  const battery = [undefined, 5000, 5000, 3000][i];
   const compareAtPrice = i < 2 ? { amount: String(599 + i * 50), currencyCode: "USD" } : null;
   return {
     node: {
@@ -28,8 +34,18 @@ export const products = Array.from({ length: 9 }, (_, i) => {
         i === 6 ? "Phone Cases" : i === 7 ? "E-Readers" : i === 8 ? "إضاءة ذكية" : "Smartphone",
       tags: ["smartphone"],
       availableForSale: true,
-      description: "Local test product for catalog verification.",
-      descriptionHtml: "<p>Local test product for catalog verification.</p>",
+      description:
+        "Local test product for catalog verification." +
+        (i === 0
+          ? "\nSpecifications\nStorage: 128GB\nDisplay: 6.72-inch FHD+ LCD with 120Hz refresh rate\nProcessor: Qualcomm Snapdragon 695 5G\nMain camera: 108MP main camera with additional depth and macro sensors\nBattery capacity: 5000mAh"
+          : battery
+            ? `\nSpecifications\nBattery capacity: ${battery}mAh`
+            : ""),
+      descriptionHtml:
+        "<p>Local test product for catalog verification.</p>" +
+        (i === 0
+          ? "<h2>Specifications</h2><p>Storage: 128GB</p><p>Display: 6.72-inch FHD+ LCD with 120Hz refresh rate</p><p>Processor: Qualcomm Snapdragon 695 5G</p><p>Main camera: 108MP main camera with additional depth and macro sensors</p><p>Battery capacity: 5000mAh</p>"
+          : ""),
       priceRange: { minVariantPrice: money },
       compareAtPriceRange: { minVariantPrice: compareAtPrice ?? money },
       images,

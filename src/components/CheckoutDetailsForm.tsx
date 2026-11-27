@@ -162,9 +162,10 @@ export function CheckoutDetailsForm({
   disabled = false,
 }: CheckoutDetailsFormProps) {
   const { language } = useLanguage();
-  const { user } = useCustomerAuth();
+  const { user, loading: authLoading, openAuth, signOut } = useCustomerAuth();
   const { profile, selectedAddress, openAddressBook } = useCustomerAccount();
   const clearCart = useCartStore((state) => state.clearCart);
+  const syncCart = useCartStore((state) => state.syncCart);
   const { data: cms, refetch: refetchCms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
   const cmsWhatsApp = cms?.settings["whatsapp_number"];
@@ -243,6 +244,9 @@ export function CheckoutDetailsForm({
         notes: "ملاحظات الطلب (اختياري)",
         notesPlaceholder: "لون مفضل، وقت التوصيل، أو أي ملاحظة",
         send: "إنشاء الطلب والمتابعة عبر واتساب",
+        signInToOrder: "سجّل الدخول لإتمام الطلب",
+        signInRequired:
+          "يجب تسجيل الدخول أو إنشاء حساب قبل إنشاء الطلب. تم حفظ بيانات الطلب الحالية.",
         creating: "جارٍ إنشاء الطلب بأمان...",
         stockUnavailable:
           "تغيّر المخزون ولم تعد بعض العناصر متاحة بالكمية المطلوبة. راجع السلة ثم حاول مجددًا.",
@@ -317,6 +321,9 @@ export function CheckoutDetailsForm({
         notes: "Order notes (optional)",
         notesPlaceholder: "Preferred colour, delivery time, or any request",
         send: "Create order & continue on WhatsApp",
+        signInToOrder: "Sign in to place order",
+        signInRequired:
+          "Sign in or create an account before placing your order. Your current checkout details were saved.",
         creating: "Creating your order securely...",
         stockUnavailable:
           "Stock changed and one or more items are no longer available in the requested quantity. Review your bag and try again.",
@@ -352,6 +359,11 @@ export function CheckoutDetailsForm({
       // Keep checkout usable if storage is blocked or malformed.
     }
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    setError((current) => (current === copy.signInRequired ? "" : current));
+  }, [copy.signInRequired, user]);
 
   useEffect(() => {
     if (!selectedAddress) return;
@@ -522,9 +534,18 @@ export function CheckoutDetailsForm({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!validateDetails() || submitting) return;
+    if (submitting || authLoading) return;
+
     persistDetails();
     setError("");
+
+    if (!user) {
+      setError(copy.signInRequired);
+      openAuth();
+      return;
+    }
+
+    if (!validateDetails()) return;
 
     let resolvedLocation = location;
     if (shareLocation && !resolvedLocation) resolvedLocation = await locateCustomer();
@@ -570,14 +591,30 @@ export function CheckoutDetailsForm({
       setCreatedOrder(order);
     } catch (cause) {
       const code = cause instanceof StoreOrderError ? cause.code : "order_failed";
-      if (code.includes("insufficient_stock") || code.includes("product_or_variant_unavailable")) {
+      if (code.includes("authentication_required") || code.includes("invalid_session")) {
+        clearCheckoutAttempt();
+        if (code.includes("invalid_session")) {
+          try {
+            await signOut();
+          } catch {
+            // The auth dialog still lets the customer establish a fresh session.
+          }
+        }
+        setError(copy.signInRequired);
+        openAuth();
+      } else if (code.includes("insufficient_stock") || code.includes("product_or_variant_unavailable")) {
+        clearCheckoutAttempt();
+        await syncCart();
         setError(copy.stockUnavailable);
       } else if (code.includes("rate_limited")) {
         setError(copy.rateLimited);
       } else if (code.includes("idempotency_key_conflict")) {
+        clearCheckoutAttempt();
+        await syncCart();
         setError(copy.orderConflict);
       } else if (code.includes("pricing_changed")) {
-        await refetchCms();
+        clearCheckoutAttempt();
+        await Promise.all([syncCart(), refetchCms()]);
         setError(copy.pricingChanged);
       } else {
         setError(copy.orderFailed);
@@ -661,6 +698,7 @@ export function CheckoutDetailsForm({
     }`;
   const actionDisabled =
     disabled ||
+    authLoading ||
     submitting ||
     items.length === 0 ||
     locating ||
@@ -1090,13 +1128,21 @@ export function CheckoutDetailsForm({
               disabled={actionDisabled || pdfBusy}
               className="press min-h-[3.25rem] w-full justify-start bg-success px-3.5 text-[13px] font-extrabold text-success-foreground shadow-card-hover hover:bg-success/90 min-[390px]:min-h-14 min-[390px]:px-4 sm:px-5 sm:text-sm"
             >
-              {locating || submitting ? (
+              {authLoading || locating || submitting ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
-              ) : (
+              ) : user ? (
                 <MessageCircle className="h-4 w-4" />
+              ) : (
+                <UserRound className="h-4 w-4" />
               )}
               <span className="min-w-0 flex-1 truncate text-start">
-                {submitting ? copy.creating : locating ? copy.locating : copy.send}
+                {submitting
+                  ? copy.creating
+                  : locating
+                    ? copy.locating
+                    : user
+                      ? copy.send
+                      : copy.signInToOrder}
               </span>
               <span className="hidden shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-xs font-black tabular-nums min-[390px]:inline-flex">
                 {formatPrice(checkoutTotal, currency)}

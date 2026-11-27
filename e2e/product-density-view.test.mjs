@@ -39,7 +39,8 @@ test("storefront density modes use static grids and preserve product information
   assert.match(card, /brand\.label/);
   assert.match(card, /t\("inStock"\)/);
   assert.match(card, /t\("outOfStock"\)/);
-  assert.match(card, /Add \$\{node\.title\} to bag/);
+  assert.match(card, /Add \$\{displayTitle\} to bag/);
+  assert.match(card, /node\.titleAr/);
   assert.match(card, /summary \|\| "\\u00a0"/);
   assert.match(card, /mt-1\.5 flex min-h-9 items-center justify-between gap-2/);
   assert.match(card, /rounded-full border border-border\/70 bg-background text-primary/);

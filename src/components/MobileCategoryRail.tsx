@@ -4,7 +4,7 @@ import { LayoutGrid } from "lucide-react";
 
 import { useHydrated } from "@/hooks/useHydrated";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
-import { catalogQueryOptions } from "@/lib/queries";
+import { navigationCatalogQueryOptions } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export function MobileCategoryRail({ activeSlug }: { activeSlug?: string | undefined }) {
   const { t, language } = useLanguage();
   const hydrated = useHydrated();
-  const { data: catalog, isLoading } = useQuery(catalogQueryOptions());
+  const { data: catalog, isLoading } = useQuery(navigationCatalogQueryOptions());
   const list = hydrated ? (catalog?.categories ?? []) : [];
 
   if (!list.length && !isLoading) return null;
@@ -47,12 +47,14 @@ export function MobileCategoryRail({ activeSlug }: { activeSlug?: string | undef
           {t("all")}
         </Link>
       ) : null}
-      <Link
-        to="/used-phones"
-        className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
-      >
-        {t("usedPhones")}
-      </Link>
+      {hydrated && (catalog?.usedPhoneCount ?? 0) > 0 ? (
+        <Link
+          to="/used-phones"
+          className="press flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent px-3 text-[12px] font-semibold text-accent-foreground"
+        >
+          {t("usedPhones")}
+        </Link>
+      ) : null}
       {list.map((category) => {
         const Icon = category.icon;
         const active = activeSlug === category.slug;

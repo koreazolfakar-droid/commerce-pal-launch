@@ -7,21 +7,42 @@ const PASSKEY_ASSURANCE_MS = 8 * 60 * 60 * 1000;
 const allowedOrigins = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
   "http://localhost:3000",
   "http://localhost:5173",
 ]);
 
+const TRUSTED_PREVIEW_SUFFIXES = [
+  ".lovable.app",
+  ".lovableproject.com",
+  ".lovableproject-dev.com",
+  ".gpt-eng.com",
+  ".gptengineer.run",
+];
+
+function originAllowed(origin: string) {
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      TRUSTED_PREVIEW_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix))
+    );
+  } catch {
+    return false;
+  }
+}
+
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
   return {
-    "Access-Control-Allow-Origin": allowedOrigins.has(origin)
-      ? origin
-      : "https://spacecallapp.store",
+    ...(originAllowed(origin)
+      ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
+      : {}),
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Cache-Control": "no-store",
     "Content-Type": "application/json; charset=utf-8",
-    Vary: "Origin",
   };
 }
 

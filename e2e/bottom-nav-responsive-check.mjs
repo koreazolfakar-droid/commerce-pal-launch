@@ -1,3 +1,5 @@
+import { products } from "./catalog-fixture.mjs";
+import { createStorefrontPage } from "./helpers/storefront-fixture-fetch.mjs";
 import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 
@@ -11,7 +13,7 @@ const cases = [
   { width: 430, height: 932 },
   { width: 768, height: 1024 },
 ];
-const expectedIds = ["home", "orders", "search", "cart"];
+const expectedIds = ["home", "search", "cart", "orders"];
 
 const browser = await chromium.launch({ headless: true });
 
@@ -56,7 +58,7 @@ async function assertActive(page, id) {
 
 try {
   for (const testCase of cases) {
-    const page = await browser.newPage({ viewport: testCase });
+    const page = await createStorefrontPage(browser, { viewport: testCase });
     await page.goto(baseURL, { waitUntil: "load" });
     await page.waitForTimeout(250);
 
@@ -122,7 +124,9 @@ try {
     await page.close();
   }
 
-  const routingPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const routingPage = await createStorefrontPage(browser, {
+    viewport: { width: 390, height: 844 },
+  });
   await routingPage.goto(`${baseURL}/my-orders`, { waitUntil: "load" });
   await waitForNav(routingPage);
   await assertActive(routingPage, "orders");
@@ -146,11 +150,25 @@ try {
     "bottom Search should focus the search input immediately",
   );
   await routingPage.getByRole("button", { name: "Close search" }).click();
+  await routingPage.waitForFunction(
+    () => document.activeElement?.matches('[data-testid="bottom-nav"] [data-nav-id="search"]'),
+    undefined,
+    { timeout: 3000 },
+  );
+
+  await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="search"]').click();
+  await searchInput.fill("Samsung");
+  await searchInput.press("Enter");
+  await routingPage.waitForURL(
+    (url) => url.pathname === "/search" && url.searchParams.get("q") === "Samsung",
+  );
+  await routingPage.getByRole("heading", { name: "Results for “Samsung”", exact: true }).waitFor();
 
   await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="home"]').click();
   await routingPage.waitForURL(`${baseURL}/`);
   await routingPage.evaluate(() => window.scrollTo(0, 500));
   await routingPage.locator('[data-testid="bottom-nav"] [data-nav-id="home"]').click();
+  await routingPage.waitForFunction(() => window.scrollY === 0, undefined, { timeout: 3000 });
   assert.equal(
     await routingPage.evaluate(() => window.scrollY),
     0,
@@ -164,44 +182,29 @@ try {
   assert.notEqual(darkBackground, "rgba(0, 0, 0, 0)", "dark mode nav background is transparent");
   await routingPage.close();
 
-  const badgePage = await browser.newPage({ viewport: { width: 360, height: 740 } });
-  await badgePage.goto(baseURL, { waitUntil: "load" });
-  await badgePage.evaluate(async () => {
-    const { useCartStore } = await import("/src/stores/cartStore.ts");
-    const price = { amount: "1.00", currencyCode: "USD" };
-    useCartStore.setState({
-      items: [
-        {
-          lineId: null,
-          variantId: "gid://shopify/ProductVariant/test",
-          variantTitle: "Test variant",
-          price,
-          quantity: 105,
-          selectedOptions: [],
-          product: {
-            node: {
-              id: "gid://shopify/Product/test",
-              title: "Test product",
-              handle: "test-product",
-              description: "",
-              availableForSale: true,
-              priceRange: { minVariantPrice: price },
-              images: { edges: [] },
-              collections: { edges: [] },
-              variants: { edges: [] },
-              options: [],
-            },
-          },
-        },
-      ],
-    });
+  const badgePage = await createStorefrontPage(browser, { viewport: { width: 360, height: 740 } });
+  const badgeItems = products.slice(0, 6).map((product) => {
+    const variant = product.node.variants.edges[0].node;
+    return {
+      lineId: null,
+      product,
+      variantId: variant.id,
+      variantTitle: variant.title,
+      price: variant.price,
+      quantity: 20,
+      selectedOptions: variant.selectedOptions,
+    };
   });
+  await badgePage.addInitScript((items) => {
+    localStorage.setItem("space-call-cart", JSON.stringify({ state: { items }, version: 0 }));
+  }, badgeItems);
+  await badgePage.goto(baseURL, { waitUntil: "load" });
   const badge = badgePage.locator('[data-testid="bottom-nav-cart-badge"]');
   await badge.waitFor({ state: "visible" });
   assert.equal((await badge.textContent())?.trim(), "99+", "cart badge should cap counts at 99+");
   await badgePage.close();
 
-  const rtlPage = await browser.newPage({ viewport: { width: 360, height: 740 } });
+  const rtlPage = await createStorefrontPage(browser, { viewport: { width: 360, height: 740 } });
   await rtlPage.addInitScript(() => localStorage.setItem("space-cell-language", "ar"));
   await rtlPage.goto(baseURL, { waitUntil: "load" });
   await waitForNav(rtlPage);

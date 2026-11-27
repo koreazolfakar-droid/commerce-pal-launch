@@ -41,6 +41,8 @@ test("storefront orders and hides homepage blocks from public CMS sections", () 
   assert.match(storefront, /\.sort\(\(a, b\) => a\.order - b\.order/);
   assert.match(storefront, /section\.is_visible && cmsSectionIsScheduled\(section\)/);
   assert.match(storefront, /<CmsBuilderSection section=\{section\} \/>/);
+  assert.match(storefront, /brandFeatureFlagsAvailable/);
+  assert.match(storefront, /showcaseBrands/);
 });
 
 test("public CMS exposes only visible sections, navigation and brands", () => {
@@ -49,6 +51,7 @@ test("public CMS exposes only visible sections, navigation and brands", () => {
     const visible = publicCms.indexOf('.eq("is_visible", true)', from);
     assert.ok(from >= 0 && visible > from, `${table} must be filtered to visible rows`);
   }
+  assert.match(publicCms, /is_featured/);
   assert.match(categories, /localizeSection\(cmsSection, language\)/);
   assert.match(brands, /localizeSection\(cmsSection, language\)/);
   assert.match(trust, /localizeSection\(section, language\)/);

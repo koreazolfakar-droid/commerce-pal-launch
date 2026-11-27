@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 
 const security = await readFile(
   new URL("../src/dashboard/security/Auth0DashboardSecurity.tsx", import.meta.url),
@@ -10,10 +11,7 @@ const mount = await readFile(
   new URL("../src/dashboard/AppMount.tsx", import.meta.url),
   "utf8",
 );
-const app = await readFile(
-  new URL("../src/dashboard/App.tsx", import.meta.url),
-  "utf8",
-);
+const app = await readDashboardShellSource();
 const login = await readFile(
   new URL("../src/dashboard/pages/LoginPage.tsx", import.meta.url),
   "utf8",

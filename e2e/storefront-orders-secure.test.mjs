@@ -19,6 +19,10 @@ const settings = await readFile(
   new URL("../src/dashboard/data/settings.ts", import.meta.url),
   "utf8",
 );
+const authCheckoutMigration = await readFile(
+  new URL("../supabase/migrations/20260927190000_require_customer_login_for_checkout.sql", import.meta.url),
+  "utf8",
+);
 
 test("checkout persists an order before WhatsApp is opened", () => {
   const createIndex = checkout.indexOf("await createStorefrontOrder({");
@@ -29,11 +33,14 @@ test("checkout persists an order before WhatsApp is opened", () => {
   assert.match(checkout, /formatPrice\(order\.total, order\.currency\)/);
 });
 
-test("checkout retries reuse a cart-scoped idempotency key", () => {
+test("checkout retries reuse a full-payload idempotency key", () => {
   assert.match(client, /CHECKOUT_ATTEMPT_KEY/);
-  assert.match(client, /cartFingerprint/);
+  assert.match(client, /checkoutFingerprint/);
   assert.match(client, /crypto\.randomUUID/);
-  assert.match(client, /idempotency_key: checkoutIdempotencyKey\(input\.items\)/);
+  assert.match(client, /customerUserId: string/);
+  assert.match(client, /customerUserId: input\.customerUserId/);
+  assert.match(client, /idempotency_key: await checkoutIdempotencyKey\(fingerprint\)/);
+  assert.match(client, /fingerprintHash/);
 });
 
 test("create-order rejects unsafe or ambiguous order requests before RPC", () => {
@@ -41,7 +48,11 @@ test("create-order rejects unsafe or ambiguous order requests before RPC", () =>
   assert.match(edge, /duplicate_variant/);
   assert.match(edge, /invalid_delivery_location/);
   assert.match(edge, /idempotency_key_conflict/);
-  assert.match(edge, /db\.rpc\("create_store_order_internal"/);
+  assert.match(edge, /authentication_required/);
+  assert.match(edge, /db\.auth\.getUser\(userToken\)/);
+  assert.match(edge, /db\.rpc\("create_store_order_for_customer_internal"/);
+  assert.match(authCheckoutMigration, /public\.create_store_order_internal\(payload\)/);
+  assert.match(authCheckoutMigration, /customer_user_id = p_customer_user_id/);
 });
 
 test("database order creation serializes duplicates and inventory conflicts", () => {

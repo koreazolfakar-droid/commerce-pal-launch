@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { EyeOff, Sparkles } from "lucide-react";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import type { CatalogCategory } from "@/dashboard/data/categories";
@@ -10,6 +11,7 @@ export default function CategoryPreview({
   category: CatalogCategory;
   products: DashboardProduct[];
 }) {
+  const { t } = useLanguage();
   const effectiveFeatured = category.active && category.featured;
 
   return (
@@ -19,9 +21,11 @@ export default function CategoryPreview({
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <div className="text-[12px] font-black text-[#14203a]">Category Preview on Homepage</div>
+          <div className="text-[12px] font-black text-[#14203a]">
+            {t("Category Preview on Homepage")}
+          </div>
           <div className="mt-1 text-[10px] text-slate-400">
-            Visual preview only — it reuses the current category and product data.
+            {t("Visual preview only — it reuses the current category and product data.")}
           </div>
         </div>
         <span
@@ -30,7 +34,7 @@ export default function CategoryPreview({
             (effectiveFeatured ? "bg-violet-50 text-violet-700" : "bg-slate-100 text-slate-500")
           }
         >
-          {effectiveFeatured ? "Featured" : "Not visible"}
+          {effectiveFeatured ? t("Featured") : t("Not visible")}
         </span>
       </div>
 
@@ -52,7 +56,8 @@ export default function CategoryPreview({
                 <Sparkles className="size-3.5 shrink-0 text-violet-500" />
               </div>
               <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
-                {category.description || "Explore the latest products in this Space Call category."}
+                {category.description ||
+                  t("Explore the latest products in this Space Call category.")}
               </p>
             </div>
             <div className="flex shrink-0 -space-x-2 rtl:space-x-reverse">
@@ -67,7 +72,7 @@ export default function CategoryPreview({
               ))}
               {!products.length && (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-white px-3 py-2 text-[9px] text-slate-400">
-                  No products yet
+                  {t("No products yet")}
                 </div>
               )}
             </div>
@@ -80,12 +85,12 @@ export default function CategoryPreview({
           </span>
           <div>
             <div className="text-[11px] font-bold text-slate-600">
-              This category is currently hidden from homepage sections.
+              {t("This category is currently hidden from homepage sections.")}
             </div>
             <div className="mt-1 text-[9px] leading-4 text-slate-400">
               {category.active
-                ? "Enable Featured to include it in homepage category sections."
-                : "Hidden storefront status takes precedence even if Featured is enabled."}
+                ? t("Enable Featured to include it in homepage category sections.")
+                : t("Hidden storefront status takes precedence even if Featured is enabled.")}
             </div>
           </div>
         </div>

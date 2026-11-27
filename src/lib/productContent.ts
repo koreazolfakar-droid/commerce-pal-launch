@@ -101,11 +101,15 @@ function isHeading(line: string) {
   return line.length <= 34 && /[:：]$/.test(line) && !SPEC_LINE.test(line.replace(/[:：]$/, ""));
 }
 
+/** AI research notes that must never reach the customer-facing page. */
+const RESEARCH_NOTE =
+  /explicitly states|grounded evidence|entity match|requires direct|exact match reported|source not verified|cannot be verified|no reliable source/i;
+
 /** Structured view of a product description. */
 export function parseDescription(html?: string, plain?: string): ContentSection[] {
   const source = (html && html.trim()) || (plain && plain.trim()) || "";
   if (!source) return [];
-  const lines = descriptionLines(source);
+  const lines = descriptionLines(source).filter((line) => !RESEARCH_NOTE.test(line));
   const sections: ContentSection[] = [];
   let current: ContentSection = { title: null, paragraphs: [], bullets: [], specs: [] };
 
@@ -153,7 +157,7 @@ const GROUP_RULES: Array<{ title: string; test: RegExp }> = [
   },
   {
     title: "Memory & Storage",
-    test: /\bram\b|memory|storage|capacity|\bssd\b|microsd|expandable/i,
+    test: /\bram\b|memory|storage|\bssd\b|microsd|expandable/i,
   },
   {
     title: "Camera",

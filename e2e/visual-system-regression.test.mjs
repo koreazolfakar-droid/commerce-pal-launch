@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -70,7 +71,7 @@ test("storefront polish avoids restoring decorative page gradients", async () =>
 
 test("shared RTL primitives use logical spacing and semantic dark-mode text", async () => {
   const [dashboard, select, table, pagination] = await Promise.all([
-    source("src/dashboard/App.tsx"),
+    readDashboardShellSource(),
     source("src/components/ui/select.tsx"),
     source("src/components/ui/table.tsx"),
     source("src/components/ui/pagination.tsx"),
@@ -79,8 +80,10 @@ test("shared RTL primitives use logical spacing and semantic dark-mode text", as
   assert.doesNotMatch(dashboard, /absolute left-3\.5 top-1\/2/);
   assert.doesNotMatch(dashboard, /bg-card pl-10 pr-14/);
   assert.doesNotMatch(dashboard, /text-slate-800/);
-  assert.match(dashboard, /absolute start-3\.5 top-1\/2/);
-  assert.match(dashboard, /bg-card ps-10 pe-14/);
+  const commands = await source("src/dashboard/components/layout/DashboardCommandCenter.tsx");
+  assert.match(commands, /absolute start-3\.5 top-4/);
+  assert.match(commands, /pe-10 ps-10/);
+  assert.doesNotMatch(commands, /absolute left-/);
 
   assert.match(select, /min-h-9 w-full/);
   assert.match(select, /py-1\.5 ps-2\.5 pe-8/);
@@ -119,19 +122,45 @@ test("product actions stay aligned without overlapping compact card content", as
   assert.match(consistency, /height: 2\.25rem;/);
   assert.match(consistency, /\.market-product-card \.market-product-action svg\.lucide/);
   assert.match(consistency, /grid-template-rows: 1rem 2\.2rem 1rem 1\.1rem 2\.375rem/);
-  assert.match(consistency, /\.homepage-product-card \.product-card-title \{[\s\S]*?min-height: 2\.15rem/);
-  assert.match(consistency, /\.market-product-card \.market-product-action \{[\s\S]*?width: 2\.375rem/);
+  assert.match(
+    consistency,
+    /\.homepage-product-card \.product-card-title \{[\s\S]*?min-height: 2\.15rem/,
+  );
+  assert.match(
+    consistency,
+    /\.market-product-card \.market-product-action \{[\s\S]*?width: 2\.375rem/,
+  );
   assert.match(consistency, /\.market-product-quantity button \{[\s\S]*?min-width: 2rem/);
 });
 
-test("dashboard shared chrome stays compact without changing navigation structure", async () => {
-  const dashboard = await source("src/dashboard/App.tsx");
+test("dashboard command navigation keeps five reachable mobile actions and contextual search", async () => {
+  const [dashboard, workspace, routes, translations] = await Promise.all([
+    readDashboardShellSource(),
+    source("src/dashboard/workspace.css"),
+    source("src/dashboard/config/routes.tsx"),
+    source("src/dashboard/uiTranslations.ts"),
+  ]);
 
-  assert.match(dashboard, /backdrop-blur-md/);
-  assert.match(dashboard, /grid min-h-\[64px\] grid-cols-5/);
-  assert.match(dashboard, /rounded-lg \$\{active \? "bg-accent" : ""\}/);
-  assert.match(dashboard, /shadow-\[0_-4px_18px_rgba\(15,23,42,\.07\)\]/);
   assert.match(dashboard, /<MobileBottomNav onMore=/);
+  assert.match(dashboard, /dashboard-mobile-nav-grid grid min-h-\[68px\] grid-cols-5/);
+  assert.match(dashboard, /dashboard-mobile-nav-create/);
+  assert.match(dashboard, /dashboard-sidebar-new-product/);
+  assert.match(dashboard, /dashboard-sidebar-store/);
+  assert.match(dashboard, /dashboard-header-search/);
+  assert.match(dashboard, /aria-current=\{active \? "page" : undefined\}/);
+  assert.match(dashboard, /useDashboardDialogFocus\(mobileOpen, sidebarRef/);
+  assert.match(workspace, /Space Call Command — navigation system/);
+  assert.match(workspace, /\.dark \.dashboard-theme-scope \{/);
+  assert.match(workspace, /\[dir="rtl"\]/);
+  assert.match(workspace, /prefers-reduced-motion: reduce/);
+  assert.match(routes, /label: "Overview"/);
+  assert.match(routes, /label: "Sales & customers"/);
+  assert.match(routes, /label: "Stock & purchasing"/);
+  assert.match(routes, /label: "Administration"/);
+  assert.match(translations, /Overview: "نظرة عامة"/);
+  assert.match(translations, /"Sales & customers": "المبيعات والعملاء"/);
+  assert.match(translations, /"Stock & purchasing": "المخزون والمشتريات"/);
+  assert.match(translations, /Administration: "الإدارة والإعدادات"/);
 });
 
 test("shared controls expose one compact sizing and focus language", async () => {
@@ -159,7 +188,7 @@ test("semantic product and dashboard hooks replace fragile visual selectors", as
     source("src/components/CompactProductCard.tsx"),
     source("src/ui-overhaul.css"),
     source("src/design-consistency.css"),
-    source("src/dashboard/App.tsx"),
+    readDashboardShellSource(),
     source("src/styles.css"),
   ]);
 
@@ -183,4 +212,34 @@ test("semantic product and dashboard hooks replace fragile visual selectors", as
   assert.match(styles, /text-\[#14203a\]/);
   assert.match(styles, /bg-\[#f5f6ff\]/);
   assert.match(styles, /border-\[#dfe2ff\]/);
+});
+
+
+test("dashboard design refresh stays scoped, theme-aware and responsive", async () => {
+  const [workspace, app, pageTitle, modal, editor, products] = await Promise.all([
+    source("src/dashboard/workspace.css"),
+    readDashboardShellSource(),
+    source("src/dashboard/components/layout/PageTitle.tsx"),
+    source("src/dashboard/components/DashboardModal.tsx"),
+    source("src/dashboard/pages/ProductFormPage.tsx"),
+    source("src/dashboard/pages/ProductsPage.tsx"),
+  ]);
+
+  assert.match(workspace, /2026 dashboard visual refresh/);
+  assert.match(workspace, /\.dashboard-theme-scope \.dashboard-sidebar-action\[aria-current="page"\]/);
+  assert.match(workspace, /\[dir="rtl"\] \.dashboard-theme-scope \.dashboard-sidebar-action/);
+  assert.match(workspace, /\.dark \.dashboard-theme-scope \{/);
+  assert.match(workspace, /@media \(max-width: 767px\)/);
+  assert.match(workspace, /@media \(prefers-contrast: more\)/);
+  assert.match(app, /dashboard-mobile-nav/);
+  assert.match(pageTitle, /dashboard-page-title/);
+  assert.match(pageTitle, /text-foreground/);
+  assert.match(modal, /aria-modal="true"/);
+  assert.match(modal, /bg-card/);
+  assert.match(editor, /dashboard-editor-grid/);
+  assert.match(editor, /dashboard-editor-panel/);
+  assert.match(editor, /renderCreateActions\("header"\)/);
+  assert.match(products, /dashboard-metric-card/);
+  assert.match(products, /dashboard-catalog-panel/);
+  assert.match(products, /dashboard-filter-panel/);
 });

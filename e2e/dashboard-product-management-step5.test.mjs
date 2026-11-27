@@ -2,35 +2,67 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-const [app, catalog, data, variants, products, form, migration, types] = await Promise.all([
+const [app, routes, catalog, data, variants, products, form, migration, atomicSave, types] = await Promise.all([
   readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/catalog.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/data/productManagement.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/components/products/ProductVariantManager.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductsPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/dashboard/pages/ProductFormPage.tsx", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/20260919082451_product_management_step5.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260928050000_atomic_product_editor_save.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/integrations/supabase/types.ts", import.meta.url), "utf8"),
 ]);
 
-test("dashboard routes use the Step 5 product pages", () => {
-  assert.match(app, /route === "\/dashboard\/products"\)\s+content = <ProductsPageLive \/>/);
-  assert.match(app, /route === "\/dashboard\/products\/new"\)\s+content = <ProductFormPageLive \/>/);
-  assert.match(app, /productDetail\)\s+content = <ProductFormPageLive id=\{productDetail\[1\]\} \/>/);
+test("dashboard routes lazy-load the Step 5 product pages", () => {
+  assert.match(routes, /const productsPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProductsPage"\)\)/);
+  assert.match(routes, /const productFormPage = lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProductFormPage"\)\)/);
+  assert.match(routes, /id: "products"[\s\S]*path: "\/dashboard\/products"[\s\S]*page: productsPage/);
+  assert.match(routes, /id: "products-new"[\s\S]*path: "\/dashboard\/products\/new"[\s\S]*page: productFormPage/);
+  assert.match(routes, /id: "product-detail"[\s\S]*productFormPage[\s\S]*params\.id/);
+  assert.match(app, /resolveDashboardRoute\(route\)/);
+  assert.doesNotMatch(app, /import ProductsPageLive from/);
+  assert.doesNotMatch(app, /import ProductFormPageLive from/);
 });
 
 test("multi-variant product save cannot overwrite variant-derived summaries", () => {
-  assert.match(catalog, /preexistingVariants\.length > 1/);
-  assert.match(catalog, /variantManagedSeparately\s*\? \{\}/);
-  assert.match(catalog, /base_price: input\.price/);
-  assert.match(catalog, /stock_quantity: Math\.max/);
+  assert.match(catalog, /save_store_product_editor/);
+  assert.match(atomicSave, /select count\(\*\)[\s\S]*into v_variant_count/);
+  assert.match(atomicSave, /if v_variant_count <= 1 then/);
+  assert.match(
+    atomicSave,
+    /sku = case[\s\S]*when v_variant_count <= 1[\s\S]*else v_product\.sku/,
+  );
+  assert.match(
+    atomicSave,
+    /barcode = case[\s\S]*when v_variant_count <= 1[\s\S]*else v_product\.barcode/,
+  );
+});
+
+test("product editor core persists in one PostgreSQL transaction", () => {
+  assert.match(catalog, /looseSupabase\.rpc\([\s\S]*"save_store_product_editor"/);
+  assert.match(atomicSave, /create or replace function public\.save_store_product_editor/);
+  assert.match(atomicSave, /security invoker/);
+  assert.match(atomicSave, /perform public\.set_store_product_collections/);
+  assert.match(atomicSave, /insert into public\.store_product_variants/);
+  assert.match(atomicSave, /update public\.store_product_variants/);
+  assert.match(atomicSave, /insert into public\.store_inventory_movements/);
+  assert.match(atomicSave, /reference_type,[\s\S]*'product_editor'/);
+  assert.match(atomicSave, /store_product_images/);
+  assert.match(atomicSave, /pg_advisory_xact_lock/);
+  assert.match(
+    atomicSave,
+    /grant execute on function public\.save_store_product_editor[\s\S]*to authenticated/,
+  );
+  assert.doesNotMatch(catalog, /set_store_product_collections/);
 });
 
 test("variant manager uses atomic RPCs and inventory-aware stock updates", () => {
-  assert.match(data, /rpc\("create_store_product_variant"/);
-  assert.match(data, /rpc\("update_store_product_variant"/);
-  assert.match(data, /rpc\("reorder_store_product_variants"/);
-  assert.match(data, /rpc\("delete_store_product_variant_safe"/);
+  assert.match(data, /rpc\(\s*"create_store_product_variant"/);
+  assert.match(data, /rpc\(\s*"update_store_product_variant"/);
+  assert.match(data, /rpc\(\s*"reorder_store_product_variants"/);
+  assert.match(data, /rpc\(\s*"delete_store_product_variant_safe"/);
   assert.match(variants, /Color/);
   assert.match(variants, /Storage \/ capacity/);
   assert.match(variants, /SKU/);
@@ -49,7 +81,7 @@ test("variant loading is stable across product-form rerenders and exposes recove
   assert.match(variants, /onSingleVariantChangeRef/);
   assert.match(variants, /const publishState = useCallback/);
   assert.match(variants, /setLoadError\(message\)/);
-  assert.match(variants, />\s*Retry/);
+  assert.match(variants, /t\("Retry"\)/);
 });
 
 test("product management supports multi-collection, duplication, bulk status and safe deletion", () => {

@@ -4,8 +4,13 @@ import { infoPageHead } from "@/lib/infoPages";
 import { shopPoliciesQueryOptions } from "@/lib/queries";
 export const Route = createFileRoute("/warranty")({
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(shopPoliciesQueryOptions());
+    return context.queryClient.ensureQueryData(shopPoliciesQueryOptions());
   },
   head: () => infoPageHead("warranty"),
-  component: () => <InfoPage page="warranty" />,
+  component: PolicyPage,
 });
+
+function PolicyPage() {
+  const policies = Route.useLoaderData();
+  return <InfoPage page="warranty" initialPolicies={policies} />;
+}

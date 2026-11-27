@@ -1,13 +1,5 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Eye,
-  EyeOff,
-  Pencil,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Pencil, Plus, Sparkles } from "lucide-react";
 import CatalogRowActions from "@/dashboard/components/CatalogRowActions";
 import BrandMark from "@/dashboard/components/brands/BrandMark";
 import type { CatalogBrand } from "@/dashboard/data/brands";
@@ -41,6 +33,7 @@ export default function BrandList({
   onDelete: (brand: CatalogBrand) => void;
   onMove: (brandId: string, direction: -1 | 1) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
       {brands.map((brand, index) => {
@@ -59,7 +52,7 @@ export default function BrandList({
               type="button"
               onClick={() => onSelect(brand)}
               aria-pressed={selected}
-              className={`flex min-h-[112px] w-full flex-col items-start justify-between gap-3 px-3 py-3 text-start transition active:scale-[.99] ${reorderMode ? "pb-14" : "pe-12"}`}
+              className={`flex min-h-[112px] w-full flex-col items-start justify-between gap-3 px-3 py-3 text-start transition active:scale-[.99] ${reorderMode ? "pb-14" : "pe-12 pb-10"}`}
             >
               <span className="flex w-full min-w-0 items-center gap-2.5">
                 <BrandMark brand={brand} className="size-10 shrink-0" />
@@ -70,17 +63,19 @@ export default function BrandList({
                     </span>
                     {brand.featured && (
                       <span className="shrink-0 rounded-full bg-violet-50 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide text-violet-700">
-                        Featured
+                        {t("Featured")}
                       </span>
                     )}
                   </span>
-                  <span className="mt-1 block truncate text-[8.5px] text-slate-400">/{brand.slug}</span>
+                  <span className="mt-1 block truncate text-[8.5px] text-slate-400">
+                    /{brand.slug}
+                  </span>
                 </span>
               </span>
 
               <span className="flex w-full flex-wrap items-center gap-1.5 text-[9px] text-slate-400">
                 <span className="rounded-full bg-slate-50 px-2 py-1 font-semibold text-slate-500">
-                  {getProductCount(brand)} products
+                  {getProductCount(brand)} {t("products")}
                 </span>
                 <span
                   className={
@@ -90,10 +85,23 @@ export default function BrandList({
                       : "bg-slate-100 text-slate-500")
                   }
                 >
-                  {brand.active ? "Active" : "Hidden"}
+                  {brand.active ? t("Active") : t("Hidden")}
                 </span>
               </span>
             </button>
+
+            {!reorderMode && (
+              <button
+                type="button"
+                onClick={() => onAddProduct(brand)}
+                aria-label={t("Add product to") + " " + brand.name}
+                title={t("Add product to") + " " + brand.name}
+                className="absolute bottom-2 end-2 flex h-7 items-center gap-1 rounded-lg bg-[#5968ea] px-2 text-[9px] font-bold text-white shadow-sm transition hover:bg-[#4a58d9] active:scale-95"
+              >
+                <Plus className="size-3" />
+                {t("Product")}
+              </button>
+            )}
 
             <div className={reorderMode ? "absolute inset-x-2 bottom-2" : "absolute end-2 top-2"}>
               {reorderMode ? (

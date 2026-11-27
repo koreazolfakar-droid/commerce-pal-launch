@@ -8,22 +8,29 @@ import { CustomerAccountButton } from "@/components/customer-auth/CustomerAccoun
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
 import { STORE_NAME } from "@/lib/storeConfig";
 
 const LazySearchOverlay = lazy(() =>
-  import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({
-    default: SearchOverlay,
-  })),
+  importWithChunkRecovery("search-overlay", () =>
+    import("@/components/SearchOverlay").then(({ SearchOverlay }) => ({
+      default: SearchOverlay,
+    })),
+  ),
 );
 const LazyMobileMenu = lazy(() =>
-  import("@/components/MobileMenu").then(({ MobileMenu }) => ({
-    default: MobileMenu,
-  })),
+  importWithChunkRecovery("mobile-menu", () =>
+    import("@/components/MobileMenu").then(({ MobileMenu }) => ({
+      default: MobileMenu,
+    })),
+  ),
 );
 const LazyMobileCategoryRail = lazy(() =>
-  import("@/components/MobileCategoryRail").then(({ MobileCategoryRail }) => ({
-    default: MobileCategoryRail,
-  })),
+  importWithChunkRecovery("mobile-category-rail", () =>
+    import("@/components/MobileCategoryRail").then(({ MobileCategoryRail }) => ({
+      default: MobileCategoryRail,
+    })),
+  ),
 );
 
 /** Mobile app style top bar: brand, quick actions, search field and category strip. */
@@ -57,7 +64,7 @@ export function MobileTopBar({
   return (
     <>
       <header className="mobile-top-bar sticky top-0 z-40 border-b border-border/45 bg-background/96 shadow-[0_8px_24px_-24px_rgba(15,23,42,.48)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid h-[4.25rem] w-full max-w-md grid-cols-[2.75rem_minmax(0,1fr)_5.75rem] items-center gap-2 px-4">
+        <div className="mx-auto grid h-[4.25rem] w-full max-w-md grid-cols-[5.75rem_minmax(0,1fr)_5.75rem] items-center gap-2 px-4">
           <button
             type="button"
             aria-label={t("openMenu")}
@@ -79,7 +86,7 @@ export function MobileTopBar({
               width={54}
               height={40}
               loading="eager"
-              fetchPriority="high"
+              fetchPriority="low"
               decoding="async"
               className="h-9 w-auto max-w-[3.4rem] shrink-0 object-contain sm:h-10 sm:max-w-[3.8rem]"
             />

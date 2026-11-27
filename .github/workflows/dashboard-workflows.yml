@@ -1,0 +1,74 @@
+name: Dashboard Workflows
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      [
+        "src/dashboard/**",
+        "src/integrations/supabase/**",
+        "e2e/dashboard-*",
+        "e2e/helpers/**",
+        "package.json",
+        "bun.lock",
+        ".github/workflows/dashboard-workflows.yml",
+      ]
+  push:
+    branches: [main]
+    paths:
+      [
+        "src/dashboard/**",
+        "src/integrations/supabase/**",
+        "e2e/dashboard-*",
+        "e2e/helpers/**",
+        "package.json",
+        "bun.lock",
+        ".github/workflows/dashboard-workflows.yml",
+      ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-workflows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - name: Dashboard behavior and safety checks
+        run: node --test e2e/dashboard-analytics.test.mjs e2e/dashboard-analytics-database.test.mjs e2e/dashboard-professional-workflows.test.mjs e2e/dashboard-csp-session-ci.test.mjs e2e/dashboard-session-security.test.mjs e2e/dashboard-release-readiness-regressions.test.mjs e2e/dashboard-ai-form-fill.test.mjs e2e/dashboard-ai-assist.test.mjs e2e/dashboard-product-specifications.test.mjs e2e/dashboard-mutation-flow.test.mjs e2e/dashboard-edge-cors-security.test.mjs
+      - name: Atomic login throttle and dashboard authentication security regressions
+        run: node --test e2e/dashboard-login-throttle-atomic.test.mjs e2e/dashboard-auth-throttle-attack.test.mjs e2e/dashboard-security-hardening.test.mjs e2e/dashboard-auth-provider-gates.test.mjs
+      - run: ./node_modules/.bin/playwright install --with-deps chromium
+      - run: bun run build
+      - name: Desktop, mobile, Arabic and workflow checks
+        env:
+          SPACE_CALL_DASHBOARD_ORIGIN: http://127.0.0.1:4173
+        run: |
+          SPACE_CALL_VISUAL_FIXTURES=1 node --import ./e2e/helpers/storefront-fixture-fetch.mjs e2e/helpers/production-preview.mjs > /tmp/dashboard-preview.log 2>&1 &
+          DASHBOARD_SERVER_PID=$!
+          trap 'kill "$DASHBOARD_SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          bun run test:dashboard:browser
+          bun run test:dashboard:professional
+          node e2e/dashboard-ai-form-fill-browser.mjs
+          node e2e/dashboard-ai-responsive-browser.mjs
+          node e2e/dashboard-sidebar-responsive-browser.mjs
+          node e2e/dashboard-analytics-browser.mjs
+          node e2e/dashboard-product-editor-browser.mjs

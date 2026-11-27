@@ -114,7 +114,7 @@ export const CartDrawer = ({
                       <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-surface">
                         {item.product.node.images?.edges?.[0]?.node && (
                           <img
-                            src={cdnImage(item.product.node.images.edges[0].node.url, 128)}
+                            src={cdnImage(item.product.node.images.edges[0].node.thumbnailUrl ?? item.product.node.images.edges[0].node.url, 128)}
                             alt={item.product.node.title}
                             className="h-full w-full object-cover"
                             loading="lazy"

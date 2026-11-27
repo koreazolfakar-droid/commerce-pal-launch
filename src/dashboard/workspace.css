@@ -1,0 +1,2317 @@
+/* Dashboard-only layout and controls. Storefront and image-editor geometry stay independent. */
+.dashboard-command-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(100%, 32rem);
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.dashboard-command-trigger:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 8%, transparent);
+}
+.dashboard-command-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 115;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1rem, 8dvh, 6rem) 1rem 1rem;
+  background: rgb(8 15 30 / 0.55);
+  backdrop-filter: blur(4px);
+}
+.dashboard-command-dialog {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: min(100%, 44rem);
+  max-height: 80dvh;
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+  background: var(--color-card);
+  color: var(--color-foreground);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.24);
+}
+.dashboard-command-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+}
+.dashboard-command-result.is-active {
+  background: color-mix(in oklab, var(--color-primary) 9%, var(--color-card));
+  border-color: color-mix(in oklab, var(--color-primary) 25%, transparent);
+}
+.dashboard-load-error {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.875rem;
+  border: 1px solid color-mix(in oklab, #e11d48 25%, var(--color-border));
+  border-radius: 1rem;
+  background: color-mix(in oklab, #e11d48 5%, var(--color-card));
+  color: var(--color-foreground);
+  padding: 1rem;
+  margin-block-end: 1rem;
+  font-size: 0.8125rem;
+}
+.dashboard-load-error p {
+  margin-block-start: 0.25rem;
+  color: var(--color-muted-foreground);
+}
+.dashboard-connectivity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  background: color-mix(in oklab, #d97706 10%, var(--color-card));
+  border-block-end: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+}
+.dashboard-form-map {
+  padding: 1rem 1.25rem;
+  margin-block-end: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-card);
+}
+.dashboard-form-map nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.875rem;
+}
+.dashboard-form-map :where(a, button) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+}
+.dashboard-form-map :where(a, button)[data-complete="true"] {
+  color: var(--color-primary);
+  border-color: color-mix(in oklab, var(--color-primary) 25%, var(--color-border));
+  background: color-mix(in oklab, var(--color-primary) 5%, var(--color-card));
+}
+/* Guided product form map: group related fields instead of twelve flat buttons. */
+.dashboard-form-map .dashboard-form-map-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+}
+.dashboard-form-map-group {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  background: var(--color-card);
+}
+.dashboard-form-map .dashboard-form-map-group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 3.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: start;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-foreground);
+  background: color-mix(in oklab, var(--color-muted) 35%, var(--color-card));
+}
+.dashboard-form-map .dashboard-form-map-group-toggle:hover {
+  background: var(--color-muted);
+}
+.dashboard-form-map .dashboard-form-map-group-toggle:focus-visible,
+.dashboard-form-map .dashboard-form-map-link:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+.dashboard-form-map .dashboard-form-map-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.375rem;
+}
+.dashboard-form-map .dashboard-form-map-links[hidden] {
+  display: none;
+}
+.dashboard-form-map .dashboard-form-map-link {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.55rem 0.75rem;
+  text-align: start;
+  border-radius: 0.625rem;
+  border: 1px solid transparent;
+  color: var(--color-foreground);
+  background: transparent;
+}
+.dashboard-form-map .dashboard-form-map-link:hover {
+  background: var(--color-muted);
+}
+.dashboard-form-map .dashboard-form-map-link[data-complete="true"] {
+  border-color: transparent;
+  color: var(--color-foreground);
+  background: transparent;
+}
+@media (max-width: 767px) {
+  .dashboard-form-map .dashboard-form-map-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dashboard-main [data-product-section] {
+  scroll-margin-top: 7rem;
+}
+.dashboard-list-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.25rem 1.25rem;
+}
+.dashboard-view {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  background: var(--color-card);
+}
+.dashboard-view > button {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.7rem;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.dashboard-view > button + button {
+  border-inline-start: 1px solid var(--color-border);
+  padding-inline: 0.5rem;
+}
+.dashboard-view.is-active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in oklab, var(--color-primary) 6%, var(--color-card));
+}
+.dashboard-save-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-start: auto;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+}
+.dashboard-save-view:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dashboard-view-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-basis: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-card);
+  padding: 0.875rem;
+}
+@media (max-width: 639px) {
+  .dashboard-command-trigger {
+    width: 2.75rem;
+    padding-inline: 0.8rem;
+  }
+  .dashboard-command-overlay {
+    padding: 0.5rem;
+    align-items: center;
+  }
+  .dashboard-command-dialog {
+    max-height: 94dvh;
+    border-radius: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid > div {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-summary-grid .text-2xl {
+    font-size: 1.5rem;
+  }
+}
+.dashboard-theme-scope {
+  --dashboard-control-height: 2.75rem;
+  --dashboard-accent: oklch(0.55 0.2 275);
+  --dashboard-soft: color-mix(in oklab, var(--color-card) 60%, var(--color-muted));
+  --dashboard-line: color-mix(in oklab, var(--color-border) 80%, transparent);
+  background: var(--dashboard-soft);
+  line-height: 1.55;
+}
+.dashboard-theme-scope .dashboard-main {
+  padding-inline: clamp(1rem, 2.5vw, 2.5rem);
+}
+.dashboard-theme-scope .dashboard-main h1 {
+  line-height: 1.3;
+  letter-spacing: -0.035em;
+}
+.dashboard-theme-scope .dashboard-page-eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: var(--dashboard-accent);
+}
+.dashboard-theme-scope .dashboard-page-description {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  max-width: 65ch;
+  color: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-main :where([class~="text-[10px]"]) {
+  font-size: 0.6875rem;
+  line-height: 1.55;
+}
+.dashboard-theme-scope .dashboard-main :where([class~="text-[11px]"]) {
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+.dashboard-theme-scope .dashboard-main :where([class~="text-[12px]"]) {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+.dashboard-theme-scope
+  .dashboard-main
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not(
+        [type="range"]
+      ):not([type="hidden"]),
+    select,
+    textarea
+  ) {
+  min-inline-size: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  background-color: var(--color-card);
+}
+.dashboard-theme-scope .dashboard-main :where(input, textarea)::placeholder {
+  color: var(--color-muted-foreground);
+  opacity: 0.75;
+}
+.dashboard-theme-scope .dashboard-main :where(input, select, textarea):disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.dashboard-theme-scope .dashboard-main :where(input[type="checkbox"], input[type="radio"]) {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--dashboard-accent);
+  flex-shrink: 0;
+}
+.dashboard-theme-scope .dashboard-main :where(table) {
+  text-align: start;
+}
+.dashboard-theme-scope .dashboard-main :where(th) {
+  text-align: start;
+  white-space: nowrap;
+}
+.dashboard-theme-scope .dashboard-main :where(td) {
+  vertical-align: middle;
+}
+.dashboard-theme-scope .dashboard-header {
+  background: color-mix(in oklab, var(--color-card) 92%, transparent);
+  gap: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-sidebar {
+  border-inline-end: 1px solid oklch(1 0 0 / 0.06);
+}
+.dashboard-theme-scope .dashboard-sidebar-action {
+  text-align: start;
+}
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]) {
+  color: oklch(0.76 0.025 260);
+}
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]) svg {
+  color: oklch(0.67 0.04 260);
+}
+.dashboard-theme-scope .dashboard-sidebar-section {
+  color: oklch(0.65 0.035 260);
+  letter-spacing: 0.12em;
+}
+.dashboard-theme-scope .dashboard-skip-link {
+  position: fixed;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 1rem;
+  transform: translateY(-200%);
+  padding: 0.75rem 1rem;
+  z-index: 100;
+  border-radius: 0.75rem;
+  background: var(--color-card);
+  color: var(--color-foreground);
+}
+.dashboard-theme-scope .dashboard-skip-link:focus {
+  transform: translateY(0);
+}
+.dashboard-theme-scope .dashboard-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-card);
+  color: var(--color-foreground);
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.dashboard-theme-scope .dashboard-button:hover:not(:disabled) {
+  background: var(--color-muted);
+  border-color: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dashboard-theme-scope .dashboard-button-primary {
+  background: var(--dashboard-accent);
+  color: oklch(1 0 0);
+  border-color: transparent;
+}
+.dashboard-theme-scope .dashboard-button-primary:hover:not(:disabled) {
+  background: oklch(0.48 0.2 275);
+  border-color: transparent;
+}
+.dashboard-theme-scope .dashboard-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--dashboard-line);
+  border-radius: 1rem;
+  background: var(--color-card);
+  box-shadow: 0 3px 12px oklch(0.2 0.03 260 / 0.025);
+}
+.dashboard-theme-scope .dashboard-panel-heading {
+  padding: 1.25rem 1.5rem;
+  border-block-end: 1px solid var(--dashboard-line);
+}
+.dashboard-theme-scope .dashboard-panel-heading h2 {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+.dashboard-theme-scope .dashboard-panel-heading p {
+  margin-block-start: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-overview-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-block-end: 1.75rem;
+}
+.dashboard-theme-scope .dashboard-overview-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+.dashboard-theme-scope .dashboard-overview-tools select {
+  border: 1px solid var(--color-border);
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+}
+.dashboard-theme-scope .dashboard-report-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  margin-block: 0.75rem 1.5rem;
+}
+.dashboard-theme-scope .dashboard-report-caption time {
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-theme-scope .dashboard-overview-metrics {
+  gap: 1rem;
+}
+.dashboard-theme-scope .dashboard-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 1.25rem;
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-kpi-label {
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  font-weight: 600;
+}
+.dashboard-theme-scope .dashboard-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.875rem;
+  flex-shrink: 0;
+  color: var(--dashboard-accent);
+  background: color-mix(in oklab, var(--dashboard-accent) 9%, var(--color-card));
+}
+.dashboard-theme-scope .dashboard-kpi-value {
+  font-size: clamp(1.65rem, 2.5vw, 2.15rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  margin-block: 1rem 0.375rem;
+  color: var(--color-foreground);
+}
+.dashboard-theme-scope .dashboard-kpi-detail {
+  color: var(--color-muted-foreground);
+  font-size: 0.6875rem;
+}
+.dashboard-theme-scope .dashboard-overview-secondary .dashboard-kpi {
+  padding: 1rem 1.25rem;
+}
+.dashboard-theme-scope .dashboard-overview-secondary .dashboard-kpi-value {
+  font-size: 1.6rem;
+  margin-block: 0.5rem 0.25rem;
+}
+.dashboard-theme-scope .dashboard-quick-action {
+  background: var(--dashboard-soft);
+  border-color: transparent;
+  min-height: 100px;
+  padding: 1rem;
+}
+.dashboard-theme-scope .dashboard-quick-action:hover {
+  border-color: color-mix(in oklab, var(--dashboard-accent) 35%, transparent);
+  background: color-mix(in oklab, var(--dashboard-accent) 7%, var(--color-card));
+}
+.dashboard-theme-scope .dashboard-empty-state {
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem 1.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--color-muted-foreground);
+  text-align: center;
+}
+.dashboard-theme-scope .dashboard-empty-state svg {
+  opacity: 0.5;
+}
+.dashboard-theme-scope .dashboard-catalog-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.dashboard-theme-scope .dashboard-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-catalog-search {
+  grid-column: 1 / -1;
+}
+.dashboard-theme-scope .dashboard-catalog-search input {
+  width: 100%;
+}
+.dashboard-theme-scope .dashboard-catalog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-block-start: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-catalog-footer > div,
+.dashboard-theme-scope .dashboard-catalog-footer label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-catalog-footer select {
+  padding-inline: 0.5rem;
+  border: 1px solid var(--color-border);
+}
+.dashboard-theme-scope .dashboard-selection-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-inline-action {
+  color: var(--dashboard-accent);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.dashboard-theme-scope .dashboard-chart {
+  color: var(--dashboard-accent);
+}
+.dashboard-theme-scope .dashboard-chart .recharts-cartesian-grid line {
+  stroke: var(--color-border);
+}
+.dashboard-theme-scope .dashboard-chart .recharts-text {
+  fill: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-chart .recharts-default-tooltip {
+  background: var(--color-popover) !important;
+  color: var(--color-popover-foreground);
+  border-color: var(--color-border) !important;
+  border-radius: 0.75rem;
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-page-eyebrow,
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-section,
+[dir="rtl"] .dashboard-theme-scope .dashboard-main h1 {
+  letter-spacing: normal;
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-directional {
+  transform: scaleX(-1);
+}
+.dark .dashboard-theme-scope {
+  --dashboard-accent: oklch(0.75 0.14 275);
+}
+.dark .dashboard-theme-scope .dashboard-button-primary {
+  background: oklch(0.53 0.2 275);
+}
+@media (min-width: 1400px) {
+  .dashboard-theme-scope .dashboard-catalog-filters {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-catalog-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .dashboard-theme-scope .dashboard-catalog-filters .dashboard-filter-field:last-child {
+    grid-column: 1 / -1;
+  }
+  .dashboard-theme-scope .dashboard-overview-tools {
+    width: 100%;
+  }
+  .dashboard-theme-scope .dashboard-overview-tools label {
+    flex: 1 1 100%;
+  }
+  .dashboard-theme-scope .dashboard-overview-tools select {
+    width: 100%;
+  }
+  .dashboard-theme-scope .dashboard-overview-tools .dashboard-button {
+    flex: 1;
+  }
+  .dashboard-theme-scope .dashboard-kpi {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-kpi-top {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+  }
+  .dashboard-theme-scope .dashboard-overview-secondary .dashboard-kpi {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-kpi-value {
+    font-size: 1.6rem;
+  }
+  .dashboard-theme-scope .dashboard-panel-heading {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-header {
+    gap: 0.25rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-theme-scope *,
+  .dashboard-theme-scope *::before,
+  .dashboard-theme-scope *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+.dashboard-theme-scope .dashboard-section-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-block-end: 1.75rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--dashboard-line);
+  font-size: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: var(--color-muted-foreground);
+}
+.dashboard-theme-scope .dashboard-breadcrumb [aria-current] {
+  color: var(--color-foreground);
+  font-weight: 650;
+}
+.dashboard-theme-scope .dashboard-related-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dashboard-theme-scope .dashboard-related-links > span {
+  color: var(--color-muted-foreground);
+  margin-inline-end: 0.25rem;
+}
+.dashboard-theme-scope .dashboard-related-links a {
+  border: 1px solid var(--dashboard-line);
+  background: var(--color-card);
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  color: var(--color-foreground);
+}
+.dashboard-theme-scope .dashboard-related-links a:hover {
+  border-color: var(--dashboard-accent);
+  color: var(--dashboard-accent);
+}
+.dashboard-theme-scope .dashboard-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--dashboard-accent);
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-section-links {
+    margin-block-end: 1.25rem;
+  }
+  .dashboard-theme-scope .dashboard-related-links a {
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+  }
+}
+@media (pointer: coarse) {
+  .dashboard-theme-scope
+    .dashboard-main
+    button:is([class~="h-8"], [class~="h-9"], [class~="h-10"]) {
+    min-height: var(--dashboard-touch);
+  }
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-catalog-metrics > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Space Call dashboard refinement — shared across existing sections, scoped away from storefront. */
+.dashboard-theme-scope {
+  --dashboard-space-1: 0.25rem;
+  --dashboard-space-2: 0.5rem;
+  --dashboard-space-3: 0.75rem;
+  --dashboard-space-4: 1rem;
+  --dashboard-space-6: 1.5rem;
+  --dashboard-radius-control: 0.5rem;
+  --dashboard-radius-panel: 0.75rem;
+  --dashboard-focus-ring: var(--color-ring);
+}
+.dashboard-theme-scope .dashboard-main {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.dashboard-theme-scope .dashboard-main :where(input, textarea, select) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-main :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--dashboard-focus-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-main :where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.dashboard-theme-scope .dashboard-main :where(img, video, canvas) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-main :where(table) {
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-theme-scope .dashboard-main :where(th, td) {
+  vertical-align: middle;
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-main {
+    padding-inline: 0.875rem;
+  }
+  .dashboard-theme-scope .dashboard-main :where(dialog, [role="dialog"]) {
+    max-width: calc(100vw - 1rem);
+  }
+  .dashboard-theme-scope .dashboard-main :where(input, textarea, select) {
+    font-size: max(1rem, 16px);
+  }
+}
+
+
+/*
+ * 2026 dashboard visual refresh.
+ * Scoped exclusively to the authenticated admin UI; no storefront selectors.
+ * Neutral surfaces + one existing Space Call accent; works in light/dark and RTL.
+ */
+.dashboard-theme-scope {
+  --dashboard-accent: var(--color-primary);
+  --dashboard-canvas: color-mix(in oklab, var(--color-muted) 57%, var(--color-background));
+  --dashboard-surface: var(--color-card);
+  --dashboard-stroke: var(--color-border);
+  --dashboard-heading: var(--color-foreground);
+  --dashboard-muted: var(--color-muted-foreground);
+  --dashboard-panel-radius: 1rem;
+  --dashboard-control-radius: 0.625rem;
+  background: var(--dashboard-canvas);
+  text-rendering: optimizeLegibility;
+}
+.dark .dashboard-theme-scope {
+  --dashboard-accent: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-sidebar {
+  background: linear-gradient(155deg, #182235 0%, #111a2a 55%, #101724 100%);
+  box-shadow: 10px 0 40px rgb(8 18 33 / 0.12);
+}
+.dashboard-theme-scope .dashboard-sidebar-section {
+  letter-spacing: 0.045em;
+  color: #9baac2;
+  font-weight: 650;
+}
+.dashboard-theme-scope .dashboard-sidebar-action {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  line-height: 1.4;
+  color: #c3cddd;
+}
+.dashboard-theme-scope .dashboard-sidebar-action:is(:hover, :focus-visible) {
+  border-color: rgb(255 255 255 / 0.09);
+  background: rgb(255 255 255 / 0.075);
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  background: rgb(255 255 255 / 0.115);
+  border-color: rgb(255 255 255 / 0.12);
+  color: #fff;
+  box-shadow: inset 3px 0 0 #90b1ff;
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  box-shadow: inset -3px 0 0 #90b1ff;
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] svg {
+  color: #d8e4ff;
+}
+.dashboard-theme-scope .dashboard-header {
+  min-width: 0;
+  border-color: var(--dashboard-stroke);
+  background: color-mix(in oklab, var(--dashboard-surface) 95%, transparent);
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--color-foreground) 3%, transparent);
+}
+.dashboard-theme-scope .dashboard-header .dashboard-icon-button,
+.dashboard-theme-scope .dashboard-header .dashboard-compact-control {
+  border-radius: var(--dashboard-control-radius);
+}
+.dashboard-theme-scope .dashboard-page-heading {
+  max-width: 72ch;
+}
+.dashboard-theme-scope .dashboard-page-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  letter-spacing: 0.055em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--dashboard-muted);
+}
+.dashboard-theme-scope .dashboard-heading-marker {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--dashboard-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--dashboard-accent) 12%, transparent);
+}
+.dashboard-theme-scope .dashboard-page-title {
+  font-size: clamp(1.625rem, 2vw, 2.125rem);
+  font-weight: 720;
+  letter-spacing: -0.04em;
+  line-height: 1.22;
+  color: var(--dashboard-heading);
+}
+.dashboard-theme-scope .dashboard-page-description {
+  font-size: 0.875rem;
+  max-width: 66ch;
+  line-height: 1.65;
+  color: var(--dashboard-muted);
+}
+.dashboard-theme-scope .dashboard-section-links {
+  margin-block-end: clamp(1.25rem, 2vw, 1.875rem);
+  padding-block-end: 0.875rem;
+}
+.dashboard-theme-scope .dashboard-related-links a {
+  border-radius: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color 150ms, border-color 150ms;
+}
+.dashboard-theme-scope .dashboard-related-links a:hover {
+  background: color-mix(in oklab, var(--dashboard-accent) 7%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-panel,
+.dashboard-theme-scope .dashboard-editor-panel,
+.dashboard-theme-scope .dashboard-filter-panel,
+.dashboard-theme-scope .dashboard-catalog-panel,
+.dashboard-theme-scope .dashboard-metric-card {
+  border: 1px solid var(--dashboard-stroke);
+  border-radius: var(--dashboard-panel-radius);
+  background: var(--dashboard-surface);
+  box-shadow: 0 2px 9px rgb(16 27 50 / 0.035);
+}
+.dashboard-theme-scope .dashboard-panel-heading,
+.dashboard-theme-scope .dashboard-editor-panel-heading {
+  border-color: var(--dashboard-stroke);
+  padding: 1.125rem 1.25rem;
+  background: color-mix(in oklab, var(--dashboard-surface) 92%, var(--color-muted));
+}
+.dashboard-theme-scope .dashboard-panel-heading h2 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.dashboard-theme-scope .dashboard-metric-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 1.125rem;
+}
+.dashboard-theme-scope .dashboard-metric-card > :first-child {
+  color: var(--dashboard-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+}
+.dashboard-theme-scope .dashboard-metric-card > :nth-child(2) {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.dashboard-theme-scope .dashboard-kpi {
+  border-radius: var(--dashboard-panel-radius);
+}
+.dashboard-theme-scope .dashboard-kpi-icon {
+  border-radius: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-kpi-value {
+  letter-spacing: -0.035em;
+}
+.dashboard-theme-scope .dashboard-button {
+  border-radius: var(--dashboard-control-radius);
+  font-weight: 650;
+  transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+.dashboard-theme-scope .dashboard-button:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--dashboard-accent) 18%, transparent);
+}
+.dashboard-theme-scope .dashboard-button-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+.dashboard-theme-scope .dashboard-button-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-primary) 87%, var(--color-foreground));
+  border-color: transparent;
+}
+.dashboard-theme-scope .dashboard-filter-panel {
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+.dashboard-theme-scope .dashboard-filter-field {
+  gap: 0.375rem;
+  font-size: 0.75rem;
+}
+.dashboard-theme-scope .dashboard-catalog-panel thead {
+  background: color-mix(in oklab, var(--color-muted) 60%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-catalog-panel th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--dashboard-muted);
+  border-color: var(--dashboard-stroke);
+}
+.dashboard-theme-scope .dashboard-catalog-panel td {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.dashboard-theme-scope .dashboard-catalog-panel tbody tr:hover {
+  background: color-mix(in oklab, var(--color-muted) 54%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-catalog-panel :where(button, input):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-form-map {
+  border-radius: var(--dashboard-panel-radius);
+  padding: clamp(1rem, 2vw, 1.375rem);
+  border-color: var(--dashboard-stroke);
+  box-shadow: 0 2px 9px rgb(16 27 50 / 0.025);
+}
+.dashboard-theme-scope .dashboard-form-map nav {
+  gap: 0.5rem;
+}
+.dashboard-theme-scope .dashboard-form-map nav button {
+  border-radius: 0.625rem;
+  min-height: 2.75rem;
+}
+.dashboard-theme-scope .dashboard-editor-panel :where(input, textarea, select) {
+  max-width: 100%;
+}
+.dashboard-theme-scope .dashboard-editor-panel :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select):focus-visible {
+  border-color: var(--dashboard-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--dashboard-accent) 12%, transparent);
+}
+.dashboard-theme-scope .dashboard-editor-upload {
+  transition: border-color 150ms, background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-editor-upload:hover {
+  background: color-mix(in oklab, var(--dashboard-accent) 5%, var(--dashboard-surface));
+}
+.dashboard-theme-scope .dashboard-modal-surface {
+  box-shadow: 0 24px 64px rgb(7 14 28 / 0.22);
+}
+.dashboard-theme-scope .dashboard-mobile-nav {
+  background: color-mix(in oklab, var(--dashboard-surface) 96%, transparent);
+}
+.dashboard-theme-scope .dashboard-mobile-nav [aria-current="page"] {
+  color: var(--dashboard-accent);
+}
+@media (min-width: 1280px) {
+  .dashboard-theme-scope .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-page-title {
+    font-size: 1.625rem;
+  }
+  .dashboard-theme-scope .dashboard-page-header,
+  .dashboard-theme-scope .dashboard-editor-header {
+    gap: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-metric-card {
+    padding: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-catalog-panel tbody > :where(tr, div) {
+    scroll-margin-top: 5rem;
+  }
+  .dashboard-theme-scope .dashboard-modal-surface {
+    max-width: 100%;
+    border-radius: 1rem 1rem 0 0;
+  }
+  .dashboard-theme-scope .dashboard-mobile-nav button {
+    min-height: 3.75rem;
+  }
+}
+@media (prefers-contrast: more) {
+  .dashboard-theme-scope .dashboard-panel,
+  .dashboard-theme-scope .dashboard-editor-panel,
+  .dashboard-theme-scope .dashboard-filter-panel {
+    border-color: var(--color-foreground);
+  }
+}
+
+
+/* Space Call Command — navigation system / desktop, mobile, RTL and theme. */
+.dashboard-theme-scope {
+  --sc-command-canvas: #f8f9fb;
+  --sc-command-ink: #182337;
+  --sc-command-secondary: #667389;
+  --sc-command-line: #e6eaf0;
+  --sc-command-hover: #edf2f8;
+  --sc-command-selected: #e7eefc;
+  --sc-command-active: #254e96;
+  --sc-command-mark: #234a8e;
+  --sc-command-mark-ink: #ffffff;
+}
+.dark .dashboard-theme-scope {
+  --sc-command-canvas: #131c2a;
+  --sc-command-ink: #f2f6fb;
+  --sc-command-secondary: #96a6bc;
+  --sc-command-line: #263448;
+  --sc-command-hover: #1d293a;
+  --sc-command-selected: #233951;
+  --sc-command-active: #b1cdfb;
+  --sc-command-mark: #d7e5ff;
+  --sc-command-mark-ink: #152c51;
+}
+.dashboard-theme-scope .dashboard-sidebar {
+  background: var(--sc-command-canvas);
+  color: var(--sc-command-ink);
+  border-inline-end: 1px solid var(--sc-command-line);
+  box-shadow: 5px 0 22px rgb(19 31 51 / 0.035);
+  transition:
+    transform 180ms cubic-bezier(.22,.8,.25,1),
+    background-color 160ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-brand {
+  border-block-end: 1px solid var(--sc-command-line);
+}
+.dashboard-theme-scope .dashboard-brand-mark {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--sc-command-mark) 60%, transparent);
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+.dashboard-theme-scope .dashboard-brand-mark > span {
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.07em;
+}
+.dashboard-theme-scope .dashboard-brand-mark::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 5px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 100%;
+  opacity: .55;
+}
+.dashboard-theme-scope .dashboard-brand-name {
+  font-size: 1.06rem;
+  font-weight: 750;
+  letter-spacing: -.045em;
+  line-height: 1.3;
+  color: var(--sc-command-ink);
+}
+.dashboard-theme-scope .dashboard-brand-dot {
+  color: var(--sc-command-active);
+}
+.dashboard-theme-scope .dashboard-brand-caption {
+  margin-block-start: .35rem;
+  font-size: .595rem;
+  font-weight: 650;
+  letter-spacing: .16em;
+  color: var(--sc-command-secondary);
+}
+.dashboard-theme-scope .dashboard-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sc-command-secondary) 25%, transparent) transparent;
+}
+.dashboard-theme-scope .dashboard-sidebar-group {
+  position: relative;
+  padding: 0;
+}
+.dashboard-theme-scope .dashboard-sidebar-group + .dashboard-sidebar-group {
+  padding-block-start: .625rem;
+  border-block-start: 1px solid var(--sc-command-line);
+}
+.dashboard-theme-scope .dashboard-sidebar-section {
+  color: var(--sc-command-secondary);
+  font-size: .65rem;
+  font-weight: 750;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  transition: color 150ms, background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-section:hover,
+.dashboard-theme-scope .dashboard-sidebar-section:focus-visible {
+  color: var(--sc-command-ink);
+  background: var(--sc-command-hover);
+}
+.dashboard-theme-scope .dashboard-sidebar-section svg {
+  opacity: .7;
+}
+.dashboard-theme-scope .dashboard-sidebar-action {
+  position: relative;
+  color: var(--sc-command-ink);
+  border: 1px solid transparent;
+  border-radius: .625rem;
+  font-weight: 560;
+  transition:
+    background-color 150ms cubic-bezier(.2,.7,.2,1),
+    color 150ms,
+    border-color 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-action .dashboard-sidebar-item-icon {
+  color: var(--sc-command-secondary);
+  transition: color 150ms, transform 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover,:focus-visible) {
+  background: var(--sc-command-hover);
+  border-color: transparent;
+  color: var(--sc-command-ink);
+}
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover,:focus-visible) .dashboard-sidebar-item-icon {
+  color: var(--sc-command-active);
+  transform: translateX(1px);
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  background: var(--sc-command-selected);
+  border-color: color-mix(in srgb, var(--sc-command-active) 13%, transparent);
+  box-shadow: none;
+  color: var(--sc-command-active);
+  font-weight: 720;
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 23%;
+  bottom: 23%;
+  width: 3px;
+  border-radius: 8px;
+  background: var(--sc-command-active);
+}
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] .dashboard-sidebar-item-icon {
+  color: var(--sc-command-active);
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  box-shadow: none;
+}
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover,:focus-visible) .dashboard-sidebar-item-icon {
+  transform: translateX(-1px);
+}
+.dashboard-theme-scope .dashboard-sidebar-footer {
+  border-block-start: 1px solid var(--sc-command-line);
+  background: var(--sc-command-canvas);
+}
+.dashboard-theme-scope .dashboard-sidebar-status {
+  color: var(--sc-command-secondary);
+  border: 1px solid var(--sc-command-line);
+  background: var(--sc-command-hover);
+}
+.dashboard-theme-scope .dashboard-sidebar-new-product {
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+  transition: filter 150ms, transform 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-new-product:hover {
+  filter: brightness(1.12);
+}
+.dashboard-theme-scope .dashboard-sidebar-new-product:active {
+  transform: scale(.985);
+}
+.dashboard-theme-scope .dashboard-sidebar-store,
+.dashboard-theme-scope .dashboard-sidebar-collapse,
+.dashboard-theme-scope .dashboard-sidebar-close {
+  color: var(--sc-command-secondary);
+  transition: color 150ms, background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-sidebar-store:is(:hover,:focus-visible),
+.dashboard-theme-scope .dashboard-sidebar-collapse:is(:hover,:focus-visible),
+.dashboard-theme-scope .dashboard-sidebar-close:is(:hover,:focus-visible) {
+  color: var(--sc-command-ink);
+  background: var(--sc-command-hover);
+}
+.dashboard-theme-scope .dashboard-commandbar {
+  background: color-mix(in srgb, var(--color-background) 94%, transparent);
+  border-block-end-color: var(--sc-command-line);
+  box-shadow: none;
+}
+.dashboard-theme-scope .dashboard-header-location-brand {
+  color: var(--color-muted-foreground);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+.dashboard-theme-scope .dashboard-header-separator {
+  display: block;
+  height: 1.25rem;
+  width: 1px;
+  background: var(--color-border);
+}
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger {
+  width: min(100%, 30rem);
+  min-height: 2.625rem;
+  border-radius: .625rem;
+  background: color-mix(in srgb, var(--color-muted) 46%, var(--color-background));
+  box-shadow: none;
+}
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger:hover {
+  background: var(--color-card);
+  border-color: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-account-trigger {
+  border: 1px solid transparent;
+}
+.dashboard-theme-scope .dashboard-account-trigger:hover {
+  border-color: var(--color-border);
+}
+.dashboard-theme-scope .dashboard-account-avatar {
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+}
+.dashboard-theme-scope .dashboard-mobile-nav {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-card) 96%, transparent);
+  box-shadow: 0 -8px 28px rgb(15 23 42 / .06);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-grid {
+  padding-inline: max(.25rem, env(safe-area-inset-left)) max(.25rem, env(safe-area-inset-right));
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item {
+  position: relative;
+  border-radius: .5rem;
+  min-height: 4.25rem;
+  transition: color 150ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item::before {
+  position: absolute;
+  content: "";
+  inset-block-start: 2px;
+  inset-inline: 30%;
+  height: 2px;
+  border-radius: 4px;
+  background: transparent;
+  transition: background-color 150ms;
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item.is-active::before {
+  background: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-icon {
+  transition: background-color 150ms, transform 150ms;
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item.is-active .dashboard-mobile-nav-icon {
+  background: color-mix(in srgb, var(--color-primary) 11%, transparent);
+  color: var(--color-primary);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-item:active .dashboard-mobile-nav-icon {
+  transform: scale(.94);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-create .dashboard-mobile-nav-icon {
+  color: var(--sc-command-mark-ink);
+  background: var(--sc-command-mark);
+}
+.dashboard-theme-scope .dashboard-mobile-nav-create.is-active .dashboard-mobile-nav-icon {
+  background: var(--sc-command-mark);
+  color: var(--sc-command-mark-ink);
+}
+.dashboard-theme-scope :is(.dashboard-sidebar-action,.dashboard-sidebar-section,.dashboard-sidebar-collapse,.dashboard-sidebar-new-product,.dashboard-sidebar-store,.dashboard-mobile-nav-item):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+@media (min-width: 1024px) {
+  .dashboard-theme-scope .dashboard-sidebar {
+    box-shadow: none;
+  }
+}
+@media (max-width: 639px) {
+  .dashboard-theme-scope .dashboard-commandbar {
+    gap: .5rem;
+  }
+  .dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger {
+    width: 100%;
+    padding-inline: .75rem;
+  }
+  .dashboard-theme-scope .dashboard-header-actions {
+    gap: .125rem;
+  }
+  .dashboard-theme-scope .dashboard-lang-switch {
+    padding-inline: .375rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-theme-scope :is(.dashboard-sidebar,.dashboard-sidebar-action,.dashboard-sidebar-item-icon,.dashboard-mobile-nav-item,.dashboard-mobile-nav-icon) {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Integrated workspace: a real desktop grid, not an optional overlay menu.
+   Desktop-site browsers usually report a ~980px CSS viewport; begin at tablet
+   width so the full sidebar remains attached in that mode, including RTL. */
+@media (min-width: 768px) {
+  .dashboard-theme-scope {
+    --dashboard-integrated-sidebar-width: clamp(232px, 24vw, 272px);
+    display: grid;
+    grid-template-columns: var(--dashboard-integrated-sidebar-width) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .dashboard-theme-scope .dashboard-sidebar {
+    /* Keep the navigation pinned to the visible viewport, even when the
+       long inventory page scrolls its document or an ancestor container.
+       The grid's first column stays reserved for this fixed-width rail. */
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    top: 0;
+    bottom: auto;
+    width: var(--dashboard-integrated-sidebar-width);
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding-block: 0;
+    translate: none;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .dashboard-theme-scope .dashboard-desktop-content {
+    grid-column: 2;
+    min-inline-size: 0;
+    width: 100%;
+  }
+
+  .dashboard-theme-scope .dashboard-sidebar-brand {
+    min-height: 94px;
+  }
+
+  .dashboard-theme-scope .dashboard-sidebar-scroll {
+    padding-block: 1.25rem;
+  }
+
+  .dashboard-theme-scope :is(
+    .dashboard-sidebar-close,
+    .dashboard-menu-trigger,
+    .dashboard-navigation-backdrop,
+    .dashboard-mobile-nav
+  ) {
+    display: none;
+  }
+}
+
+/* Space Call product editor — Phase 1. Scope every rule to the dashboard editor. */
+.dashboard-theme-scope .dashboard-product-editor {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header {
+  align-items: flex-start;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header > div {
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header > div:last-child {
+  align-items: center;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel {
+  border-color: var(--dashboard-stroke, var(--color-border));
+  border-radius: var(--dashboard-panel-radius, 1rem);
+  background: var(--color-card);
+  box-shadow: 0 2px 12px rgb(12 24 46 / 0.035);
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel-heading {
+  padding-block: 1rem;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel-heading > div:first-child {
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(input, select, textarea) {
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+  align-items: start;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-main,
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-aside {
+  min-width: 0;
+  align-self: start;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more {
+  position: relative;
+  min-width: 0;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary {
+  list-style: none;
+  user-select: none;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary::-webkit-details-marker {
+  display: none;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu {
+  position: absolute;
+  z-index: 60;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  width: min(19rem, 85vw);
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-card);
+  box-shadow: 0 18px 48px rgb(8 20 42 / 0.16);
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu > :where(button, a) {
+  width: 100%;
+  min-height: 2.75rem;
+  justify-content: flex-start;
+  white-space: normal;
+  font-size: 0.8125rem;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary:focus-visible,
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu > :where(button, a):focus-visible,
+.dashboard-theme-scope .dashboard-product-editor .dashboard-form-map button:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer {
+  min-width: 0;
+}
+@media (min-width: 1280px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 0.9fr);
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 1279px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header {
+    margin-block-end: 1.25rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header > div:last-child {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-header [role="group"] {
+    width: 100%;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-more > summary {
+    justify-content: center;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-form-map {
+    padding: 0.875rem;
+    min-width: 0;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-form-map nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    padding-block-end: 0.375rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-form-map nav > button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(input, textarea, select) {
+    font-size: 1rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(.grid) {
+    min-width: 0;
+  }
+  .dashboard-theme-scope .dashboard-product-editor {
+    padding-block-end: 7rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer {
+    position: sticky;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 25;
+    margin-block-end: 1rem;
+    padding: 0.75rem;
+    box-shadow: 0 8px 32px rgb(12 24 46 / 0.11);
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-footer > div:first-child {
+    display: none;
+  }
+  .dashboard-theme-scope .dashboard-product-editor [data-product-section] {
+    scroll-margin-bottom: 11rem;
+  }
+}
+@media (max-width: 389px) {
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel :where(.p-5) {
+    padding: 0.875rem;
+  }
+  .dashboard-theme-scope .dashboard-product-editor .dashboard-product-more-menu {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+  }
+}
+
+/* The AI assistant renders in a body portal. On desktop, the Dashboard root uses
+ * a two-column integrated-sidebar grid; never apply that root geometry to a modal. */
+.dashboard-theme-scope.dashboard-ai-dialog {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  align-items: stretch;
+  min-inline-size: 0;
+  block-size: auto;
+  max-block-size: calc(100dvh - 24px);
+}
+.dashboard-theme-scope.dashboard-ai-dialog > :nth-child(2) {
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* Field geometry follows the actual panel width after the integrated sidebar. */
+.dashboard-theme-scope .dashboard-product-editor :is(#product-pricing, #product-inventory) > .grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel label > span:first-child {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel textarea {
+  resize: vertical;
+  min-block-size: 6rem;
+}
+.dashboard-theme-scope .dashboard-product-editor .dashboard-editor-panel button {
+  min-block-size: 2.75rem;
+  min-inline-size: 2.75rem;
+}
+.dashboard-theme-scope .dashboard-product-editor #product-media img {
+  max-inline-size: 100%;
+}
+.dashboard-theme-scope .dashboard-product-editor :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.dashboard-theme-scope.dashboard-ai-dialog :is(button, summary) {
+  min-block-size: 2.75rem;
+}
+@media (max-width: 767px) {
+  .dashboard-theme-scope.dashboard-ai-dialog :is(input:not([type="checkbox"]):not([type="radio"]), textarea) {
+    font-size: 1rem;
+  }
+}
+
+
+/*
+ * Space Call Dashboard redesign — final visual layer.
+ * Presentation-only overrides. Navigation, data loading, auth and integrations
+ * remain owned by the existing React components and data modules.
+ */
+.dashboard-theme-scope {
+  --sc-redesign-canvas: color-mix(in oklab, var(--color-background) 90%, #dfe7f4);
+  --sc-redesign-surface: color-mix(in oklab, var(--color-card) 97%, #eef3fb);
+  --sc-redesign-surface-raised: var(--color-card);
+  --sc-redesign-line: color-mix(in oklab, var(--color-border) 84%, #b8c7dc);
+  --sc-redesign-muted: color-mix(in oklab, var(--color-muted-foreground) 94%, #52637d);
+  --sc-redesign-accent-soft: color-mix(in oklab, var(--color-primary) 9%, transparent);
+  background: var(--sc-redesign-canvas);
+}
+
+.dashboard-theme-scope .dashboard-desktop-content {
+  background:
+    radial-gradient(circle at 92% 0%, color-mix(in oklab, var(--color-primary) 6%, transparent), transparent 24rem),
+    var(--sc-redesign-canvas);
+}
+
+.dashboard-theme-scope .dashboard-header {
+  min-height: 4.5rem;
+  padding-inline: clamp(0.875rem, 2.4vw, 2.5rem);
+  background: color-mix(in oklab, var(--sc-redesign-surface-raised) 88%, transparent);
+  border-block-end-color: var(--sc-redesign-line);
+  box-shadow: 0 10px 26px rgb(20 39 72 / 0.035);
+}
+
+.dashboard-theme-scope .dashboard-header-search {
+  max-width: 42rem;
+}
+
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger {
+  min-height: 2.875rem;
+  border-color: var(--sc-redesign-line);
+  border-radius: 0.9rem;
+  background: color-mix(in oklab, var(--sc-redesign-canvas) 70%, var(--color-card));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
+}
+
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger:focus-visible,
+.dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger:hover {
+  border-color: color-mix(in oklab, var(--color-primary) 42%, var(--sc-redesign-line));
+  background: var(--color-card);
+  box-shadow: 0 0 0 4px var(--sc-redesign-accent-soft);
+}
+
+.dashboard-theme-scope .dashboard-sidebar {
+  background:
+    linear-gradient(160deg, color-mix(in srgb, #162845 96%, #274d84) 0%, #121d31 58%, #0e1728 100%);
+  border-inline-end-color: rgb(255 255 255 / 0.085);
+}
+
+.dashboard-theme-scope .dashboard-sidebar-brand {
+  min-height: 5.75rem;
+  padding-inline: 1.25rem;
+  border-block-end-color: rgb(255 255 255 / 0.09);
+}
+
+.dashboard-theme-scope .dashboard-sidebar-scroll {
+  padding-inline: 0.75rem;
+}
+
+.dashboard-theme-scope .dashboard-sidebar-group + .dashboard-sidebar-group {
+  margin-block-start: 0.45rem;
+  padding-block-start: 0.9rem;
+}
+
+.dashboard-theme-scope .dashboard-sidebar-section {
+  min-height: 2.25rem;
+  padding-inline: 0.75rem;
+  color: #9eacc2;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+}
+
+.dashboard-theme-scope .dashboard-sidebar-action {
+  min-height: 2.75rem;
+  border-radius: 0.8rem;
+  padding-inline: 0.75rem;
+  color: #c8d2e2;
+}
+
+.dashboard-theme-scope .dashboard-sidebar-action:not([aria-current]):is(:hover, :focus-visible) {
+  background: rgb(255 255 255 / 0.085);
+  border-color: rgb(255 255 255 / 0.08);
+  color: #fff;
+}
+
+.dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  background: linear-gradient(90deg, rgb(116 157 240 / 0.19), rgb(116 157 240 / 0.07));
+  border-color: rgb(151 184 247 / 0.2);
+  box-shadow: inset 3px 0 0 #9abaff, 0 7px 18px rgb(4 12 27 / 0.12);
+  color: #fff;
+}
+
+[dir="rtl"] .dashboard-theme-scope .dashboard-sidebar-action[aria-current="page"] {
+  box-shadow: inset -3px 0 0 #9abaff, 0 7px 18px rgb(4 12 27 / 0.12);
+}
+
+.dashboard-theme-scope .dashboard-main {
+  width: min(100%, 1540px);
+  padding-block: clamp(1.25rem, 2.6vw, 2.75rem) clamp(5.75rem, 8vw, 7rem);
+  padding-inline: clamp(1rem, 3.2vw, 3.75rem);
+}
+
+.dashboard-theme-scope .dashboard-section-links {
+  margin-block-end: clamp(1.25rem, 2.5vw, 2rem);
+  padding-block-end: 1rem;
+  border-block-end-color: var(--sc-redesign-line);
+}
+
+.dashboard-theme-scope .dashboard-page-title {
+  font-size: clamp(1.75rem, 2.4vw, 2.45rem);
+  letter-spacing: -0.055em;
+}
+
+.dashboard-theme-scope .dashboard-page-description {
+  color: var(--sc-redesign-muted);
+}
+
+.dashboard-theme-scope .dashboard-panel,
+.dashboard-theme-scope .dashboard-editor-panel,
+.dashboard-theme-scope .dashboard-filter-panel,
+.dashboard-theme-scope .dashboard-catalog-panel,
+.dashboard-theme-scope .dashboard-metric-card {
+  border-color: var(--sc-redesign-line);
+  border-radius: 1.15rem;
+  background: var(--sc-redesign-surface-raised);
+  box-shadow: 0 12px 30px rgb(24 45 80 / 0.045);
+}
+
+.dashboard-theme-scope .dashboard-panel-heading,
+.dashboard-theme-scope .dashboard-editor-panel-heading {
+  padding: 1.15rem 1.35rem;
+  background: color-mix(in oklab, var(--sc-redesign-surface) 82%, transparent);
+}
+
+.dashboard-theme-scope .dashboard-kpi {
+  min-height: 9.5rem;
+  padding: 1.25rem 1.35rem;
+  background:
+    linear-gradient(145deg, color-mix(in oklab, var(--color-primary) 3%, var(--color-card)), var(--color-card) 52%),
+    var(--color-card);
+}
+
+.dashboard-theme-scope .dashboard-kpi-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 12%, transparent);
+  background: var(--sc-redesign-accent-soft);
+}
+
+.dashboard-theme-scope .dashboard-kpi-value {
+  margin-block-start: 1.15rem;
+  font-size: clamp(1.65rem, 2.7vw, 2.35rem);
+}
+
+.dashboard-theme-scope .dashboard-button {
+  min-height: 2.875rem;
+  border-radius: 0.8rem;
+}
+
+.dashboard-theme-scope .dashboard-overview-header {
+  align-items: flex-end;
+  margin-block-end: 1rem;
+}
+
+.dashboard-theme-scope .dashboard-overview-tools {
+  gap: 0.5rem;
+}
+
+.dashboard-theme-scope .dashboard-report-caption {
+  margin-block: 0.75rem 1.5rem;
+  padding-inline-start: 0.125rem;
+}
+
+.dashboard-theme-scope .dashboard-quick-action {
+  min-height: 7rem;
+  border: 1px solid var(--sc-redesign-line);
+  border-radius: 0.9rem;
+  background: color-mix(in oklab, var(--color-muted) 42%, var(--color-card));
+}
+
+.dashboard-theme-scope .dashboard-quick-action:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--color-primary) 38%, var(--sc-redesign-line));
+  box-shadow: 0 10px 22px color-mix(in oklab, var(--color-primary) 10%, transparent);
+}
+
+.dashboard-theme-scope .dashboard-catalog-panel thead {
+  background: color-mix(in oklab, var(--color-primary) 4%, var(--color-muted));
+}
+
+.dashboard-theme-scope .dashboard-catalog-panel tbody tr {
+  border-block-end-color: var(--sc-redesign-line);
+}
+
+.dashboard-theme-scope .dashboard-catalog-panel tbody tr:hover {
+  background: color-mix(in oklab, var(--color-primary) 4%, var(--color-card));
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav {
+  min-height: 4.5rem;
+  border-block-start-color: var(--sc-redesign-line);
+  background: color-mix(in oklab, var(--color-card) 92%, transparent);
+  box-shadow: 0 -12px 30px rgb(17 35 64 / 0.12);
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav-grid {
+  max-width: 38rem;
+  margin-inline: auto;
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav-item {
+  position: relative;
+  min-height: 4.25rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav-item.is-active::before {
+  inset-block-start: 0.4rem;
+  width: 2.2rem;
+  height: 0.18rem;
+  border-radius: 999px;
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav-icon {
+  border-radius: 0.75rem;
+}
+
+.dashboard-theme-scope .dashboard-mobile-nav-create .dashboard-mobile-nav-icon {
+  color: var(--color-primary-foreground);
+  background: var(--color-primary);
+  box-shadow: 0 5px 14px color-mix(in oklab, var(--color-primary) 24%, transparent);
+}
+
+@media (min-width: 768px) {
+  .dashboard-theme-scope {
+    --dashboard-integrated-sidebar-width: clamp(248px, 22vw, 292px);
+  }
+
+  .dashboard-theme-scope .dashboard-main {
+    min-height: calc(100dvh - 4.5rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-main {
+    padding-block-start: 1rem;
+    padding-inline: 0.875rem;
+  }
+
+  .dashboard-theme-scope .dashboard-header {
+    min-height: 4.15rem;
+    padding-inline: 0.75rem;
+  }
+
+  .dashboard-theme-scope .dashboard-header-search {
+    max-width: none;
+  }
+
+  .dashboard-theme-scope .dashboard-header-search .dashboard-command-trigger {
+    min-height: 2.7rem;
+  }
+
+  .dashboard-theme-scope .dashboard-page-title {
+    font-size: 1.75rem;
+  }
+
+  .dashboard-theme-scope .dashboard-overview-header {
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .dashboard-theme-scope .dashboard-overview-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .dashboard-theme-scope .dashboard-overview-tools label {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-theme-scope .dashboard-overview-tools .dashboard-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-theme-scope .dashboard-overview-metrics {
+    gap: 0.75rem;
+  }
+
+  .dashboard-theme-scope .dashboard-kpi {
+    min-height: 8.5rem;
+    padding: 1rem;
+  }
+
+  .dashboard-theme-scope .dashboard-kpi-value {
+    margin-block-start: 0.8rem;
+    font-size: 1.55rem;
+  }
+
+  .dashboard-theme-scope .dashboard-panel-heading {
+    padding: 1rem;
+  }
+
+  .dashboard-theme-scope .dashboard-quick-action {
+    min-height: 6.5rem;
+    padding: 0.875rem;
+  }
+
+  .dashboard-theme-scope .dashboard-report-caption {
+    align-items: flex-start;
+    gap: 0.4rem 0.65rem;
+    line-height: 1.55;
+  }
+}
+
+@media (max-width: 389px) {
+  .dashboard-theme-scope .dashboard-main {
+    padding-inline: 0.7rem;
+  }
+
+  .dashboard-theme-scope .dashboard-header-actions {
+    gap: 0;
+  }
+
+  .dashboard-theme-scope .dashboard-header-actions .dashboard-toolbar-button {
+    display: none;
+  }
+
+  .dashboard-theme-scope .dashboard-account-trigger {
+    padding-inline-end: 0.25rem;
+  }
+
+  .dashboard-theme-scope .dashboard-overview-metrics {
+    gap: 0.6rem;
+  }
+
+  .dashboard-theme-scope .dashboard-kpi {
+    min-height: 8rem;
+    padding: 0.8rem;
+  }
+
+  .dashboard-theme-scope .dashboard-kpi-label {
+    font-size: 0.74rem;
+  }
+
+  .dashboard-theme-scope .dashboard-kpi-value {
+    font-size: 1.35rem;
+  }
+}
+
+.dark .dashboard-theme-scope {
+  --sc-redesign-canvas: #0e1727;
+  --sc-redesign-surface: #172338;
+  --sc-redesign-surface-raised: #18263b;
+  --sc-redesign-line: #2b3a52;
+  --sc-redesign-muted: #a3b1c5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-theme-scope .dashboard-quick-action:hover {
+    transform: none;
+  }
+}
+
+
+/* Phase 2: clearer operational hierarchy and mobile-first data presentation. */
+.dashboard-theme-scope .dashboard-home-primary-metrics .dashboard-kpi:first-child {
+  background:
+    linear-gradient(140deg, color-mix(in oklab, var(--color-primary) 13%, var(--color-card)), var(--color-card) 62%),
+    var(--color-card);
+  border-color: color-mix(in oklab, var(--color-primary) 23%, var(--sc-redesign-line));
+}
+
+.dashboard-theme-scope .dashboard-home-secondary-metrics {
+  opacity: 0.92;
+}
+
+.dashboard-theme-scope .dashboard-home-secondary-metrics .dashboard-kpi {
+  min-height: 8.25rem;
+}
+
+.dashboard-theme-scope .dashboard-attention-panel {
+  border-color: color-mix(in oklab, #f59e0b 24%, var(--sc-redesign-line));
+}
+
+.dashboard-theme-scope .dashboard-attention-list {
+  background: color-mix(in oklab, var(--color-muted) 20%, var(--color-card));
+}
+
+.dashboard-theme-scope .dashboard-attention-row {
+  min-height: 4.25rem;
+  transition: background-color 150ms, padding-inline 150ms;
+}
+
+.dashboard-theme-scope .dashboard-attention-row:hover,
+.dashboard-theme-scope .dashboard-recent-order-row:hover {
+  background: color-mix(in oklab, var(--color-primary) 5%, var(--color-card));
+}
+
+.dashboard-theme-scope .dashboard-attention-row:focus-visible,
+.dashboard-theme-scope .dashboard-recent-order-row:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--color-ring);
+  outline-offset: -2px;
+}
+
+.dashboard-theme-scope .dashboard-recent-order-row {
+  min-height: 4.5rem;
+  transition: background-color 150ms;
+}
+
+.dashboard-theme-scope .dashboard-recent-order-title,
+.dashboard-theme-scope .dashboard-attention-value {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  .dashboard-theme-scope .dashboard-filter-panel {
+    position: sticky;
+    top: 5.25rem;
+    z-index: 15;
+    box-shadow: 0 8px 24px rgb(20 39 72 / 0.055);
+  }
+}
+
+.dashboard-theme-scope .dashboard-responsive-table {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: color-mix(in oklab, var(--color-muted-foreground) 32%, transparent) transparent;
+}
+
+.dashboard-theme-scope .dashboard-responsive-table table {
+  min-width: 42rem;
+}
+
+.dashboard-theme-scope .dashboard-responsive-table th,
+.dashboard-theme-scope .dashboard-responsive-table td {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .dashboard-theme-scope .dashboard-responsive-table {
+    overflow: visible;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table table,
+  .dashboard-theme-scope .dashboard-responsive-table thead,
+  .dashboard-theme-scope .dashboard-responsive-table tbody,
+  .dashboard-theme-scope .dashboard-responsive-table tr,
+  .dashboard-theme-scope .dashboard-responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table table {
+    min-width: 0;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table thead {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody tr {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sc-redesign-line);
+    border-radius: 0.9rem;
+    background: var(--sc-redesign-surface-raised);
+    box-shadow: 0 5px 16px rgb(20 39 72 / 0.04);
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(6rem, 0.55fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.35rem 0;
+    border: 0;
+    text-align: start;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody td::before {
+    content: attr(data-label);
+    color: var(--sc-redesign-muted);
+    font-size: 0.69rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody td[colspan] {
+    display: block;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody td[colspan]::before {
+    content: none;
+  }
+
+  .dashboard-theme-scope .dashboard-home-primary-metrics,
+  .dashboard-theme-scope .dashboard-home-secondary-metrics {
+    gap: 0.7rem;
+  }
+
+  .dashboard-theme-scope .dashboard-attention-row,
+  .dashboard-theme-scope .dashboard-recent-order-row {
+    padding-inline: 1rem;
+  }
+
+  .dashboard-theme-scope .dashboard-attention-row {
+    min-height: 4.5rem;
+  }
+}
+
+@media (max-width: 389px) {
+  .dashboard-theme-scope .dashboard-responsive-table tbody {
+    padding-inline: 0.6rem;
+  }
+
+  .dashboard-theme-scope .dashboard-responsive-table tbody td {
+    grid-template-columns: minmax(5.25rem, 0.5fr) minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+.dashboard-theme-scope .dashboard-work-tools {
+  padding: clamp(0.875rem, 2vw, 1.375rem);
+  border-block-start: 3px solid var(--color-primary);
+}
+
+.dashboard-work-heading,
+.dashboard-stock-summary > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  color: var(--color-foreground);
+  font-weight: 650;
+}
+
+.dashboard-work-heading {
+  flex-wrap: wrap;
+}
+
+.dashboard-work-heading h2 {
+  font-size: 1.125rem;
+}
+
+.dashboard-work-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.875rem;
+  background: var(--color-muted);
+}
+
+.dashboard-work-switch button {
+  flex: 1 1 auto;
+  min-height: 2.75rem;
+  padding-inline: 0.8rem;
+  border-radius: 0.625rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.875rem;
+}
+
+.dashboard-work-switch button[aria-pressed="true"] {
+  background: var(--color-card);
+  color: var(--color-primary);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.14);
+}
+
+.dashboard-work-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.625rem;
+  margin-block-start: 1rem;
+}
+
+.dashboard-work-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.dashboard-work-links a:hover {
+  border-color: var(--color-primary);
+  background: var(--color-accent);
+}
+
+.dashboard-work-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  background: color-mix(in oklab, var(--color-primary) 12%, var(--color-card));
+  color: var(--color-primary);
+}
+
+.dashboard-work-tools :is(button, a):focus-visible,
+.dashboard-stock-summary summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.dashboard-stock-summary > summary {
+  cursor: pointer;
+  padding: 0.9rem 1rem;
+  font-size: 0.9375rem;
+  list-style: none;
+}
+
+.dashboard-stock-summary > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-stock-summary[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.dashboard-stock-summary .dashboard-home-secondary-metrics {
+  padding: 0 1rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .dashboard-work-switch,
+  .dashboard-work-links {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-work-links a {
+    flex-direction: column;
+    align-items: start;
+  }
+}

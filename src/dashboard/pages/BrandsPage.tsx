@@ -1,3 +1,6 @@
+import { PageTitle } from "@/dashboard/components/layout/PageTitle";
+import { useLanguage } from "@/dashboard/i18n";
+import DashboardModal from "@/dashboard/components/DashboardModal";
 import {
   Check,
   ChevronDown,
@@ -14,7 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import BrandAssignmentDialog from "@/dashboard/components/brands/BrandAssignmentDialog";
@@ -33,7 +36,6 @@ import {
   getBrandProductCount,
   getProductsForBrand,
   loadBrandsWorkspace,
-  refreshDashboardProducts,
   reorderDashboardBrands,
   updateDashboardBrand,
   uploadDashboardBrandImage,
@@ -47,15 +49,16 @@ type EditState = {
 };
 
 function ProductStatus({ status }: { status: DashboardProduct["status"] }) {
+  const { t } = useLanguage();
   const classes =
     status === "Active"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
       : status === "Draft"
-        ? "bg-amber-50 text-amber-700"
-        : "bg-slate-100 text-slate-500";
+        ? "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+        : "bg-muted text-muted-foreground";
 
   return (
-    <span className={"rounded-full px-2 py-1 text-[8px] font-black " + classes}>{status}</span>
+    <span className={"rounded-full px-2 py-1 text-[8px] font-black " + classes}>{t(status)}</span>
   );
 }
 
@@ -70,15 +73,19 @@ function Toggle({
   checked: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-start transition hover:border-indigo-200"
+      role="switch"
+      aria-checked={checked}
+      aria-label={t(title)}
+      className="flex w-full items-center justify-between gap-4 rounded-xl border border-border bg-card px-3.5 py-3 text-start transition hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     >
       <span className="min-w-0">
-        <span className="block text-[11px] font-bold text-slate-700">{title}</span>
-        <span className="mt-0.5 block text-[9px] leading-4 text-slate-400">{description}</span>
+        <span className="block text-[11px] font-bold text-foreground">{t(title)}</span>
+        <span className="mt-0.5 block text-[9px] leading-4 text-muted-foreground">{t(description)}</span>
       </span>
       <span
         className={
@@ -97,46 +104,8 @@ function Toggle({
   );
 }
 
-function Modal({
-  title,
-  subtitle,
-  onClose,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[97] grid place-items-end bg-slate-950/45 p-0 backdrop-blur-[2px] sm:place-items-center sm:p-4"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-lg rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-[18px] font-black tracking-[-.03em] text-[#14203a]">{title}</h2>
-            <p className="mt-1 text-[10px] leading-4 text-slate-400">{subtitle}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export default function BrandsPage() {
+  const { t, lang } = useLanguage();
   const [, navigate] = useLocation();
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
   const [products, setProducts] = useState<DashboardProduct[]>([]);
@@ -157,6 +126,9 @@ export default function BrandsPage() {
   const [productMenuId, setProductMenuId] = useState<string | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reorderDraft, setReorderDraft] = useState<CatalogBrand[]>([]);
+  const mutationLock = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [loadVersion, setLoadVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -184,9 +156,39 @@ export default function BrandsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadVersion]);
 
   const selected = brands.find((brand) => brand.id === selectedId) || brands[0];
+
+  const patchProductBrandAssignments = (productIds: string[], destination: CatalogBrand | null) => {
+    const ids = new Set(productIds);
+    if (!ids.size) return;
+    setProducts((current) =>
+      current.map((product) =>
+        ids.has(product.id)
+          ? {
+              ...product,
+              brandId: destination?.id ?? null,
+              brand: destination?.name ?? "",
+            }
+          : product,
+      ),
+    );
+  };
+
+  const reassignProductsFromBrand = (sourceBrandId: string, destination: CatalogBrand | null) => {
+    setProducts((current) =>
+      current.map((product) =>
+        product.brandId === sourceBrandId
+          ? {
+              ...product,
+              brandId: destination?.id ?? null,
+              brand: destination?.name ?? "",
+            }
+          : product,
+      ),
+    );
+  };
 
   const assignedProducts = useMemo(
     () => (selected ? getProductsForBrand(products, selected) : []),
@@ -232,6 +234,7 @@ export default function BrandsPage() {
   const listBrands = reorderMode ? reorderDraft : filteredBrands;
 
   const openCreate = () => {
+    if (mutationLock.current) return;
     const nextOrder = brands.reduce((max, brand) => Math.max(max, brand.order), 0) + 1;
     setEditing({
       mode: "create",
@@ -248,14 +251,13 @@ export default function BrandsPage() {
   };
 
   const openEdit = (brand: CatalogBrand) => {
+    if (mutationLock.current) return;
     setSelectedId(brand.id);
     setEditing({ mode: "edit", brand: { ...brand } });
   };
 
-  const saveBrand = async (
-    nextBrand: CatalogBrand,
-    imageChange: BrandImageChange,
-  ) => {
+  const saveBrand = async (nextBrand: CatalogBrand, imageChange: BrandImageChange) => {
+    if (mutationLock.current) return false;
     const duplicateSlug = brands.some(
       (brand) =>
         brand.id !== nextBrand.id && brand.slug.toLowerCase() === nextBrand.slug.toLowerCase(),
@@ -265,6 +267,8 @@ export default function BrandsPage() {
       return false;
     }
 
+    mutationLock.current = true;
+    setBusy(true);
     try {
       let saved =
         editing?.mode === "create"
@@ -300,6 +304,11 @@ export default function BrandsPage() {
           : [...current, saved];
         return next.sort((a, b) => a.order - b.order);
       });
+      setProducts((current) =>
+        current.map((product) =>
+          product.brandId === saved.id ? { ...product, brand: saved.name } : product,
+        ),
+      );
       setSelectedId(saved.id);
 
       toast.success(
@@ -315,21 +324,29 @@ export default function BrandsPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand save failed.");
       return false;
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const toggleBrand = async (brand: CatalogBrand, patch: Partial<CatalogBrand>) => {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true);
     try {
       const saved = await updateDashboardBrand({ ...brand, ...patch });
-      setBrands((current) =>
-        current.map((item) => (item.id === saved.id ? saved : item)),
-      );
+      setBrands((current) => current.map((item) => (item.id === saved.id ? saved : item)));
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand update failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const duplicateBrand = async (brand: CatalogBrand) => {
+    if (mutationLock.current) return;
     const now = new Date().toISOString();
     const duplicate: CatalogBrand = {
       ...brand,
@@ -343,6 +360,8 @@ export default function BrandsPage() {
       updatedAt: now,
     };
 
+    mutationLock.current = true;
+    setBusy(true);
     try {
       const created = await createDashboardBrand(duplicate);
       setBrands((current) => [...current, created].sort((a, b) => a.order - b.order));
@@ -350,10 +369,14 @@ export default function BrandsPage() {
       toast.success("Brand duplicated in Supabase without copying product assignments.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand duplication failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const requestDelete = (brand: CatalogBrand) => {
+    if (mutationLock.current) return;
     if (brands.length <= 1) {
       toast.error("Keep at least one brand in the catalog.");
       return;
@@ -364,19 +387,27 @@ export default function BrandsPage() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget || deleting) return;
-    const destinationId =
-      deleteDestination === "unbranded" ? null : deleteDestination || null;
+    if (!deleteTarget || deleting || mutationLock.current) return;
+    const destinationId = deleteDestination === "unbranded" ? null : deleteDestination || null;
 
+    mutationLock.current = true;
+    setBusy(true);
     setDeleting(true);
     try {
-      await deleteDashboardBrand(deleteTarget.id, destinationId);
-      const workspace = await loadBrandsWorkspace();
-      setBrands(workspace.brands);
-      setProducts(workspace.products);
+      const deletedBrandId = deleteTarget.id;
+      const destination =
+        destinationId === null
+          ? null
+          : (brands.find((brand) => brand.id === destinationId) ?? null);
+      const remainingBrands = brands.filter((brand) => brand.id !== deletedBrandId);
+
+      await deleteDashboardBrand(deletedBrandId, destinationId);
+
+      setBrands(remainingBrands);
+      reassignProductsFromBrand(deletedBrandId, destination);
       setSelectedId((current) =>
-        current === deleteTarget.id || !workspace.brands.some((brand) => brand.id === current)
-          ? workspace.brands[0]?.id || ""
+        current === deletedBrandId || !remainingBrands.some((brand) => brand.id === current)
+          ? remainingBrands[0]?.id || ""
           : current,
       );
       setDeleteTarget(null);
@@ -384,15 +415,19 @@ export default function BrandsPage() {
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Brand deletion failed.");
     } finally {
+      mutationLock.current = false;
+      setBusy(false);
       setDeleting(false);
     }
   };
 
   const assignProducts = async (productIds: string[]) => {
-    if (!selected) return;
+    if (!selected || mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await assignProductsToDashboardBrand(productIds, selected.id);
-      setProducts(await refreshDashboardProducts());
+      patchProductBrandAssignments(productIds, selected);
       setAssignmentOpen(false);
       toast.success(
         productIds.length === 1
@@ -401,22 +436,31 @@ export default function BrandsPage() {
       );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Product assignment failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const removeProductFromBrand = async (product: DashboardProduct) => {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await assignProductsToDashboardBrand([product.id], null);
-      setProducts(await refreshDashboardProducts());
+      patchProductBrandAssignments([product.id], null);
       setProductMenuId(null);
       toast.success(product.name + " moved to Unbranded in Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Removing product from brand failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const confirmMoveProduct = async () => {
-    if (!moveProduct || !moveDestination) return;
+    if (!moveProduct || !moveDestination || mutationLock.current) return;
     const destinationId = moveDestination === "unbranded" ? null : moveDestination;
     const destination = brands.find((brand) => brand.id === moveDestination);
     const destinationName = destinationId === null ? "Unbranded" : destination?.name;
@@ -426,23 +470,30 @@ export default function BrandsPage() {
       return;
     }
 
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await assignProductsToDashboardBrand([moveProduct.id], destinationId);
-      setProducts(await refreshDashboardProducts());
+      patchProductBrandAssignments([moveProduct.id], destination ?? null);
       toast.success(moveProduct.name + " moved to " + destinationName + " in Supabase.");
       setMoveProduct(null);
       setMoveDestination("");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Moving product failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
   const startReorder = () => {
+    if (mutationLock.current) return;
     setReorderDraft([...brands].sort((a, b) => a.order - b.order));
     setReorderMode(true);
   };
 
   const moveReorderItem = (brandId: string, direction: -1 | 1) => {
+    if (mutationLock.current) return;
     setReorderDraft((current) => {
       const index = current.findIndex((brand) => brand.id === brandId);
       const nextIndex = index + direction;
@@ -455,20 +506,33 @@ export default function BrandsPage() {
   };
 
   const saveReorder = async () => {
+    if (!reorderMode || mutationLock.current) return;
     const normalized = reorderDraft.map((brand, index) => ({
       ...brand,
       order: index + 1,
       updatedAt: new Date().toISOString(),
     }));
+    mutationLock.current = true;
+    setBusy(true);
     try {
       await reorderDashboardBrands(normalized);
-      setBrands(normalized);
+      const positions = new Map(normalized.map((brand) => [brand.id, brand.order]));
+      // Reordering changes positions only; edits made since opening the draft stay intact.
+      setBrands((current) =>
+        current.map((brand) => ({
+          ...brand,
+          order: positions.get(brand.id) ?? brand.order,
+        })).sort((a, b) => a.order - b.order),
+      );
       setReorderMode(false);
       setReorderDraft([]);
       setSortMode("order");
       toast.success("Brand order saved to Supabase.");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Saving brand order failed.");
+    } finally {
+      mutationLock.current = false;
+      setBusy(false);
     }
   };
 
@@ -490,16 +554,19 @@ export default function BrandsPage() {
 
   if (loading) {
     return (
-      <div className="grid min-h-[360px] place-items-center rounded-2xl border border-slate-200 bg-white">
-        <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      <div role="status" aria-label={lang === "ar" ? "جارٍ تحميل العلامات التجارية" : "Loading brands"} className="grid min-h-[360px] place-items-center rounded-2xl border border-border bg-card">
+        <Loader2 className="size-6 animate-spin text-primary" aria-hidden="true" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
-        {error}
+      <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+        <p>{error}</p>
+        <button type="button" onClick={() => setLoadVersion((current) => current + 1)} className="mt-4 min-h-10 rounded-xl border border-current px-4 font-semibold">
+          {lang === "ar" ? "إعادة المحاولة" : "Retry"}
+        </button>
       </div>
     );
   }
@@ -508,23 +575,14 @@ export default function BrandsPage() {
     return (
       <div>
         <div className="mb-6">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            Commerce / Catalog
-          </div>
-          <h1 className="text-[24px] font-black tracking-[-.04em] text-[#14203a] sm:text-[30px] sm:tracking-[-.05em]">
-            Brands Management
-          </h1>
-          <p className="mt-1.5 text-[12px] text-slate-500">
-            Manage Space Call brands, identity, visibility, order, SEO, and product assignments.
-          </p>
+          <PageTitle eyebrow="Commerce / Catalog" title="Brands Management" description="Manage Space Call brands, identity, visibility, order, SEO, and product assignments." />
         </div>
         <div className="grid min-h-[320px] place-items-center rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center">
           <div>
             <Globe2 className="mx-auto size-8 text-slate-300" />
-            <h2 className="mt-4 text-[14px] font-black text-slate-700">No brands yet</h2>
+            <h2 className="mt-4 text-[14px] font-black text-slate-700">{t("No brands yet")}</h2>
             <p className="mt-1 text-[10px] text-slate-400">
-              Create the first brand for the Space Call catalog.
+              {t("Create the first brand for the Space Call catalog.")}
             </p>
             <button
               type="button"
@@ -532,7 +590,7 @@ export default function BrandsPage() {
               className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white"
             >
               <Plus className="size-4" />
-              Add Brand
+              {t("Add Brand")}
             </button>
           </div>
         </div>
@@ -541,7 +599,9 @@ export default function BrandsPage() {
             brand={editing.brand}
             brands={brands}
             mode={editing.mode}
-            onClose={() => setEditing(null)}
+            onClose={() => {
+              if (!mutationLock.current) setEditing(null);
+            }}
             onSave={saveBrand}
           />
         )}
@@ -550,19 +610,27 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="pb-4 sm:pb-8">
+    <div className="pb-4 sm:pb-8" aria-busy={busy}>
+      {busy && (
+        <p role="status" className="mb-3 flex items-center gap-2 rounded-xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          {lang === "ar" ? "جارٍ حفظ التعديلات…" : "Saving changes…"}
+        </p>
+      )}
+      <fieldset disabled={busy} className="m-0 min-w-0 border-0 p-0">
+      {!reorderMode && (
+        <button
+          type="button"
+          onClick={openCreate}
+          aria-label={t("Add Brand")}
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] end-4 z-40 flex h-12 items-center gap-2 rounded-full bg-[#5968ea] px-5 text-[12px] font-bold text-white shadow-[0_10px_24px_rgba(89,104,234,.35)] transition active:scale-95 lg:hidden"
+        >
+          <Plus className="size-4" /> {t("Add Brand")}
+        </button>
+      )}
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
-            <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            Commerce / Catalog
-          </div>
-          <h1 className="text-[30px] font-black tracking-[-.05em] text-[#14203a]">
-            Brands Management
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-slate-500">
-            Manage Space Call brands, identity, visibility, order, SEO, and product assignments.
-          </p>
+          <PageTitle eyebrow="Commerce / Catalog" title="Brands Management" description="Manage Space Call brands, identity, visibility, order, SEO, and product assignments." />
         </div>
 
         <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
@@ -574,7 +642,7 @@ export default function BrandsPage() {
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
               >
                 <GripVertical className="size-4" />
-                Reorder
+                {t("Reorder")}
               </button>
               <button
                 type="button"
@@ -582,7 +650,7 @@ export default function BrandsPage() {
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] sm:w-auto"
               >
                 <Plus className="size-4" />
-                Add Brand
+                {t("Add Brand")}
               </button>
             </>
           ) : (
@@ -595,7 +663,7 @@ export default function BrandsPage() {
                 }}
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 sm:w-auto"
               >
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 type="button"
@@ -603,7 +671,7 @@ export default function BrandsPage() {
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white sm:w-auto"
               >
                 <Check className="size-4" />
-                Save Order
+                {t("Save Order")}
               </button>
             </>
           )}
@@ -635,16 +703,19 @@ export default function BrandsPage() {
         <div className="mb-3 flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-3.5">
           <GripVertical className="mt-0.5 size-4 shrink-0 text-indigo-500" />
           <div>
-            <div className="text-[11px] font-bold text-indigo-800">Reorder Brands</div>
+            <div className="text-[11px] font-bold text-indigo-800">{t("Reorder Brands")}</div>
             <div className="mt-0.5 text-[9px] leading-4 text-indigo-600">
-              Use Up and Down controls on any screen size. Save Order normalizes positions.
+              {t("Use Up and Down controls on any screen size. Save Order normalizes positions.")}
             </div>
           </div>
         </div>
       )}
 
       <div className="space-y-4">
-        <section id="brand-list" className="scroll-mt-[6.5rem] rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-3">
+        <section
+          id="brand-list"
+          className="scroll-mt-[6.5rem] rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-3"
+        >
           {listBrands.length ? (
             <BrandList
               brands={listBrands}
@@ -680,7 +751,7 @@ export default function BrandsPage() {
               <div>
                 <SearchX className="mx-auto size-7 text-slate-300" />
                 <div className="mt-3 text-[11px] font-bold text-slate-600">
-                  No brands match these filters
+                  {t("No brands match these filters")}
                 </div>
                 <button
                   type="button"
@@ -688,7 +759,7 @@ export default function BrandsPage() {
                   className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold text-[#5968ea]"
                 >
                   <RotateCcw className="size-3.5" />
-                  Reset filters
+                  {t("Reset filters")}
                 </button>
               </div>
             </div>
@@ -709,7 +780,7 @@ export default function BrandsPage() {
                 className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 shadow-sm"
               >
                 <ChevronDown className="size-3.5 rotate-90" />
-                Back to brands
+                {t("Back to brands")}
               </button>
             </div>
             <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(33,47,82,.04)] sm:p-5">
@@ -725,20 +796,20 @@ export default function BrandsPage() {
                         className={
                           "rounded-full px-2 py-1 text-[8px] font-black " +
                           (selected.active
-                            ? "bg-emerald-50 text-emerald-700"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                             : "bg-slate-100 text-slate-500")
                         }
                       >
-                        {selected.active ? "Active" : "Hidden"}
+                        {selected.active ? t("Active") : t("Hidden")}
                       </span>
                       {selected.featured && (
                         <span className="rounded-full bg-violet-50 px-2 py-1 text-[8px] font-black text-violet-700">
-                          Featured
+                          {t("Featured")}
                         </span>
                       )}
                     </div>
                     <p className="mt-1 text-[10px] text-slate-400">
-                      /{selected.slug} · {assignedProducts.length} assigned products
+                      /{selected.slug} · {assignedProducts.length} {t("assigned products")}
                     </p>
                   </div>
                 </div>
@@ -750,7 +821,7 @@ export default function BrandsPage() {
                     className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 active:scale-[.98]"
                   >
                     <Pencil className="size-3.5" />
-                    Edit Brand
+                    {t("Edit Brand")}
                   </button>
                   <button
                     type="button"
@@ -758,7 +829,7 @@ export default function BrandsPage() {
                     className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-indigo-100 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100 active:scale-[.98]"
                   >
                     <Plus className="size-3.5" />
-                    Assign Products
+                    {t("Assign Products")}
                   </button>
                   <button
                     type="button"
@@ -770,7 +841,7 @@ export default function BrandsPage() {
                     className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 active:scale-[.98]"
                   >
                     <Eye className="size-3.5" />
-                    Preview
+                    {t("Preview")}
                   </button>
                   <button
                     type="button"
@@ -778,7 +849,7 @@ export default function BrandsPage() {
                     className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-[10px] font-bold text-rose-700 transition hover:bg-rose-100 active:scale-[.98]"
                   >
                     <Trash2 className="size-3.5" />
-                    Delete Brand
+                    {t("Delete Brand")}
                   </button>
                 </div>
               </div>
@@ -786,31 +857,31 @@ export default function BrandsPage() {
               <div className="mt-5 grid gap-3 xl:grid-cols-[1.4fr_.8fr]">
                 <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
                   <div className="text-[9px] font-black uppercase tracking-[.13em] text-slate-400">
-                    Description
+                    {t("Description")}
                   </div>
                   <p className="mt-2 text-[11px] leading-5 text-slate-600">
-                    {selected.description || "No description has been added for this brand yet."}
+                    {selected.description || t("No description has been added for this brand yet.")}
                   </p>
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <div>
                       <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
-                        Status
+                        {t("Status")}
                       </div>
                       <div className="mt-1 text-[10px] font-bold text-slate-700">
-                        {selected.active ? "Active" : "Hidden"}
+                        {selected.active ? t("Active") : t("Hidden")}
                       </div>
                     </div>
                     <div>
                       <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
-                        Homepage
+                        {t("Homepage")}
                       </div>
                       <div className="mt-1 text-[10px] font-bold text-slate-700">
-                        {selected.featured ? "Featured" : "Not Featured"}
+                        {selected.featured ? t("Featured") : t("Not Featured")}
                       </div>
                     </div>
                     <div>
                       <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
-                        Sort Order
+                        {t("Sort Order")}
                       </div>
                       <div className="mt-1 text-[10px] font-bold text-slate-700">
                         {selected.order}
@@ -818,7 +889,7 @@ export default function BrandsPage() {
                     </div>
                     <div>
                       <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
-                        Website
+                        {t("Website")}
                       </div>
                       <div className="mt-1 truncate text-[10px] font-bold text-slate-700">
                         {selected.website || "—"}
@@ -831,19 +902,20 @@ export default function BrandsPage() {
                   <Toggle
                     checked={selected.active}
                     onChange={(active) => toggleBrand(selected, { active })}
-                    title="Active"
+                    title={t("Active")}
                     description="Available for storefront brand browsing"
                   />
                   <Toggle
                     checked={selected.featured}
                     onChange={(featured) => toggleBrand(selected, { featured })}
-                    title="Featured"
+                    title={t("Featured")}
                     description="Show this brand in homepage sections"
                   />
                   {!selected.active && selected.featured && (
                     <div className="rounded-xl bg-amber-50 px-3 py-2 text-[9px] leading-4 text-amber-700">
-                      Hidden status takes precedence. Featured remains saved but is not effectively
-                      visible.
+                      {t(
+                        "Hidden status takes precedence. Featured remains saved but is not effectively visible.",
+                      )}
                     </div>
                   )}
                 </div>
@@ -857,10 +929,12 @@ export default function BrandsPage() {
               <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                 <div>
                   <div className="text-[13px] font-black text-[#14203a]">
-                    Products by {selected.name}
+                    {t("Products by")} {selected.name}
                   </div>
                   <div className="mt-1 text-[10px] text-slate-400">
-                    Brand assignment uses store_products.brand_id in Supabase as the single source of truth.
+                    {t(
+                      "Brand assignment uses store_products.brand_id in Supabase as the single source of truth.",
+                    )}
                   </div>
                 </div>
                 <button
@@ -869,7 +943,7 @@ export default function BrandsPage() {
                   className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#5968ea] px-3 text-[10px] font-bold text-white"
                 >
                   <Plus className="size-3.5" />
-                  Assign Products
+                  {t("Assign Products")}
                 </button>
               </div>
 
@@ -889,7 +963,9 @@ export default function BrandsPage() {
                               className="h-full w-full object-contain p-1.5 xl:p-1"
                             />
                           ) : (
-                            <div className="text-[9px] font-bold text-slate-300">No image</div>
+                            <div className="text-[9px] font-bold text-slate-300">
+                              {t("No image")}
+                            </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -897,7 +973,7 @@ export default function BrandsPage() {
                             {product.name}
                           </div>
                           <div className="mt-1 truncate text-[10px] font-medium text-slate-400 xl:text-[9px]">
-                            {product.category || "Uncategorized"}
+                            {product.category || t("Uncategorized")}
                           </div>
                         </div>
                       </div>
@@ -905,7 +981,7 @@ export default function BrandsPage() {
                       <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-slate-50/70 p-3 xl:contents">
                         <div className="min-w-0">
                           <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
-                            SKU
+                            {t("SKU")}
                           </div>
                           <div className="mt-1 truncate font-mono text-[10px] font-semibold text-slate-600 xl:mt-0 xl:text-[9px] xl:font-normal xl:text-slate-500">
                             {product.sku || "—"}
@@ -914,7 +990,7 @@ export default function BrandsPage() {
 
                         <div className="min-w-0">
                           <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
-                            Price
+                            {t("Price")}
                           </div>
                           <div className="mt-1 text-[11px] font-black text-slate-700 xl:mt-0 xl:text-[10px] xl:font-bold">
                             {"$" + product.price.toLocaleString()}
@@ -923,7 +999,7 @@ export default function BrandsPage() {
 
                         <div className="min-w-0">
                           <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
-                            Stock
+                            {t("Stock")}
                           </div>
                           <div
                             className={
@@ -937,7 +1013,7 @@ export default function BrandsPage() {
 
                         <div className="min-w-0">
                           <div className="text-[8px] font-bold uppercase tracking-wide text-slate-400 xl:hidden">
-                            Status
+                            {t("Status")}
                           </div>
                           <div className="mt-1 xl:mt-0">
                             <ProductStatus status={product.status} />
@@ -962,7 +1038,7 @@ export default function BrandsPage() {
                         {productMenuId === product.id && (
                           <>
                             <button
-                              aria-label="Close product actions"
+                              aria-label={t("Close product actions")}
                               className="fixed inset-0 z-[70] cursor-default bg-slate-950/20 lg:bg-transparent"
                               onClick={() => setProductMenuId(null)}
                             />
@@ -977,7 +1053,9 @@ export default function BrandsPage() {
                                 <div className="truncate text-[11px] font-black text-slate-700">
                                   {product.name}
                                 </div>
-                                <div className="mt-0.5 text-[9px] text-slate-400">Product actions</div>
+                                <div className="mt-0.5 text-[9px] text-slate-400">
+                                  {t("Product actions")}
+                                </div>
                               </div>
 
                               <button
@@ -990,7 +1068,7 @@ export default function BrandsPage() {
                                 className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 lg:min-h-0 lg:gap-2 lg:rounded-lg lg:px-2.5 lg:py-2 lg:text-[10px]"
                               >
                                 <Eye className="size-4 text-slate-400 lg:size-3.5" />
-                                View Product
+                                {t("View Product")}
                               </button>
 
                               <button
@@ -1003,7 +1081,7 @@ export default function BrandsPage() {
                                 className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 lg:min-h-0 lg:gap-2 lg:rounded-lg lg:px-2.5 lg:py-2 lg:text-[10px]"
                               >
                                 <Pencil className="size-4 text-slate-400 lg:size-3.5" />
-                                Edit Product
+                                {t("Edit Product")}
                               </button>
 
                               <button
@@ -1017,7 +1095,7 @@ export default function BrandsPage() {
                                 className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-slate-600 hover:bg-slate-50 lg:min-h-0 lg:gap-2 lg:rounded-lg lg:px-2.5 lg:py-2 lg:text-[10px]"
                               >
                                 <MoveRight className="size-4 text-slate-400 lg:size-3.5" />
-                                Move to Brand
+                                {t("Move to Brand")}
                               </button>
 
                               <div className="my-1 border-t border-slate-100" />
@@ -1029,7 +1107,7 @@ export default function BrandsPage() {
                                 className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold text-amber-700 hover:bg-amber-50 lg:min-h-0 lg:gap-2 lg:rounded-lg lg:px-2.5 lg:py-2 lg:text-[10px]"
                               >
                                 <X className="size-4 lg:size-3.5" />
-                                Remove from Brand
+                                {t("Remove from Brand")}
                               </button>
                             </div>
                           </>
@@ -1043,7 +1121,7 @@ export default function BrandsPage() {
                   <div>
                     <BrandMark brand={selected} className="mx-auto size-12" />
                     <div className="mt-3 text-[11px] font-bold text-slate-600">
-                      No products are assigned to {selected.name} yet.
+                      {t("No products are assigned to")} {selected.name} {t("yet.")}
                     </div>
                     <button
                       type="button"
@@ -1051,7 +1129,7 @@ export default function BrandsPage() {
                       className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 text-[10px] font-bold text-indigo-700"
                     >
                       <Plus className="size-3.5" />
-                      Assign Products
+                      {t("Assign Products")}
                     </button>
                   </div>
                 </div>
@@ -1063,13 +1141,17 @@ export default function BrandsPage() {
         )}
       </div>
 
+      </fieldset>
+
       {editing && (
         <BrandForm
           key={editing.brand.id}
           brand={editing.brand}
           brands={brands}
           mode={editing.mode}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+              if (!mutationLock.current) setEditing(null);
+            }}
           onSave={saveBrand}
         />
       )}
@@ -1078,15 +1160,19 @@ export default function BrandsPage() {
         <BrandAssignmentDialog
           brand={selected}
           products={products}
-          onClose={() => setAssignmentOpen(false)}
+          onClose={() => {
+            if (!mutationLock.current) setAssignmentOpen(false);
+          }}
           onAssign={assignProducts}
         />
       )}
 
       {deleteTarget && (
-        <Modal
+        <DashboardModal
           title={"Delete " + deleteTarget.name + "?"}
-          subtitle="This permanently removes the brand record. Products are never deleted and can be reassigned first."
+          subtitle={t(
+            "This permanently removes the brand record. Products are never deleted and can be reassigned first.",
+          )}
           onClose={() => {
             if (!deleting) setDeleteTarget(null);
           }}
@@ -1094,20 +1180,23 @@ export default function BrandsPage() {
           {getBrandProductCount(products, deleteTarget) > 0 ? (
             <div className="space-y-4">
               <div className="rounded-xl bg-amber-50 p-3 text-[10px] leading-5 text-amber-800">
-                <b>{getBrandProductCount(products, deleteTarget)} products</b> currently use this
-                brand. Choose where they should move before deletion.
+                <b>
+                  {getBrandProductCount(products, deleteTarget)} {t("products")}
+                </b>{" "}
+                {t("currently use this brand. Choose where they should move before deletion.")}
               </div>
               <label className="block">
                 <span className="mb-1.5 block text-[10px] font-bold text-slate-600">
-                  Move products to
+                  {t("Move products to")}
                 </span>
                 <div className="relative">
                   <select
                     value={deleteDestination}
                     onChange={(event) => setDeleteDestination(event.target.value)}
-                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
+                    disabled={deleting}
+                    className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="unbranded">Unbranded</option>
+                    <option value="unbranded">{t("Unbranded")}</option>
                     {brands
                       .filter((brand) => brand.id !== deleteTarget.id)
                       .map((brand) => (
@@ -1122,7 +1211,7 @@ export default function BrandsPage() {
             </div>
           ) : (
             <div className="rounded-xl bg-slate-50 p-3 text-[10px] leading-5 text-slate-600">
-              This brand has no assigned products, so no reassignment is required.
+              {t("This brand has no assigned products, so no reassignment is required.")}
             </div>
           )}
 
@@ -1133,7 +1222,7 @@ export default function BrandsPage() {
               disabled={deleting}
               className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               type="button"
@@ -1142,31 +1231,39 @@ export default function BrandsPage() {
               aria-busy={deleting}
               className="flex h-10 items-center gap-2 rounded-xl bg-rose-600 px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              {deleting ? "Deleting…" : "Delete Brand"}
+              {deleting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+              {deleting ? t("Deleting…") : t("Delete Brand")}
             </button>
           </div>
-        </Modal>
+        </DashboardModal>
       )}
 
       {moveProduct && (
-        <Modal
-          title="Move Product"
+        <DashboardModal
+          title={t("Move Product")}
           subtitle={moveProduct.name + " stays intact; only its Supabase brand assignment changes."}
           onClose={() => {
+            if (mutationLock.current) return;
             setMoveProduct(null);
             setMoveDestination("");
           }}
         >
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-bold text-slate-600">Destination</span>
+            <span className="mb-1.5 block text-[10px] font-bold text-slate-600">
+              {t("Destination")}
+            </span>
             <div className="relative">
               <select
                 value={moveDestination}
+                disabled={busy}
                 onChange={(event) => setMoveDestination(event.target.value)}
                 className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-9 text-[11px] text-slate-700 outline-none"
               >
-                <option value="">Choose brand</option>
+                <option value="">{t("Choose brand")}</option>
                 {brands
                   .filter((brand) => brand.id !== selected?.id)
                   .map((brand) => (
@@ -1174,7 +1271,7 @@ export default function BrandsPage() {
                       {brand.name}
                     </option>
                   ))}
-                <option value="unbranded">Unbranded</option>
+                <option value="unbranded">{t("Unbranded")}</option>
               </select>
               <ChevronDown className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             </div>
@@ -1183,25 +1280,28 @@ export default function BrandsPage() {
           <div className="mt-5 flex justify-end gap-2">
             <button
               type="button"
+              disabled={busy}
               onClick={() => {
+                if (mutationLock.current) return;
                 setMoveProduct(null);
                 setMoveDestination("");
               }}
               className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               type="button"
-              disabled={!moveDestination}
+              disabled={!moveDestination || busy}
+              aria-busy={busy}
               onClick={confirmMoveProduct}
               className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               <MoveRight className="size-4" />
-              Move Product
+              {t("Move Product")}
             </button>
           </div>
-        </Modal>
+        </DashboardModal>
       )}
     </div>
   );

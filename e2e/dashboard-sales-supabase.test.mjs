@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -14,9 +15,7 @@ const [app, nav, page, data, migration] = await Promise.all([
 ]);
 
 test("Sales is a real dashboard route backed by Supabase", () => {
-  assert.match(app, /import SalesPage from "@\/dashboard\/pages\/SalesPage"/);
-  assert.match(app, /route === "\/dashboard\/sales"\) content = <SalesPage \/>/);
-  assert.match(nav, /label: "Sales", href: "\/dashboard\/sales"/);
+assertDashboardRoute("/dashboard/sales","salesPage");
   assert.match(data, /from\("store_sales"\)/);
 });
 

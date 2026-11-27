@@ -48,6 +48,74 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const nowIso = new Date().toISOString();
+  const scope = new URL(req.url).searchParams.get("scope");
+
+  if (scope === "hero") {
+    const heroResult = await db
+      .from("cms_hero_slides")
+      .select("*")
+      .eq("is_published", true)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gt.${nowIso}`)
+      .order("sort_order")
+      .limit(1)
+      .maybeSingle();
+
+    if (heroResult.error) {
+      console.error("public-cms hero query failed", heroResult.error.message);
+      return new Response(JSON.stringify({ error: "cms_hero_query_failed" }), {
+        status: 500,
+        headers: headers(req),
+      });
+    }
+
+    const row = heroResult.data;
+    const hero =
+      row &&
+      typeof row.image_url === "string" &&
+      row.image_url.trim()
+        ? {
+            id: row.id,
+            title: row.title ?? null,
+            title_en: row.title_en ?? null,
+            title_ar: row.title_ar ?? null,
+            subtitle: row.subtitle ?? null,
+            subtitle_en: row.subtitle_en ?? null,
+            subtitle_ar: row.subtitle_ar ?? null,
+            eyebrow_en: row.eyebrow_en ?? null,
+            eyebrow_ar: row.eyebrow_ar ?? null,
+            image_url: row.image_url,
+            mobile_image_url: row.mobile_image_url ?? null,
+            image_alt_en: row.image_alt_en ?? null,
+            image_alt_ar: row.image_alt_ar ?? null,
+            mobile_image_alt_en: row.mobile_image_alt_en ?? null,
+            mobile_image_alt_ar: row.mobile_image_alt_ar ?? null,
+            button_label: row.button_label ?? null,
+            button_label_en: row.button_label_en ?? null,
+            button_label_ar: row.button_label_ar ?? null,
+            target_type: row.target_type ?? "none",
+            target_value: row.target_value ?? null,
+            secondary_button_label_en: row.secondary_button_label_en ?? null,
+            secondary_button_label_ar: row.secondary_button_label_ar ?? null,
+            secondary_target_type: row.secondary_target_type ?? "none",
+            secondary_target_value: row.secondary_target_value ?? null,
+            sort_order: row.sort_order ?? 0,
+            content_alignment: row.content_alignment ?? "start",
+            overlay_opacity: row.overlay_opacity ?? 20,
+            button_style: row.button_style ?? "primary",
+            secondary_button_style: row.secondary_button_style ?? "secondary",
+            content_theme: row.content_theme ?? "light",
+            open_in_new_tab: row.open_in_new_tab ?? false,
+            secondary_open_in_new_tab: row.secondary_open_in_new_tab ?? false,
+            visual_config: row.visual_config ?? {},
+          }
+        : null;
+
+    return new Response(JSON.stringify({ hero }), {
+      status: 200,
+      headers: headers(req),
+    });
+  }
 
   // Use select("*") for the localized content tables so this function stays
   // deploy-safe both immediately before and after the bilingual migration runs.
@@ -80,7 +148,7 @@ Deno.serve(async (req: Request) => {
         .order("sort_order"),
       db
         .from("cms_brands")
-        .select("id,name,slug,logo_url,href,sort_order,is_visible")
+        .select("id,name,slug,logo_url,href,sort_order,is_visible,is_featured")
         .eq("is_visible", true)
         .order("sort_order")
         .order("name"),

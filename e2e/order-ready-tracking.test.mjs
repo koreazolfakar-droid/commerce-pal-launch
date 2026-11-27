@@ -7,6 +7,10 @@ const migration = await readFile(
   "utf8",
 );
 const data = await readFile(new URL("../src/dashboard/data/orders.ts", import.meta.url), "utf8");
+const statsMigration = await readFile(
+  new URL("../supabase/migrations/20260928113000_dashboard_scale_hardening.sql", import.meta.url),
+  "utf8",
+);
 const detail = await readFile(
   new URL("../src/dashboard/pages/OrderDetailPage.tsx", import.meta.url),
   "utf8",
@@ -15,8 +19,14 @@ const storefront = await readFile(new URL("../src/routes/my-orders.tsx", import.
 
 test("ready is a real guarded order state between processing and delivery", () => {
   assert.match(migration, /'processing',[\s\S]+'ready',[\s\S]+'out_for_delivery'/);
-  assert.match(migration, /v_before\.status = 'processing' and p_status in \('ready', 'out_for_delivery', 'cancelled'\)/);
-  assert.match(migration, /v_before\.status = 'ready' and p_status in \('out_for_delivery', 'cancelled'\)/);
+  assert.match(
+    migration,
+    /v_before\.status = 'processing' and p_status in \('ready', 'out_for_delivery', 'cancelled'\)/,
+  );
+  assert.match(
+    migration,
+    /v_before\.status = 'ready' and p_status in \('out_for_delivery', 'cancelled'\)/,
+  );
   assert.match(migration, /order_version_conflict/);
   assert.match(migration, /insert into public\.store_order_audit_log/);
   assert.match(migration, /insert into public\.store_sales/);
@@ -24,7 +34,10 @@ test("ready is a real guarded order state between processing and delivery", () =
 
 test("dashboard exposes ready in types, counts, and next-state progression", () => {
   assert.match(data, /\| "ready"/);
-  assert.match(data, /countOrders\("ready"\)/);
+  assert.match(data, /rpc\("get_dashboard_order_stats"\)/);
+  assert.match(data, /ready: count\(row\?\.ready_count\)/);
+  assert.match(statsMigration, /ready_count bigint/);
+  assert.match(statsMigration, /count\(\*\) filter \(where status = 'ready'\)/);
   assert.match(data, /status === "processing"\) return "ready"/);
   assert.match(data, /status === "ready"\) return "out_for_delivery"/);
   assert.match(detail, /nextStatus === "ready"/);

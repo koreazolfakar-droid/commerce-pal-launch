@@ -29,6 +29,14 @@ async function sourceUrl(name) {
 const taxonomy = await import(await sourceUrl("taxonomy"));
 const { applyFilters, parseProductSearch } = await import(await sourceUrl("filters"));
 const { productSearchScore, normalizeSearchText } = await import(await sourceUrl("searchRanking"));
+const { textSearchScore } = await import(await sourceUrl("searchRanking"));
+
+test("search keeps matching a collection when its optional description is missing", () => {
+  assert.ok(textSearchScore("Samsung", "Samsung", ["samsung", null]) > 0);
+  assert.ok(textSearchScore("Samsung", "Samsung", ["samsung", undefined]) > 0);
+  assert.equal(normalizeSearchText(null), "");
+  assert.equal(normalizeSearchText(undefined), "");
+});
 const { productPrice, productDiscountPercent, productPrimaryVariant } = await import(
   await sourceUrl("productPricing")
 );
@@ -212,13 +220,11 @@ test("configuration collections do not clutter customer navigation", () => {
   );
 });
 
-
 test("search ranking strongly prefers an exact product title", () => {
   const exact = product({ title: "Apple iPhone 17 Pro Max", vendor: "Apple" });
   const broad = product({ title: "Case for Apple iPhone 17 Pro Max", vendor: "Spigen" });
   assert.ok(
-    productSearchScore(exact, "iphone 17 pro max") >
-      productSearchScore(broad, "iphone 17 pro max"),
+    productSearchScore(exact, "iphone 17 pro max") > productSearchScore(broad, "iphone 17 pro max"),
   );
 });
 
@@ -265,13 +271,19 @@ test("search normalizes Arabic spelling and supports conservative brand aliases"
 test("catalog q filtering uses the same precise search matcher", () => {
   const catalog = taxonomy.buildCatalogIndex(products);
   const matches = applyFilters(products, catalog, { q: "samsng fixture 4" });
-  assert.deepEqual(matches.map((item) => item.node.handle), ["fixture-phone-4"]);
+  assert.deepEqual(
+    matches.map((item) => item.node.handle),
+    ["fixture-phone-4"],
+  );
 });
-
 
 test("search understands common Arabic category and brand terms", () => {
   const phone = product({ title: "Xiaomi 17 Ultra", vendor: "Xiaomi", productType: "Smartphone" });
-  const charger = product({ title: "Anker Nano Charger 45W", vendor: "Anker", productType: "Charger" });
+  const charger = product({
+    title: "Anker Nano Charger 45W",
+    vendor: "Anker",
+    productType: "Charger",
+  });
   assert.ok(productSearchScore(phone, "شاومي موبايل") > 0);
   assert.ok(productSearchScore(charger, "انكر شاحن") > 0);
 });
@@ -286,7 +298,6 @@ test("description-only marketing words do not create noisy product matches", () 
   });
   assert.equal(productSearchScore(item, "compatible"), 0);
 });
-
 
 test("catalog q results are ordered by relevance when no explicit sort is selected", () => {
   const exact = product({
@@ -306,5 +317,42 @@ test("catalog q results are ordered by relevance when no explicit sort is select
   const items = [accessory, exact];
   const catalog = taxonomy.buildCatalogIndex(items);
   const matches = applyFilters(items, catalog, { q: "Samsung Galaxy S26" });
-  assert.deepEqual(matches.map((item) => item.node.handle), ["search-exact", "search-accessory"]);
+  assert.deepEqual(
+    matches.map((item) => item.node.handle),
+    ["search-exact", "search-accessory"],
+  );
+});
+
+
+test("managed category assignment outranks product type and misleading tags", () => {
+  const item = product({
+    categoryId: "managed-gaming",
+    categorySlug: "gaming",
+    categoryName: "Gaming",
+    productType: "Smartphone",
+    tags: ["category:accessories"],
+    title: "iPhone gaming controller",
+  });
+  assert.deepEqual(taxonomy.resolveCategories(item).map((category) => category.slug), ["gaming"]);
+  const catalog = taxonomy.buildCatalogIndex([item]);
+  assert.deepEqual(catalog.categories.map((category) => category.slug), ["gaming"]);
+  assert.deepEqual(
+    applyFilters([item], catalog, { category: ["gaming"] }).map((entry) => entry.node.handle),
+    [item.node.handle],
+  );
+});
+
+test("brand-new managed category slugs are not coerced into legacy category names", () => {
+  const assigned = product({
+    categoryId: "new-custom-category-id",
+    categorySlug: "game",
+    categoryName: "Game",
+    productType: "Other",
+    tags: ["category:smartphones"],
+  });
+  const catalog = taxonomy.buildCatalogIndex([assigned]);
+  assert.deepEqual(catalog.categories.map((category) => category.slug), ["game"]);
+  assert.equal(catalog.categories[0].label, "Game");
+  assert.equal(applyFilters([assigned], catalog, { category: ["game"] }).length, 1);
+  assert.equal(applyFilters([assigned], catalog, { category: ["smartphones"] }).length, 0);
 });

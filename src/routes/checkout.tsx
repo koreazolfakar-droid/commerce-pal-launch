@@ -34,15 +34,18 @@ function CheckoutPage() {
   const { language, t } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const { items, total: cartTotal, isLoading } = useCartStore();
-  const [cartHydrated, setCartHydrated] = useState(() => useCartStore.persist.hasHydrated());
+  // Browser storage is unavailable during SSR; keep the first client render
+  // identical and inspect persistence only after mounting.
+  const [cartHydrated, setCartHydrated] = useState(false);
 
   useEffect(() => {
-    if (useCartStore.persist.hasHydrated()) {
+    const persistence = useCartStore.persist;
+    if (!persistence || persistence.hasHydrated()) {
       setCartHydrated(true);
       return;
     }
 
-    return useCartStore.persist.onFinishHydration(() => setCartHydrated(true));
+    return persistence.onFinishHydration(() => setCartHydrated(true));
   }, []);
 
   const currency = cartTotal?.currencyCode ?? items[0]?.price.currencyCode ?? "USD";
@@ -70,8 +73,7 @@ function CheckoutPage() {
         subtitle: "Add delivery and payment details to confirm your order.",
         back: "Back to bag",
         emptyTitle: "There is nothing to check out",
-        emptyDescription:
-          "Add products to your bag first, then continue to checkout.",
+        emptyDescription: "Add products to your bag first, then continue to checkout.",
       };
 
   return (

@@ -395,11 +395,23 @@ function inferredCategory(text: string): CategoryDefinition | undefined {
 }
 
 /**
- * Explicit category tags > product type > exact category collection > title.
+ * Managed category UUID/slug > explicit tags > product type > collection > title.
  * Brand campaigns, compatibility tags and variant option names are not categories.
  */
 export function resolveCategories(product: StoreProduct): CategoryDefinition[] {
   const node = product.node;
+  // Dashboard assignments win over editorial Product Type and inferred keywords.
+  // Preserve the exact managed slug, even when it resembles a legacy keyword.
+  const managedSlug = node.categorySlug?.trim();
+  if (managedSlug) {
+    const known = categoryDefinition(managedSlug);
+    return [known ?? {
+      slug: managedSlug,
+      label: node.categoryName?.trim() || managedSlug,
+      icon: Package,
+      keywords: [],
+    }];
+  }
   const explicit = new Map<string, CategoryDefinition>();
   for (const tag of node.tags ?? []) {
     const match = /^(?:category|cat|section):\s*(.+)$/i.exec(tag.trim());
@@ -453,6 +465,9 @@ export interface BrandRef {
 const GENERIC_VENDORS = new Set([
   STORE_NAME.toLowerCase(),
   STORE_NAME.toLowerCase().replace(/\s+/g, ""),
+  "brand",
+  "no brand",
+  "unbranded",
   "default",
   "generic",
   "unknown",
@@ -463,6 +478,8 @@ export function resolveBrand(
   product: StoreProduct,
   genericVendors: Set<string> = new Set(),
 ): BrandRef | null {
+  if (product.node.vendorHidden) return null;
+
   const identity = (value: string): BrandRef | null => {
     const slug = slugify(value);
     if (!slug) return null;
@@ -471,17 +488,30 @@ export function resolveBrand(
     );
     return known ? { slug: known.slug, label: known.label } : { slug, label: value.trim() };
   };
+  const vendor = product.node.vendor?.trim() ?? "";
+  const canonicalSlug = product.node.vendorSlug?.trim();
+  if (
+    vendor &&
+    canonicalSlug &&
+    !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
+    !genericVendors.has(vendor.toLowerCase())
+  ) {
+    return { slug: canonicalSlug, label: vendor };
+  }
+
   for (const tag of product.node.tags ?? []) {
     const match = /^(?:brand|vendor|make):\s*(.+)$/i.exec(tag.trim());
-    if (match?.[1] && identity(match[1])) return identity(match[1]);
+    if (match?.[1] && !GENERIC_VENDORS.has(match[1].trim().toLowerCase()) && identity(match[1]))
+      return identity(match[1]);
   }
-  const vendor = product.node.vendor?.trim() ?? "";
+
   if (
     vendor &&
     !GENERIC_VENDORS.has(vendor.toLowerCase()) &&
     !genericVendors.has(vendor.toLowerCase())
-  )
+  ) {
     return identity(vendor);
+  }
 
   // Only a leading brand/product family is evidence; "Case for iPhone" is not Apple.
   const title = product.node.title.trim().toLowerCase();

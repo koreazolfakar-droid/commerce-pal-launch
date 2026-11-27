@@ -1,12 +1,7 @@
-import {
-  ExternalLink,
-  ImageUp,
-  Loader2,
-  RefreshCw,
-  Save,
-  Store,
-  UploadCloud,
-} from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
+import { confirmDashboardDiscard } from "@/dashboard/lib/unsavedChanges";
+import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
+import { ExternalLink, ImageUp, Loader2, RefreshCw, Save, Store, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import ImageOptimizationPreview from "@/dashboard/components/ImageOptimizationPreview";
@@ -59,9 +54,10 @@ function Field({
   type?: string;
   disabled?: boolean;
 }) {
+  const { t } = useLanguage();
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-bold text-slate-600">{t(label)}</span>
       <input
         type={type}
         value={value}
@@ -69,7 +65,7 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        className="h-11 w-full rounded-xl border border-border bg-background px-3 text-[12px] text-foreground outline-none transition placeholder:text-slate-300 focus:border-[#6974eb] focus:ring-4 focus:ring-[#6974eb]/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
       />
     </label>
   );
@@ -84,11 +80,12 @@ function Panel({
   subtitle?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_24px_rgba(33,47,82,.04)]">
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_8px_24px_rgba(33,47,82,.04)]">
       <div className="border-b border-slate-100 px-5 py-4">
-        <div className="text-[13px] font-bold text-[#14203a]">{title}</div>
-        {subtitle ? <div className="mt-1 text-[11px] text-slate-400">{subtitle}</div> : null}
+        <div className="text-[13px] font-bold text-[#14203a]">{t(title)}</div>
+        {subtitle ? <div className="mt-1 text-[11px] text-slate-400">{t(subtitle)}</div> : null}
       </div>
       {children}
     </section>
@@ -96,6 +93,7 @@ function Panel({
 }
 
 export default function SettingsPage() {
+  const { t, lang } = useLanguage();
   const [tab, setTab] = useState<Tab>("identity");
   const [settings, setSettings] = useState<DashboardSiteSettings>(EMPTY);
   const [saved, setSaved] = useState<DashboardSiteSettings>(EMPTY);
@@ -103,76 +101,141 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingLogo, setEditingLogo] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const requestVersion = useRef(0);
+  const operationLock = useRef(false);
+  const mounted = useRef(true);
   const [pendingLogo, setPendingLogo] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageEditor = useSmartImageEditor();
 
   const load = useCallback(async (manual = false) => {
-    if (!manual) setLoading(true);
+    if (operationLock.current) return;
+    if (manual && !confirmDashboardDiscard()) return;
+    const request = ++requestVersion.current;
+    if (manual) setRefreshing(true);
+    else setLoading(true);
+    setLoadError("");
     try {
-      const [next, nextRole] = await Promise.all([
-        loadDashboardSiteSettings(),
-        getDashboardRole(),
-      ]);
+      const [next, nextRole] = await Promise.all([loadDashboardSiteSettings(), getDashboardRole()]);
+      if (request !== requestVersion.current || !mounted.current) return;
       setSettings(next);
       setSaved(next);
       setRole(nextRole);
+      setPendingLogo(null);
+      setLoaded(true);
       if (manual) toast.success("Settings refreshed from Supabase.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Unable to load settings.");
+      if (request !== requestVersion.current || !mounted.current) return;
+      setLoadError(cause instanceof Error ? cause.message : "Unable to load settings.");
     } finally {
-      setLoading(false);
+      if (request === requestVersion.current && mounted.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void load(false);
+    return () => {
+      mounted.current = false;
+      requestVersion.current += 1;
+    };
   }, [load]);
 
-  const dirty = useMemo(
+  const settingsDirty = useMemo(
     () => JSON.stringify(settings) !== JSON.stringify(saved),
     [saved, settings],
   );
+  const dirty = settingsDirty || Boolean(pendingLogo);
+  useDashboardUnsavedChanges(dirty);
+  const busy = saving || uploading || editingLogo || refreshing;
 
   const update = (key: keyof DashboardSiteSettings, value: string) => {
+    if (operationLock.current || refreshing) return;
     setSettings((current) => ({ ...current, [key]: value }));
   };
 
   const save = async () => {
-    if (!dirty || saving) return;
+    if (!loaded || !settingsDirty || pendingLogo || operationLock.current || refreshing) return;
+    operationLock.current = true;
     setSaving(true);
     try {
       const next = await saveDashboardSiteSettings(settings);
+      if (!mounted.current) return;
       setSettings(next);
       setSaved(next);
       toast.success("Store settings saved to Supabase.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Saving settings failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "Saving settings failed.");
     } finally {
-      setSaving(false);
+      operationLock.current = false;
+      if (mounted.current) setSaving(false);
     }
   };
 
   const uploadLogo = async (file: File | undefined) => {
-    if (!file || uploading) return;
+    if (!file || !loaded || operationLock.current || refreshing) return;
+    operationLock.current = true;
     setUploading(true);
     try {
       const url = await uploadDashboardStoreLogo(file);
-      update("logoUrl", url);
+      if (!mounted.current) return;
+      setSettings((current) => ({ ...current, logoUrl: url }));
+      setPendingLogo(null);
       toast.success("Logo uploaded. Save changes to publish it.");
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Logo upload failed.");
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "Logo upload failed.");
+      // Keep the prepared file available so a failed upload can be retried.
     } finally {
-      setUploading(false);
+      operationLock.current = false;
+      if (mounted.current) setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
-      setPendingLogo(null);
+    }
+  };
+
+  const editLogo = async (source: File | string) => {
+    if (operationLock.current || refreshing) return;
+    operationLock.current = true;
+    setEditingLogo(true);
+    try {
+      const options = {
+        title: "Adjust store logo",
+        preset: "logo" as const,
+        transparent: true,
+        defaultFit: "contain" as const,
+      };
+      const edited = typeof source === "string"
+        ? await imageEditor.editUrl(source, options)
+        : await imageEditor.editFile(source, options);
+      if (mounted.current && edited) setPendingLogo(edited);
+    } catch (cause) {
+      if (mounted.current) toast.error(cause instanceof Error ? cause.message : "Logo editor failed.");
+    } finally {
+      operationLock.current = false;
+      if (mounted.current) setEditingLogo(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="grid min-h-[420px] place-items-center rounded-2xl border border-slate-200 bg-white">
+      <div role="status" aria-label={lang === "ar" ? "جارٍ تحميل الإعدادات" : "Loading settings"} className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-card">
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
+      </div>
+    );
+  }
+
+  if (!loaded) {
+    return (
+      <div role="alert" className="rounded-2xl border border-border bg-card p-6 text-sm text-foreground">
+        <h1 className="font-semibold">{t("Settings")}</h1>
+        <p className="mt-2 break-words text-muted-foreground">{loadError}</p>
+        <button type="button" onClick={() => void load(false)} className="dashboard-button mt-4">{t("Retry")}</button>
       </div>
     );
   }
@@ -185,69 +248,88 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div>
+    <div aria-busy={busy}>
       {imageEditor.dialog}
       <div className="mb-7 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.18em] text-[#6a70e7]">
             <span className="size-1.5 rounded-full bg-[#6a70e7]" />
-            System / Live configuration
+            {t("System / Live configuration")}
           </div>
-          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">Settings</h1>
+          <h1 className="text-[30px] font-bold tracking-[-.05em] text-[#14203a]">
+            {t("Settings")}
+          </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-            Edit the public Space Call identity and contact details stored in Supabase.
+            {t("Edit the public Space Call identity and contact details stored in Supabase.")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => void load(true)}
-            disabled={saving || uploading}
+            disabled={busy}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600 disabled:opacity-50"
           >
-            <RefreshCw className="size-3.5" /> Refresh
+            <RefreshCw className="size-3.5" /> {t("Refresh")}
           </button>
           <button
             onClick={() => window.open(SITE_URL, "_blank", "noopener,noreferrer")}
             className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-600"
           >
-            <ExternalLink className="size-3.5" /> View store
+            <ExternalLink className="size-3.5" /> {t("View store")}
           </button>
           <button
             onClick={() => void save()}
-            disabled={!dirty || saving || uploading}
+            disabled={!settingsDirty || Boolean(pendingLogo) || busy}
             className="flex h-10 items-center gap-2 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            Save changes
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{" "}
+            {t("Save changes")}
           </button>
         </div>
       </div>
 
+      {loadError && (
+        <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <p>{lang === "ar" ? "تعذّر التحديث. ما زالت إعداداتك المعروضة محفوظة من آخر تحميل ناجح." : "Refresh failed. Your last successfully loaded settings are still shown."}</p>
+          <p className="mt-1 break-words">{loadError}</p>
+        </div>
+      )}
+      {pendingLogo && (
+        <p role="status" className="mb-4 rounded-xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
+          {lang === "ar" ? "الشعار جاهز للرفع. أكّد رفعه أو ألغِه من قسم هوية المتجر قبل حفظ الإعدادات." : "Logo ready to upload. Confirm its upload or cancel it in Store identity before saving settings."}
+        </p>
+      )}
+      {refreshing && <p role="status" className="mb-3 text-xs text-muted-foreground">{t("Loading…")}</p>}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#dfe2ff] bg-[#f5f6ff] px-4 py-3">
         <div className="flex items-center gap-2 text-[11px] font-semibold text-[#5962b8]">
           <Store className="size-4" />
-          Changes are served to the storefront through public-cms. Reload the storefront to see saved values.
+          {t(
+            "Changes are served to the storefront through public-cms. Reload the storefront to see saved values.",
+          )}
         </div>
-        <span className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${
-          dirty ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-        }`}>
-          {dirty ? "Unsaved changes" : "Saved"}
+        <span
+          className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${
+            dirty ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+          }`}
+        >
+          {dirty ? t("Unsaved changes") : t("Saved")}
         </span>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+      <fieldset disabled={busy} className="grid min-w-0 gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
         <nav className="h-fit rounded-2xl border border-slate-200/80 bg-white p-2 shadow-[0_8px_24px_rgba(33,47,82,.04)]">
           {tabs.map((item) => (
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
-              className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-[11px] font-semibold transition ${
+              aria-pressed={tab === item.id}
+              className={`flex w-full items-center rounded-xl px-3 py-2.5 text-start text-[11px] font-semibold transition ${
                 tab === item.id
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </nav>
@@ -256,12 +338,16 @@ export default function SettingsPage() {
           {tab === "identity" ? (
             <>
               <Panel
-                title="Brand identity"
-                subtitle="Store name and logo are live in the storefront header/footer. Taglines are stored in CMS for supported content surfaces."
+                title={t("Brand identity")}
+                subtitle={t(
+                  "Store name and logo are live in the storefront header/footer. Taglines are stored in CMS for supported content surfaces.",
+                )}
               >
                 <div className="grid gap-5 p-5 lg:grid-cols-[220px_minmax(0,1fr)]">
                   <div>
-                    <div className="mb-1.5 text-[11px] font-bold text-slate-600">Store logo</div>
+                    <div className="mb-1.5 text-[11px] font-bold text-slate-600">
+                      {t("Store logo")}
+                    </div>
                     <div className="grid min-h-40 place-items-center overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4">
                       {settings.logoUrl ? (
                         <img
@@ -272,7 +358,7 @@ export default function SettingsPage() {
                       ) : (
                         <div className="text-center text-slate-400">
                           <ImageUp className="mx-auto size-7" />
-                          <div className="mt-2 text-[10px]">Default storefront logo</div>
+                          <div className="mt-2 text-[10px]">{t("Default storefront logo")}</div>
                         </div>
                       )}
                     </div>
@@ -285,14 +371,7 @@ export default function SettingsPage() {
                         const file = event.target.files?.[0] ?? null;
                         event.currentTarget.value = "";
                         if (!file) return;
-                        void imageEditor.editFile(file, {
-                          title: "Adjust store logo",
-                          preset: "logo",
-                          transparent: true,
-                          defaultFit: "contain",
-                        }).then((edited) => {
-                          if (edited) setPendingLogo(edited);
-                        });
+                        void editLogo(file);
                       }}
                     />
                     {pendingLogo ? (
@@ -300,7 +379,7 @@ export default function SettingsPage() {
                         <ImageOptimizationPreview
                           files={[pendingLogo]}
                           resolution="1080"
-                          title="Store logo compression preview"
+                          title={t("Store logo compression preview")}
                           compact
                         />
                       </div>
@@ -308,46 +387,37 @@ export default function SettingsPage() {
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => fileRef.current?.click()}
-                        disabled={uploading}
+                        disabled={busy}
                         className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-600 disabled:opacity-50"
                       >
-                        {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}
-                        Upload
+                        {uploading ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <UploadCloud className="size-3.5" />
+                        )}{" "}
+                        {t("Upload")}
                       </button>
                       <button
                         type="button"
                         onClick={() => {
                           const source = pendingLogo ?? settings.logoUrl;
                           if (!source) return;
-                          const editPromise =
-                            source instanceof File
-                              ? imageEditor.editFile(source, {
-                                  title: "Adjust store logo",
-                                  preset: "logo",
-                                  transparent: true,
-                                  defaultFit: "contain",
-                                })
-                              : imageEditor.editUrl(source, {
-                                  title: "Adjust store logo",
-                                  preset: "logo",
-                                  transparent: true,
-                                  defaultFit: "contain",
-                                });
-                          void editPromise.then((edited) => {
-                            if (edited) setPendingLogo(edited);
-                          });
+                          void editLogo(source);
                         }}
-                        disabled={(!settings.logoUrl && !pendingLogo) || uploading}
+                        disabled={(!settings.logoUrl && !pendingLogo) || busy}
                         className="h-9 rounded-xl border border-indigo-200 bg-white text-[10px] font-bold text-indigo-600 disabled:opacity-40"
                       >
-                        Adjust
+                        {t("Adjust")}
                       </button>
                       <button
-                        onClick={() => { setPendingLogo(null); update("logoUrl", ""); }}
-                        disabled={!settings.logoUrl || uploading}
+                        onClick={() => {
+                          setPendingLogo(null);
+                          update("logoUrl", "");
+                        }}
+                        disabled={(!settings.logoUrl && !pendingLogo) || busy}
                         className="col-span-2 h-9 rounded-xl border border-slate-200 bg-white text-[10px] font-bold text-slate-500 disabled:opacity-40"
                       >
-                        Use default
+                        {t("Use default")}
                       </button>
                     </div>
                     {pendingLogo ? (
@@ -355,18 +425,18 @@ export default function SettingsPage() {
                         <button
                           type="button"
                           onClick={() => setPendingLogo(null)}
-                          disabled={uploading}
+                          disabled={busy}
                           className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[9px] font-bold text-slate-600"
                         >
-                          Cancel
+                          {t("Cancel")}
                         </button>
                         <button
                           type="button"
                           onClick={() => void uploadLogo(pendingLogo)}
-                          disabled={uploading}
+                          disabled={busy}
                           className="h-8 rounded-lg bg-[#5968ea] px-2.5 text-[9px] font-bold text-white disabled:opacity-50"
                         >
-                          Confirm & upload
+                          {t("Confirm & upload")}
                         </button>
                       </div>
                     ) : null}
@@ -375,26 +445,29 @@ export default function SettingsPage() {
                   <div className="grid content-start gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <Field
-                        label="Store name"
+                        label={t("Store name")}
                         value={settings.siteName}
                         onChange={(value) => update("siteName", value)}
-                        placeholder="Space Call"
+                        placeholder={t("Space Call")}
                       />
                     </div>
                     <Field
-                      label="Tagline — English"
+                      label={t("Tagline — English")}
                       value={settings.taglineEn}
                       onChange={(value) => update("taglineEn", value)}
                     />
                     <Field
-                      label="Tagline — Arabic"
+                      label={t("Tagline — Arabic")}
                       value={settings.taglineAr}
                       onChange={(value) => update("taglineAr", value)}
                       dir="rtl"
                     />
                     <div className="sm:col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-3 text-[10px] leading-5 text-slate-500">
-                      Production domain: <span className="font-bold text-slate-700">{SITE_URL}</span>.
-                      The domain remains deployment configuration and is intentionally not editable from CMS.
+                      {t("Production domain:")}
+                      <span className="font-bold text-slate-700">{SITE_URL}</span>
+                      {t(
+                        ". The domain remains deployment configuration and is intentionally not editable from CMS.",
+                      )}
                     </div>
                   </div>
                 </div>
@@ -404,32 +477,34 @@ export default function SettingsPage() {
 
           {tab === "contact" ? (
             <Panel
-              title="Contact & WhatsApp"
-              subtitle="WhatsApp is live across storefront contact and checkout surfaces. The other contact fields are stored in CMS for supported contact surfaces."
+              title={t("Contact & WhatsApp")}
+              subtitle={t(
+                "WhatsApp is live across storefront contact and checkout surfaces. The other contact fields are stored in CMS for supported contact surfaces.",
+              )}
             >
               <div className="grid gap-4 p-5 sm:grid-cols-2">
                 <Field
-                  label="WhatsApp number"
+                  label={t("WhatsApp number")}
                   value={settings.whatsappNumber}
                   onChange={(value) => update("whatsappNumber", value)}
                   placeholder="961..."
                   dir="ltr"
                 />
                 <Field
-                  label="Store phone"
+                  label={t("Store phone")}
                   value={settings.storePhone}
                   onChange={(value) => update("storePhone", value)}
                   dir="ltr"
                 />
                 <Field
-                  label="Store email"
+                  label={t("Store email")}
                   value={settings.storeEmail}
                   onChange={(value) => update("storeEmail", value)}
                   type="email"
                   dir="ltr"
                 />
                 <Field
-                  label="Support email"
+                  label={t("Support email")}
                   value={settings.supportEmail}
                   onChange={(value) => update("supportEmail", value)}
                   type="email"
@@ -437,21 +512,21 @@ export default function SettingsPage() {
                 />
                 <div className="sm:col-span-2">
                   <Field
-                    label="Address"
+                    label={t("Address")}
                     value={settings.addressLine}
                     onChange={(value) => update("addressLine", value)}
                   />
                 </div>
                 <Field
-                  label="City"
+                  label={t("City")}
                   value={settings.city}
                   onChange={(value) => update("city", value)}
                 />
                 <Field
-                  label="Country code"
+                  label={t("Country code")}
                   value={settings.countryCode}
                   onChange={(value) => update("countryCode", value)}
-                  placeholder="LB"
+                  placeholder={t("LB")}
                   dir="ltr"
                 />
               </div>
@@ -460,12 +535,14 @@ export default function SettingsPage() {
 
           {tab === "delivery" ? (
             <Panel
-              title="Delivery pricing"
-              subtitle="This fee is shared by the storefront cart and the secure server-side order flow. Enter 0 for Free Delivery."
+              title={t("Delivery pricing")}
+              subtitle={t(
+                "This fee is shared by the storefront cart and the secure server-side order flow. Enter 0 for Free Delivery.",
+              )}
             >
               <div className="grid gap-4 p-5 sm:grid-cols-2">
                 <Field
-                  label="Default delivery fee"
+                  label={t("Default delivery fee")}
                   value={settings.deliveryFee}
                   onChange={(value) => update("deliveryFee", value)}
                   type="number"
@@ -475,12 +552,18 @@ export default function SettingsPage() {
                 />
                 <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-[11px] leading-5 text-slate-500">
                   <div className="font-bold text-slate-700">
-                    {Number(settings.deliveryFee || 0) === 0 ? "Free Delivery" : "Paid Delivery"}
+                    {Number(settings.deliveryFee || 0) === 0
+                      ? t("Free Delivery")
+                      : t("Paid Delivery")}
                   </div>
                   <div className="mt-1">
                     {role === "admin"
-                      ? "The default is USD 2.00 per order. Changes here are reflected in the storefront cart and are enforced server-side for new orders. Staff can still override delivery on an unpaid order."
-                      : "Only an admin with MFA or passkey step-up can change the global delivery fee. You can view the current fee, but editing is locked for your role."}
+                      ? t(
+                          "The default is USD 2.00 per order. Changes here are reflected in the storefront cart and are enforced server-side for new orders. Staff can still override delivery on an unpaid order.",
+                        )
+                      : t(
+                          "Only an admin with MFA or passkey step-up can change the global delivery fee. You can view the current fee, but editing is locked for your role.",
+                        )}
                   </div>
                 </div>
               </div>
@@ -489,20 +572,47 @@ export default function SettingsPage() {
 
           {tab === "social" ? (
             <Panel
-              title="Social media"
-              subtitle="Saved social links are consumed by the storefront footer; deployment fallbacks remain available when a CMS value is empty."
+              title={t("Social media")}
+              subtitle={t(
+                "Saved social links are consumed by the storefront footer; deployment fallbacks remain available when a CMS value is empty.",
+              )}
             >
               <div className="grid gap-4 p-5 sm:grid-cols-2">
-                <Field label="Instagram URL" value={settings.instagramUrl} onChange={(value) => update("instagramUrl", value)} dir="ltr" />
-                <Field label="Facebook URL" value={settings.facebookUrl} onChange={(value) => update("facebookUrl", value)} dir="ltr" />
-                <Field label="X URL" value={settings.xUrl} onChange={(value) => update("xUrl", value)} dir="ltr" />
-                <Field label="YouTube URL" value={settings.youtubeUrl} onChange={(value) => update("youtubeUrl", value)} dir="ltr" />
-                <Field label="TikTok URL" value={settings.tiktokUrl} onChange={(value) => update("tiktokUrl", value)} dir="ltr" />
+                <Field
+                  label={t("Instagram URL")}
+                  value={settings.instagramUrl}
+                  onChange={(value) => update("instagramUrl", value)}
+                  dir="ltr"
+                />
+                <Field
+                  label={t("Facebook URL")}
+                  value={settings.facebookUrl}
+                  onChange={(value) => update("facebookUrl", value)}
+                  dir="ltr"
+                />
+                <Field
+                  label={t("X URL")}
+                  value={settings.xUrl}
+                  onChange={(value) => update("xUrl", value)}
+                  dir="ltr"
+                />
+                <Field
+                  label={t("YouTube URL")}
+                  value={settings.youtubeUrl}
+                  onChange={(value) => update("youtubeUrl", value)}
+                  dir="ltr"
+                />
+                <Field
+                  label={t("TikTok URL")}
+                  value={settings.tiktokUrl}
+                  onChange={(value) => update("tiktokUrl", value)}
+                  dir="ltr"
+                />
               </div>
             </Panel>
           ) : null}
         </div>
-      </div>
+      </fieldset>
     </div>
   );
 }

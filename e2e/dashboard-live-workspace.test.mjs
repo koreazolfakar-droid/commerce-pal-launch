@@ -83,7 +83,7 @@ test("homepage previews do not fabricate products for an empty or unknown source
     }),
     [],
   );
-  assert.equal(api.previewSource({ type: "collection", settings: { count: 999 } }).limit, 20);
+  assert.equal(api.previewSource({ type: "collection", settings: { count: 999 } }).limit, 10);
 });
 
 test("homepage preview uses actual product price, currency and primary image", async () => {

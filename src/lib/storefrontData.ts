@@ -16,6 +16,10 @@ export function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
   return nativeStore.fetchCatalogProducts(first);
 }
 
+export function fetchCatalogPreviewProducts(first = 24): Promise<StoreProduct[]> {
+  return nativeStore.fetchCatalogPreviewProducts(first);
+}
+
 export function fetchHomepageProducts(first = 48): Promise<StoreProduct[]> {
   return nativeStore.fetchHomepageProducts(first);
 }
@@ -43,6 +47,17 @@ export function fetchCollectionByHandle(
   return nativeStore.fetchCollectionByHandle(handle, pageSize);
 }
 
+export type HomepageProductSource = nativeStore.HomepageProductSource;
+
+export function fetchHomepageConfiguredProducts(config: {
+  source: HomepageProductSource;
+  sourceValue?: string;
+  manualProductIds?: string[];
+  count?: number;
+}): Promise<StoreProduct[]> {
+  return nativeStore.fetchHomepageConfiguredProducts(config);
+}
+
 export function fetchNewestProducts(first = 12): Promise<StoreProduct[]> {
   return nativeStore.fetchNewestProducts(first);
 }
@@ -57,6 +72,10 @@ export function fetchProductsByVendor(vendor: string, first = 8): Promise<StoreP
 
 export function fetchAllProductsByVendor(vendor: string): Promise<StoreProduct[]> {
   return nativeStore.fetchAllProductsByVendor(vendor);
+}
+
+export function fetchProductsByIds(ids: string[]): Promise<StoreProduct[]> {
+  return nativeStore.fetchProductsByIds(ids);
 }
 
 export function fetchProductsByHandles(handles: string[]): Promise<StoreProduct[]> {

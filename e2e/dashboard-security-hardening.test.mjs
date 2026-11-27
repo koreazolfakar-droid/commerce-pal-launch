@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -35,6 +36,10 @@ const throttleMigration = await readFile(
   new URL("../supabase/migrations/20260919064000_dashboard_login_throttle.sql", import.meta.url),
   "utf8",
 );
+const atomicThrottleMigration = await readFile(
+  new URL("../supabase/migrations/20261118090000_atomic_dashboard_login_throttle.sql", import.meta.url),
+  "utf8",
+);
 const hardenedPolicies = await readFile(
   new URL("../supabase/migrations/20260919065000_harden_dashboard_security_policies.sql", import.meta.url),
   "utf8",
@@ -62,17 +67,20 @@ test("Turnstile widget uses explicit rendering, token expiry handling and CSP al
   assert.match(csp, /frame-src[^\n]+https:\/\/challenges\.cloudflare\.com/);
 });
 
-test("pre-auth throttle uses opaque pair/IP buckets and authenticates success resets", () => {
+test("pre-auth throttle uses opaque pair/IP buckets without account enumeration", () => {
   assert.match(catalog, /dashboard-auth-throttle/);
-  assert.match(catalog, /outcome: "check" \| "failure" \| "success"/);
-  assert.match(catalog, /dashboardLoginThrottle\(email, "check"\)/);
-  assert.match(catalog, /dashboardLoginThrottle\(email, "failure"\)/);
+  assert.match(catalog, /outcome: "attempt" \| "success"/);
+  assert.match(catalog, /dashboardLoginThrottle\(email, "attempt"\)/);
+  assert.doesNotMatch(catalog, /dashboardLoginThrottle\(email, "failure"\)/);
   assert.match(catalog, /dashboardLoginThrottle\(email, "success"\)/);
-  assert.match(throttle, /PAIR_SOFT_FAILURES = 5/);
-  assert.match(throttle, /PAIR_HARD_FAILURES = 10/);
-  assert.match(throttle, /IP_SOFT_FAILURES = 25/);
-  assert.match(throttle, /IP_HARD_FAILURES = 50/);
-  assert.match(throttle, /outcome === "success"/);
+  assert.match(atomicThrottleMigration, /v_soft_threshold := case when v_index = 1 then 5 else 25 end/);
+  assert.match(atomicThrottleMigration, /v_hard_threshold := case when v_index = 1 then 10 else 50 end/);
+  assert.match(throttle, /supabase\.rpc\("consume_dashboard_login_attempt"/);
+  assert.match(throttle, /readBoundedText\(req, 1024\)/);
+  assert.doesNotMatch(throttle, /readBucket\(|recordAttempt\(|resetExpired\(/);
+  assert.match(throttle, /outcome === "attempt" \|\| outcome === "check"/);
+  assert.match(throttle, /outcome === "failure"/);
+  assert.doesNotMatch(throttle, /dashboard_staff_email_exists/);
   assert.match(throttle, /authorization.*bearer/is);
   assert.match(throttle, /supabase\.auth\.getUser\(token\)/);
   assert.match(throttle, /from\("user_roles"\)/);
@@ -87,13 +95,25 @@ test("pre-auth throttle uses opaque pair/IP buckets and authenticates success re
   assert.doesNotMatch(throttleMigration, /email text|ip_address|raw_email|raw_ip/i);
 
   const authCheck = throttle.indexOf("await supabase.auth.getUser(token)");
-  const pairHash = throttle.indexOf("sha256(`pair|${ip}|${email}`)");
-  const successBranch = throttle.indexOf('if (outcome === "success")');
-  const successDelete = throttle.indexOf('.delete()\n        .eq("key_hash", pairKeyHash)', successBranch);
+  const pairHash = throttle.indexOf("sha256(\`pair|\${ip}|\${email}\`)");
+  const successDelete = throttle.indexOf('.delete()\n      .eq("key_hash", pairKeyHash)');
   assert.ok(authCheck >= 0, "success reset must validate the session");
-  assert.ok(pairHash > authCheck, "pair bucket must be derived after authenticated identity");
-  assert.ok(successDelete > authCheck, "pair bucket reset must happen after authentication");
+  assert.ok(pairHash > authCheck, "success must bind the pair bucket after authenticated identity");
+  assert.ok(successDelete > pairHash, "pair bucket reset must happen after authentication");
 });
+test("atomic throttle RPC serializes concurrent requests and cannot be called by browser roles", () => {
+  assert.match(atomicThrottleMigration, /pg_catalog\.pg_advisory_xact_lock/);
+  assert.match(atomicThrottleMigration, /on conflict \(key_hash\) do update/);
+  assert.match(atomicThrottleMigration, /security invoker/);
+  assert.match(atomicThrottleMigration, /revoke all on function public\.consume_dashboard_login_attempt\(text, text\)/);
+  assert.match(atomicThrottleMigration, /from public, anon, authenticated/);
+  assert.match(atomicThrottleMigration, /to service_role/);
+  assert.match(throttle, /typeof decision\.allowed !== "boolean"/);
+  assert.match(throttle, /invalid_atomic_throttle_response/);
+  assert.match(throttle, /RequestBodyTooLargeError/);
+  assert.match(throttle, /payload_too_large/);
+});
+
 test("throttle storage is denied to browser roles", () => {
   assert.match(hardenedPolicies, /dashboard_login_throttle_deny_clients/);
   assert.match(hardenedPolicies, /to anon, authenticated/);
@@ -125,10 +145,7 @@ test("security events are sanitized, user-bound and visible in the Security Cent
 });
 
 test("Security Center is a real route and reports security state precisely", () => {
-  assert.match(app, /import SecurityPage from "@\/dashboard\/pages\/SecurityPage"/);
-  assert.match(app, /route === "\/dashboard\/security"[\s\S]+<SecurityPage \/>/);
-  assert.match(nav, /href: "\/dashboard\/security"/);
-  assert.match(nav, /label: "Security"/);
+assertDashboardRoute("/dashboard/security","securityPage");
   assert.match(securityPage, /AAL2 active/);
   assert.match(securityPage, /Client configured/);
   assert.match(securityPage, /Supabase Auth must also have Cloudflare Turnstile enabled/);

@@ -1,13 +1,5 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Eye,
-  EyeOff,
-  Pencil,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { useLanguage } from "@/dashboard/i18n";
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Pencil, Plus, Sparkles } from "lucide-react";
 import { CategoryGlyph } from "@/components/CategoryGlyph";
 import CatalogRowActions from "@/dashboard/components/CatalogRowActions";
 import type { CatalogCategory } from "@/dashboard/data/categories";
@@ -49,6 +41,7 @@ function CategoryRow({
   onMoveUp,
   onMoveDown,
 }: CategoryActionProps) {
+  const { t } = useLanguage();
   return (
     <div
       className={
@@ -85,26 +78,28 @@ function CategoryRow({
               <span
                 title={
                   category.active
-                    ? "Featured on homepage"
-                    : "Featured is saved, but Hidden status takes precedence"
+                    ? t("Featured on homepage")
+                    : t("Featured is saved, but Hidden status takes precedence")
                 }
                 className="shrink-0 rounded-full bg-violet-50 px-1.5 py-0.5 text-[7.5px] font-black uppercase tracking-wide text-violet-700"
               >
-                Featured
+                {t("Featured")}
               </span>
             )}
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 sm:text-[9px]">
             <span className="max-w-[140px] truncate">/{category.slug}</span>
             <span>•</span>
-            <span>{productCount} products</span>
+            <span>
+              {productCount} {t("products")}
+            </span>
             <span
               className={
                 "rounded-full px-2 py-0.5 font-bold " +
                 (category.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")
               }
             >
-              {category.active ? "Active" : "Hidden"}
+              {category.active ? t("Active") : t("Hidden")}
             </span>
           </span>
         </span>

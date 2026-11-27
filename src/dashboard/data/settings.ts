@@ -1,5 +1,6 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { broadcastStorefrontRefresh } from "@/lib/nativeStore";
 import type { Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
 import { convertProductImageToWebp } from "@/dashboard/lib/imageProcessing";
@@ -38,21 +39,57 @@ type SettingDefinition = {
 const DEFINITIONS: SettingDefinition[] = [
   { field: "siteName", key: "site_name", group: "branding", type: "text", label: "Store name" },
   { field: "logoUrl", key: "logo_url", group: "branding", type: "url", label: "Logo URL" },
-  { field: "taglineEn", key: "tagline_en", group: "branding", type: "text", label: "Tagline (English)" },
-  { field: "taglineAr", key: "tagline_ar", group: "branding", type: "text", label: "Tagline (Arabic)" },
-  { field: "whatsappNumber", key: "whatsapp_number", group: "contact", type: "text", label: "WhatsApp number" },
+  {
+    field: "taglineEn",
+    key: "tagline_en",
+    group: "branding",
+    type: "text",
+    label: "Tagline (English)",
+  },
+  {
+    field: "taglineAr",
+    key: "tagline_ar",
+    group: "branding",
+    type: "text",
+    label: "Tagline (Arabic)",
+  },
+  {
+    field: "whatsappNumber",
+    key: "whatsapp_number",
+    group: "contact",
+    type: "text",
+    label: "WhatsApp number",
+  },
   { field: "storePhone", key: "store_phone", group: "contact", type: "text", label: "Store phone" },
   { field: "storeEmail", key: "store_email", group: "contact", type: "text", label: "Store email" },
-  { field: "supportEmail", key: "support_email", group: "contact", type: "text", label: "Support email" },
+  {
+    field: "supportEmail",
+    key: "support_email",
+    group: "contact",
+    type: "text",
+    label: "Support email",
+  },
   { field: "addressLine", key: "address_line", group: "contact", type: "text", label: "Address" },
   { field: "city", key: "city", group: "contact", type: "text", label: "City" },
-  { field: "countryCode", key: "country_code", group: "contact", type: "text", label: "Country code" },
+  {
+    field: "countryCode",
+    key: "country_code",
+    group: "contact",
+    type: "text",
+    label: "Country code",
+  },
   { field: "instagramUrl", key: "instagram_url", group: "social", type: "url", label: "Instagram" },
   { field: "facebookUrl", key: "facebook_url", group: "social", type: "url", label: "Facebook" },
   { field: "xUrl", key: "x_url", group: "social", type: "url", label: "X" },
   { field: "youtubeUrl", key: "youtube_url", group: "social", type: "url", label: "YouTube" },
   { field: "tiktokUrl", key: "tiktok_url", group: "social", type: "url", label: "TikTok" },
-  { field: "deliveryFee", key: "delivery_fee", group: "commerce", type: "number", label: "Default delivery fee" },
+  {
+    field: "deliveryFee",
+    key: "delivery_fee",
+    group: "commerce",
+    type: "number",
+    label: "Default delivery fee",
+  },
 ];
 
 const SETTINGS_BUCKET = "cms-media";
@@ -121,7 +158,10 @@ export async function loadDashboardSiteSettings(): Promise<DashboardSiteSettings
   const { data, error } = await supabase
     .from("cms_site_settings")
     .select("key,value_text")
-    .in("key", DEFINITIONS.map((definition) => definition.key));
+    .in(
+      "key",
+      DEFINITIONS.map((definition) => definition.key),
+    );
 
   throwIfError(error, "Loading store settings failed");
 
@@ -131,7 +171,7 @@ export async function loadDashboardSiteSettings(): Promise<DashboardSiteSettings
 
   for (const definition of DEFINITIONS) {
     const stored = byKey.get(definition.key)?.trim();
-    if (stored) next[definition.field] = stored;
+    if (stored !== undefined) next[definition.field] = stored;
   }
 
   return next;
@@ -206,11 +246,10 @@ export async function saveDashboardSiteSettings(
     updated_at: now,
   }));
 
-  const { error } = await supabase
-    .from("cms_site_settings")
-    .upsert(rows, { onConflict: "key" });
+  const { error } = await supabase.from("cms_site_settings").upsert(rows, { onConflict: "key" });
 
   throwIfError(error, "Saving store settings failed");
+  broadcastStorefrontRefresh();
   return normalized;
 }
 
@@ -239,15 +278,21 @@ export async function uploadDashboardStoreLogo(file: File): Promise<string> {
 
   const { data: publicUrl } = supabase.storage.from(SETTINGS_BUCKET).getPublicUrl(objectPath);
 
-  const { error: assetError } = await supabase.rpc("register_cms_media_asset", rpcArgs({
-    p_object_path: objectPath,
-    p_file_name: conversion.file.name,
-    p_mime_type: "image/webp",
-    p_size_bytes: conversion.file.size,
-    p_alt_text: "Space Call store logo",
-  }));
+  const { error: assetError } = await supabase.rpc(
+    "register_cms_media_asset",
+    rpcArgs({
+      p_object_path: objectPath,
+      p_file_name: conversion.file.name,
+      p_mime_type: "image/webp",
+      p_size_bytes: conversion.file.size,
+      p_alt_text: "Space Call store logo",
+    }),
+  );
   if (assetError) {
-    console.warn("[dashboard-settings] logo uploaded but media registration failed", assetError.message);
+    console.warn(
+      "[dashboard-settings] logo uploaded but media registration failed",
+      assetError.message,
+    );
   }
 
   return publicUrl.publicUrl;

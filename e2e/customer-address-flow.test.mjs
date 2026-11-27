@@ -76,7 +76,7 @@ test("saved address selector is available in desktop chrome and as a compact mob
   assert.match(mobile, /data-testid="mobile-header-location"/);
   assert.match(mobile, /<MapPin/);
   assert.match(mobile, /mobile-header-action/);
-  assert.match(mobile, /grid-cols-\[2\.75rem_minmax\(0,1fr\)_5\.75rem\]/);
+  assert.match(mobile, /grid-cols-\[5\.75rem_minmax\(0,1fr\)_5\.75rem\]/);
   assert.match(mobile, /CustomerAccountButton[\s\S]*variant="icon"/);
   assert.match(mobile, /ThemeToggle className="mobile-header-action h-11 w-11/);
   assert.match(mobile, /data-testid="mobile-header-location"[\s\S]*Deliver to/);
@@ -114,8 +114,8 @@ test("customer order history is isolated behind the JWT-verified edge function",
 
   assert.match(edge, /db\.auth\.getUser\(token\)/);
   assert.match(edge, /customer_user_id/);
-  assert.match(edge, /customer_email/);
-  assert.match(edge, /customer_phone/);
+  assert.match(edge, /\.eq\("customer_user_id", user\.id\)/);
+  assert.doesNotMatch(edge, /\.(?:eq|ilike)\("customer_(?:email|phone)"/);
   assert.match(edge, /orderIdentityMatches/);
   assert.match(edge, /action === "items"/);
   assert.match(cleanup, /drop function if exists public\.get_my_store_orders/);
@@ -130,13 +130,20 @@ test("customer order history is isolated behind the JWT-verified edge function",
 });
 
 
-test("authenticated checkouts are linked server-side and guest checkout remains supported", async () => {
-  const edge = await read("supabase/functions/create-order/index.ts");
+test("checkout requires authentication and links every new order atomically", async () => {
+  const [edge, checkout, migration] = await Promise.all([
+    read("supabase/functions/create-order/index.ts"),
+    read("src/components/CheckoutDetailsForm.tsx"),
+    read("supabase/migrations/20260927190000_require_customer_login_for_checkout.sql"),
+  ]);
 
-  assert.match(edge, /authenticatedBearerToken/);
-  assert.match(edge, /db\.auth\.getUser\(userToken\)/);
-  assert.match(edge, /customer_user_id: accountUserId/);
-  assert.match(edge, /\.is\("customer_user_id", null\)/);
-  assert.match(edge, /if \(userToken\)/);
   assert.match(edge, /const userToken = authenticatedBearerToken\(req\)/);
+  assert.match(edge, /if \(!userToken\)/);
+  assert.match(edge, /db\.auth\.getUser\(userToken\)/);
+  assert.match(edge, /create_store_order_for_customer_internal/);
+  assert.match(edge, /p_customer_user_id: accountUserId/);
+  assert.match(checkout, /if \(!user\)/);
+  assert.match(checkout, /openAuth\(\)/);
+  assert.match(checkout, /signInToOrder/);
+  assert.match(migration, /customer_user_id = p_customer_user_id/);
 });

@@ -16,3 +16,12 @@ export function cdnImage(url: string | undefined, _width: number): string | unde
 export function cdnSrcSet(_url: string | undefined, _width: number): string | undefined {
   return undefined;
 }
+
+/** Try the original once if its lightweight thumbnail cannot be displayed. */
+export function productImageSource(
+  url: string | undefined,
+  fallbackUrl: string | undefined,
+  failedUrls: readonly string[],
+): string | undefined {
+  return [url, fallbackUrl].find((source) => Boolean(source) && !failedUrls.includes(source!));
+}

@@ -1,8 +1,10 @@
+import { loadAllRows, loadRowsByIds } from "@/dashboard/lib/loadAllRows";
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { getDashboardRole, type DashboardRole } from "@/dashboard/data/catalog";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 
 type SupplierRow = Tables<"store_suppliers">;
 type LocationRow = Tables<"store_procurement_locations">;
@@ -17,7 +19,14 @@ type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
 
 function throwIfError(error: { message: string } | null, label: string) {
-  if (error) throw new Error(`${label}: ${error.message}`);
+  if (!error) return;
+  if (error.message.includes("procurement_version_conflict")) {
+    throw new Error("This procurement record changed in another session. Refresh and try again.");
+  }
+  if (error.message.includes("procurement_version_required")) {
+    throw new Error("This procurement record needs to be refreshed before it can be changed.");
+  }
+  throw new Error(`${label}: ${error.message}`);
 }
 
 async function requireDashboardStaff() {
@@ -106,6 +115,7 @@ export type PurchaseOrderSummary = {
   cancelledAt: string | null;
   cancellationReason: string | null;
   createdAt: string;
+  updatedAt: string;
   notes: string | null;
   discountAmount: number;
   taxAmount: number;
@@ -149,6 +159,7 @@ export type ReceivingSummary = {
   employee: string;
   receivedAt: string;
   approvedAt: string | null;
+  updatedAt: string;
   notes: string | null;
   stockUnits: number;
   damagedUnits: number;
@@ -198,57 +209,84 @@ export async function loadReceivingWorkspace(
   const includeAudit = options.includeAudit !== false;
   const includeSerials = options.includeSerials !== false;
 
-  const [supplierResult, locationResult, poResult, receivingResult, productResult, variantResult, eventResult, attachmentResult] = await Promise.all([
-    supabase
-      .from("store_suppliers")
-      .select("id,name,code,phone,email,notes,is_active")
-      .order("name", { ascending: true }),
-    supabase
-      .from("store_procurement_locations")
-      .select("id,name,code,address,is_active")
-      .order("name", { ascending: true }),
+  const [
+    supplierResult,
+    locationResult,
+    poResult,
+    receivingResult,
+    productResult,
+    variantResult,
+    eventResult,
+    attachmentResult,
+  ] = await Promise.all([
+    loadAllRows(
+      supabase
+        .from("store_suppliers")
+        .select("id,name,code,phone,email,notes,is_active")
+        .order("name", { ascending: true }),
+    ),
+    loadAllRows(
+      supabase
+        .from("store_procurement_locations")
+        .select("id,name,code,address,is_active")
+        .order("name", { ascending: true }),
+    ),
     includePurchaseOrders
-      ? supabase
-          .from("store_purchase_orders")
-          .select("id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes")
-          .order("created_at", { ascending: false })
-          .limit(100)
+      ? loadAllRows(
+          supabase
+            .from("store_purchase_orders")
+            .select(
+              "id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,updated_at,notes",
+            )
+            .order("created_at", { ascending: false }),
+        )
       : Promise.resolve({ data: [], error: null }),
     includeReceivings
-      ? supabase
-          .from("store_receivings")
-          .select("id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes")
-          .order("received_at", { ascending: false })
-          .limit(100)
+      ? loadAllRows(
+          supabase
+            .from("store_receivings")
+            .select(
+              "id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,updated_at,notes",
+            )
+            .order("received_at", { ascending: false }),
+        )
       : Promise.resolve({ data: [], error: null }),
     includeProductOptions
-      ? supabase
-          .from("store_products")
-          .select("id,title,sku,stock_quantity,status,track_inventory")
-          .neq("status", "archived")
-          .order("title", { ascending: true })
+      ? loadAllRows(
+          supabase
+            .from("store_products")
+            .select("id,title,sku,stock_quantity,status,track_inventory")
+            .neq("status", "archived")
+            .order("title", { ascending: true }),
+        )
       : Promise.resolve({ data: [], error: null }),
     includeProductOptions
-      ? supabase
-          .from("store_product_variants")
-          .select("id,product_id,title,sku,stock_quantity,is_active,track_inventory,sort_order")
-          .eq("is_active", true)
-          .order("product_id", { ascending: true })
-          .order("sort_order", { ascending: true })
+      ? loadAllRows(
+          supabase
+            .from("store_product_variants")
+            .select("id,product_id,title,sku,stock_quantity,is_active,track_inventory,sort_order")
+            .eq("is_active", true)
+            .order("product_id", { ascending: true })
+            .order("sort_order", { ascending: true }),
+        )
       : Promise.resolve({ data: [], error: null }),
     includeAudit
-      ? supabase
-          .from("store_procurement_events")
-          .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
-          .order("created_at", { ascending: false })
-          .limit(300)
+      ? loadAllRows(
+          supabase
+            .from("store_procurement_events")
+            .select("id,purchase_order_id,receiving_id,event_type,details,actor_id,created_at")
+            .order("created_at", { ascending: false }),
+        )
       : Promise.resolve({ data: [], error: null }),
     includeAudit
-      ? supabase
-          .from("store_procurement_attachments")
-          .select("id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at")
-          .order("created_at", { ascending: false })
-          .limit(300)
+      ? loadAllRows(
+          supabase
+            .from("store_procurement_attachments")
+            .select(
+              "id,purchase_order_id,receiving_id,file_name,storage_path,mime_type,size_bytes,attachment_type,created_at",
+            )
+            .order("created_at", { ascending: false }),
+        )
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -261,8 +299,14 @@ export async function loadReceivingWorkspace(
   throwIfError(eventResult.error, "Loading procurement audit events failed");
   throwIfError(attachmentResult.error, "Loading procurement attachments failed");
 
-  const suppliers = (supplierResult.data ?? []) as Pick<SupplierRow, "id" | "name" | "code" | "phone" | "email" | "notes" | "is_active">[];
-  const locations = (locationResult.data ?? []) as Pick<LocationRow, "id" | "name" | "code" | "address" | "is_active">[];
+  const suppliers = (supplierResult.data ?? []) as Pick<
+    SupplierRow,
+    "id" | "name" | "code" | "phone" | "email" | "notes" | "is_active"
+  >[];
+  const locations = (locationResult.data ?? []) as Pick<
+    LocationRow,
+    "id" | "name" | "code" | "address" | "is_active"
+  >[];
   const purchaseOrders = (poResult.data ?? []) as Pick<
     PurchaseOrderRow,
     | "id"
@@ -283,11 +327,21 @@ export async function loadReceivingWorkspace(
     | "shipping_amount"
     | "exchange_rate"
     | "created_at"
+    | "updated_at"
     | "notes"
   >[];
   const receivings = (receivingResult.data ?? []) as Pick<
     ReceivingRow,
-    "id" | "receipt_number" | "purchase_order_id" | "invoice_number" | "status" | "receiving_employee_label" | "received_at" | "approved_at" | "notes"
+    | "id"
+    | "receipt_number"
+    | "purchase_order_id"
+    | "invoice_number"
+    | "status"
+    | "receiving_employee_label"
+    | "received_at"
+    | "approved_at"
+    | "updated_at"
+    | "notes"
   >[];
   const products = (productResult.data ?? []) as Pick<
     ProductRow,
@@ -295,15 +349,36 @@ export async function loadReceivingWorkspace(
   >[];
   const variants = (variantResult.data ?? []) as Pick<
     VariantRow,
-    "id" | "product_id" | "title" | "sku" | "stock_quantity" | "is_active" | "track_inventory" | "sort_order"
+    | "id"
+    | "product_id"
+    | "title"
+    | "sku"
+    | "stock_quantity"
+    | "is_active"
+    | "track_inventory"
+    | "sort_order"
   >[];
   const events = (eventResult.data ?? []) as Pick<
     ProcurementEventRow,
-    "id" | "purchase_order_id" | "receiving_id" | "event_type" | "details" | "actor_id" | "created_at"
+    | "id"
+    | "purchase_order_id"
+    | "receiving_id"
+    | "event_type"
+    | "details"
+    | "actor_id"
+    | "created_at"
   >[];
   const attachmentRows = (attachmentResult.data ?? []) as Pick<
     ProcurementAttachmentRow,
-    "id" | "purchase_order_id" | "receiving_id" | "file_name" | "storage_path" | "mime_type" | "size_bytes" | "attachment_type" | "created_at"
+    | "id"
+    | "purchase_order_id"
+    | "receiving_id"
+    | "file_name"
+    | "storage_path"
+    | "mime_type"
+    | "size_bytes"
+    | "attachment_type"
+    | "created_at"
   >[];
 
   const poIds = purchaseOrders.map((row) => row.id);
@@ -311,16 +386,24 @@ export async function loadReceivingWorkspace(
 
   const [poItemResult, receivingItemResult] = await Promise.all([
     poIds.length
-      ? supabase
-          .from("store_purchase_order_items")
-          .select("id,purchase_order_id,product_id,variant_id,sku_snapshot,title_snapshot,expected_quantity,unit_cost")
-          .in("purchase_order_id", poIds)
+      ? loadRowsByIds(poIds, (batch) =>
+          supabase
+            .from("store_purchase_order_items")
+            .select(
+              "id,purchase_order_id,product_id,variant_id,sku_snapshot,title_snapshot,expected_quantity,unit_cost",
+            )
+            .in("purchase_order_id", batch),
+        )
       : Promise.resolve({ data: [], error: null }),
     receivingIds.length
-      ? supabase
-          .from("store_receiving_items")
-          .select("id,receiving_id,purchase_order_item_id,expected_quantity_snapshot,remaining_quantity_before,received_quantity,damaged_quantity,unit_cost,delivered_quantity,difference,missing_quantity,overage_quantity,overage_reason")
-          .in("receiving_id", receivingIds)
+      ? loadRowsByIds(receivingIds, (batch) =>
+          supabase
+            .from("store_receiving_items")
+            .select(
+              "id,receiving_id,purchase_order_item_id,expected_quantity_snapshot,remaining_quantity_before,received_quantity,damaged_quantity,unit_cost,delivered_quantity,difference,missing_quantity,overage_quantity,overage_reason",
+            )
+            .in("receiving_id", batch),
+        )
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -329,7 +412,14 @@ export async function loadReceivingWorkspace(
 
   const poItems = (poItemResult.data ?? []) as Pick<
     PurchaseOrderItemRow,
-    "id" | "purchase_order_id" | "product_id" | "variant_id" | "sku_snapshot" | "title_snapshot" | "expected_quantity" | "unit_cost"
+    | "id"
+    | "purchase_order_id"
+    | "product_id"
+    | "variant_id"
+    | "sku_snapshot"
+    | "title_snapshot"
+    | "expected_quantity"
+    | "unit_cost"
   >[];
   const receivingItems = (receivingItemResult.data ?? []) as Pick<
     ReceivingItemRow,
@@ -349,16 +439,25 @@ export async function loadReceivingWorkspace(
   >[];
 
   const receivingItemIds = receivingItems.map((row) => row.id);
-  const serialResult = includeSerials && receivingItemIds.length
-    ? await supabase
-        .from("store_receiving_serials")
-        .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status")
-        .in("receiving_item_id", receivingItemIds)
-    : { data: [], error: null };
+  const serialResult =
+    includeSerials && receivingItemIds.length
+      ? await loadRowsByIds(receivingItemIds, (batch) =>
+          supabase
+            .from("store_receiving_serials")
+            .select("id,receiving_item_id,serial_number,imei1,imei2,condition,inventory_status")
+            .in("receiving_item_id", batch),
+        )
+      : { data: [], error: null };
   throwIfError(serialResult.error, "Loading receiving serials failed");
   const serialRows = (serialResult.data ?? []) as Pick<
     ReceivingSerialRow,
-    "id" | "receiving_item_id" | "serial_number" | "imei1" | "imei2" | "condition" | "inventory_status"
+    | "id"
+    | "receiving_item_id"
+    | "serial_number"
+    | "imei1"
+    | "imei2"
+    | "condition"
+    | "inventory_status"
   >[];
   const serialsByReceivingItem = new Map<string, ReceivingSerial[]>();
   for (const serial of serialRows) {
@@ -504,7 +603,10 @@ export async function loadReceivingWorkspace(
       const subtotal = lines.reduce((sum, line) => sum + line.expectedQuantity * line.unitCost, 0);
       const grandTotal = Math.max(
         0,
-        subtotal - toNumber(po.discount_amount) + toNumber(po.tax_amount) + toNumber(po.shipping_amount),
+        subtotal -
+          toNumber(po.discount_amount) +
+          toNumber(po.tax_amount) +
+          toNumber(po.shipping_amount),
       );
       return {
         id: po.id,
@@ -514,7 +616,9 @@ export async function loadReceivingWorkspace(
         status: po.status,
         currency: po.currency,
         locationId: po.location_id,
-        locationName: po.location_id ? locationById.get(po.location_id)?.name ?? "Unknown location" : "Unassigned",
+        locationName: po.location_id
+          ? (locationById.get(po.location_id)?.name ?? "Unknown location")
+          : "Unassigned",
         expectedAt: po.expected_at,
         orderedAt: po.ordered_at,
         approvedAt: po.approved_at,
@@ -523,6 +627,7 @@ export async function loadReceivingWorkspace(
         cancelledAt: po.cancelled_at,
         cancellationReason: po.cancellation_reason,
         createdAt: po.created_at,
+        updatedAt: po.updated_at,
         notes: po.notes,
         discountAmount: toNumber(po.discount_amount),
         taxAmount: toNumber(po.tax_amount),
@@ -545,12 +650,15 @@ export async function loadReceivingWorkspace(
         receiptNumber: receipt.receipt_number,
         purchaseOrderId: receipt.purchase_order_id,
         poNumber: po?.po_number ?? "—",
-        supplierName: po ? supplierById.get(po.supplier_id)?.name ?? "Unknown supplier" : "Unknown supplier",
+        supplierName: po
+          ? (supplierById.get(po.supplier_id)?.name ?? "Unknown supplier")
+          : "Unknown supplier",
         invoiceNumber: receipt.invoice_number,
         status: receipt.status,
         employee: receipt.receiving_employee_label?.trim() || "Authenticated staff",
         receivedAt: receipt.received_at,
         approvedAt: receipt.approved_at,
+        updatedAt: receipt.updated_at,
         notes: receipt.notes,
         stockUnits: lines.reduce((sum, line) => sum + line.receivedQuantity, 0),
         damagedUnits: lines.reduce((sum, line) => sum + line.damagedQuantity, 0),
@@ -582,7 +690,6 @@ export async function loadReceivingWorkspace(
   };
 }
 
-
 export type PurchaseOrderDetailData = {
   role: DashboardRole;
   purchaseOrder: PurchaseOrderSummary | null;
@@ -605,7 +712,7 @@ export async function loadPurchaseOrderDetail(
   const { data: poData, error: poError } = await supabase
     .from("store_purchase_orders")
     .select(
-      "id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,notes",
+      "id,supplier_id,location_id,po_number,status,currency,expected_at,ordered_at,approved_at,rejected_at,rejection_reason,cancelled_at,cancellation_reason,discount_amount,tax_amount,shipping_amount,exchange_rate,created_at,updated_at,notes",
     )
     .eq("id", purchaseOrderId)
     .maybeSingle();
@@ -641,6 +748,7 @@ export async function loadPurchaseOrderDetail(
     | "shipping_amount"
     | "exchange_rate"
     | "created_at"
+    | "updated_at"
     | "notes"
   >;
 
@@ -773,10 +881,18 @@ export async function loadPurchaseOrderDetail(
       }
     : null;
 
-  const events: ProcurementEventSummary[] = ((eventResult.data ?? []) as Pick<
-    ProcurementEventRow,
-    "id" | "purchase_order_id" | "receiving_id" | "event_type" | "details" | "actor_id" | "created_at"
-  >[]).map((row) => ({
+  const events: ProcurementEventSummary[] = (
+    (eventResult.data ?? []) as Pick<
+      ProcurementEventRow,
+      | "id"
+      | "purchase_order_id"
+      | "receiving_id"
+      | "event_type"
+      | "details"
+      | "actor_id"
+      | "created_at"
+    >[]
+  ).map((row) => ({
     id: row.id,
     purchaseOrderId: row.purchase_order_id,
     receivingId: row.receiving_id,
@@ -819,9 +935,7 @@ export async function loadPurchaseOrderDetail(
     status: po.status,
     currency: po.currency,
     locationId: po.location_id,
-    locationName: po.location_id
-      ? locationResult.data?.name ?? "Unknown location"
-      : "Unassigned",
+    locationName: po.location_id ? (locationResult.data?.name ?? "Unknown location") : "Unassigned",
     expectedAt: po.expected_at,
     orderedAt: po.ordered_at,
     approvedAt: po.approved_at,
@@ -830,6 +944,7 @@ export async function loadPurchaseOrderDetail(
     cancelledAt: po.cancelled_at,
     cancellationReason: po.cancellation_reason,
     createdAt: po.created_at,
+    updatedAt: po.updated_at,
     notes: po.notes,
     discountAmount: toNumber(po.discount_amount),
     taxAmount: toNumber(po.tax_amount),
@@ -863,7 +978,6 @@ export async function loadPurchaseOrderDetail(
     })),
   };
 }
-
 
 export type ProcurementFormOptionsData = {
   suppliers: ReceivingSupplier[];
@@ -915,7 +1029,14 @@ export async function loadProcurementFormOptions(): Promise<ProcurementFormOptio
   >[];
   const variants = (variantResult.data ?? []) as Pick<
     VariantRow,
-    "id" | "product_id" | "title" | "sku" | "stock_quantity" | "is_active" | "track_inventory" | "sort_order"
+    | "id"
+    | "product_id"
+    | "title"
+    | "sku"
+    | "stock_quantity"
+    | "is_active"
+    | "track_inventory"
+    | "sort_order"
   >[];
 
   const variantsByProduct = new Map<string, typeof variants>();
@@ -1011,7 +1132,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
   const { data: receiptData, error: receiptError } = await supabase
     .from("store_receivings")
     .select(
-      "id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,notes",
+      "id,receipt_number,purchase_order_id,invoice_number,status,receiving_employee_label,received_at,approved_at,updated_at,notes",
     )
     .eq("id", receivingId)
     .maybeSingle();
@@ -1037,6 +1158,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
     | "receiving_employee_label"
     | "received_at"
     | "approved_at"
+    | "updated_at"
     | "notes"
   >;
 
@@ -1070,11 +1192,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
             .eq("purchase_order_id", po.id)
         : Promise.resolve({ data: [], error: null }),
       po
-        ? supabase
-            .from("store_suppliers")
-            .select("id,name")
-            .eq("id", po.supplier_id)
-            .maybeSingle()
+        ? supabase.from("store_suppliers").select("id,name").eq("id", po.supplier_id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       supabase
         .from("store_procurement_events")
@@ -1139,7 +1257,13 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
   const serialsByReceivingItem = new Map<string, ReceivingSerial[]>();
   for (const serial of (serialResult.data ?? []) as Pick<
     ReceivingSerialRow,
-    "id" | "receiving_item_id" | "serial_number" | "imei1" | "imei2" | "condition" | "inventory_status"
+    | "id"
+    | "receiving_item_id"
+    | "serial_number"
+    | "imei1"
+    | "imei2"
+    | "condition"
+    | "inventory_status"
   >[]) {
     const rows = serialsByReceivingItem.get(serial.receiving_item_id) ?? [];
     rows.push({
@@ -1188,10 +1312,18 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
     unitCost: toNumber(item.unit_cost),
   }));
 
-  const events: ProcurementEventSummary[] = ((eventResult.data ?? []) as Pick<
-    ProcurementEventRow,
-    "id" | "purchase_order_id" | "receiving_id" | "event_type" | "details" | "actor_id" | "created_at"
-  >[]).map((row) => ({
+  const events: ProcurementEventSummary[] = (
+    (eventResult.data ?? []) as Pick<
+      ProcurementEventRow,
+      | "id"
+      | "purchase_order_id"
+      | "receiving_id"
+      | "event_type"
+      | "details"
+      | "actor_id"
+      | "created_at"
+    >[]
+  ).map((row) => ({
     id: row.id,
     purchaseOrderId: row.purchase_order_id,
     receivingId: row.receiving_id,
@@ -1237,6 +1369,7 @@ export async function loadReceivingDetail(receivingId: string): Promise<Receivin
     employee: receiptRow.receiving_employee_label?.trim() || "Authenticated staff",
     receivedAt: receiptRow.received_at,
     approvedAt: receiptRow.approved_at,
+    updatedAt: receiptRow.updated_at,
     notes: receiptRow.notes,
     stockUnits: lines.reduce((sum, line) => sum + line.receivedQuantity, 0),
     damagedUnits: lines.reduce((sum, line) => sum + line.damagedQuantity, 0),
@@ -1274,6 +1407,7 @@ export async function createReceivingSupplier(input: {
   phone?: string;
   email?: string;
   notes?: string;
+  isActive?: boolean;
 }) {
   await requireDashboardStaff();
   const name = input.name.trim();
@@ -1287,7 +1421,7 @@ export async function createReceivingSupplier(input: {
       phone: input.phone?.trim() || null,
       email: input.email?.trim() || null,
       notes: input.notes?.trim() || null,
-      is_active: true,
+      is_active: input.isActive ?? true,
     })
     .select("id,name,code,phone,email,notes,is_active")
     .single();
@@ -1327,29 +1461,36 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput) {
     unit_cost: item.unitCost,
   }));
 
-  const { data, error } = await supabase.rpc("create_store_purchase_order_v2", rpcArgs({
-    p_supplier_id: input.supplierId,
-    p_location_id: input.locationId ?? null,
-    p_po_number: input.poNumber.trim(),
-    p_currency: (input.currency || "USD").trim().toUpperCase(),
-    p_expected_at: input.expectedAt ?? null,
-    p_discount_amount: input.discountAmount ?? 0,
-    p_tax_amount: input.taxAmount ?? 0,
-    p_shipping_amount: input.shippingAmount ?? 0,
-    p_exchange_rate: input.exchangeRate ?? 1,
-    p_notes: input.notes?.trim() || null,
-    p_items: payload,
-  }));
+  const { data, error } = await supabase.rpc(
+    "create_store_purchase_order_v2",
+    rpcArgs({
+      p_supplier_id: input.supplierId,
+      p_location_id: input.locationId ?? null,
+      p_po_number: input.poNumber.trim(),
+      p_currency: (input.currency || "USD").trim().toUpperCase(),
+      p_expected_at: input.expectedAt ?? null,
+      p_discount_amount: input.discountAmount ?? 0,
+      p_tax_amount: input.taxAmount ?? 0,
+      p_shipping_amount: input.shippingAmount ?? 0,
+      p_exchange_rate: input.exchangeRate ?? 1,
+      p_notes: input.notes?.trim() || null,
+      p_items: payload,
+    }),
+  );
   throwIfError(error, "Creating purchase order failed");
   if (!data) throw new Error("Purchase order creation returned no id.");
   return data;
 }
 
-export async function submitPurchaseOrder(purchaseOrderId: string) {
+export async function submitPurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("submit_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "submit_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Submitting purchase order failed");
   return data;
 }
@@ -1382,13 +1523,16 @@ export async function createReceiving(input: CreateReceivingInput) {
     overage_reason: line.overageReason?.trim() || null,
   }));
 
-  const { data, error } = await supabase.rpc("create_store_receiving", rpcArgs({
-    p_purchase_order_id: input.purchaseOrderId,
-    p_invoice_number: input.invoiceNumber.trim(),
-    p_receiving_employee_label: input.employeeLabel?.trim() || null,
-    p_notes: input.notes?.trim() || null,
-    p_lines: payload,
-  }));
+  const { data, error } = await supabase.rpc(
+    "create_store_receiving",
+    rpcArgs({
+      p_purchase_order_id: input.purchaseOrderId,
+      p_invoice_number: input.invoiceNumber.trim(),
+      p_receiving_employee_label: input.employeeLabel?.trim() || null,
+      p_notes: input.notes?.trim() || null,
+      p_lines: payload,
+    }),
+  );
   throwIfError(error, "Creating receiving draft failed");
   if (!data) throw new Error("Receiving creation returned no id.");
   return data;
@@ -1396,6 +1540,7 @@ export async function createReceiving(input: CreateReceivingInput) {
 
 export type UpdateReceivingDraftInput = {
   receivingId: string;
+  expectedUpdatedAt: string;
   invoiceNumber: string;
   employeeLabel?: string;
   notes?: string;
@@ -1420,32 +1565,41 @@ export async function updateReceivingDraft(input: UpdateReceivingDraftInput) {
     overage_reason: line.overageReason?.trim() || null,
   }));
 
-  const { data, error } = await supabase.rpc("update_store_receiving_draft", rpcArgs({
-    p_receiving_id: input.receivingId,
-    p_invoice_number: input.invoiceNumber.trim(),
-    p_receiving_employee_label: input.employeeLabel?.trim() || null,
-    p_notes: input.notes?.trim() || null,
-    p_lines: payload,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "update_store_receiving_draft_v2",
+    rpcArgs({
+      p_receiving_id: input.receivingId,
+      p_expected_updated_at: input.expectedUpdatedAt,
+      p_invoice_number: input.invoiceNumber.trim(),
+      p_receiving_employee_label: input.employeeLabel?.trim() || null,
+      p_notes: input.notes?.trim() || null,
+      p_lines: payload,
+    }),
+  );
   throwIfError(error, "Updating receiving draft failed");
   return data;
 }
 
-export async function approveReceiving(receivingId: string) {
+export async function approveReceiving(receivingId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_receiving", rpcArgs({
-    p_receiving_id: receivingId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "approve_store_receiving_v2",
+    rpcArgs({
+      p_receiving_id: receivingId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Approving receiving failed");
   const result = data?.[0];
   if (!result) throw new Error("Receiving approval returned no result.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return result;
 }
 
-
 export type UpdatePurchaseOrderDraftInput = CreatePurchaseOrderInput & {
   purchaseOrderId: string;
+  expectedUpdatedAt: string;
 };
 
 function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
@@ -1460,101 +1614,149 @@ function poItemsPayload(items: CreatePurchaseOrderInput["items"]): Json {
 export async function updatePurchaseOrderDraft(input: UpdatePurchaseOrderDraftInput) {
   await requireDashboardStaff();
   if (!input.items.length) throw new Error("Add at least one PO item.");
-  const { data, error } = await supabase.rpc("update_store_purchase_order_draft", rpcArgs({
-    p_purchase_order_id: input.purchaseOrderId,
-    p_supplier_id: input.supplierId,
-    p_location_id: input.locationId ?? null,
-    p_po_number: input.poNumber.trim(),
-    p_currency: (input.currency || "USD").trim().toUpperCase(),
-    p_expected_at: input.expectedAt ?? null,
-    p_discount_amount: input.discountAmount ?? 0,
-    p_tax_amount: input.taxAmount ?? 0,
-    p_shipping_amount: input.shippingAmount ?? 0,
-    p_exchange_rate: input.exchangeRate ?? 1,
-    p_notes: input.notes?.trim() || null,
-    p_items: poItemsPayload(input.items),
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "update_store_purchase_order_draft_v2",
+    rpcArgs({
+      p_purchase_order_id: input.purchaseOrderId,
+      p_expected_updated_at: input.expectedUpdatedAt,
+      p_supplier_id: input.supplierId,
+      p_location_id: input.locationId ?? null,
+      p_po_number: input.poNumber.trim(),
+      p_currency: (input.currency || "USD").trim().toUpperCase(),
+      p_expected_at: input.expectedAt ?? null,
+      p_discount_amount: input.discountAmount ?? 0,
+      p_tax_amount: input.taxAmount ?? 0,
+      p_shipping_amount: input.shippingAmount ?? 0,
+      p_exchange_rate: input.exchangeRate ?? 1,
+      p_notes: input.notes?.trim() || null,
+      p_items: poItemsPayload(input.items),
+    }),
+  );
   throwIfError(error, "Updating purchase order failed");
   return data;
 }
 
-export async function deletePurchaseOrderDraft(purchaseOrderId: string) {
+export async function deletePurchaseOrderDraft(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("delete_store_purchase_order_draft", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "delete_store_purchase_order_draft_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Deleting purchase order draft failed");
   return data;
 }
 
-export async function approvePurchaseOrder(purchaseOrderId: string) {
+export async function approvePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("approve_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "approve_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Approving purchase order failed");
   return data;
 }
 
-export async function issuePurchaseOrder(purchaseOrderId: string) {
+export async function issuePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("issue_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "issue_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Issuing purchase order failed");
   return data;
 }
 
-export async function closePurchaseOrder(purchaseOrderId: string) {
+export async function closePurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("close_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "close_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Closing purchase order failed");
   return data;
 }
 
-export async function rejectPurchaseOrder(purchaseOrderId: string, reason: string) {
+export async function rejectPurchaseOrder(
+  purchaseOrderId: string,
+  expectedUpdatedAt: string,
+  reason: string,
+) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Rejection reason is required.");
-  const { data, error } = await supabase.rpc("reject_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-    p_reason: cleanReason,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "reject_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+      p_reason: cleanReason,
+    }),
+  );
   throwIfError(error, "Rejecting purchase order failed");
   return data;
 }
 
-export async function reopenPurchaseOrder(purchaseOrderId: string) {
+export async function reopenPurchaseOrder(purchaseOrderId: string, expectedUpdatedAt: string) {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("reopen_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "reopen_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+    }),
+  );
   throwIfError(error, "Reopening purchase order failed");
   return data;
 }
 
-export async function cancelPurchaseOrder(purchaseOrderId: string, reason: string) {
+export async function cancelPurchaseOrder(
+  purchaseOrderId: string,
+  expectedUpdatedAt: string,
+  reason: string,
+) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Cancellation reason is required.");
-  const { data, error } = await supabase.rpc("cancel_store_purchase_order", rpcArgs({
-    p_purchase_order_id: purchaseOrderId,
-    p_reason: cleanReason,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "cancel_store_purchase_order_v2",
+    rpcArgs({
+      p_purchase_order_id: purchaseOrderId,
+      p_expected_updated_at: expectedUpdatedAt,
+      p_reason: cleanReason,
+    }),
+  );
   throwIfError(error, "Cancelling purchase order failed");
   return data;
 }
 
-export async function voidReceiving(receivingId: string, reason: string) {
+export async function voidReceiving(
+  receivingId: string,
+  expectedUpdatedAt: string,
+  reason: string,
+) {
   await requireDashboardStaff();
   const cleanReason = reason.trim();
   if (!cleanReason) throw new Error("Void reason is required.");
-  const { data, error } = await supabase.rpc("void_store_receiving", rpcArgs({
-    p_receiving_id: receivingId,
-    p_reason: cleanReason,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "void_store_receiving_v2",
+    rpcArgs({
+      p_receiving_id: receivingId,
+      p_expected_updated_at: expectedUpdatedAt,
+      p_reason: cleanReason,
+    }),
+  );
   throwIfError(error, "Voiding receiving failed");
   return data;
 }
@@ -1632,10 +1834,13 @@ export async function replaceReceivingSerials(
     }))
     .filter((serial) => serial.serial_number || serial.imei1 || serial.imei2);
 
-  const { data, error } = await supabase.rpc("replace_store_receiving_serials", rpcArgs({
-    p_receiving_item_id: receivingItemId,
-    p_serials: payload,
-  }));
+  const { data, error } = await supabase.rpc(
+    "replace_store_receiving_serials",
+    rpcArgs({
+      p_receiving_item_id: receivingItemId,
+      p_serials: payload,
+    }),
+  );
   throwIfError(error, "Saving serial / IMEI data failed");
   return data;
 }
@@ -1651,16 +1856,20 @@ export async function uploadProcurementAttachment(input: {
   attachmentType: "purchase_order" | "supplier_invoice" | "packing_list" | "other";
 }) {
   await requireDashboardStaff();
-  if (!input.purchaseOrderId && !input.receivingId) throw new Error("Attachment must belong to a PO or receiving.");
+  if (!input.purchaseOrderId && !input.receivingId)
+    throw new Error("Attachment must belong to a PO or receiving.");
   if (input.file.size <= 0) throw new Error("The selected file is empty.");
-  if (input.file.size > MAX_PROCUREMENT_FILE_BYTES) throw new Error("Attachment must be 20 MB or smaller.");
+  if (input.file.size > MAX_PROCUREMENT_FILE_BYTES)
+    throw new Error("Attachment must be 20 MB or smaller.");
 
   const unique =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const safeName = input.file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
-  const scope = input.purchaseOrderId ? `po/${input.purchaseOrderId}` : `receiving/${input.receivingId}`;
+  const scope = input.purchaseOrderId
+    ? `po/${input.purchaseOrderId}`
+    : `receiving/${input.receivingId}`;
   const objectPath = `${PROCUREMENT_MEDIA_PREFIX}/${scope}/${unique}-${safeName}`;
 
   const { error: uploadError } = await supabase.storage
@@ -1705,7 +1914,10 @@ export async function deleteProcurementAttachment(attachment: ProcurementAttachm
     .from(PROCUREMENT_MEDIA_BUCKET)
     .remove([attachment.storagePath]);
   if (storageError) {
-    console.warn("[procurement] attachment metadata deleted but storage cleanup failed", storageError.message);
+    console.warn(
+      "[procurement] attachment metadata deleted but storage cleanup failed",
+      storageError.message,
+    );
   }
 }
 
@@ -1733,7 +1945,7 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
   const now = Date.now();
   const totalSpend = workspace.purchaseOrders
     .filter((po) => !["cancelled", "rejected"].includes(po.status))
-    .reduce((sum, po) => sum + po.grandTotal, 0);
+    .reduce((sum, po) => sum + po.grandTotal * po.exchangeRate, 0);
   const openStatuses = new Set(["pending_approval", "approved", "ordered", "partially_received"]);
   const openPoCount = workspace.purchaseOrders.filter((po) => openStatuses.has(po.status)).length;
   const overduePoCount = workspace.purchaseOrders.filter((po) => {
@@ -1747,15 +1959,18 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
     .filter((receipt) => receipt.status === "approved")
     .reduce((sum, receipt) => sum + receipt.damagedUnits, 0);
 
-  const supplierMap = new Map<string, {
-    supplierId: string;
-    supplierName: string;
-    spend: number;
-    poCount: number;
-    completedPoCount: number;
-    onTimeCompletedCount: number;
-    damagedUnits: number;
-  }>();
+  const supplierMap = new Map<
+    string,
+    {
+      supplierId: string;
+      supplierName: string;
+      spend: number;
+      poCount: number;
+      completedPoCount: number;
+      onTimeCompletedCount: number;
+      damagedUnits: number;
+    }
+  >();
   for (const po of workspace.purchaseOrders) {
     if (["cancelled", "rejected"].includes(po.status)) continue;
     const current = supplierMap.get(po.supplierId) ?? {
@@ -1767,7 +1982,7 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
       onTimeCompletedCount: 0,
       damagedUnits: 0,
     };
-    current.spend += po.grandTotal;
+    current.spend += po.grandTotal * po.exchangeRate;
     current.poCount += 1;
 
     const poReceipts = workspace.receivings.filter(
@@ -1796,7 +2011,8 @@ export function buildProcurementAnalytics(workspace: ReceivingWorkspace): Procur
     overduePoCount,
     receivedUnits,
     damagedUnits,
-    damageRate: receivedUnits + damagedUnits > 0 ? damagedUnits / (receivedUnits + damagedUnits) : 0,
+    damageRate:
+      receivedUnits + damagedUnits > 0 ? damagedUnits / (receivedUnits + damagedUnits) : 0,
     supplierSpend: [...supplierMap.values()]
       .map((supplier) => ({
         ...supplier,
@@ -1841,9 +2057,10 @@ export function buildReorderSuggestions(
       const projected = option.currentStock + onOrder;
       const lastPo = [...workspace.purchaseOrders]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .find((po) =>
-          !["cancelled", "rejected"].includes(po.status) &&
-          po.items.some((line) => (line.variantId ?? line.productId) === option.key),
+        .find(
+          (po) =>
+            !["cancelled", "rejected"].includes(po.status) &&
+            po.items.some((line) => (line.variantId ?? line.productId) === option.key),
         );
       return {
         key: option.key,

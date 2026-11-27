@@ -27,12 +27,13 @@ export const Route = createFileRoute("/collections/$handle")({
       };
     }
     const collectionName = loaderData.collection.title;
-    const title = `${collectionName} in Lebanon | ${STORE_NAME}`;
+    const title = loaderData.collection.seoTitle?.trim() || `${collectionName} in Lebanon | ${STORE_NAME}`;
     const rawDescription = loaderData.collection.description?.trim() ?? "";
     const description =
-      rawDescription.length >= 90
+      loaderData.collection.seoDescription?.trim() ||
+      (rawDescription.length >= 90
         ? rawDescription.slice(0, 155)
-        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`;
+        : `Shop ${collectionName} in Lebanon at ${STORE_NAME} with live prices, current availability and direct Space Call checkout.`);
     const image = loaderData.collection.image?.url;
     const path = `/collections/${params.handle}`;
     return {

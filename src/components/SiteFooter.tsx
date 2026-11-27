@@ -24,7 +24,7 @@ const FOOTER_BRAND_LINKS = [
   { slug: "poco", label: "POCO" },
 ] as const;
 
-export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: boolean }) {
+export function SiteFooter() {
   const { language, t } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
   const isAr = language === "ar";
@@ -42,10 +42,22 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
     return typeof value === "string" && value.trim() ? value.trim() : fallback;
   };
   const socials = [
-    { label: "Instagram", Icon: Instagram, href: socialSetting("instagram_url", STORE_CONFIG.socialInstagram) },
-    { label: "Facebook", Icon: Facebook, href: socialSetting("facebook_url", STORE_CONFIG.socialFacebook) },
+    {
+      label: "Instagram",
+      Icon: Instagram,
+      href: socialSetting("instagram_url", STORE_CONFIG.socialInstagram),
+    },
+    {
+      label: "Facebook",
+      Icon: Facebook,
+      href: socialSetting("facebook_url", STORE_CONFIG.socialFacebook),
+    },
     { label: "X", Icon: Twitter, href: socialSetting("x_url", STORE_CONFIG.socialX) },
-    { label: "YouTube", Icon: Youtube, href: socialSetting("youtube_url", STORE_CONFIG.socialYoutube) },
+    {
+      label: "YouTube",
+      Icon: Youtube,
+      href: socialSetting("youtube_url", STORE_CONFIG.socialYoutube),
+    },
   ];
 
   const support = [
@@ -63,9 +75,9 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
   ] as const;
 
   return (
-    <footer className={`${compactTopSpacing ? "mt-4" : "mt-16"} border-t bg-surface`}>
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid min-w-0 gap-10 md:grid-cols-2 lg:grid-cols-6">
+    <footer className="mt-0 border-t bg-surface">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12">
+        <div className="grid min-w-0 gap-6 sm:gap-10 md:grid-cols-2 lg:grid-cols-6">
           <div className="min-w-0 lg:col-span-2">
             <div className="flex items-center gap-2.5">
               <img
@@ -82,7 +94,7 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
               {isAr
                 ? "هواتف وأجهزة تقنية أصلية مع تجربة شراء آمنة ودعم مباشر."
-                : `Phones and technology from the connected ${storeName} catalogue, with secure checkout and direct support.`}
+                : `Shop phones, tablets and accessories at ${storeName}, with clear pricing and direct support.`}
             </p>
             <a
               href={whatsappUrl}
@@ -94,18 +106,20 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
               {isAr ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
             </a>
             <div className="mt-5 flex gap-3 text-muted-foreground">
-              {socials.filter((social) => social.href).map(({ Icon, label, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={label}
-                  className="grid h-9 w-9 place-items-center rounded-md border bg-background hover:text-primary"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
+              {socials
+                .filter((social) => social.href)
+                .map(({ Icon, label, href }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={label}
+                    className="grid h-9 w-9 place-items-center rounded-md border bg-background hover:text-primary"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
             </div>
           </div>
 
@@ -197,10 +211,12 @@ export function SiteFooter({ compactTopSpacing = false }: { compactTopSpacing?: 
           </div>
         </div>
 
-        <div className="mt-10 border-t pt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-7 border-t pt-5 text-center text-sm text-muted-foreground sm:mt-10 sm:pt-6">
           <p>
             © {new Date().getFullYear()} {storeName}.{" "}
-            {isAr ? "تسوّق آمن ودعم مباشر من Space Call." : "Secure shopping and direct support from Space Call."}
+            {isAr
+              ? "تسوّق آمن ودعم مباشر من Space Call."
+              : "Secure shopping and direct support from Space Call."}
           </p>
         </div>
       </div>

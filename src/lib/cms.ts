@@ -85,6 +85,7 @@ export type CmsBrand = {
   href: string | null;
   sort_order: number;
   is_visible: boolean;
+  is_featured?: boolean;
 };
 
 export type CmsSeoPage = {
@@ -135,9 +136,7 @@ function normalizeCmsSnapshot(value: unknown): CmsSnapshot {
     settings: isObject(value.settings) ? (value.settings as Record<string, CmsSettingValue>) : {},
     heroSlides: Array.isArray(value.heroSlides) ? (value.heroSlides as CmsHeroSlide[]) : [],
     sections: Array.isArray(value.sections) ? (value.sections as CmsSection[]) : [],
-    navigation: Array.isArray(value.navigation)
-      ? (value.navigation as CmsNavigationItem[])
-      : [],
+    navigation: Array.isArray(value.navigation) ? (value.navigation as CmsNavigationItem[]) : [],
     brands: Array.isArray(value.brands) ? (value.brands as CmsBrand[]) : [],
     seoPages: Array.isArray(value.seoPages) ? (value.seoPages as CmsSeoPage[]) : [],
   };
@@ -161,7 +160,7 @@ export async function fetchCmsSnapshot(): Promise<CmsSnapshot> {
   try {
     const response = await fetch(`${url}/functions/v1/public-cms`, {
       method: "GET",
-      cache: "default",
+      // Omit cache: Workers rejects an explicit "default" mode before sending.
       headers: {
         apikey: key,
         Accept: "application/json",
@@ -282,4 +281,3 @@ export function cmsSeoPage(snapshot: CmsSnapshot, pageSlug: string, language: Cm
       null,
   };
 }
-

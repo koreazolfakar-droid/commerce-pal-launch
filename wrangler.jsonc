@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "space-call-staging",
+  "main": "src/server.ts",
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "previews": {},
+  "routes": [
+    { "pattern": "spacecallapp.store", "custom_domain": true },
+    { "pattern": "www.spacecallapp.store", "custom_domain": true },
+    { "pattern": "app.spacecallapp.store", "custom_domain": true }
+  ],
+  "observability": {
+    "enabled": false
+  }
+}

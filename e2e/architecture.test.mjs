@@ -94,6 +94,13 @@ test("homepage uses bounded product reads and keeps brand shelves lazy", async (
 
   assert.match(homeSections, /productsByHandlesQueryOptions/);
   assert.match(homeSections, /handles\.slice\(0, 6\)/);
+  assert.doesNotMatch(homeSections, /BenefitsBar|const BENEFITS|ServicesStrip/);
+  assert.match(index, /function takeUniqueProducts/);
+  assert.match(index, /seenHomepageProductIds/);
+  assert.match(index, /brandFeatureFlagsAvailable/);
+  assert.match(index, /brands=\{showcaseBrands\}/);
+  assert.match(index, /excludedProductIds=\{seenHomepageProductIds\}/);
+  assert.match(shelves, /withoutExcludedProducts/);
 });
 
 test("global navigation uses lightweight facets instead of the full catalog snapshot", async () => {
@@ -126,20 +133,29 @@ test("native cart keeps local totals and native checkout", async () => {
     read("src/routes/product.$handle.tsx"),
   ]);
   assert.match(store, /function localCartState/);
-  assert.match(store, /syncCart:\s*async \(\) => undefined/);
+  assert.match(store, /syncCart:\s*async \(\) => \{/);
+  assert.match(store, /fetchProductsByIds/);
+  assert.match(store, /cartItemMaxQuantity/);
   assert.match(drawer, /\bto="\/cart"/);
   assert.doesNotMatch(drawer, /checkoutShopify|getCheckoutUrl|myshopify/);
-  assert.match(productRoute, /window\.location\.assign\("\/cart"\)/);
+  assert.match(productRoute, /router\.navigate\(\{ to: "\/cart" \}\)/);
 });
 
 test("server blocks Shopify runtime secrets and applies hardened browser headers", async () => {
-  const [server, csp] = await Promise.all([
+  const [server, sharedRateLimit, csp] = await Promise.all([
     read("src/server.ts"),
+    read("src/security/mutation-rate-limit.server.ts"),
     read("src/lib/contentSecurityPolicy.ts"),
   ]);
   assert.doesNotMatch(server, /SHOPIFY_STOREFRONT/);
   assert.match(server, /MAX_REQUEST_BYTES/);
   assert.match(server, /RATE_LIMIT_MAX_MUTATIONS/);
+  assert.match(server, /consumeSharedMutationRateLimit/);
+  assert.match(server, /Request protection is temporarily unavailable/);
+  assert.match(sharedRateLimit, /consume_edge_rate_limit/);
+  assert.match(sharedRateLimit, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(sharedRateLimit, /sha256/);
+  assert.doesNotMatch(server, /new Map<string, RateBucket>/);
   assert.match(server, /Cross-site mutation blocked/);
   assert.doesNotMatch(csp, /connect-src[^\n]*myshopify|form-action[^\n]*myshopify|frame-src[^\n]*myshopify|checkout\.shopify\.com/);
   assert.match(csp, /frame-ancestors 'self'/);

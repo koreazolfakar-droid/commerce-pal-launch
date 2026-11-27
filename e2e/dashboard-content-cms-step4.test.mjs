@@ -1,3 +1,4 @@
+import { assertDashboardRoute, assertDashboardNavigation } from "./helpers/dashboard-routes.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -31,9 +32,9 @@ const [
 ]);
 
 test("step 4 dashboard routes no longer fall through to GenericPage", () => {
-  assert.match(app, /route === "\/dashboard\/navigation"\) content = <NavigationPage \/>/);
-  assert.match(app, /route === "\/dashboard\/media"\) content = <MediaLibraryPage \/>/);
-  assert.match(app, /route === "\/dashboard\/seo"\) content = <SeoPage \/>/);
+assertDashboardRoute("/dashboard/navigation","navigationPage");
+assertDashboardRoute("/dashboard/media","mediaPage");
+assertDashboardRoute("/dashboard/seo","seoPage");
 });
 
 test("navigation manager is Supabase-backed and storefront consumes it", () => {
@@ -45,7 +46,7 @@ test("navigation manager is Supabase-backed and storefront consumes it", () => {
   assert.match(publicCms, /from\("cms_navigation_items"\)/);
   assert.match(storeLayout, /<CmsNavigationStrip area="header"/);
   assert.match(storeLayout, /<CmsNavigationStrip area="mobile_menu"/);
-  assert.match(storeLayout, /<CmsNavigationStrip area="footer"/);
+  assert.match(storeLayout, /<DeferredSiteFooter/);
   assert.match(storeLayout, /<BottomNav \/>/);
   assert.match(bottomNav, /localizeNavigationItem\(item, language\)/);
 });
@@ -53,7 +54,7 @@ test("navigation manager is Supabase-backed and storefront consumes it", () => {
 test("media library uses protected cms-media storage and homepage builder uses it", () => {
   assert.match(mediaData, /BUCKET = "cms-media"/);
   assert.match(mediaData, /from\("cms_media_assets"\)/);
-  assert.match(mediaData, /storage\.from\(BUCKET\)\.upload/);
+  assert.match(mediaData, /storage\s*\.from\(BUCKET\)\s*\.upload/);
   assert.match(mediaData, /register_cms_media_asset/);
   assert.match(mediaData, /convertProductImageToWebp\(file, "1920"\)/);
   assert.match(mediaPage, /loadDashboardMediaWorkspace/);

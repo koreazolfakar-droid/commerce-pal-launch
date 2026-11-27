@@ -1,3 +1,4 @@
+import { createStorefrontPage } from "./helpers/storefront-fixture-fetch.mjs";
 import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 
@@ -13,7 +14,7 @@ const browser = await chromium.launch({ headless: true });
 
 try {
   for (const testCase of cases) {
-    const page = await browser.newPage({
+    const page = await createStorefrontPage(browser, {
       viewport: { width: testCase.width, height: testCase.height },
     });
     await page.goto(baseURL, { waitUntil: "load" });
@@ -95,7 +96,9 @@ try {
     await page.waitForTimeout(100);
     assert.equal(page.url(), before, `${testCase.name}: hero media click changed route`);
 
-    console.log(`PASS ${testCase.name}: responsive hero layout, CMS content and inert media click OK`);
+    console.log(
+      `PASS ${testCase.name}: responsive hero layout, CMS content and inert media click OK`,
+    );
     await page.close();
   }
 } finally {

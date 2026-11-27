@@ -6,7 +6,8 @@ import {
   listDashboardProducts,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { safeStoreHref } from "@/lib/safeUrl";
 import {
   convertProductImageToWebp,
   getImageCompressionPreset,
@@ -75,11 +76,13 @@ export async function uploadDashboardBrandImage(
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const objectPath = `${BRAND_MEDIA_PREFIX}/${kind}s/${unique}.webp`;
-  const { error } = await supabase.storage.from(BRAND_MEDIA_BUCKET).upload(
-    objectPath,
-    conversion.file,
-    { cacheControl: "31536000", upsert: false, contentType: "image/webp" },
-  );
+  const { error } = await supabase.storage
+    .from(BRAND_MEDIA_BUCKET)
+    .upload(objectPath, conversion.file, {
+      cacheControl: "31536000",
+      upsert: false,
+      contentType: "image/webp",
+    });
   throwIfError(error, `Uploading brand ${kind} failed`);
   const { data } = supabase.storage.from(BRAND_MEDIA_BUCKET).getPublicUrl(objectPath);
   return { url: data.publicUrl, conversion };
@@ -94,6 +97,7 @@ export async function removeDashboardBrandImage(url: string) {
 }
 
 function mapBrand(row: BrandRow): CatalogBrand {
+  const safeWebsite = safeStoreHref(row.href);
   return {
     id: row.id,
     name: row.name,
@@ -104,7 +108,7 @@ function mapBrand(row: BrandRow): CatalogBrand {
     order: row.sort_order,
     ...(row.logo_url ? { logo: row.logo_url } : {}),
     ...(row.cover_image_url ? { coverImage: row.cover_image_url } : {}),
-    ...(row.href ? { website: row.href } : {}),
+    ...(safeWebsite ? { website: safeWebsite } : {}),
     ...(row.seo_title ? { seoTitle: row.seo_title } : {}),
     ...(row.seo_description ? { seoDescription: row.seo_description } : {}),
     createdAt: row.created_at,
@@ -113,6 +117,14 @@ function mapBrand(row: BrandRow): CatalogBrand {
 }
 
 function toBrandPayload(brand: CatalogBrand) {
+  const rawWebsite = brand.website?.trim() ?? "";
+  const safeWebsite = rawWebsite ? safeStoreHref(rawWebsite) : null;
+  if (rawWebsite && !safeWebsite) {
+    throw new Error(
+      "Brand website must be a site path, #anchor, or a valid http(s) URL without embedded credentials.",
+    );
+  }
+
   return {
     name: brand.name.trim(),
     slug: normalizeBrandSlug(brand.slug || brand.name),
@@ -122,7 +134,7 @@ function toBrandPayload(brand: CatalogBrand) {
     sort_order: Math.max(0, Math.trunc(brand.order)),
     logo_url: brand.logo?.trim() || null,
     cover_image_url: brand.coverImage?.trim() || null,
-    href: brand.website?.trim() || null,
+    href: safeWebsite,
     seo_title: brand.seoTitle?.trim() || null,
     seo_description: brand.seoDescription?.trim() || null,
   };
@@ -137,16 +149,10 @@ export function normalizeBrandSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export function createUniqueBrandSlug(
-  value: string,
-  brands: CatalogBrand[],
-  excludeId?: string,
-) {
+export function createUniqueBrandSlug(value: string, brands: CatalogBrand[], excludeId?: string) {
   const base = normalizeBrandSlug(value) || "brand";
   const used = new Set(
-    brands
-      .filter((brand) => brand.id !== excludeId)
-      .map((brand) => brand.slug.toLowerCase()),
+    brands.filter((brand) => brand.id !== excludeId).map((brand) => brand.slug.toLowerCase()),
   );
   if (!used.has(base)) return base;
   let suffix = 2;
@@ -194,14 +200,11 @@ export async function loadBrandsWorkspace() {
 export async function createDashboardBrand(brand: CatalogBrand) {
   await requireDashboardStaff();
   const payload = toBrandPayload(brand);
-  const { data, error } = await supabase
-    .from("cms_brands")
-    .insert(payload)
-    .select("*")
-    .single();
+  const { data, error } = await supabase.from("cms_brands").insert(payload).select("*").single();
   throwIfError(error, "Creating brand failed");
   if (!data) throw new Error("Creating brand returned no record.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapBrand(data as BrandRow);
 }
 
@@ -235,6 +238,7 @@ export async function updateDashboardBrand(brand: CatalogBrand) {
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapBrand(data as BrandRow);
 }
 
@@ -248,12 +252,10 @@ export async function assignProductsToDashboardBrand(productIds: string[], brand
     .in("id", ids);
   throwIfError(error, "Assigning products to brand failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
-export async function deleteDashboardBrand(
-  brandId: string,
-  destinationBrandId: string | null,
-) {
+export async function deleteDashboardBrand(brandId: string, destinationBrandId: string | null) {
   await requireDashboardStaff();
 
   const { data: media, error: mediaError } = await supabase
@@ -265,20 +267,23 @@ export async function deleteDashboardBrand(
 
   const { error } = await supabase.rpc(
     "delete_store_brand",
-    rpcArgs(destinationBrandId
-      ? { p_brand_id: brandId, p_destination_brand_id: destinationBrandId }
-      : { p_brand_id: brandId },
-  ));
+    rpcArgs(
+      destinationBrandId
+        ? { p_brand_id: brandId, p_destination_brand_id: destinationBrandId }
+        : { p_brand_id: brandId },
+    ),
+  );
   throwIfError(error, "Deleting brand failed");
 
-  const unusedMedia = [media?.logo_url, media?.cover_image_url].filter(
-    (url): url is string => Boolean(url),
+  const unusedMedia = [media?.logo_url, media?.cover_image_url].filter((url): url is string =>
+    Boolean(url),
   );
   await Promise.all(
     unusedMedia.map((url) => removeDashboardBrandImage(url).catch(() => undefined)),
   );
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function reorderDashboardBrands(brands: CatalogBrand[]) {
@@ -287,11 +292,15 @@ export async function reorderDashboardBrands(brands: CatalogBrand[]) {
     id: brand.id,
     sort_order: index + 1,
   })) satisfies Json[];
-  const { error } = await supabase.rpc("reorder_store_brands", rpcArgs({
-    p_items: items as Json,
-  }));
+  const { error } = await supabase.rpc(
+    "reorder_store_brands",
+    rpcArgs({
+      p_items: items as Json,
+    }),
+  );
   throwIfError(error, "Saving brand order failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function refreshDashboardProducts() {

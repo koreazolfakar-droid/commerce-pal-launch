@@ -7,18 +7,38 @@
 export interface StoreProductNode {
   id: string;
   title: string;
+  titleAr?: string;
   description: string;
+  descriptionAr?: string;
   descriptionHtml?: string;
   handle: string;
   vendor?: string;
+  vendorSlug?: string;
+  vendorHidden?: boolean;
+  /** Immutable Dashboard category assignment; productType is a separate, editable label. */
+  categoryId?: string | null;
+  /** Slug of the active managed category, resolved through the category ID. */
+  categorySlug?: string;
+  categoryName?: string;
   productType?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   availableForSale?: boolean;
   createdAt?: string;
   updatedAt?: string;
   tags?: string[];
+  specificationGroups?: Array<{
+    title: string;
+    titleAr?: string;
+    rows: Array<{ label: string; labelAr?: string; value: string }>;
+  }>;
   priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   compareAtPriceRange?: { minVariantPrice: { amount: string; currencyCode: string } };
-  images: { edges: Array<{ node: { url: string; altText: string | null } }> };
+  images: {
+    edges: Array<{
+      node: { url: string; thumbnailUrl?: string; altText: string | null };
+    }>;
+  };
   collections?: { edges: Array<{ node: { handle: string; title: string } }> };
   variants: {
     edges: Array<{
@@ -52,5 +72,7 @@ export interface StoreCollection {
   handle: string;
   title: string;
   description: string;
+  seoTitle?: string;
+  seoDescription?: string;
   image: { url: string; altText: string | null } | null;
 }

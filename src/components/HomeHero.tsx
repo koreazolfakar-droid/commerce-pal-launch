@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TrustBenefitsRail } from "@/components/TrustBenefitsRail";
 import { localizeHeroSlide, type CmsHeroSlide } from "@/lib/cms";
+import { CRITICAL_HERO_DESKTOP_URL, CRITICAL_HERO_MOBILE_URL } from "@/lib/criticalHero";
 import { useLanguage } from "@/lib/i18n";
 
 export function HomeHero({
@@ -20,7 +21,8 @@ export function HomeHero({
     [cmsHeroSlides, failedCmsSlideIds, language],
   );
 
-  const slideCount = localizedCmsSlides.length;
+  const renderedSlides = localizedCmsSlides;
+  const slideCount = renderedSlides.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
 
@@ -29,8 +31,8 @@ export function HomeHero({
   }, [slideCount]);
 
 
-  const cmsSlide = localizedCmsSlides[activeIndex] ?? localizedCmsSlides[0];
-  const heroSource = cmsSlide ? "supabase-cms" : "placeholder";
+  const cmsSlide = renderedSlides[activeIndex] ?? renderedSlides[0];
+  const heroSource = localizedCmsSlides.length ? "supabase-cms" : "placeholder";
 
   return (
     <>
@@ -71,21 +73,28 @@ export function HomeHero({
             }
           />
         ) : (
-          <div
+          <picture
             data-testid="home-hero-media"
             aria-hidden="true"
-            className="absolute inset-0 z-[1] grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-8"
+            className="absolute inset-0 z-[1] block overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950"
           >
-            <div className="grid place-items-center rounded-3xl bg-white/95 p-5 shadow-xl">
-              <img src="/logo.svg" alt="" className="h-14 w-auto max-w-[15rem] object-contain" />
-            </div>
-          </div>
+            <source media="(max-width: 639px)" srcSet={CRITICAL_HERO_MOBILE_URL} />
+            <img
+              src={CRITICAL_HERO_DESKTOP_URL}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
         )}
 
         {slideCount > 1 && (
           <div
             data-testid="home-hero-dots"
             className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex justify-center sm:bottom-3"
+            role="group"
             aria-label={language === "ar" ? "شرائح الهيرو" : "Hero slides"}
           >
             <div className="pointer-events-auto flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-slate-950/45 px-1.5 py-1 shadow-sm backdrop-blur-md">
@@ -126,7 +135,7 @@ export function HomeHero({
               </div>
               <button
                 type="button"
-                className="grid size-9 place-items-center rounded-full text-lg text-white/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="grid size-11 shrink-0 place-items-center rounded-full text-lg text-white/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 aria-label={language === "ar" ? "الشريحة التالية" : "Next slide"}
                 onClick={() =>
                   setActiveIndex((index) => (index + 1) % slideCount)

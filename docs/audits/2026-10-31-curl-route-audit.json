@@ -1,0 +1,2858 @@
+{
+  "date": "2026-10-31",
+  "scope": "Read-only HTTP/SSR route audit before fixes; no authentication or order writes",
+  "routes": [
+    {
+      "url": "https://spacecallapp.store/",
+      "final_url": "https://spacecallapp.store/",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Lebanon | Official Online Electronics Store"
+    },
+    {
+      "url": "https://spacecallapp.store/ar",
+      "final_url": "https://spacecallapp.store/ar",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/ar"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1"
+      ],
+      "title": "Space Call لبنان | متجر هواتف وإلكترونيات أونلاين"
+    },
+    {
+      "url": "https://spacecallapp.store/shop",
+      "final_url": "https://spacecallapp.store/shop",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/shop"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Phones & Tech in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/categories",
+      "final_url": "https://spacecallapp.store/categories",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/categories"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Categories — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/brands",
+      "final_url": "https://spacecallapp.store/brands",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/brands"
+      ],
+      "robots": [
+        "index,follow"
+      ],
+      "title": "Brands — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/used-phones",
+      "final_url": "https://spacecallapp.store/used-phones",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/used-phones"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Used Phones — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections",
+      "final_url": "https://spacecallapp.store/collections",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "All Collections — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/help",
+      "final_url": "https://spacecallapp.store/help",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/help"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Help Center | Order & Shopping Support"
+    },
+    {
+      "url": "https://spacecallapp.store/contact",
+      "final_url": "https://spacecallapp.store/contact",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/contact"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Contact Space Call | Product & Order Support Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/shipping",
+      "final_url": "https://spacecallapp.store/shipping",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/shipping"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Shipping | Delivery Information Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/returns",
+      "final_url": "https://spacecallapp.store/returns",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/returns"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Returns | Return Policy & Request Guide"
+    },
+    {
+      "url": "https://spacecallapp.store/warranty",
+      "final_url": "https://spacecallapp.store/warranty",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/warranty"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Warranty | Electronics Warranty Guide Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/faq",
+      "final_url": "https://spacecallapp.store/faq",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/faq"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call FAQ | Orders, Delivery, Returns & Warranty"
+    },
+    {
+      "url": "https://spacecallapp.store/about",
+      "final_url": "https://spacecallapp.store/about",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/about"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "About Space Call | Electronics Store in Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/privacy",
+      "final_url": "https://spacecallapp.store/privacy",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/privacy"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Privacy Policy | Customer Data & Store Privacy"
+    },
+    {
+      "url": "https://spacecallapp.store/terms",
+      "final_url": "https://spacecallapp.store/terms",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/terms"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Terms of Service | Online Store Terms Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/category/smartphones",
+      "final_url": "https://spacecallapp.store/category/smartphones",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/smartphones"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Smartphones in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/tablets",
+      "final_url": "https://spacecallapp.store/category/tablets",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/tablets"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Tablets in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/laptops",
+      "final_url": "https://spacecallapp.store/category/laptops",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/laptops"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Laptops in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/smartwatches",
+      "final_url": "https://spacecallapp.store/category/smartwatches",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/smartwatches"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Smartwatches in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/headphones",
+      "final_url": "https://spacecallapp.store/category/headphones",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/headphones"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Headphones & Earbuds in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/chargers",
+      "final_url": "https://spacecallapp.store/category/chargers",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/chargers"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Chargers in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/cables",
+      "final_url": "https://spacecallapp.store/category/cables",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/cables"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Cables in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/power-banks",
+      "final_url": "https://spacecallapp.store/category/power-banks",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/power-banks"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Power Banks in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/gaming",
+      "final_url": "https://spacecallapp.store/category/gaming",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/gaming"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Gaming in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/category/backpack",
+      "final_url": "https://spacecallapp.store/category/backpack",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/category/backpack"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Backpack in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/anker",
+      "final_url": "https://spacecallapp.store/brand/anker",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/samsung",
+      "final_url": "https://spacecallapp.store/brand/samsung",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/apple",
+      "final_url": "https://spacecallapp.store/brand/apple",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/oneplus",
+      "final_url": "https://spacecallapp.store/brand/oneplus",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/black-shark",
+      "final_url": "https://spacecallapp.store/brand/black-shark",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/xiaomi",
+      "final_url": "https://spacecallapp.store/brand/xiaomi",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/lenovo",
+      "final_url": "https://spacecallapp.store/brand/lenovo",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/redmi",
+      "final_url": "https://spacecallapp.store/brand/redmi",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/infinix",
+      "final_url": "https://spacecallapp.store/brand/infinix",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/ugreen",
+      "final_url": "https://spacecallapp.store/brand/ugreen",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/huawei",
+      "final_url": "https://spacecallapp.store/brand/huawei",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/poco",
+      "final_url": "https://spacecallapp.store/brand/poco",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/tecno",
+      "final_url": "https://spacecallapp.store/brand/tecno",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/acefast",
+      "final_url": "https://spacecallapp.store/brand/acefast",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/honor",
+      "final_url": "https://spacecallapp.store/brand/honor",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/sony",
+      "final_url": "https://spacecallapp.store/brand/sony",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/dell",
+      "final_url": "https://spacecallapp.store/brand/dell",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/powerology",
+      "final_url": "https://spacecallapp.store/brand/powerology",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/realme",
+      "final_url": "https://spacecallapp.store/brand/realme",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/redmagic",
+      "final_url": "https://spacecallapp.store/brand/redmagic",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/brand/vention",
+      "final_url": "https://spacecallapp.store/brand/vention",
+      "status": 500,
+      "h1": 1,
+      "canonical": [],
+      "robots": [],
+      "title": "This page didn't load"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/acefast",
+      "final_url": "https://spacecallapp.store/collections/acefast",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/acefast"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "ACEFAST in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/anker-ugreen-chargers",
+      "final_url": "https://spacecallapp.store/collections/anker-ugreen-chargers",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/anker-ugreen-chargers"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Anker UGREEN Chargers in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/samsung",
+      "final_url": "https://spacecallapp.store/collections/samsung",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/samsung"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Samsung in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/chargers",
+      "final_url": "https://spacecallapp.store/collections/chargers",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/chargers"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Chargers in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/oneplus-phones",
+      "final_url": "https://spacecallapp.store/collections/oneplus-phones",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/oneplus-phones"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "OnePlus Phones in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/smartphones",
+      "final_url": "https://spacecallapp.store/collections/smartphones",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/smartphones"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Smartphones in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/backpacks",
+      "final_url": "https://spacecallapp.store/collections/backpacks",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/backpacks"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Backpacks in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/laptop-dell",
+      "final_url": "https://spacecallapp.store/collections/laptop-dell",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/laptop-dell"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Laptop - Dell in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/laptops",
+      "final_url": "https://spacecallapp.store/collections/laptops",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/laptops"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Laptops in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/smart-watches",
+      "final_url": "https://spacecallapp.store/collections/smart-watches",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/smart-watches"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Smart Watches in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/tablets",
+      "final_url": "https://spacecallapp.store/collections/tablets",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/tablets"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Tablets in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/anker-power-banks",
+      "final_url": "https://spacecallapp.store/collections/anker-power-banks",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/anker-power-banks"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Anker Power Banks in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/apple",
+      "final_url": "https://spacecallapp.store/collections/apple",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/apple"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Apple in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/laptop-lenovo",
+      "final_url": "https://spacecallapp.store/collections/laptop-lenovo",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/laptop-lenovo"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Laptop - Lenovo in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/apple-iphone",
+      "final_url": "https://spacecallapp.store/collections/apple-iphone",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/apple-iphone"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Apple iPhone in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/power-banks",
+      "final_url": "https://spacecallapp.store/collections/power-banks",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/power-banks"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Power Banks in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/redmi",
+      "final_url": "https://spacecallapp.store/collections/redmi",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/redmi"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Redmi in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/xiaomi",
+      "final_url": "https://spacecallapp.store/collections/xiaomi",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/xiaomi"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Xiaomi • Redmi • POCO (All) in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/charging-cables",
+      "final_url": "https://spacecallapp.store/collections/charging-cables",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/charging-cables"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Charging Cables in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/iphone-17-series",
+      "final_url": "https://spacecallapp.store/collections/iphone-17-series",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/iphone-17-series"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "iPhone 17 Series in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/xiaomi-phones",
+      "final_url": "https://spacecallapp.store/collections/xiaomi-phones",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/xiaomi-phones"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Xiaomi Phones in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/iphone-16-series",
+      "final_url": "https://spacecallapp.store/collections/iphone-16-series",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/iphone-16-series"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "iPhone 16 Series in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/poco",
+      "final_url": "https://spacecallapp.store/collections/poco",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/poco"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "POCO in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/ugreen",
+      "final_url": "https://spacecallapp.store/collections/ugreen",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/ugreen"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "UGREEN in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/%D8%A7%D9%84%D8%A3%D8%AC%D9%87%D8%B2%D8%A9-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B9%D9%85%D9%84%D8%A9",
+      "final_url": "https://spacecallapp.store/collections/%D8%A7%D9%84%D8%A3%D8%AC%D9%87%D8%B2%D8%A9-%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B9%D9%85%D9%84%D8%A9",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/الأجهزة-المستعملة"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "الأجهزة المستعملة in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/wireless-earbuds",
+      "final_url": "https://spacecallapp.store/collections/wireless-earbuds",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/wireless-earbuds"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Wireless Earbuds in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/xiaomi-1",
+      "final_url": "https://spacecallapp.store/collections/xiaomi-1",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/xiaomi-1"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Xiaomi in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/anker",
+      "final_url": "https://spacecallapp.store/collections/anker",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/anker"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Anker in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/%D9%87%D9%88%D8%A7%D8%AA%D9%81-tecno-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9",
+      "final_url": "https://spacecallapp.store/collections/%D9%87%D9%88%D8%A7%D8%AA%D9%81-tecno-%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/هواتف-tecno-الجديدة"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "هواتف TECNO الجديدة in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/collections/anker-earbuds",
+      "final_url": "https://spacecallapp.store/collections/anker-earbuds",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/collections/anker-earbuds"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large"
+      ],
+      "title": "Anker Earbuds in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/acefast-c24-03-usb-c-to-usb-c-fast-charging-data-cable-60w-1-2m-white",
+      "final_url": "https://spacecallapp.store/product/acefast-c24-03-usb-c-to-usb-c-fast-charging-data-cable-60w-1-2m-white",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/acefast-c24-03-usb-c-to-usb-c-fast-charging-data-cable-60w-1-2m-white"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "ACEFAST C24-03 USB-C to USB-C Fast Charging Data Cable (60W, 1.2m) - White — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/acefast-30w-gan-usb-c-fast-charger-with-led-display-cable-black",
+      "final_url": "https://spacecallapp.store/product/acefast-30w-gan-usb-c-fast-charger-with-led-display-cable-black",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/acefast-30w-gan-usb-c-fast-charger-with-led-display-cable-black"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "ACEFAST 30W GaN USB-C Fast Charger with LED Display & Cable – Black — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/acefast-a119-45w-gan-usb-c-charger-set",
+      "final_url": "https://spacecallapp.store/product/acefast-a119-45w-gan-usb-c-charger-set",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/acefast-a119-45w-gan-usb-c-charger-set"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "ACEFAST A119 45W GaN USB-C Charger Set + 1.2m Cable"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-18-pro-max",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-18-pro-max",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-18-pro-max"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 18 Pro Max — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/bange-6625-super-light-genuine-leather-15-6-inch-waterproof-laptop-backpack",
+      "final_url": "https://spacecallapp.store/product/bange-6625-super-light-genuine-leather-15-6-inch-waterproof-laptop-backpack",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/bange-6625-super-light-genuine-leather-15-6-inch-waterproof-laptop-backpack"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "BANGE 6625 Super-Light Genuine Leather 15.6-inch Waterproof Laptop Backpack — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/bange-7700-large-capacity-15-6-inch-waterproof-laptop-backpack",
+      "final_url": "https://spacecallapp.store/product/bange-7700-large-capacity-15-6-inch-waterproof-laptop-backpack",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/bange-7700-large-capacity-15-6-inch-waterproof-laptop-backpack"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "BANGE 7700 Large Capacity 15.6-inch Waterproof Laptop Backpack — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/mark-ryden-aeroshield-15-6-inch-waterproof-backpack-with-usb-charging-port-mr6886",
+      "final_url": "https://spacecallapp.store/product/mark-ryden-aeroshield-15-6-inch-waterproof-backpack-with-usb-charging-port-mr6886",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/mark-ryden-aeroshield-15-6-inch-waterproof-backpack-with-usb-charging-port-mr6886"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Mark Ryden AeroShield 15.6-inch Waterproof Backpack with USB Charging Port - MR6886 — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/wiwu-14-inch-ora-waterproof-backpack",
+      "final_url": "https://spacecallapp.store/product/wiwu-14-inch-ora-waterproof-backpack",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/wiwu-14-inch-ora-waterproof-backpack"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "WiWU 14-inch Ora Waterproof Backpack — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/mark-ryden-mist-backpack-l_mr1106_00",
+      "final_url": "https://spacecallapp.store/product/mark-ryden-mist-backpack-l_mr1106_00",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/mark-ryden-mist-backpack-l_mr1106_00"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Mark Ryden Mist Backpack - L_MR1106_00 — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/dell-ecoloop-urban-backpack-14-16-inch-cp4523g",
+      "final_url": "https://spacecallapp.store/product/dell-ecoloop-urban-backpack-14-16-inch-cp4523g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/dell-ecoloop-urban-backpack-14-16-inch-cp4523g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Dell EcoLoop Urban Backpack 14–16-inch (CP4523G) — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/mark-ryden-compilo-oxford-anti-theft-waterproof-laptop-backpack-with-usb-port",
+      "final_url": "https://spacecallapp.store/product/mark-ryden-compilo-oxford-anti-theft-waterproof-laptop-backpack-with-usb-port",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/mark-ryden-compilo-oxford-anti-theft-waterproof-laptop-backpack-with-usb-port"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Mark Ryden Compilo Oxford Anti-Theft Waterproof Laptop Backpack with USB Port — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/ugreen-up-to-15-6-inches-laptop-backpack-b02-lp664-90798",
+      "final_url": "https://spacecallapp.store/product/ugreen-up-to-15-6-inches-laptop-backpack-b02-lp664-90798",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/ugreen-up-to-15-6-inches-laptop-backpack-b02-lp664-90798"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "UGREEN Up to 15.6 inches Laptop Backpack B02 – LP664 – 90798 — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/mark-ryden-coast-laptop-backpack-waterproof-anti-theft",
+      "final_url": "https://spacecallapp.store/product/mark-ryden-coast-laptop-backpack-waterproof-anti-theft",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/mark-ryden-coast-laptop-backpack-waterproof-anti-theft"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Mark Ryden Coast Laptop Backpack – Waterproof & Anti-Theft — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-mi-casual-daypack-bag-lightweight-durable-water-resistant",
+      "final_url": "https://spacecallapp.store/product/xiaomi-mi-casual-daypack-bag-lightweight-durable-water-resistant",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-mi-casual-daypack-bag-lightweight-durable-water-resistant"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi Mi Casual Daypack Bag – Lightweight, Durable & Water-Resistant — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/mark-ryden-muke-i-mr1611-laptop-backpack-waterproof-anti-theft",
+      "final_url": "https://spacecallapp.store/product/mark-ryden-muke-i-mr1611-laptop-backpack-waterproof-anti-theft",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/mark-ryden-muke-i-mr1611-laptop-backpack-waterproof-anti-theft"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Mark Ryden Muke I MR1611 Laptop Backpack – Waterproof & Anti-Theft — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/mark-ryden-expandos-mr9299-17-6-expandable-2-in-1-travel-backpack",
+      "final_url": "https://spacecallapp.store/product/mark-ryden-expandos-mr9299-17-6-expandable-2-in-1-travel-backpack",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/mark-ryden-expandos-mr9299-17-6-expandable-2-in-1-travel-backpack"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Mark Ryden Expandos MR9299 17.6\" Expandable 2-in-1 Travel Backpack — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-watch-8-40mm-graphite",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-watch-8-40mm-graphite",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-watch-8-40mm-graphite"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy Watch 8 - 40mm - Graphite — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-smart-band-10-amoled-fitness-tracker-with-150-sports-modes-21-day-battery",
+      "final_url": "https://spacecallapp.store/product/xiaomi-smart-band-10-amoled-fitness-tracker-with-150-sports-modes-21-day-battery",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-smart-band-10-amoled-fitness-tracker-with-150-sports-modes-21-day-battery"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi Smart Band 10 – AMOLED Fitness Tracker with 150+ Sports Modes & 21-Day Battery — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/cmf-watch-3-pro",
+      "final_url": "https://spacecallapp.store/product/cmf-watch-3-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/cmf-watch-3-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "CMF Watch 3 Pro — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/huawei-band-10",
+      "final_url": "https://spacecallapp.store/product/huawei-band-10",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/huawei-band-10"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Huawei Band 10 — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-gt3-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-gt3-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-gt3-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark GT3 Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-s3-classic-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-s3-classic-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-s3-classic-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark S3 Classic Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-gs3-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-gs3-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-gs3-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark GS3 Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-gt3-neo-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-gt3-neo-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-gt3-neo-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark GT3 Neo Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-gs3-ultra-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-gs3-ultra-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-gs3-ultra-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark GS3 Ultra Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-s1-pro-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-s1-pro-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-s1-pro-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark S1 Pro Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-s3-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-s3-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-s3-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark S3 Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-smart-band-10-ceramic-edition-pearl-white",
+      "final_url": "https://spacecallapp.store/product/xiaomi-smart-band-10-ceramic-edition-pearl-white",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-smart-band-10-ceramic-edition-pearl-white"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi Smart Band 10 Ceramic Edition - Pearl White — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/huawei-watch-fit-4-pro",
+      "final_url": "https://spacecallapp.store/product/huawei-watch-fit-4-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/huawei-watch-fit-4-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Huawei Watch Fit 4 Pro — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/huawei-watch-fit-5",
+      "final_url": "https://spacecallapp.store/product/huawei-watch-fit-5",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/huawei-watch-fit-5"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "HUAWEI Watch Fit 5 — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/huawei-watch-fit-5-pro",
+      "final_url": "https://spacecallapp.store/product/huawei-watch-fit-5-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/huawei-watch-fit-5-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "HUAWEI WATCH FIT 5 Pro — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-gt3-neo-2-smart-watch",
+      "final_url": "https://spacecallapp.store/product/black-shark-gt3-neo-2-smart-watch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-gt3-neo-2-smart-watch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark GT3 Neo 2 Smart Watch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-run-smartwatch",
+      "final_url": "https://spacecallapp.store/product/black-shark-run-smartwatch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-run-smartwatch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark Run Smartwatch — Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-open",
+      "final_url": "https://spacecallapp.store/product/oneplus-open",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-open"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Open Foldable Phone | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-nord-ce-3-lite-5g",
+      "final_url": "https://spacecallapp.store/product/oneplus-nord-ce-3-lite-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-nord-ce-3-lite-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Nord CE 3 Lite 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-nord-ce-4-lite-5g",
+      "final_url": "https://spacecallapp.store/product/oneplus-nord-ce-4-lite-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-nord-ce-4-lite-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Nord CE 4 Lite 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-nord-ce-4",
+      "final_url": "https://spacecallapp.store/product/oneplus-nord-ce-4",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-nord-ce-4"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Nord CE 4 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-nord-3-5g",
+      "final_url": "https://spacecallapp.store/product/oneplus-nord-3-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-nord-3-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Nord 3 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-nord-4",
+      "final_url": "https://spacecallapp.store/product/oneplus-nord-4",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-nord-4"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Nord 4 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-nord-5",
+      "final_url": "https://spacecallapp.store/product/oneplus-nord-5",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-nord-5"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus Nord 5 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-11",
+      "final_url": "https://spacecallapp.store/product/oneplus-11",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-11"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus 11 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-12r",
+      "final_url": "https://spacecallapp.store/product/oneplus-12r",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-12r"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus 12R 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-12",
+      "final_url": "https://spacecallapp.store/product/oneplus-12",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-12"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus 12 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-13r",
+      "final_url": "https://spacecallapp.store/product/oneplus-13r",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-13r"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus 13R 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/oneplus-13",
+      "final_url": "https://spacecallapp.store/product/oneplus-13",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/oneplus-13"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "OnePlus 13 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/infinix-zero-40-5g",
+      "final_url": "https://spacecallapp.store/product/infinix-zero-40-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/infinix-zero-40-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Infinix Zero 40 5G 12GB 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/infinix-gt-30-pro",
+      "final_url": "https://spacecallapp.store/product/infinix-gt-30-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/infinix-gt-30-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Infinix GT 30 Pro 5G 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/infinix-note-50-pro",
+      "final_url": "https://spacecallapp.store/product/infinix-note-50-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/infinix-note-50-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Infinix Note 50 Pro+ 5G 12GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/infinix-note-edge",
+      "final_url": "https://spacecallapp.store/product/infinix-note-edge",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/infinix-note-edge"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Infinix Note Edge 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/infinix-hot-60-pro",
+      "final_url": "https://spacecallapp.store/product/infinix-hot-60-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/infinix-hot-60-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Infinix Hot 60 Pro 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/infinix-smart-9",
+      "final_url": "https://spacecallapp.store/product/infinix-smart-9",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/infinix-smart-9"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Infinix Smart 9 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-322-usb-c-to-usb-c-nylon-cable-60w-6ft",
+      "final_url": "https://spacecallapp.store/product/anker-322-usb-c-to-usb-c-nylon-cable-60w-6ft",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-322-usb-c-to-usb-c-nylon-cable-60w-6ft"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 322 USB-C to USB-C Nylon Cable 60W 6ft | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-322-usb-c-to-usb-c-cable-60w-3ft",
+      "final_url": "https://spacecallapp.store/product/anker-322-usb-c-to-usb-c-cable-60w-3ft",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-322-usb-c-to-usb-c-cable-60w-3ft"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 322 USB-C to USB-C Cable 60W 3ft | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-322-usb-a-to-usb-c-braided-cable-6ft-1-8m",
+      "final_url": "https://spacecallapp.store/product/anker-322-usb-a-to-usb-c-braided-cable-6ft-1-8m",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-322-usb-a-to-usb-c-braided-cable-6ft-1-8m"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 322 USB-A to USB-C Cable 6ft | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-322-usb-a-to-usb-c-braided-cable-3ft-0-9m",
+      "final_url": "https://spacecallapp.store/product/anker-322-usb-a-to-usb-c-braided-cable-3ft-0-9m",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-322-usb-a-to-usb-c-braided-cable-3ft-0-9m"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 322 USB-A to USB-C Cable 3ft | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/honor-magicpad-4-tablet-256gb-with-smart-touch-keyboard",
+      "final_url": "https://spacecallapp.store/product/honor-magicpad-4-tablet-256gb-with-smart-touch-keyboard",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/honor-magicpad-4-tablet-256gb-with-smart-touch-keyboard"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "HONOR MagicPad 4 256GB Tablet | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/realme-gt-8-pro-5g-china",
+      "final_url": "https://spacecallapp.store/product/realme-gt-8-pro-5g-china",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/realme-gt-8-pro-5g-china"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "realme GT 8 Pro 5G China | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/sony-playstation-5-pro-ps5-pro",
+      "final_url": "https://spacecallapp.store/product/sony-playstation-5-pro-ps5-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/sony-playstation-5-pro-ps5-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Sony PlayStation 5 Pro 2TB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/sony-playstation-5-ps5",
+      "final_url": "https://spacecallapp.store/product/sony-playstation-5-ps5",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/sony-playstation-5-ps5"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Sony PlayStation 5 PS5 1TB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmagic-astra-gaming-tablet",
+      "final_url": "https://spacecallapp.store/product/redmagic-astra-gaming-tablet",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmagic-astra-gaming-tablet"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "RedMagic Astra Gaming Tablet | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/black-shark-gaming-tablet",
+      "final_url": "https://spacecallapp.store/product/black-shark-gaming-tablet",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/black-shark-gaming-tablet"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Black Shark Gaming Tablet 8.8 inch | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-ipad-pro-11-m5",
+      "final_url": "https://spacecallapp.store/product/apple-ipad-pro-11-m5",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-ipad-pro-11-m5"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPad Pro 11 M5 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-pad-7",
+      "final_url": "https://spacecallapp.store/product/xiaomi-pad-7",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-pad-7"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi Pad 7 11.2 inch Tablet | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-tab-s11-ultra",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-tab-s11-ultra",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-tab-s11-ultra"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy Tab S11 Ultra | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/honor-watch-4",
+      "final_url": "https://spacecallapp.store/product/honor-watch-4",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/honor-watch-4"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "HONOR Watch 4 Smart Watch | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/honor-x9d-5g-12gb-256gb",
+      "final_url": "https://spacecallapp.store/product/honor-x9d-5g-12gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/honor-x9d-5g-12gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "HONOR X9d 5G 12GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/powerology-magvolt-10000mah-magnetic-power-bank-black",
+      "final_url": "https://spacecallapp.store/product/powerology-magvolt-10000mah-magnetic-power-bank-black",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/powerology-magvolt-10000mah-magnetic-power-bank-black"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Powerology MagVolt 10000mAh Magnetic Power Bank | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-note-14-pro-plus-5g-256gb",
+      "final_url": "https://spacecallapp.store/product/redmi-note-14-pro-plus-5g-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-note-14-pro-plus-5g-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi Note 14 Pro+ 5G 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-15-4g-256gb-2-years-warranty",
+      "final_url": "https://spacecallapp.store/product/redmi-15-4g-256gb-2-years-warranty",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-15-4g-256gb-2-years-warranty"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi 15 4G 256GB 2 Year Warranty | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-a7-pro-128gb",
+      "final_url": "https://spacecallapp.store/product/redmi-a7-pro-128gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-a7-pro-128gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi A7 Pro 128GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-a7-pro-64gb",
+      "final_url": "https://spacecallapp.store/product/redmi-a7-pro-64gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-a7-pro-64gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi A7 Pro 64GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-15c-4g-8gb-256gb",
+      "final_url": "https://spacecallapp.store/product/redmi-15c-4g-8gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-15c-4g-8gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi 15C 4G 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-note-15-pro-4g-512gb",
+      "final_url": "https://spacecallapp.store/product/redmi-note-15-pro-4g-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-note-15-pro-4g-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi Note 15 Pro 4G 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/redmi-note-15-pro-5g-256gb",
+      "final_url": "https://spacecallapp.store/product/redmi-note-15-pro-5g-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/redmi-note-15-pro-5g-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Redmi Note 15 Pro 5G 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-17-ultra-package",
+      "final_url": "https://spacecallapp.store/product/xiaomi-17-ultra-package",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-17-ultra-package"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi 17 Ultra Package in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-17t-pro-1tb",
+      "final_url": "https://spacecallapp.store/product/xiaomi-17t-pro-1tb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-17t-pro-1tb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi 17T Pro 1TB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-17-ultra",
+      "final_url": "https://spacecallapp.store/product/xiaomi-17-ultra",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-17-ultra"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi 17 Ultra 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-17-512gb",
+      "final_url": "https://spacecallapp.store/product/xiaomi-17-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-17-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi 17 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/xiaomi-17t-512gb",
+      "final_url": "https://spacecallapp.store/product/xiaomi-17t-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/xiaomi-17t-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Xiaomi 17T 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/poco-f8-ultra",
+      "final_url": "https://spacecallapp.store/product/poco-f8-ultra",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/poco-f8-ultra"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "POCO F8 Ultra | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/poco-x8-pro-5g-512gb",
+      "final_url": "https://spacecallapp.store/product/poco-x8-pro-5g-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/poco-x8-pro-5g-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "POCO X8 Pro 5G 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/poco-f8-pro-5g-512gb",
+      "final_url": "https://spacecallapp.store/product/poco-f8-pro-5g-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/poco-f8-pro-5g-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "POCO F8 Pro 5G 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/poco-c85-256gb",
+      "final_url": "https://spacecallapp.store/product/poco-c85-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/poco-c85-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "POCO C85 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-16e",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-16e",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-16e"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 16e | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-16-pro-max",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-16-pro-max",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-16-pro-max"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 16 Pro Max | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-16-pro",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-16-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-16-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 16 Pro | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-16-plus",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-16-plus",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-16-plus"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 16 Plus | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-16",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-16",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-16"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 16 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-17e",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-17e",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-17e"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 17e | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-17-pro-max",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-17-pro-max",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-17-pro-max"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 17 Pro Max | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-17-pro",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-17-pro",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-17-pro"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 17 Pro | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-air",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-air",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-air"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone Air | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/apple-iphone-17",
+      "final_url": "https://spacecallapp.store/product/apple-iphone-17",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/apple-iphone-17"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Apple iPhone 17 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i5-13420h-8gb-512gb-1",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i5-13420h-8gb-512gb-1",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i5-13420h-8gb-512gb-1"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad Slim 3 i5 8GB 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-v15-core-i7-13620h-8gb-512gb",
+      "final_url": "https://spacecallapp.store/product/lenovo-v15-core-i7-13620h-8gb-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-v15-core-i7-13620h-8gb-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo V15 Core i7 8GB 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i7-13620h-16gb-512gb",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i7-13620h-16gb-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i7-13620h-16gb-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad Slim 3 i7 16GB 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i5-13420h-8gb-512gb",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i5-13420h-8gb-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-slim-3-core-i5-13420h-8gb-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad Slim 3 i5 8GB 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-1-15iru7-core-i5-1335u-8gb-256gb-touch",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-1-15iru7-core-i5-1335u-8gb-256gb-touch",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-1-15iru7-core-i5-1335u-8gb-256gb-touch"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad 1 i5 Touch 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-15ian8-n100-8gb-256gb",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-15ian8-n100-8gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-slim-3-15ian8-n100-8gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad Slim 3 N100 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-1-celeron-n4500-8gb-256gb",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-1-celeron-n4500-8gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-1-celeron-n4500-8gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad 1 Celeron N4500 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-15iru8-core-i3-1315u-8gb-512gb",
+      "final_url": "https://spacecallapp.store/product/lenovo-ideapad-slim-3-15iru8-core-i3-1315u-8gb-512gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/lenovo-ideapad-slim-3-15iru8-core-i3-1315u-8gb-512gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Lenovo IdeaPad Slim 3 i3 8GB 512GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-z-fold8-ultra",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-z-fold8-ultra",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-z-fold8-ultra"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy Z Fold8 Ultra | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-z-fold8",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-z-fold8",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-z-fold8"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy Z Fold8 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-z-flip8",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-z-flip8",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-z-flip8"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy Z Flip8 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-s26-1",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-s26-1",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-s26-1"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy S26+ | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-s26",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-s26",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-s26"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy S26 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-s25-edge",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-s25-edge",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-s25-edge"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy S25 Edge | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-a27-5g",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-a27-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-a27-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy A27 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-s25-fe",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-s25-fe",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-s25-fe"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy S25 FE | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-a57-5g",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-a57-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-a57-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy A57 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-a37-5g",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-a37-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-a37-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy A37 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-a26-5g",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-a26-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-a26-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy A26 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-a17-5g",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-a17-5g",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-a17-5g"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy A17 5G | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-a07",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-a07",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-a07"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy A07 4G Dual SIM | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/samsung-galaxy-s24-ultra",
+      "final_url": "https://spacecallapp.store/product/samsung-galaxy-s24-ultra",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/samsung-galaxy-s24-ultra"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Samsung Galaxy S24 Ultra | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/ugreen-nexode-pro-65w-3-port-charger",
+      "final_url": "https://spacecallapp.store/product/ugreen-nexode-pro-65w-3-port-charger",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/ugreen-nexode-pro-65w-3-port-charger"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "UGREEN Nexode Pro 65W 3-Port Charger | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/ugreen-200w-4-port-laptop-charger",
+      "final_url": "https://spacecallapp.store/product/ugreen-200w-4-port-laptop-charger",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/ugreen-200w-4-port-laptop-charger"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "UGREEN 200W 4-Port Laptop Charger | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/ugreen-nexode-65w-charger-with-retractable-usb-c-cable",
+      "final_url": "https://spacecallapp.store/product/ugreen-nexode-65w-charger-with-retractable-usb-c-cable",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/ugreen-nexode-65w-charger-with-retractable-usb-c-cable"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "UGREEN Nexode 65W Charger with USB-C Cable | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/ugreen-nexode-45w-2-port-charger-with-retractable-cable",
+      "final_url": "https://spacecallapp.store/product/ugreen-nexode-45w-2-port-charger-with-retractable-cable",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/ugreen-nexode-45w-2-port-charger-with-retractable-cable"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "UGREEN Nexode 45W 2-Port Charger | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/ugreen-nexode-100w-charger-with-retractable-usb-c-cable",
+      "final_url": "https://spacecallapp.store/product/ugreen-nexode-100w-charger-with-retractable-usb-c-cable",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/ugreen-nexode-100w-charger-with-retractable-usb-c-cable"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "UGREEN Nexode 100W Charger with USB-C Cable | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-prime-charger-100w-3-ports-gan",
+      "final_url": "https://spacecallapp.store/product/anker-prime-charger-100w-3-ports-gan",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-prime-charger-100w-3-ports-gan"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Prime Charger 100W 3 Port GaN | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-735-charger-nano-ii-65w",
+      "final_url": "https://spacecallapp.store/product/anker-735-charger-nano-ii-65w",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-735-charger-nano-ii-65w"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 735 Charger Nano II 65W | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-715-charger-nano-ii-65w",
+      "final_url": "https://spacecallapp.store/product/anker-715-charger-nano-ii-65w",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-715-charger-nano-ii-65w"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 715 Charger Nano II 65W | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-nano-charger-45w-with-usb-c-cable",
+      "final_url": "https://spacecallapp.store/product/anker-nano-charger-45w-with-usb-c-cable",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-nano-charger-45w-with-usb-c-cable"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Nano Charger 45W USB-C Cable | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-nano-charger-20w",
+      "final_url": "https://spacecallapp.store/product/anker-nano-charger-20w",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-nano-charger-20w"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Nano Charger 20W USB-C | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-laptop-power-bank-25k-165w-built-in-and-retractable-cables",
+      "final_url": "https://spacecallapp.store/product/anker-laptop-power-bank-25k-165w-built-in-and-retractable-cables",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-laptop-power-bank-25k-165w-built-in-and-retractable-cables"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Laptop Power Bank 25K 165W | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-prime-power-bank-20k-220w",
+      "final_url": "https://spacecallapp.store/product/anker-prime-power-bank-20k-220w",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-prime-power-bank-20k-220w"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Prime Power Bank 20K 220W | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-power-bank-20k-87w-built-in-usb-c-cable",
+      "final_url": "https://spacecallapp.store/product/anker-power-bank-20k-87w-built-in-usb-c-cable",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-power-bank-20k-87w-built-in-usb-c-cable"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Power Bank 20K 87W USB-C Cable | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-nano-power-bank-10k-45w-built-in-retractable-usb-c-cable",
+      "final_url": "https://spacecallapp.store/product/anker-nano-power-bank-10k-45w-built-in-retractable-usb-c-cable",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-nano-power-bank-10k-45w-built-in-retractable-usb-c-cable"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Nano Power Bank 10K 45W | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-zolo-power-bank-20k-45w",
+      "final_url": "https://spacecallapp.store/product/anker-zolo-power-bank-20k-45w",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-zolo-power-bank-20k-45w"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Zolo Power Bank 20K 45W | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-313-power-bank-powercore-10k",
+      "final_url": "https://spacecallapp.store/product/anker-313-power-bank-powercore-10k",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-313-power-bank-powercore-10k"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker 313 Power Bank PowerCore 10K | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/soundcore-liberty-5",
+      "final_url": "https://spacecallapp.store/product/soundcore-liberty-5",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/soundcore-liberty-5"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "soundcore Liberty 5 | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/soundcore-liberty-4-nc",
+      "final_url": "https://spacecallapp.store/product/soundcore-liberty-4-nc",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/soundcore-liberty-4-nc"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "soundcore Liberty 4 NC | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/soundcore-p40i",
+      "final_url": "https://spacecallapp.store/product/soundcore-p40i",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/soundcore-p40i"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "soundcore P40i Wireless Earbuds | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/soundcore-p31i",
+      "final_url": "https://spacecallapp.store/product/soundcore-p31i",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/soundcore-p31i"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "soundcore P31i Wireless Earbuds | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/soundcore-p30i",
+      "final_url": "https://spacecallapp.store/product/soundcore-p30i",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/soundcore-p30i"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "soundcore P30i Wireless Earbuds | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/tecno-spark-50-pro-4gb-256gb",
+      "final_url": "https://spacecallapp.store/product/tecno-spark-50-pro-4gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/tecno-spark-50-pro-4gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "TECNO SPARK 50 Pro 4GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/tecno-pova-7-ultra-5g-12gb-256gb",
+      "final_url": "https://spacecallapp.store/product/tecno-pova-7-ultra-5g-12gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/tecno-pova-7-ultra-5g-12gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "TECNO POVA 7 Ultra 5G 12GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/tecno-camon-50-ultra-5g-12gb-256gb",
+      "final_url": "https://spacecallapp.store/product/tecno-camon-50-ultra-5g-12gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/tecno-camon-50-ultra-5g-12gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "TECNO CAMON 50 Ultra 5G 12GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/tecno-camon-50-pro-8gb-256gb",
+      "final_url": "https://spacecallapp.store/product/tecno-camon-50-pro-8gb-256gb",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/tecno-camon-50-pro-8gb-256gb"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "TECNO CAMON 50 Pro 8GB 256GB | Lebanon"
+    },
+    {
+      "url": "https://spacecallapp.store/product/anker-soundcore-liberty-4-nc",
+      "final_url": "https://spacecallapp.store/product/anker-soundcore-liberty-4-nc",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/anker-soundcore-liberty-4-nc"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Anker Soundcore Liberty 4 NC in Lebanon | Space Call"
+    },
+    {
+      "url": "https://spacecallapp.store/product/vention-power-bank",
+      "final_url": "https://spacecallapp.store/product/vention-power-bank",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/product/vention-power-bank"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Vention 10000mAh Power Bank 22.5W | Lebanon"
+    },
+    {
+      "url": "https://www.spacecallapp.store/cart",
+      "final_url": "https://www.spacecallapp.store/cart",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/cart"
+      ],
+      "robots": [
+        "noindex, follow"
+      ],
+      "title": "Your bag — Space Call"
+    },
+    {
+      "url": "https://www.spacecallapp.store/wishlist",
+      "final_url": "https://www.spacecallapp.store/wishlist",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/wishlist"
+      ],
+      "robots": [
+        "noindex, follow"
+      ],
+      "title": "Your wishlist — Space Call"
+    },
+    {
+      "url": "https://www.spacecallapp.store/compare",
+      "final_url": "https://www.spacecallapp.store/",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/"
+      ],
+      "robots": [
+        "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      ],
+      "title": "Space Call Lebanon | Official Online Electronics Store"
+    },
+    {
+      "url": "https://www.spacecallapp.store/search?q=charger",
+      "final_url": "https://www.spacecallapp.store/search?q=charger",
+      "status": 200,
+      "h1": 1,
+      "canonical": [
+        "https://spacecallapp.store/search"
+      ],
+      "robots": [
+        "noindex, follow"
+      ],
+      "title": "Search products — Space Call"
+    },
+    {
+      "url": "https://www.spacecallapp.store/my-orders",
+      "final_url": "https://www.spacecallapp.store/my-orders",
+      "status": 200,
+      "h1": 0,
+      "canonical": [
+        "https://spacecallapp.store/my-orders"
+      ],
+      "robots": [
+        "noindex, follow"
+      ],
+      "title": "My orders — Space Call"
+    },
+    {
+      "url": "https://www.spacecallapp.store/checkout",
+      "final_url": "https://www.spacecallapp.store/checkout",
+      "status": 200,
+      "h1": 0,
+      "canonical": [
+        "https://spacecallapp.store/checkout"
+      ],
+      "robots": [
+        "noindex, nofollow"
+      ],
+      "title": "Checkout — Space Call"
+    },
+    {
+      "url": "https://www.spacecallapp.store/dashboard",
+      "final_url": "https://www.spacecallapp.store/dashboard",
+      "status": 200,
+      "h1": 0,
+      "canonical": [],
+      "robots": [
+        "noindex, nofollow"
+      ],
+      "title": "Space Call · Admin Dashboard"
+    }
+  ]
+}

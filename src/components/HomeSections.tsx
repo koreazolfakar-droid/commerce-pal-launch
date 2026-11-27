@@ -1,149 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Bike, CreditCard, Heart, MessageCircle, RotateCcw, ShieldCheck, Tag } from "lucide-react";
-import { ArrowRight } from "lucide-react";
 
 import { cdnImage } from "@/lib/image";
-import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { productsByHandlesQueryOptions } from "@/lib/queries";
 import { useLanguage } from "@/lib/i18n";
-import { generalWhatsAppUrl } from "@/lib/whatsapp";
-import { STORE_NAME } from "@/lib/storeConfig";
 import { useRecentlyViewedStore } from "@/stores/recentlyViewedStore";
-
-const BENEFITS = [
-  { icon: Bike, title: "benefitFreeDelivery", detail: "benefitEligibleOrders", fastDelivery: true },
-  { icon: ShieldCheck, title: "benefitWarranty", detail: "benefitAuthentic", fastDelivery: false },
-  { icon: RotateCcw, title: "benefitReturns", detail: "benefitReturnsPolicy", fastDelivery: false },
-  {
-    icon: CreditCard,
-    title: "benefitSecurePayment",
-    detail: "benefitEncryptedCheckout",
-    fastDelivery: false,
-  },
-] as const;
-
-export function BenefitsBar({ compact = false }: { compact?: boolean } = {}) {
-  const { t, language } = useLanguage();
-
-  return (
-    <section
-      aria-label={t("shoppingBenefits")}
-      data-testid="benefits-bar"
-      className="w-full"
-      data-compact={compact ? "true" : "false"}
-    >
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-        {BENEFITS.map((benefit) => (
-          <div
-            key={benefit.title}
-            className="group flex min-h-[5.75rem] min-w-0 items-start gap-2.5 rounded-lg border border-border/70 bg-card p-3 shadow-card transition-colors duration-150 hover:border-primary/20 sm:min-h-[6.25rem] sm:p-3.5"
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-10 sm:w-10">
-              <benefit.icon
-                className="h-[18px] w-[18px] sm:h-5 sm:w-5"
-                strokeWidth={1.8}
-                aria-hidden="true"
-              />
-            </span>
-            <div className="min-w-0 pt-0.5">
-              <p className="break-words text-[11px] font-extrabold leading-snug tracking-[-0.01em] sm:text-xs">
-                {benefit.fastDelivery
-                  ? language === "ar"
-                    ? "توصيل سريع"
-                    : "Fast delivery"
-                  : t(benefit.title)}
-              </p>
-              <p className="mt-1 break-words text-[10px] leading-snug text-muted-foreground sm:text-[11px]">
-                {t(benefit.detail)}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-const SERVICES = [
-  {
-    icon: Heart,
-    title: "serviceSavedFavorites",
-    detail: "serviceSavedDetail",
-    cta: "serviceSavedAction",
-    to: "/wishlist" as const,
-  },
-  {
-    icon: Tag,
-    title: "serviceDeals",
-    detail: "serviceDealsDetail",
-    cta: "serviceDealsAction",
-    to: "/shop" as const,
-  },
-  {
-    icon: MessageCircle,
-    title: "serviceWhatsApp",
-    detail: "serviceWhatsAppDetail",
-    cta: "serviceWhatsAppAction",
-    to: undefined,
-  },
-] as const;
-
-export function ServicesStrip() {
-  const { t } = useLanguage();
-  const { data: cms } = useQuery(cmsQueryOptions());
-  const cmsStoreName = cms?.settings["site_name"];
-  const cmsWhatsApp = cms?.settings["whatsapp_number"];
-  const storeName =
-    typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
-  const whatsappNumber =
-    typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
-  const whatsappHref = generalWhatsAppUrl(whatsappNumber, storeName);
-  return (
-    <section aria-label={t("storeServices")}>
-      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3">
-        {SERVICES.map((service) => {
-          const className =
-            "group flex min-w-0 flex-col items-start gap-3 rounded-lg border bg-card p-4 shadow-card transition-colors duration-150 hover:border-primary/40 sm:flex-row";
-          const content = (
-            <>
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-primary">
-                <service.icon className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <p className="break-words text-sm font-semibold leading-relaxed">
-                  {t(service.title)}
-                </p>
-                <p className="mt-1 break-words text-xs leading-relaxed text-muted-foreground">
-                  {t(service.detail)}
-                </p>
-                <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                  {t(service.cta)}{" "}
-                  <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-                </span>
-              </div>
-            </>
-          );
-          return service.to ? (
-            <Link key={service.title} to={service.to} className={className}>
-              {content}
-            </Link>
-          ) : (
-            <a
-              key={service.title}
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={className}
-            >
-              {content}
-            </a>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 /** Real products previously opened by this shopper; never invents history. */
 export function RecentlyViewed() {
@@ -174,7 +35,7 @@ export function RecentlyViewed() {
           >
             {product.node.images.edges[0]?.node && (
               <img
-                src={cdnImage(product.node.images.edges[0].node.url, 320)}
+                src={cdnImage(product.node.images.edges[0].node.thumbnailUrl ?? product.node.images.edges[0].node.url, 320)}
                 alt={product.node.images.edges[0].node.altText ?? product.node.title}
                 loading="lazy"
                 width={220}

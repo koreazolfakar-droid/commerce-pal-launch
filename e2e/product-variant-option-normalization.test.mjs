@@ -22,7 +22,7 @@ test("product variant controls remain compact on mobile", async () => {
   const picker = await source("src/components/product/VariantPicker.tsx");
 
   assert.match(picker, /grid gap-3 sm:gap-4/);
-  assert.match(picker, /h-9 w-9/);
+  assert.match(picker, /h-11 w-11/);
   assert.match(picker, /px-3\.5 py-2/);
   assert.doesNotMatch(picker, /selected\[option\.name\][\s\S]{0,140}text-\[13px\]/);
 });

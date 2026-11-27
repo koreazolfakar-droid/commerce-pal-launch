@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import { CategoryGlyph } from "@/components/CategoryGlyph";
+import { HomeCategorySkeletonItems } from "@/components/LoadingSkeletons";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { findCategoryArtworkCollection } from "@/lib/categoryArtwork";
 import { cdnImage } from "@/lib/image";
@@ -27,6 +28,7 @@ type HomeCategoryItem = {
   image?: string;
   glyphSlug: string;
   count: number;
+  managed: boolean;
 };
 
 async function fetchManagedHomeCategories(): Promise<ManagedHomeCategory[]> {
@@ -65,10 +67,15 @@ export function HomeCategorySection({
 }) {
   const { t, language } = useLanguage();
   const { data: cms } = useQuery(cmsQueryOptions());
-  const { data: managedCategories } = useQuery({
+  const {
+    data: managedCategories,
+    isPending: managedCategoriesPending,
+    isError: managedCategoriesFailed,
+  } = useQuery({
     queryKey: ["storefront", "home-categories"],
     queryFn: fetchManagedHomeCategories,
     staleTime: 30_000,
+    retry: 1,
   });
 
   const facetsBySlug = new Map(catalogCategories.map((category) => [category.slug, category]));
@@ -79,8 +86,7 @@ export function HomeCategorySection({
   const managedItems: HomeCategoryItem[] =
     managedCategories?.map((category) => {
       const facet =
-        facetsBySlug.get(category.slug) ??
-        facetsByName.get(normalizeCategoryName(category.name));
+        facetsBySlug.get(category.slug) ?? facetsByName.get(normalizeCategoryName(category.name));
 
       return {
         slug: category.slug,
@@ -89,6 +95,7 @@ export function HomeCategorySection({
         image: category.image_url || undefined,
         glyphSlug: facet?.slug ?? category.slug,
         count: facet?.count ?? 0,
+        managed: true,
       };
     }) ?? [];
 
@@ -97,11 +104,12 @@ export function HomeCategorySection({
     label: category.label,
     glyphSlug: category.slug,
     count: category.count,
+    managed: false,
   }));
 
-  const categories = managedCategories !== undefined ? managedItems : fallbackItems;
+  const categories = managedCategoriesFailed ? fallbackItems : managedItems;
 
-  if (!categories.length) return null;
+  if (!managedCategoriesPending && !categories.length) return null;
 
   const cmsSection = cms?.sections.find(
     (section) => section.page_slug === "home" && section.section_key === "categories",
@@ -134,61 +142,61 @@ export function HomeCategorySection({
       <div className="relative -mx-4 sm:mx-0">
         <div
           className="category-home-rail flex snap-x snap-proximity gap-3 overflow-x-auto px-4 pb-2 pe-10 scroll-smooth [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 sm:px-0 sm:pe-0 lg:gap-5"
-          role="list"
+          role="navigation"
           aria-label={title}
         >
-          {categories.map((category) => {
-            const label =
-              language === "ar" && category.labelAr?.trim()
-                ? category.labelAr.trim()
-                : managedCategories !== undefined
-                  ? category.label
-                  : categoryLabel(category, language);
-            const artwork = findCategoryArtworkCollection(
-              collections,
-              category.glyphSlug,
-              category.label,
-            );
-            const imageUrl = cdnImage(category.image || artwork?.image?.url, 192);
+          {managedCategoriesPending
+            ? <HomeCategorySkeletonItems />
+            : categories.map((category) => {
+                const label =
+                  language === "ar" && category.labelAr?.trim()
+                    ? category.labelAr.trim()
+                    : managedCategories !== undefined
+                      ? category.label
+                      : categoryLabel(category, language);
+                const artwork = category.managed
+                  ? undefined
+                  : findCategoryArtworkCollection(collections, category.glyphSlug, category.label);
+                const imageUrl = cdnImage(category.image || artwork?.image?.url, 192);
 
-            return (
-              <Link
-                key={category.slug}
-                to="/category/$slug"
-                params={{ slug: category.slug }}
-                role="listitem"
-                aria-label={label}
-                preload="intent"
-                className="category-home-item group flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
-              >
-                <span
-                  className="category-home-media relative grid h-[5.25rem] w-[5.25rem] shrink-0 place-items-center overflow-hidden rounded-xl border border-border/45 bg-card shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-px group-hover:scale-[1.035] group-hover:border-primary/25 group-hover:shadow-[0_6px_16px_-12px_rgba(15,23,42,0.28)] sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]"
-                  aria-hidden="true"
-                >
-                  <span className="pointer-events-none absolute inset-0 bg-card" />
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      width={128}
-                      height={128}
-                      className="relative h-full w-full object-contain p-1"
-                    />
-                  ) : (
-                    <CategoryGlyph
-                      slug={category.glyphSlug}
-                      className="relative h-[4.7rem] w-[4.7rem] sm:h-[5.05rem] sm:w-[5.05rem] lg:h-[5.35rem] lg:w-[5.35rem]"
-                    />
-                  )}
-                </span>
-                <h3 className="category-home-label line-clamp-2 min-h-[2.1rem] w-full max-w-full text-center text-[11.5px] font-semibold leading-[1.25] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.2rem] sm:text-xs">
-                  {label}
-                </h3>
-              </Link>
-            );
-          })}
+                return (
+                  <Link
+                    key={category.slug}
+                    to="/category/$slug"
+                    params={{ slug: category.slug }}
+                    aria-label={label}
+                    preload="intent"
+                    className="category-home-item group flex w-[5.9rem] shrink-0 snap-start flex-col items-center gap-2 px-0.5 py-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:w-[6.65rem] sm:gap-2.5 lg:w-[7.15rem]"
+                  >
+                    <span
+                      className="category-home-media relative grid h-[5.25rem] w-[5.25rem] shrink-0 place-items-center overflow-hidden rounded-xl border border-border/45 bg-card shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,transform] duration-150 group-hover:-translate-y-px group-hover:scale-[1.035] group-hover:border-primary/25 group-hover:shadow-[0_6px_16px_-12px_rgba(15,23,42,0.28)] sm:h-[5.65rem] sm:w-[5.65rem] lg:h-[6rem] lg:w-[6rem]"
+                      aria-hidden="true"
+                    >
+                      <span className="pointer-events-none absolute inset-0 bg-card" />
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          loading="lazy"
+                          fetchPriority="low"
+                          decoding="async"
+                          width={128}
+                          height={128}
+                          className="relative h-full w-full object-contain p-1"
+                        />
+                      ) : (
+                        <CategoryGlyph
+                          slug={category.glyphSlug}
+                          className="relative h-[4.7rem] w-[4.7rem] sm:h-[5.05rem] sm:w-[5.05rem] lg:h-[5.35rem] lg:w-[5.35rem]"
+                        />
+                      )}
+                    </span>
+                    <h3 className="category-home-label line-clamp-2 min-h-[2.1rem] w-full max-w-full text-center text-[11.5px] font-semibold leading-[1.25] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary sm:min-h-[2.2rem] sm:text-xs">
+                      {label}
+                    </h3>
+                  </Link>
+                );
+              })}
         </div>
         <div
           className="pointer-events-none absolute inset-y-0 end-0 w-7 bg-gradient-to-l from-background via-background/75 to-transparent sm:hidden"

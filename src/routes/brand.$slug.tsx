@@ -1,8 +1,10 @@
 import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import { CatalogView } from "@/components/CatalogView";
 import { categoryLabel, useLanguage } from "@/lib/i18n";
 import { StoreLayout } from "@/components/StoreLayout";
+import { publicSupabase } from "@/integrations/supabase/publicClient";
 import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
 import { allVendorProductsQueryOptions, catalogQueryOptions } from "@/lib/queries";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
@@ -13,9 +15,21 @@ import type { StoreProduct } from "@/lib/storeTypes";
 export const Route = createFileRoute("/brand/$slug")({
   validateSearch: parseProductSearch,
   loader: async ({ context, params }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const [catalog, managedBrandResult] = await Promise.all([
+      context.queryClient.ensureQueryData(catalogQueryOptions()),
+      publicSupabase
+        .from("cms_brands")
+        .select("name,slug,description,seo_title,seo_description")
+        .eq("slug", params.slug)
+        .eq("is_visible", true)
+        .maybeSingle(),
+    ]);
     const brand = catalog.brands.find((entry) => entry.slug === params.slug);
     if (!brand) throw notFound();
+    if (managedBrandResult.error) {
+      console.warn("Loading optional storefront brand metadata failed.", managedBrandResult.error);
+    }
+    const managedBrand = managedBrandResult.error ? null : managedBrandResult.data;
 
     const indexedProducts = catalog.products.filter(
       (product) => catalog.brandOf.get(product.node.handle)?.slug === params.slug,
@@ -34,11 +48,14 @@ export const Route = createFileRoute("/brand/$slug")({
     for (const product of [...indexedProducts, ...vendorProducts]) {
       uniqueProducts.set(product.node.id, product);
     }
-    const brandCatalog = buildCatalogIndex([...uniqueProducts.values()]);
-
     return {
-      label: brand.label,
-      catalog: brandCatalog,
+      label: managedBrand?.name?.trim() || brand.label,
+      description: managedBrand?.description?.trim() || null,
+      seoTitle: managedBrand?.seo_title?.trim() || null,
+      seoDescription: managedBrand?.seo_description?.trim() || null,
+      // Catalog facets contain React icon components. Only plain product data
+      // may cross the loader serialization boundary; rebuild facets in the page.
+      products: [...uniqueProducts.values()],
     };
   },
   head: ({ params, loaderData }) => {
@@ -51,8 +68,11 @@ export const Route = createFileRoute("/brand/$slug")({
       };
     }
     const label = loaderData.label ?? params.slug.replace(/-/g, " ");
-    const title = `${label} Products in Lebanon | ${STORE_NAME}`;
-    const description = `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
+    const title = loaderData.seoTitle || `${label} Products in Lebanon | ${STORE_NAME}`;
+    const description =
+      loaderData.seoDescription ||
+      loaderData.description ||
+      `Shop ${label} phones, tablets, wearables, audio and accessories in Lebanon at ${STORE_NAME}, with live stock and direct Space Call checkout.`;
     const path = `/brand/${params.slug}`;
     return {
       meta: [
@@ -70,7 +90,7 @@ export const Route = createFileRoute("/brand/$slug")({
             { name: label, path },
           ]),
         ),
-        jsonLd(itemListJsonLd(`${label} products`, loaderData.catalog.products)),
+        jsonLd(itemListJsonLd(`${label} products`, loaderData.products)),
       ],
     };
   },
@@ -80,8 +100,8 @@ export const Route = createFileRoute("/brand/$slug")({
 function BrandPage() {
   const { language } = useLanguage();
   const { slug } = Route.useParams();
-  const { label: brandLabel, catalog: loaderCatalog } = Route.useLoaderData();
-  const catalog = loaderCatalog as CatalogIndex;
+  const { label: brandLabel, products: brandProducts } = Route.useLoaderData();
+  const catalog = useMemo(() => buildCatalogIndex(brandProducts), [brandProducts]);
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -135,8 +155,12 @@ function BrandPage() {
   return (
     <StoreLayout>
       <CatalogView
-        title={`${brandLabel} products`}
-        description={`${inBrand.length} product${inBrand.length === 1 ? "" : "s"} from ${brandLabel} available in the live catalogue.`}
+        title={language === "ar" ? `منتجات ${brandLabel}` : `${brandLabel} products`}
+        description={
+          language === "ar"
+            ? `${inBrand.length} منتج متوفّر من ${brandLabel}.`
+            : `${inBrand.length} product${inBrand.length === 1 ? "" : "s"} from ${brandLabel} available in the catalogue.`
+        }
         products={products}
         total={inBrand.length}
         filters={filters}

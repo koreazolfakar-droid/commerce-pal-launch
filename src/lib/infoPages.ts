@@ -25,6 +25,7 @@ export type InfoPageName = keyof typeof INFO_PAGES;
 export const POLICY_PAGES = {
   shipping: "shippingPolicy",
   returns: "refundPolicy",
+  warranty: "warrantyPolicy",
   privacy: "privacyPolicy",
   terms: "termsOfService",
 } as const satisfies Partial<Record<InfoPageName, PolicyKey>>;

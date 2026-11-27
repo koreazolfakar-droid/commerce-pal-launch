@@ -1,8 +1,9 @@
 import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
+import { looseSupabase } from "@/integrations/supabase/looseClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import { getDashboardRole } from "@/dashboard/data/catalog";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -35,10 +36,7 @@ type InventoryVariantRow = Pick<
   | "options"
 >;
 type InventoryImageRow = Pick<ImageRow, "product_id" | "url" | "is_primary" | "sort_order">;
-type InventoryLatestMovementRow = Pick<
-  MovementRow,
-  "variant_id" | "created_at" | "quantity_delta"
->;
+type InventoryLatestMovementRow = Pick<MovementRow, "variant_id" | "created_at" | "quantity_delta">;
 
 export type InventoryRow = {
   productId: string;
@@ -150,25 +148,26 @@ function firstImageByProduct(images: InventoryImageRow[]) {
 export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
   await requireDashboardStaff();
 
-  const [productResult, variantResult, imageResult, brandResult, categoryResult] = await Promise.all([
-    supabase
-      .from("store_products")
-      .select("id,title,brand_id,category_id,product_type,sku,barcode,stock_quantity,status")
-      .order("title", { ascending: true }),
-    supabase
-      .from("store_product_variants")
-      .select(
-        "id,product_id,title,sku,barcode,image_url,stock_quantity,track_inventory,is_active,options",
-      )
-      .order("product_id", { ascending: true })
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("store_product_images")
-      .select("product_id,url,is_primary,sort_order")
-      .order("sort_order", { ascending: true }),
-    supabase.from("cms_brands").select("id,name"),
-    supabase.from("store_categories").select("id,name"),
-  ]);
+  const [productResult, variantResult, imageResult, brandResult, categoryResult] =
+    await Promise.all([
+      supabase
+        .from("store_products")
+        .select("id,title,brand_id,category_id,product_type,sku,barcode,stock_quantity,status")
+        .order("title", { ascending: true }),
+      supabase
+        .from("store_product_variants")
+        .select(
+          "id,product_id,title,sku,barcode,image_url,stock_quantity,track_inventory,is_active,options",
+        )
+        .order("product_id", { ascending: true })
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("store_product_images")
+        .select("product_id,url,is_primary,sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase.from("cms_brands").select("id,name"),
+      supabase.from("store_categories").select("id,name"),
+    ]);
 
   throwIfError(productResult.error, "Loading inventory products failed");
   throwIfError(variantResult.error, "Loading inventory variants failed");
@@ -195,11 +194,11 @@ export async function loadInventoryWorkspace(): Promise<InventoryRow[]> {
         variantId: variant.id,
         productName: product.title,
         variantTitle: variant.title,
-        brand: product.brand_id ? brands.get(product.brand_id) ?? "" : "",
+        brand: product.brand_id ? (brands.get(product.brand_id) ?? "") : "",
         categoryId: product.category_id,
         category: product.category_id
-          ? categories.get(product.category_id) ?? product.product_type ?? ""
-          : product.product_type ?? "",
+          ? (categories.get(product.category_id) ?? product.product_type ?? "")
+          : (product.product_type ?? ""),
         sku: variant.sku ?? product.sku ?? "",
         barcode: variant.barcode ?? product.barcode ?? "",
         image: variant.image_url || fallbackImage,
@@ -220,7 +219,11 @@ export type InventoryPage = {
   items: InventoryRow[];
   page: number;
   pageSize: number;
+  /** Number of parent products returned, not number of variants. */
+  productCountOnPage: number;
   totalCount: number;
+  /** Keep a compatibility mode while old deployments update their RPC schema. */
+  paginationMode: "products" | "variants";
 };
 
 export type InventorySummary = {
@@ -260,6 +263,32 @@ type InventoryPageRow = {
   total_count: number;
 };
 
+/** One row per parent product; includes every variant in sorted JSONB. */
+type InventoryProductVariantJson = {
+  variant_id: string;
+  variant_title: string | null;
+  sku: string | null;
+  barcode: string | null;
+  image: string | null;
+  stock: number;
+  track_inventory: boolean;
+  variant_active: boolean;
+  options: Json;
+};
+
+type InventoryProductPageRow = {
+  product_id: string;
+  product_name: string;
+  brand: string | null;
+  category_id: string | null;
+  category: string | null;
+  image: string | null;
+  product_stock: number;
+  product_status: string;
+  variants: InventoryProductVariantJson[];
+  total_count: number;
+};
+
 type InventorySummaryRow = {
   total_units: number | null;
   variant_count: number | null;
@@ -280,18 +309,9 @@ export async function loadInventoryPage(input: {
   const page = Math.max(1, Math.trunc(input.page ?? 1));
   const pageSize = Math.min(100, Math.max(1, Math.trunc(input.pageSize ?? 20)));
   const category = input.category ?? "all";
-  const categoryId =
-    category !== "all" && category !== "uncategorized" ? category : undefined;
+  const categoryId = category !== "all" && category !== "uncategorized" ? category : undefined;
 
-  // The generated Supabase types lag behind the dashboard pagination functions,
-  // so these two RPCs are called through a loosely typed view of the client and
-  // narrowed to the row shapes the SQL functions return.
-  const rpc = supabase.rpc as unknown as (
-    name: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: InventoryPageRow[] | null; error: unknown }>;
-
-  const { data, error } = await rpc("dashboard_inventory_page", {
+  const args = {
     p_search: input.search?.trim() || undefined,
     p_category_id: categoryId,
     p_uncategorized: category === "uncategorized",
@@ -299,43 +319,102 @@ export async function loadInventoryPage(input: {
     p_threshold: Math.max(0, Math.trunc(input.threshold ?? 10)),
     p_page: page,
     p_page_size: pageSize,
-  });
+  };
 
+  // The SQL RPC was introduced after the generated Supabase types snapshot.
+  // It returns whole product groups (one JSON row per product) to avoid both
+  // variant splitting across pages and the PostgREST max-row limit.
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown[] | null; error: unknown }>;
+
+  const { data: products, error: productsError } = await rpc(
+    "dashboard_inventory_products_page",
+    args,
+  );
+
+  if (!productsError) {
+    const productRows = (products ?? []) as InventoryProductPageRow[];
+    return {
+      items: productRows.flatMap((product): InventoryRow[] =>
+        (Array.isArray(product.variants) ? product.variants : []).map((variant) => ({
+          productId: product.product_id,
+          variantId: variant.variant_id,
+          productName: product.product_name,
+          variantTitle: variant.variant_title ?? "",
+          brand: product.brand ?? "",
+          categoryId: product.category_id,
+          category: product.category ?? "",
+          sku: variant.sku ?? "",
+          barcode: variant.barcode ?? "",
+          image: variant.image || product.image || "",
+          stock: variant.stock,
+          productStock: product.product_stock,
+          trackInventory: variant.track_inventory,
+          variantActive: variant.variant_active,
+          productStatus: product.product_status as ProductRow["status"],
+          optionsLabel: optionsLabel(variant.options),
+          lastMovementAt: null,
+          lastMovementDelta: null,
+        })),
+      ),
+      page,
+      pageSize,
+      totalCount: Number(productRows[0]?.total_count ?? 0),
+      productCountOnPage: productRows.length,
+      paginationMode: "products",
+    };
+  }
+
+  const missingNewRpc =
+    typeof productsError === "object" &&
+    productsError !== null &&
+    "code" in productsError &&
+    productsError.code === "PGRST202";
+  if (!missingNewRpc) {
+    throwIfError(productsError as never, "Loading grouped inventory failed");
+  }
+
+  // The existing variant-level RPC remains a temporary deployment fallback.
+  // It is intentionally NOT labelled as a complete product group.
+  const { data, error } = await rpc("dashboard_inventory_page", args);
   throwIfError(error as never, "Loading inventory page failed");
 
-  const rows = data ?? [];
+  const rows = (data ?? []) as InventoryPageRow[];
+  const items: InventoryRow[] = rows.map((row) => ({
+    productId: row.product_id,
+    variantId: row.variant_id,
+    productName: row.product_name,
+    variantTitle: row.variant_title ?? "",
+    brand: row.brand ?? "",
+    categoryId: row.category_id,
+    category: row.category ?? "",
+    sku: row.sku ?? "",
+    barcode: row.barcode ?? "",
+    image: row.image ?? "",
+    stock: row.stock,
+    productStock: row.product_stock,
+    trackInventory: row.track_inventory,
+    variantActive: row.variant_active,
+    productStatus: row.product_status as ProductRow["status"],
+    optionsLabel: optionsLabel(row.options),
+    lastMovementAt: null,
+    lastMovementDelta: null,
+  }));
   return {
-    items: rows.map((row) => ({
-      productId: row.product_id,
-      variantId: row.variant_id,
-      productName: row.product_name,
-      variantTitle: row.variant_title ?? "",
-      brand: row.brand ?? "",
-      categoryId: row.category_id,
-      category: row.category ?? "",
-      sku: row.sku ?? "",
-      barcode: row.barcode ?? "",
-      image: row.image ?? "",
-      stock: row.stock,
-      productStock: row.product_stock,
-      trackInventory: row.track_inventory,
-      variantActive: row.variant_active,
-      productStatus: row.product_status as ProductRow["status"],
-      optionsLabel: optionsLabel(row.options),
-      lastMovementAt: null,
-      lastMovementDelta: null,
-    })),
+    items,
     page,
     pageSize,
     totalCount: Number(rows[0]?.total_count ?? 0),
+    productCountOnPage: new Set(items.map((row) => row.productId)).size,
+    paginationMode: "variants",
   };
 }
 
-export async function loadInventorySummary(
-  threshold = 10,
-): Promise<InventorySummary> {
+export async function loadInventorySummary(threshold = 10): Promise<InventorySummary> {
   await requireDashboardStaff();
-  const rpc = supabase.rpc as unknown as (
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     name: string,
     args: Record<string, unknown>,
   ) => Promise<{ data: InventorySummaryRow[] | null; error: unknown }>;
@@ -394,9 +473,7 @@ export async function loadInventoryLatestMovements(
     query = query.in("variant_id", ids);
   }
 
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(safeLimit);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(safeLimit);
 
   throwIfError(error, "Loading latest inventory movements failed");
 
@@ -504,16 +581,20 @@ export async function adjustInventoryDelta(
   await requireDashboardStaff();
   if (!Number.isInteger(delta) || delta === 0) return row.stock;
 
-  const { data, error } = await supabase.rpc("adjust_store_inventory", rpcArgs({
-    p_product_id: row.productId,
-    p_variant_id: row.variantId,
-    p_quantity_delta: delta,
-    p_note: note,
-  }));
+  const { data, error } = await supabase.rpc(
+    "adjust_store_inventory",
+    rpcArgs({
+      p_product_id: row.productId,
+      p_variant_id: row.variantId,
+      p_quantity_delta: delta,
+      p_note: note,
+    }),
+  );
   throwIfError(error, "Adjusting inventory failed");
   const result = data?.[0];
   if (!result) throw new Error("Inventory adjustment returned no result.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return result.new_stock;
 }
 
@@ -527,15 +608,23 @@ export async function setInventoryStock(
     throw new Error("Stock must be a non-negative whole number.");
   }
 
-  const { data, error } = await supabase.rpc("set_store_inventory_stock", rpcArgs({
-    p_product_id: row.productId,
-    p_variant_id: row.variantId,
-    p_stock: stock,
-    p_note: note,
-  }));
+  const { data, error } = await looseSupabase.rpc(
+    "set_store_inventory_stock_v2",
+    rpcArgs({
+      p_product_id: row.productId,
+      p_variant_id: row.variantId,
+      p_stock: stock,
+      p_expected_stock: row.stock,
+      p_note: note,
+    }),
+  );
+  if (error?.message?.includes("inventory_stock_conflict")) {
+    throw new Error("Inventory changed in another session. Refresh and try again.");
+  }
   throwIfError(error, "Setting inventory failed");
   const result = data?.[0];
   if (!result) throw new Error("Inventory update returned no result.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return result.new_stock;
 }

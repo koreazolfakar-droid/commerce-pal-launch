@@ -1,52 +1,78 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { nitro } from "nitro/vite";
+import { fileURLToPath } from "node:url";
+import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from "vite";
 
-function buildVersion() {
-  const now = new Date();
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(now.getUTCDate()).padStart(2, "0");
-  const hh = String(now.getUTCHours()).padStart(2, "0");
-  const min = String(now.getUTCMinutes()).padStart(2, "0");
-  const sec = String(now.getUTCSeconds()).padStart(2, "0");
-  return `${yyyy}.${mm}.${dd}.${hh}${min}${sec}`;
-}
+const APP_VERSION = new Date()
+  .toISOString()
+  .replace(/[-:TZ.]/g, "")
+  .slice(0, 14);
 
-const APP_VERSION = buildVersion();
-
-export default defineConfig({
-  vite: {
-    define: {
-      __APP_VERSION__: JSON.stringify(APP_VERSION),
-    },
-    // Pre-bundle the Start client graph at startup. Without this, Vite can
-    // discover these modules after the first document request, force a reload,
-    // and abort the browser's in-flight dynamic entry import.
-    optimizeDeps: {
-      include: [
-        "@tanstack/react-start/client",
-        "@tanstack/router-core",
-        "@tanstack/router-core/isServer",
-        "@tanstack/router-core/ssr/client",
-        "seroval",
-      ],
-    },
+// Standalone framework configuration. Production Workers use vite.cloudflare.config.ts.
+export default defineConfig(({ command }) => ({
+  plugins: [
+    tailwindcss(),
+    tsconfigPaths({ projects: ["./tsconfig.json"] }),
+    tanstackStart({
+      importProtection: {
+        behavior: "error",
+        client: { files: ["**/server/**"], specifiers: ["server-only"] },
+      },
+      // Start enables automatic route splitting; its schema deliberately omits that option.
+      server: { entry: "server" },
+    }),
+    // Lovable deploys `dist/`, so the build must write its server bundle and
+    // static assets there (dist/server + dist/client) instead of Nitro's
+    // default `.output/` directory.
+    ...(command === "build"
+      ? [
+          nitro({
+            preset: "cloudflare-module",
+            output: {
+              dir: "dist",
+              serverDir: "dist/server",
+              publicDir: "dist/client",
+            },
+            cloudflare: { nodeCompat: true, deployConfig: true },
+          }),
+        ]
+      : []),
+    react(),
+  ],
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
+  css: { transformer: "lightningcss" },
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    dedupe: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/react-query",
+      "@tanstack/query-core",
+    ],
   },
-  tanstackStart: {
-    // Let TanStack split route UI into on-demand chunks instead of shipping every
-    // page component with the first storefront visit. The Lovable wrapper already
-    // owns the Start/Router plugins, so configure its existing plugin rather than
-    // registering a duplicate @tanstack/router-plugin instance.
-    router: {
-      autoCodeSplitting: true,
-    },
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
+  server: { host: "::", port: 8080, allowedHosts: ["terminal.local"] },
+  optimizeDeps: {
+    exclude: [
+      "@tanstack/react-start",
+      "@tanstack/react-start/client",
+      "@tanstack/react-start-client",
+      "@tanstack/start-client-core",
+    ],
+    include: [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/router-core",
+      "@tanstack/router-core/isServer",
+      "@tanstack/router-core/ssr/client",
+      "seroval",
+    ],
   },
-});
+}));

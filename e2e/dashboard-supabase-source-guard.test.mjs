@@ -1,15 +1,33 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
+import { readDashboardShellSource } from "./helpers/dashboard-shell-source.mjs";
 
 const files = {
-  app: await readFile(new URL("../src/dashboard/App.tsx", import.meta.url), "utf8"),
+  workspaceSearch: await readFile(
+    new URL("../src/dashboard/data/workspaceSearch.ts", import.meta.url),
+    "utf8",
+  ),
+  app: await readDashboardShellSource(),
+  routes: await readFile(new URL("../src/dashboard/config/routes.tsx", import.meta.url), "utf8"),
   brands: await readFile(new URL("../src/dashboard/pages/BrandsPage.tsx", import.meta.url), "utf8"),
-  categories: await readFile(new URL("../src/dashboard/pages/CategoriesPage.tsx", import.meta.url), "utf8"),
-  inventory: await readFile(new URL("../src/dashboard/pages/InventoryManagerPage.tsx", import.meta.url), "utf8"),
+  categories: await readFile(
+    new URL("../src/dashboard/pages/CategoriesPage.tsx", import.meta.url),
+    "utf8",
+  ),
+  inventory: await readFile(
+    new URL("../src/dashboard/pages/InventoryManagerPage.tsx", import.meta.url),
+    "utf8",
+  ),
   brandData: await readFile(new URL("../src/dashboard/data/brands.ts", import.meta.url), "utf8"),
-  categoryData: await readFile(new URL("../src/dashboard/data/categories.ts", import.meta.url), "utf8"),
-  inventoryData: await readFile(new URL("../src/dashboard/data/inventory.ts", import.meta.url), "utf8"),
+  categoryData: await readFile(
+    new URL("../src/dashboard/data/categories.ts", import.meta.url),
+    "utf8",
+  ),
+  inventoryData: await readFile(
+    new URL("../src/dashboard/data/inventory.ts", import.meta.url),
+    "utf8",
+  ),
   catalogData: await readFile(new URL("../src/dashboard/data/catalog.ts", import.meta.url), "utf8"),
 };
 
@@ -32,19 +50,20 @@ test("migrated catalog pages do not import dashboard mock data", () => {
 });
 
 test("products page and global product search are Supabase-backed", () => {
-  assert.match(files.app, /listDashboardProductSearchIndex\(\)/);
+  assert.match(files.workspaceSearch, /searchDashboardProducts\(normalizedQuery, 5\)/);
   assert.doesNotMatch(files.app, /listDashboardProducts\(\)/);
-  assert.match(files.app, /import ProductsPageLive from "@\/dashboard\/pages\/ProductsPage"/);
-  assert.doesNotMatch(
-    files.app,
-    /pageMeta\["\/dashboard\/products"\]/,
-  );
-  assert.match(files.app, /const results: DashboardProductSearchItem\[\]/);
+  assert.match(files.routes, /lazyPage\(\(\) => import\("@\/dashboard\/pages\/ProductsPage"\)\)/);
+  assert.doesNotMatch(files.app, /@\/dashboard\/pages\/ProductsPage/);
+  assert.doesNotMatch(files.app, /pageMeta\["\/dashboard\/products"\]/);
+  assert.match(files.app, /DashboardCommandCenter/);
+  assert.match(files.workspaceSearch, /limit\(5\)/);
 });
 
 test("dashboard catalog avoids eager heavy payloads", () => {
   assert.match(files.catalogData, /DASHBOARD_ROLE_CACHE_TTL_MS/);
-  assert.match(files.catalogData, /listDashboardProductSearchIndex/);
+  assert.match(files.catalogData, /searchDashboardProducts/);
+  assert.match(files.catalogData, /search_dashboard_products/);
+  assert.doesNotMatch(files.catalogData, /listDashboardProductSearchIndex/);
   assert.match(
     files.catalogData,
     /id,handle,title,description,brand_id,category_id,product_type,base_price,compare_at_price,stock_quantity,status,sku,barcode,seo_title,seo_description/,
@@ -93,4 +112,3 @@ test("migrated data layers read and write Supabase tables directly", () => {
   assert.match(files.categoryData, /\.from\("store_categories"\)/);
   assert.match(files.inventoryData, /\.from\("store_product_variants"\)/);
 });
-

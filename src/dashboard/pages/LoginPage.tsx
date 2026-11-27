@@ -1,27 +1,27 @@
 import {
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
   Eye,
   EyeOff,
   KeyRound,
   Languages,
   Loader2,
-  LockKeyhole,
   Mail,
   Moon,
   ShieldCheck,
   Sun,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/dashboard/i18n";
 import { useTheme, type Theme } from "@/dashboard/contexts/ThemeContext";
+import { supabase } from "@/integrations/supabase/client";
 import DashboardMfaStep from "@/dashboard/components/auth/DashboardMfaStep";
 import TurnstileChallenge from "@/dashboard/components/auth/TurnstileChallenge";
 import {
   getDashboardMfaStatus,
+  type DashboardMfaStatus,
   isDashboardTurnstileConfigured,
   requestDashboardPasswordReset,
   signInDashboard,
@@ -33,17 +33,7 @@ const EMAIL_STORAGE_KEY = "spacecall-dashboard-email";
 
 const loginCopy = {
   en: {
-    brandSubtitle: "Admin workspace",
-    privateWorkspace: "Private workspace",
-    secureAccess: "Secure access",
-    heroTitle: "A focused workspace for authorized staff.",
-    heroBody: "Sign in with your approved account to continue.",
-    protectedWorkspace: "Protected workspace",
-    protectedBody: "Your sign-in details are hidden whenever this page loses focus.",
-    openStorefront: "Open storefront",
-    authorizedOnly: "Authorized access",
-    welcome: "Welcome back",
-    signInDescription: "Sign in to continue to your workspace.",
+    brandSubtitle: "DASHBOARD",
     forgotTitle: "Reset your password",
     forgotDescription: "Enter your account email to request a recovery link.",
     recoveryTitle: "Create a new password",
@@ -67,11 +57,11 @@ const loginCopy = {
     updatePassword: "Update password",
     backToSignIn: "Back to sign in",
     recoveryReceived: "Recovery request received",
-    recoveryBody: "If this email belongs to an authorized account, a recovery link will arrive shortly.",
+    recoveryBody:
+      "If this email belongs to an authorized account, a recovery link will arrive shortly.",
     passwordHint: "Use at least 10 characters and avoid passwords you use on other services.",
-    antiPhishing: "Never share your password or verification code. Space Call support will never ask for them.",
-    sensitiveHidden: "Sensitive content hidden",
-    returnSecurely: "Return to this page to continue.",
+    antiPhishing:
+      "Never share your password or verification code. Space Call support will never ask for them.",
     capsLock: "Caps Lock is on. Check your password before continuing.",
     showPassword: "Show password",
     hidePassword: "Hide password",
@@ -96,17 +86,7 @@ const loginCopy = {
     genericError: "Something went wrong. Try again.",
   },
   ar: {
-    brandSubtitle: "مساحة الإدارة",
-    privateWorkspace: "مساحة خاصة",
-    secureAccess: "دخول آمن",
-    heroTitle: "مساحة عمل مركّزة للمستخدمين المصرّح لهم.",
-    heroBody: "سجّل الدخول بحسابك المعتمد للمتابعة.",
-    protectedWorkspace: "مساحة محمية",
-    protectedBody: "يتم إخفاء بيانات تسجيل الدخول تلقائيًا عند مغادرة هذه الصفحة.",
-    openStorefront: "فتح المتجر",
-    authorizedOnly: "دخول للمصرّح لهم",
-    welcome: "مرحبًا بعودتك",
-    signInDescription: "سجّل الدخول للمتابعة إلى مساحة العمل.",
+    brandSubtitle: "لوحة الإدارة",
     forgotTitle: "استعادة كلمة المرور",
     forgotDescription: "أدخل بريد حسابك لطلب رابط الاستعادة.",
     recoveryTitle: "إنشاء كلمة مرور جديدة",
@@ -133,8 +113,6 @@ const loginCopy = {
     recoveryBody: "إذا كان البريد مرتبطًا بحساب مصرح له، سيصل رابط الاستعادة قريبًا.",
     passwordHint: "استخدم 10 أحرف على الأقل وتجنب كلمات المرور المستخدمة في خدمات أخرى.",
     antiPhishing: "لا تشارك كلمة المرور أو رمز التحقق. دعم Space Call لن يطلبهما منك.",
-    sensitiveHidden: "تم إخفاء المحتوى الحساس",
-    returnSecurely: "عد إلى هذه الصفحة للمتابعة.",
     capsLock: "زر الأحرف الكبيرة مفعّل. تحقق من كلمة المرور قبل المتابعة.",
     showPassword: "إظهار كلمة المرور",
     hidePassword: "إخفاء كلمة المرور",
@@ -161,48 +139,20 @@ const loginCopy = {
 } as const;
 
 function BrandLockup() {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const copy = loginCopy[lang];
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="login-logo-tile grid size-11 shrink-0 place-items-center overflow-hidden rounded-[15px] border border-white/10 bg-white/[.08] shadow-[0_14px_40px_rgba(54,68,173,.3)]">
+      <div className="login-logo-tile grid size-11 shrink-0 place-items-center overflow-hidden rounded-[15px] border border-white/10 bg-white/[.08] shadow-[0_10px_24px_rgba(37,99,235,.15)]">
         <img src="/logo.svg" alt="" className="h-7 w-auto max-w-8 object-contain" />
       </div>
       <div className="min-w-0">
-        <div className="login-heading truncate text-[16px] font-bold tracking-[-.03em] text-white">
-          Space Call
+        <div className="login-heading truncate text-base font-bold tracking-tight text-white">
+          {t("Space Call")}
         </div>
-        <div className="login-muted mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[.18em] text-slate-400">
+        <div className="login-muted mt-0.5 truncate text-xs font-semibold uppercase tracking-[.18em] text-slate-400">
           {copy.brandSubtitle}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function WorkspacePreview() {
-  const { lang } = useLanguage();
-  const copy = loginCopy[lang];
-  return (
-    <div className="login-soft relative overflow-hidden rounded-[24px] border border-white/[.08] bg-[#0d172b]/72 p-5 shadow-[0_24px_80px_rgba(0,0,0,.22)] backdrop-blur-xl">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/35 to-transparent" />
-      <div className="flex items-center gap-3">
-        <div className="grid size-11 shrink-0 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.08] text-indigo-200">
-          <LockKeyhole className="size-5" />
-        </div>
-        <div>
-          <div className="login-heading text-[13px] font-bold text-white">{copy.protectedWorkspace}</div>
-          <div className="login-muted mt-1 text-[10px] leading-4 text-slate-400">{copy.protectedBody}</div>
-        </div>
-      </div>
-      <div className="mt-5 grid grid-cols-[1.25fr_.75fr] gap-2" aria-hidden="true">
-        <div className="login-placeholder h-16 rounded-2xl bg-white/[.035]" />
-        <div className="login-placeholder h-16 rounded-2xl bg-white/[.025]" />
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-2" aria-hidden="true">
-        <div className="login-placeholder h-10 rounded-xl bg-white/[.025]" />
-        <div className="login-placeholder h-10 rounded-xl bg-white/[.04]" />
-        <div className="login-placeholder h-10 rounded-xl bg-white/[.025]" />
       </div>
     </div>
   );
@@ -228,7 +178,7 @@ function ThemeLanguageControls({
         title={copy.switchLanguage}
       >
         <Languages className="size-4" />
-        <span className="text-[10px] font-black">{lang === "en" ? "AR" : "EN"}</span>
+        <span className="text-xs font-black">{lang === "en" ? "AR" : "EN"}</span>
       </button>
       <button
         type="button"
@@ -267,15 +217,15 @@ function PasswordField({
 
   return (
     <label className="block">
-      <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">
+      <span className="login-label mb-2 block text-sm font-medium text-slate-300">
         {label ?? copy.password}
       </span>
       <div className="relative">
         <KeyRound
           className={
             isRtl
-              ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
-              : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+              ? "absolute end-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+              : "absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
           }
         />
         <input
@@ -293,15 +243,15 @@ function PasswordField({
           }}
           onKeyUp={(event) => setCapsLockOn(event.getModifierState("CapsLock"))}
           onBlur={() => setCapsLockOn(false)}
-          className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10 sm:text-[13px]"
+          className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-blue-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-blue-500/10 sm:text-[13px]"
         />
         <button
           type="button"
           onClick={onToggle}
           className={
             isRtl
-              ? "login-icon-button absolute left-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
-              : "login-icon-button absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+              ? "login-icon-button absolute start-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+              : "login-icon-button absolute end-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
           }
           aria-label={visible ? copy.hidePassword : copy.showPassword}
         >
@@ -311,7 +261,7 @@ function PasswordField({
       {capsLockOn ? (
         <div
           role="status"
-          className="mt-2 flex items-center gap-2 text-[10px] font-semibold text-amber-200"
+          className="mt-2 flex items-center gap-2 text-xs font-semibold text-amber-200"
         >
           <ShieldCheck className="size-3.5" />
           {copy.capsLock}
@@ -323,17 +273,15 @@ function PasswordField({
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
   const copy = loginCopy[lang];
   const isRtl = lang === "ar";
   const requestedMode =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("mode")
-      : null;
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("mode") : null;
   const recoveryMode = requestedMode === "recovery";
   const mfaMode = requestedMode === "mfa";
   const storedEmail =
-    typeof window !== "undefined" ? window.localStorage.getItem(EMAIL_STORAGE_KEY) ?? "" : "";
+    typeof window !== "undefined" ? (window.localStorage.getItem(EMAIL_STORAGE_KEY) ?? "") : "";
 
   const [view, setView] = useState<LoginView>(recoveryMode || mfaMode ? "mfa" : "signin");
   const [email, setEmail] = useState(storedEmail);
@@ -347,48 +295,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [inlineError, setInlineError] = useState("");
-  const [privacyShielded, setPrivacyShielded] = useState(false);
+  const [mfaInitialStatus, setMfaInitialStatus] = useState<DashboardMfaStatus | null>(null);
+  const signInPendingRef = useRef(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    const shield = () => setPrivacyShielded(true);
-    const unshield = () => setPrivacyShielded(false);
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") shield();
-      else unshield();
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "PrintScreen") {
-        event.preventDefault();
-        shield();
-        window.setTimeout(unshield, 1200);
-      }
-    };
-
-    window.addEventListener("blur", shield);
-    window.addEventListener("focus", unshield);
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("pagehide", shield);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      window.removeEventListener("blur", shield);
-      window.removeEventListener("focus", unshield);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("pagehide", shield);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, []);
-
-  useEffect(() => {
     if (recoveryMode) return;
 
     let cancelled = false;
-    getDashboardMfaStatus()
+    // Most visits to the sign-in page have no session. Avoid a pointless
+    // server MFA check (and token-refresh attempt) in that case.
+    void supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (cancelled || !session) return null;
+        return getDashboardMfaStatus();
+      })
       .then((status) => {
         if (cancelled || !status) return;
         if (status.ready) {
@@ -455,45 +378,48 @@ export default function LoginPage() {
       }
       return copy.genericError;
     },
-    [copy, lang],
+    [copy],
   );
 
   const title = useMemo(() => {
     if (view === "forgot") return copy.forgotTitle;
     if (view === "recovery") return copy.recoveryTitle;
     if (view === "mfa") return copy.mfaTitle;
-    return copy.welcome;
+    return copy.signIn;
   }, [copy, view]);
 
   const description = useMemo(() => {
     if (view === "forgot") return copy.forgotDescription;
     if (view === "recovery") return copy.recoveryDescription;
     if (view === "mfa") return copy.mfaDescription;
-    return copy.signInDescription;
+    return "";
   }, [copy, view]);
 
   const submit = async () => {
+    // Reject rapid taps and Enter repeats before React updates the disabled button.
+    if (signInPendingRef.current) return;
     setInlineError("");
     if (!email.trim() || !password) {
       setInlineError(copy.required);
       return;
     }
 
+    signInPendingRef.current = true;
     setLoading(true);
     try {
-      await signInDashboard(email, password, captchaToken ?? undefined);
+      setMfaInitialStatus(null);
+      const mfaStatus = await signInDashboard(email, password, captchaToken ?? undefined);
 
       if (rememberEmail) window.localStorage.setItem(EMAIL_STORAGE_KEY, email.trim());
       else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
-
-      const mfaStatus = await getDashboardMfaStatus();
-      if (!mfaStatus) throw new Error("Unable to verify this session.");
 
       if (mfaStatus.ready) {
         toast.success(copy.signedIn);
         navigate("/dashboard");
       } else {
         setPassword("");
+        // The server-validated MFA state is reused by the next screen.
+        setMfaInitialStatus(mfaStatus);
         setView("mfa");
         window.history.replaceState({}, "", "/dashboard/login?mode=mfa");
       }
@@ -505,6 +431,7 @@ export default function LoginPage() {
       setInlineError(message);
       toast.error(message);
     } finally {
+      signInPendingRef.current = false;
       setLoading(false);
       resetCaptcha();
     }
@@ -572,6 +499,7 @@ export default function LoginPage() {
     setShowNewPassword(false);
     setShowConfirmPassword(false);
     resetCaptcha();
+    setMfaInitialStatus(null);
     setView("signin");
   };
 
@@ -597,143 +525,71 @@ export default function LoginPage() {
     setShowPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
+    setMfaInitialStatus(null);
     setView("signin");
     setInlineError("");
   }, []);
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} data-login-theme={theme} className="login-root relative min-h-[100dvh] overflow-hidden bg-[#07101f] text-white print:hidden">
+    <div
+      dir={isRtl ? "rtl" : "ltr"}
+      data-login-theme={theme}
+      className="login-root relative min-h-[100dvh] overflow-hidden bg-[#09172b] text-white print:hidden"
+    >
       <style>{`
-        [data-login-theme="light"].login-root { background: #eef2f7 !important; color: #0f172a !important; }
-        [data-login-theme="light"] .login-card { background: rgba(255,255,255,.96) !important; border-color: #e2e8f0 !important; box-shadow: 0 36px 110px rgba(15,23,42,.14) !important; }
-        [data-login-theme="light"] .login-form-panel { background: #ffffff !important; }
-        [data-login-theme="light"] .login-showcase { border-color: #e2e8f0 !important; }
-        [data-login-theme="light"] .login-showcase-bg { background: radial-gradient(circle at 20% 10%, rgba(99,102,241,.14), transparent 34%), linear-gradient(145deg,#f8faff 0%,#f4f6ff 52%,#eef2ff 100%) !important; }
+        [data-login-theme="light"].login-root { background: #f3f6fb !important; color: #0f172a !important; }
+        [data-login-theme="light"] .login-form-panel { background: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 24px 80px rgba(15,23,42,.09) !important; }
         [data-login-theme="light"] .login-heading { color: #0f172a !important; }
         [data-login-theme="light"] .login-muted { color: #64748b !important; }
         [data-login-theme="light"] .login-label { color: #334155 !important; }
-        [data-login-theme="light"] .login-input { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #0f172a !important; box-shadow: inset 0 1px 2px rgba(15,23,42,.03) !important; }
-        [data-login-theme="light"] .login-input:focus { background: #fff !important; border-color: #818cf8 !important; }
-        [data-login-theme="light"] .login-icon-button, [data-login-theme="light"] .login-control { color: #475569 !important; background: #fff !important; border-color: #e2e8f0 !important; }
-        [data-login-theme="light"] .login-soft { background: rgba(255,255,255,.78) !important; border-color: #e0e7ff !important; box-shadow: 0 20px 60px rgba(79,70,229,.08) !important; }
-        [data-login-theme="light"] .login-placeholder { background: #f1f5f9 !important; }
+        [data-login-theme="light"] .login-input { background: #f8fafc !important; border-color: #cbd5e1 !important; color: #0f172a !important; box-shadow: none !important; }
+        [data-login-theme="light"] .login-input:focus { background: #ffffff !important; border-color: #2563eb !important; }
+        [data-login-theme="light"] .login-icon-button, [data-login-theme="light"] .login-control { color: #475569 !important; background: #ffffff !important; border-color: #cbd5e1 !important; }
+        [data-login-theme="light"] .login-soft { background: #f8fafc !important; border-color: #e2e8f0 !important; box-shadow: none !important; }
         [data-login-theme="light"] .login-footer { background: #f8fafc !important; border-color: #e2e8f0 !important; }
-        [data-login-theme="light"] .login-privacy { background: rgba(238,242,247,.98) !important; }
-        [data-login-theme="light"] .login-logo-tile { background: #fff !important; border-color: #e2e8f0 !important; box-shadow: 0 12px 32px rgba(30,41,59,.10) !important; }
+        [data-login-theme="light"] .login-logo-tile { background: #ffffff !important; border-color: #dbe4f0 !important; box-shadow: 0 10px 24px rgba(15,23,42,.08) !important; }
         [data-login-theme="light"] .login-error { background: #fff1f2 !important; border-color: #fecdd3 !important; color: #be123c !important; }
-        [data-login-theme="light"] .login-secret { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #334155 !important; }
-        [data-login-theme="light"] .login-secondary { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
-        [data-login-theme="light"] .login-badge { background: #ecfdf5 !important; border-color: #d1fae5 !important; color: #047857 !important; }
-        [data-login-theme="light"] .login-accent { background: #eef2ff !important; border-color: #e0e7ff !important; color: #4338ca !important; }
-        [data-login-theme="light"] .login-link { color: #4f46e5 !important; }
+        [data-login-theme="light"] .login-link { color: #1d4ed8 !important; }
         @media print {
           html, body { background: #0a1224 !important; }
           body * { visibility: hidden !important; }
         }
       `}</style>
-      {privacyShielded ? (
-        <div
-          className="login-privacy fixed inset-0 z-[9999] grid place-items-center bg-[#07101f]/98 backdrop-blur-xl"
-          aria-live="polite"
-          data-testid="login-privacy-shield"
-        >
-          <div className="mx-auto max-w-xs px-6 text-center">
-            <div className="mx-auto grid size-14 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-300/[.07] text-[#c8ceff] shadow-[0_20px_60px_rgba(79,70,229,.18)]">
-              <ShieldCheck className="size-6" />
-            </div>
-            <div className="login-heading mt-4 text-sm font-bold text-white">{copy.sensitiveHidden}</div>
-            <p className="login-muted mt-1.5 text-[11px] leading-5 text-slate-400">
-              {copy.returnSecurely}
-            </p>
-          </div>
-        </div>
-      ) : null}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-36 -top-44 size-[560px] rounded-full bg-indigo-500/[.16] blur-[120px]" />
-        <div className="absolute -bottom-48 -right-24 size-[620px] rounded-full bg-violet-500/[.12] blur-[140px]" />
-        <div className="absolute left-[58%] top-[12%] size-[260px] rounded-full bg-cyan-400/[.035] blur-[90px]" />
-        <div className="absolute inset-0 opacity-[.028] [background-image:linear-gradient(rgba(255,255,255,.75)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.75)_1px,transparent_1px)] [background-size:52px_52px]" />
-        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white/[.025] to-transparent" />
-      </div>
-
-      <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-[1180px] items-stretch p-0 sm:items-center sm:px-6 sm:py-8 lg:px-8">
-        <div className="login-card grid min-h-[100dvh] w-full overflow-hidden bg-[#0c1629]/92 shadow-[0_40px_140px_rgba(0,0,0,.48)] backdrop-blur-2xl sm:min-h-0 sm:rounded-[32px] sm:border sm:border-white/[.08] sm:ring-1 sm:ring-white/[.02] lg:grid-cols-[1.05fr_.95fr]">
-          <section className="login-showcase relative hidden min-h-[680px] overflow-hidden border-r border-white/[.07] p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
-            <div className="login-showcase-bg absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(79,70,229,.18),transparent_34%),linear-gradient(145deg,#111e38_0%,#0d172b_52%,#0a1426_100%)]" />
-            <div className="absolute -right-24 top-24 size-72 rounded-full border border-white/[.035]" />
-            <div className="absolute -right-8 top-40 size-48 rounded-full border border-white/[.03]" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-300/20 to-transparent" />
-
-            <div className="relative flex items-center justify-between">
-              <BrandLockup />
-              <div className="login-muted rounded-full border border-white/[.08] bg-white/[.035] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.15em] text-slate-400">
-                {copy.privateWorkspace}
-              </div>
-            </div>
-
-            <div className="relative my-10 max-w-[500px]">
-              <div className="login-accent mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.07] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-indigo-200">
-                <ShieldCheck className="size-3.5" />
-                {copy.secureAccess}
-              </div>
-              <h2 className="login-heading max-w-[470px] text-[41px] font-black leading-[1.02] tracking-[-.055em] text-white xl:text-[48px]">
-                {copy.heroTitle}
-              </h2>
-              <p className="login-muted mt-5 max-w-[455px] text-[13px] leading-6 text-slate-400">
-                {copy.heroBody}
-              </p>
-
-              <div className="mt-7">
-                <WorkspacePreview />
-              </div>
-
-            </div>
-
-            <div className="relative flex items-center justify-between border-t border-white/[.06] pt-5 text-[9px] text-slate-500">
-              <span className="inline-flex items-center gap-2">
-                <span className="size-1.5 rounded-full bg-emerald-300" />
-                Space Call Admin
-              </span>
-              <a href="/" className="login-link inline-flex items-center gap-1.5 font-semibold text-slate-300 transition hover:text-white">
-                {copy.openStorefront} <ArrowRight className={isRtl ? "size-3 rotate-180" : "size-3"} />
-              </a>
-            </div>
-          </section>
-
-          <section className="login-form-panel relative flex min-h-[100dvh] items-start justify-center bg-[linear-gradient(180deg,rgba(255,255,255,.018),transparent_32%)] px-5 pb-8 pt-5 sm:min-h-[680px] sm:items-center sm:p-10 xl:p-12">
-            <div className="w-full max-w-[420px]">
-              <div className="mb-9 flex items-center justify-between gap-3 lg:hidden">
-                <BrandLockup />
-                <ThemeLanguageControls
-                  theme={theme}
-                  onThemeToggle={toggleTheme}
-                />
-              </div>
-
-              <div className={isRtl ? "absolute left-6 top-6 hidden lg:block" : "absolute right-6 top-6 hidden lg:block"}>
-                <ThemeLanguageControls
-                  theme={theme}
-                  onThemeToggle={toggleTheme}
-                />
-              </div>
-
-              <div className="mb-8">
-                <div className="login-accent mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-300/15 bg-indigo-300/[.065] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-[#c7ccff]">
-                  <LockKeyhole className="size-3.5" />
-                  {copy.authorizedOnly}
-                </div>
-                <h1 className="login-heading text-[34px] font-black leading-none tracking-[-.055em] text-white sm:text-[38px]">
-                  {title}
+      <div className="relative mx-auto flex min-h-[100dvh] w-full items-center justify-center px-4 py-8 sm:px-6">
+        <div className="w-full max-w-[460px]">
+          <header className="mb-6 flex items-center justify-between gap-3">
+            <BrandLockup />
+            <ThemeLanguageControls theme={theme} onThemeToggle={toggleTheme} />
+          </header>
+          <section className="login-form-panel w-full rounded-[24px] border border-white/[.09] bg-[#101e33] p-5 shadow-[0_24px_70px_rgba(0,0,0,.24)] sm:p-9">
+            <div className="w-full">
+              <div className={view === "mfa" ? "mb-6" : "mb-8"}>
+                <h1
+                  className={`login-heading font-semibold leading-tight tracking-tight text-white ${view === "mfa" ? "text-[30px] sm:text-[34px]" : "text-[28px] sm:text-[30px]"}`}
+                >
+                  {t(title)}
                 </h1>
-                <p className="login-muted mt-3 max-w-md text-[12px] leading-5 text-slate-400">{description}</p>
+                {view !== "signin" ? (
+                  <p className="login-muted mt-2.5 max-w-md text-sm leading-5 text-slate-400">
+                    {t(description)}
+                  </p>
+                ) : null}
               </div>
 
               {view === "signin" ? (
                 <div className="space-y-4">
                   <label className="block">
-                    <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">{copy.email}</span>
+                    <span className="login-label mb-2 block text-sm font-medium text-slate-300">
+                      {copy.email}
+                    </span>
                     <div className="relative">
-                      <Mail className={isRtl ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"} />
+                      <Mail
+                        className={
+                          isRtl
+                            ? "absolute end-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+                            : "absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+                        }
+                      />
                       <input
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
@@ -744,11 +600,11 @@ export default function LoginPage() {
                         spellCheck={false}
                         autoComplete="username"
                         dir="ltr"
-                        placeholder="name@company.com"
+                        placeholder={t("name@company.com")}
                         onKeyDown={(event) => {
                           if (event.key === "Enter") void submit();
                         }}
-                        className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10 sm:text-[13px]"
+                        className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-blue-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-blue-500/10 sm:text-[13px]"
                       />
                     </div>
                   </label>
@@ -762,12 +618,12 @@ export default function LoginPage() {
                   />
 
                   <div className="flex items-center justify-between gap-3">
-                    <label className="login-muted flex cursor-pointer items-center gap-2 text-[10px] font-medium text-slate-400">
+                    <label className="login-muted flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-400">
                       <input
                         type="checkbox"
                         checked={rememberEmail}
                         onChange={(event) => setRememberEmail(event.target.checked)}
-                        className="size-4 rounded border-white/15 bg-white/5 accent-indigo-500"
+                        className="size-4 rounded border-white/15 bg-white/5 accent-blue-600"
                       />
                       {copy.rememberEmail}
                     </label>
@@ -780,7 +636,7 @@ export default function LoginPage() {
                         resetCaptcha();
                         setView("forgot");
                       }}
-                      className="login-link rounded-md px-1 py-0.5 text-[10px] font-bold text-[#b9c0ff] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60"
+                      className="login-link rounded-md px-1 py-0.5 text-xs font-bold text-[#93c5fd] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60"
                     >
                       {copy.forgotPassword}
                     </button>
@@ -793,7 +649,10 @@ export default function LoginPage() {
                   />
 
                   {inlineError ? (
-                    <div role="alert" className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
+                    <div
+                      role="alert"
+                      className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-sm leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]"
+                    >
                       {inlineError}
                     </div>
                   ) : null}
@@ -801,18 +660,17 @@ export default function LoginPage() {
                   <button
                     onClick={() => void submit()}
                     disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
-                    className="mt-1 flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] via-[#6d68ef] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_18px_38px_rgba(87,84,219,.28)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_22px_44px_rgba(87,84,219,.34)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50"
+                    className="mt-1 flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_20px_38px_rgba(37,99,235,.23)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <>
-                        {copy.signIn} <ArrowRight className={isRtl ? "size-4 rotate-180" : "size-4"} />
+                        {copy.signIn}{" "}
+                        <ArrowRight className={isRtl ? "size-4 rotate-180" : "size-4"} />
                       </>
                     )}
                   </button>
-
-
                 </div>
               ) : null}
 
@@ -823,17 +681,27 @@ export default function LoginPage() {
                       <div className="grid size-10 place-items-center rounded-full bg-emerald-300/10 text-emerald-300">
                         <Mail className="size-4" />
                       </div>
-                      <div className="login-heading mt-4 text-[14px] font-bold text-white">{copy.recoveryReceived}</div>
-                      <p className="login-muted mt-1.5 text-[11px] leading-5 text-slate-400">
+                      <div className="login-heading mt-4 text-[14px] font-bold text-white">
+                        {copy.recoveryReceived}
+                      </div>
+                      <p className="login-muted mt-1.5 text-sm leading-5 text-slate-400">
                         {copy.recoveryBody}
                       </p>
                     </div>
                   ) : (
                     <>
                       <label className="block">
-                        <span className="login-label mb-2 block text-[11px] font-bold text-slate-300">{copy.email}</span>
+                        <span className="login-label mb-2 block text-sm font-medium text-slate-300">
+                          {copy.email}
+                        </span>
                         <div className="relative">
-                          <Mail className={isRtl ? "absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500" : "absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"} />
+                          <Mail
+                            className={
+                              isRtl
+                                ? "absolute end-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+                                : "absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-500"
+                            }
+                          />
                           <input
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
@@ -844,11 +712,11 @@ export default function LoginPage() {
                             spellCheck={false}
                             autoComplete="email"
                             dir="ltr"
-                            placeholder="name@company.com"
+                            placeholder={t("name@company.com")}
                             onKeyDown={(event) => {
                               if (event.key === "Enter") void sendReset();
                             }}
-                            className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-indigo-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-indigo-500/10 sm:text-[13px]"
+                            className="login-input h-[54px] w-full rounded-[16px] border border-white/[.09] bg-[#0a1426]/80 px-11 text-[16px] text-white shadow-inner shadow-black/10 outline-none transition duration-200 placeholder:text-slate-600 hover:border-white/[.14] focus:border-blue-400/70 focus:bg-[#0c1830] focus:ring-4 focus:ring-blue-500/10 sm:text-[13px]"
                           />
                         </div>
                       </label>
@@ -860,7 +728,10 @@ export default function LoginPage() {
                       />
 
                       {inlineError ? (
-                        <div role="alert" className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
+                        <div
+                          role="alert"
+                          className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-sm leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]"
+                        >
                           {inlineError}
                         </div>
                       ) : null}
@@ -868,9 +739,15 @@ export default function LoginPage() {
                       <button
                         onClick={() => void sendReset()}
                         disabled={loading || (isDashboardTurnstileConfigured && !captchaToken)}
-                        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_16px_34px_rgba(87,84,219,.24)] transition hover:brightness-110 disabled:opacity-50"
+                        className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition hover:brightness-110 disabled:opacity-50"
                       >
-                        {loading ? <Loader2 className="size-4 animate-spin" /> : <><Mail className="size-4" /> {copy.sendRecovery}</>}
+                        {loading ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Mail className="size-4" /> {copy.sendRecovery}
+                          </>
+                        )}
                       </button>
                     </>
                   )}
@@ -878,9 +755,10 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={backToSignIn}
-                    className="login-muted flex h-10 w-full items-center justify-center gap-2 text-[11px] font-bold text-slate-400 transition hover:text-white"
+                    className="login-muted flex h-10 w-full items-center justify-center gap-2 text-sm font-bold text-slate-400 transition hover:text-white"
                   >
-                    <ArrowLeft className={isRtl ? "size-3.5 rotate-180" : "size-3.5"} /> {copy.backToSignIn}
+                    <ArrowLeft className={isRtl ? "size-3.5 rotate-180" : "size-3.5"} />{" "}
+                    {copy.backToSignIn}
                   </button>
                 </div>
               ) : null}
@@ -905,12 +783,15 @@ export default function LoginPage() {
                     onEnter={() => void saveNewPassword()}
                   />
 
-                  <div className="login-soft login-muted rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-[10px] leading-5 text-slate-400">
+                  <div className="login-soft login-muted rounded-xl border border-white/[.08] bg-white/[.035] px-3.5 py-3 text-xs leading-5 text-slate-400">
                     {copy.passwordHint}
                   </div>
 
                   {inlineError ? (
-                    <div role="alert" className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-[11px] leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]">
+                    <div
+                      role="alert"
+                      className="login-error rounded-[14px] border border-rose-300/15 bg-rose-400/[.07] px-3.5 py-3 text-sm leading-5 text-rose-100 shadow-[0_10px_30px_rgba(244,63,94,.06)]"
+                    >
                       {inlineError}
                     </div>
                   ) : null}
@@ -918,23 +799,32 @@ export default function LoginPage() {
                   <button
                     onClick={() => void saveNewPassword()}
                     disabled={loading}
-                    className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-indigo-300/10 bg-gradient-to-r from-[#6472f3] to-[#765ee7] text-[12px] font-bold text-white shadow-[0_16px_34px_rgba(87,84,219,.24)] transition hover:brightness-110 disabled:opacity-50"
+                    className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[16px] border border-blue-300/10 bg-[#2563eb] text-[12px] font-bold text-white shadow-[0_14px_32px_rgba(37,99,235,.2)] transition hover:brightness-110 disabled:opacity-50"
                   >
-                    {loading ? <Loader2 className="size-4 animate-spin" /> : <><KeyRound className="size-4" /> {copy.updatePassword}</>}
+                    {loading ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <>
+                        <KeyRound className="size-4" /> {copy.updatePassword}
+                      </>
+                    )}
                   </button>
                 </div>
               ) : null}
 
               {view === "mfa" ? (
                 <DashboardMfaStep
+                  initialStatus={mfaInitialStatus}
                   onSuccess={handleMfaSuccess}
                   onCancel={handleMfaCancel}
                   theme={theme}
                 />
               ) : null}
 
-              <div className="login-footer mt-8 rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5">
-                <p className="login-muted text-center text-[9px] leading-4 text-slate-500">
+              <div
+                className={`login-footer rounded-[16px] border border-white/[.055] bg-white/[.025] px-4 py-3.5 ${view === "mfa" ? "mt-6" : "mt-8"}`}
+              >
+                <p className="login-muted text-center text-xs leading-4 text-slate-500">
                   {copy.antiPhishing}
                 </p>
               </div>

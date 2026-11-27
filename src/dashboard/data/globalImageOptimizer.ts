@@ -3,6 +3,7 @@ import {
   replaceDashboardMediaAssetWithWebp,
   type DashboardMediaAsset,
 } from "@/dashboard/data/media";
+import { convertProductThumbnailToWebp } from "@/dashboard/lib/imageProcessing";
 import { supabase } from "@/integrations/supabase/client";
 import { invalidateNativeStoreCache } from "@/lib/nativeStore";
 
@@ -79,32 +80,26 @@ function asset(
 export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAsset[]> {
   await requireDashboardAdmin();
 
-  const [
-    mediaResult,
-    productImageResult,
-    productResult,
-    brandResult,
-    categoryResult,
-    heroResult,
-  ] = await Promise.all([
-    supabase
-      .from("cms_media_assets")
-      .select("id,bucket_id,object_path,file_name,mime_type,size_bytes")
-      .order("created_at", { ascending: false })
-      .limit(1000),
-    supabase
-      .from("store_product_images")
-      .select("id,product_id,url")
-      .order("created_at", { ascending: false })
-      .limit(1000),
-    supabase.from("store_products").select("id,title").limit(1000),
-    supabase.from("cms_brands").select("id,name,logo_url,cover_image_url").limit(1000),
-    supabase.from("store_categories").select("id,name,image_url").limit(1000),
-    supabase
-      .from("cms_hero_slides")
-      .select("id,title,title_en,image_url,mobile_image_url")
-      .limit(1000),
-  ]);
+  const [mediaResult, productImageResult, productResult, brandResult, categoryResult, heroResult] =
+    await Promise.all([
+      supabase
+        .from("cms_media_assets")
+        .select("id,bucket_id,object_path,file_name,mime_type,size_bytes")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      supabase
+        .from("store_product_images")
+        .select("id,product_id,url")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      supabase.from("store_products").select("id,title").limit(1000),
+      supabase.from("cms_brands").select("id,name,logo_url,cover_image_url").limit(1000),
+      supabase.from("store_categories").select("id,name,image_url").limit(1000),
+      supabase
+        .from("cms_hero_slides")
+        .select("id,title,title_en,image_url,mobile_image_url")
+        .limit(1000),
+    ]);
 
   throwIfError(mediaResult.error, "Loading media assets failed");
   throwIfError(productImageResult.error, "Loading product images failed");
@@ -135,20 +130,17 @@ export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAs
   for (const row of productImageResult.data ?? []) {
     if (!row.url) continue;
     rows.push(
-      asset(
-        "product",
-        row.id,
-        "url",
-        productNames.get(row.product_id) ?? "Product image",
-        row.url,
-      ),
+      asset("product", row.id, "url", productNames.get(row.product_id) ?? "Product image", row.url),
     );
   }
 
   for (const row of brandResult.data ?? []) {
-    if (row.logo_url) rows.push(asset("brand", row.id, "logo_url", `${row.name} · Logo`, row.logo_url));
+    if (row.logo_url)
+      rows.push(asset("brand", row.id, "logo_url", `${row.name} · Logo`, row.logo_url));
     if (row.cover_image_url) {
-      rows.push(asset("brand", row.id, "cover_image_url", `${row.name} · Cover`, row.cover_image_url));
+      rows.push(
+        asset("brand", row.id, "cover_image_url", `${row.name} · Cover`, row.cover_image_url),
+      );
     }
   }
 
@@ -158,13 +150,171 @@ export async function loadGlobalLegacyImageAssets(): Promise<GlobalLegacyImageAs
 
   for (const row of heroResult.data ?? []) {
     const title = row.title_en || row.title || "Hero slide";
-    if (row.image_url) rows.push(asset("hero", row.id, "image_url", `${title} · Desktop`, row.image_url));
+    if (row.image_url)
+      rows.push(asset("hero", row.id, "image_url", `${title} · Desktop`, row.image_url));
     if (row.mobile_image_url) {
-      rows.push(asset("hero", row.id, "mobile_image_url", `${title} · Mobile`, row.mobile_image_url));
+      rows.push(
+        asset("hero", row.id, "mobile_image_url", `${title} · Mobile`, row.mobile_image_url),
+      );
     }
   }
 
   return rows;
+}
+
+export type ProductThumbnailBackfillProgress = {
+  completed: number;
+  total: number;
+  sourceBytes: number;
+  thumbnailBytes: number;
+  currentLabel: string;
+};
+
+export type ProductThumbnailBackfillResult = {
+  processed: number;
+  skipped: number;
+  remaining: number;
+  failed: Array<{ imageId: string; error: string }>;
+  sourceBytes: number;
+  thumbnailBytes: number;
+};
+
+export async function backfillStorefrontProductThumbnails(
+  limit = 24,
+  onProgress?: (progress: ProductThumbnailBackfillProgress) => void,
+): Promise<ProductThumbnailBackfillResult> {
+  await requireDashboardAdmin();
+
+  const safeLimit = Math.min(250, Math.max(1, Math.trunc(limit)));
+  const { data: imageRows, error: imageError } = await supabase
+    .from("store_product_images")
+    .select("id,product_id,url,thumbnail_url,is_primary,sort_order,created_at")
+    .eq("is_primary", true)
+    .is("thumbnail_url", null)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  throwIfError(imageError, "Loading missing primary product thumbnails failed");
+
+  const candidateRows = (imageRows ?? []).filter((row) => Boolean(row.url));
+  const productIds = [...new Set(candidateRows.map((row) => row.product_id))];
+
+  if (!productIds.length) {
+    return {
+      processed: 0,
+      skipped: 0,
+      remaining: 0,
+      failed: [],
+      sourceBytes: 0,
+      thumbnailBytes: 0,
+    };
+  }
+
+  const { data: products, error: productError } = await supabase
+    .from("store_products")
+    .select("id,title")
+    .in("id", productIds)
+    .eq("status", "active");
+  throwIfError(productError, "Loading active products for thumbnail backfill failed");
+
+  const productNames = new Map((products ?? []).map((row) => [row.id, row.title || "Product"]));
+  const eligibleRows = candidateRows.filter((row) => productNames.has(row.product_id));
+  const pending = eligibleRows.slice(0, safeLimit);
+  const total = pending.length;
+  let processed = 0;
+  const skipped = candidateRows.length - eligibleRows.length;
+  let sourceBytes = 0;
+  let thumbnailBytes = 0;
+  const failed: Array<{ imageId: string; error: string }> = [];
+
+  for (let index = 0; index < pending.length; index += 1) {
+    const row = pending[index];
+    const label = productNames.get(row.product_id) ?? "Product";
+    onProgress?.({
+      completed: index,
+      total,
+      sourceBytes,
+      thumbnailBytes,
+      currentLabel: label,
+    });
+
+    let objectPath: string | null = null;
+    try {
+      const response = await fetch(row.url, {
+        cache: "no-store",
+        mode: "cors",
+        credentials: "omit",
+      });
+      if (!response.ok) {
+        throw new Error(`Source download failed (HTTP ${response.status}).`);
+      }
+
+      const blob = await response.blob();
+      const mimeType = blob.type || mimeFromUrl(row.url);
+      if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(mimeType)) {
+        throw new Error(`Unsupported source format: ${mimeType || "unknown"}.`);
+      }
+
+      const source = new File([blob], `product-${row.id}`, {
+        type: mimeType,
+        lastModified: Date.now(),
+      });
+      const conversion = await convertProductThumbnailToWebp(source);
+      if (!conversion.file.size) throw new Error("Generated thumbnail is empty.");
+
+      objectPath = `products/${row.product_id}/thumbnails/${row.id}.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from(OUTPUT_BUCKET)
+        .upload(objectPath, conversion.file, {
+          cacheControl: "31536000",
+          upsert: true,
+          contentType: "image/webp",
+        });
+      throwIfError(uploadError, "Uploading product card thumbnail failed");
+
+      const { data: publicUrl } = supabase.storage.from(OUTPUT_BUCKET).getPublicUrl(objectPath);
+      const { error: updateError } = await supabase
+        .from("store_product_images")
+        .update({ thumbnail_url: publicUrl.publicUrl })
+        .eq("id", row.id)
+        .eq("product_id", row.product_id)
+        .is("thumbnail_url", null);
+      throwIfError(updateError, "Saving product card thumbnail failed");
+
+      sourceBytes += source.size;
+      thumbnailBytes += conversion.file.size;
+      processed += 1;
+    } catch (cause) {
+      if (objectPath) {
+        await supabase.storage
+          .from(OUTPUT_BUCKET)
+          .remove([objectPath])
+          .catch(() => undefined);
+      }
+      failed.push({
+        imageId: row.id,
+        error: cause instanceof Error ? cause.message : "Thumbnail generation failed.",
+      });
+    }
+
+    onProgress?.({
+      completed: index + 1,
+      total,
+      sourceBytes,
+      thumbnailBytes,
+      currentLabel: label,
+    });
+  }
+
+  if (processed) invalidateNativeStoreCache();
+
+  return {
+    processed,
+    skipped,
+    remaining: Math.max(0, eligibleRows.length - processed),
+    failed,
+    sourceBytes,
+    thumbnailBytes,
+  };
 }
 
 export async function downloadGlobalLegacyImage(assetRow: GlobalLegacyImageAsset): Promise<File> {
@@ -244,7 +394,7 @@ export async function replaceGlobalLegacyImageWithWebp(
   if (assetRow.source === "product") {
     ({ error } = await supabase
       .from("store_product_images")
-      .update({ url: uploaded.url })
+      .update({ url: uploaded.url, thumbnail_url: null })
       .eq("id", assetRow.recordId));
   } else if (assetRow.source === "brand") {
     const payload =
@@ -269,7 +419,10 @@ export async function replaceGlobalLegacyImageWithWebp(
   }
 
   if (error) {
-    await supabase.storage.from(OUTPUT_BUCKET).remove([uploaded.objectPath]).catch(() => undefined);
+    await supabase.storage
+      .from(OUTPUT_BUCKET)
+      .remove([uploaded.objectPath])
+      .catch(() => undefined);
     throw new Error(`Updating ${assetRow.source} image reference failed: ${error.message}`);
   }
 
@@ -284,7 +437,6 @@ export async function replaceGlobalLegacyImageWithWebp(
     objectPath: uploaded.objectPath,
   };
 }
-
 
 export type SafeCleanupCandidate = {
   key: string;
@@ -318,7 +470,10 @@ function storageObjectPathFromPublicUrl(url?: string | null) {
   const marker = `/storage/v1/object/public/${OUTPUT_BUCKET}/`;
   const index = url.indexOf(marker);
   if (index < 0) return null;
-  const raw = url.slice(index + marker.length).split("?")[0].split("#")[0];
+  const raw = url
+    .slice(index + marker.length)
+    .split("?")[0]
+    .split("#")[0];
   try {
     return decodeURIComponent(raw);
   } catch {
@@ -341,8 +496,12 @@ async function loadAllKnownReferencedObjectPaths(): Promise<Set<string>> {
     heroResult,
     settingsResult,
   ] = await Promise.all([
-    supabase.from("cms_media_assets").select("bucket_id,object_path").eq("bucket_id", OUTPUT_BUCKET).limit(5000),
-    supabase.from("store_product_images").select("url").limit(5000),
+    supabase
+      .from("cms_media_assets")
+      .select("bucket_id,object_path")
+      .eq("bucket_id", OUTPUT_BUCKET)
+      .limit(5000),
+    supabase.from("store_product_images").select("url,thumbnail_url").limit(5000),
     supabase.from("store_product_variants").select("image_url").limit(5000),
     supabase.from("cms_brands").select("logo_url,cover_image_url").limit(5000),
     supabase.from("store_categories").select("image_url").limit(5000),
@@ -363,7 +522,10 @@ async function loadAllKnownReferencedObjectPaths(): Promise<Set<string>> {
   for (const row of mediaResult.data ?? []) {
     if (row.object_path) referenced.add(row.object_path);
   }
-  for (const row of productImagesResult.data ?? []) addReferencedUrl(referenced, row.url);
+  for (const row of productImagesResult.data ?? []) {
+    addReferencedUrl(referenced, row.url);
+    addReferencedUrl(referenced, row.thumbnail_url);
+  }
   for (const row of variantsResult.data ?? []) addReferencedUrl(referenced, row.image_url);
   for (const row of brandsResult.data ?? []) {
     addReferencedUrl(referenced, row.logo_url);
@@ -388,11 +550,13 @@ type ListedStorageObject = {
   } | null;
 };
 
-async function listStorageFilesRecursive(prefix: string): Promise<Array<{
-  objectPath: string;
-  sizeBytes: number;
-  mimeType: string;
-}>> {
+async function listStorageFilesRecursive(prefix: string): Promise<
+  Array<{
+    objectPath: string;
+    sizeBytes: number;
+    mimeType: string;
+  }>
+> {
   const output: Array<{ objectPath: string; sizeBytes: number; mimeType: string }> = [];
   const queue = [prefix];
 
@@ -470,7 +634,8 @@ export async function scanSafeOldOriginals(): Promise<SafeCleanupScan> {
       fileName: row.objectPath.split("/").pop() || row.objectPath,
       sizeBytes: row.sizeBytes,
       mimeType: row.mimeType,
-      reason: "No current dashboard/storefront database reference points to this managed storage object.",
+      reason:
+        "No current dashboard/storefront database reference points to this managed storage object.",
     }))
     .sort((a, b) => b.sizeBytes - a.sizeBytes);
 
@@ -482,9 +647,11 @@ export async function scanSafeOldOriginals(): Promise<SafeCleanupScan> {
   };
 }
 
-export async function deleteSafeOldOriginals(
-  candidates: SafeCleanupCandidate[],
-): Promise<{ deleted: number; reclaimedBytes: number; failed: Array<{ objectPath: string; error: string }> }> {
+export async function deleteSafeOldOriginals(candidates: SafeCleanupCandidate[]): Promise<{
+  deleted: number;
+  reclaimedBytes: number;
+  failed: Array<{ objectPath: string; error: string }>;
+}> {
   await requireDashboardAdmin();
   if (!candidates.length) return { deleted: 0, reclaimedBytes: 0, failed: [] };
 

@@ -1,8 +1,10 @@
+import { usedPhoneProducts } from "@/lib/usedPhones";
 import { publicSupabase } from "@/integrations/supabase/publicClient";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import type { StoreCollection, StoreProduct } from "@/lib/storeTypes";
-import { buildCatalogIndex } from "@/lib/taxonomy";
+import { buildCatalogIndex, categoryDefinition } from "@/lib/taxonomy";
 import { productSearchScore, textSearchScore } from "@/lib/searchRanking";
+import { specificationGroups } from "@/lib/productSpecifications";
 
 type ProductRow = Tables<"store_products">;
 type VariantRow = Tables<"store_product_variants">;
@@ -10,17 +12,25 @@ type ImageRow = Tables<"store_product_images">;
 type CollectionRow = Tables<"store_collections">;
 type CollectionLinkRow = Tables<"store_collection_products">;
 type BrandRow = Tables<"cms_brands">;
+type CategoryRow = Tables<"store_categories">;
 
 type StorefrontProductRow = Pick<
   ProductRow,
   | "id"
   | "title"
+  | "title_ar"
   | "description"
+  | "description_ar"
   | "description_html"
   | "handle"
   | "brand_id"
+  | "category_id"
   | "product_type"
+  | "specifications"
   | "created_at"
+  | "updated_at"
+  | "seo_title"
+  | "seo_description"
   | "tags"
   | "base_price"
   | "compare_at_price"
@@ -50,35 +60,97 @@ type StorefrontVariantRow = Pick<
 >;
 type StorefrontImageRow = Pick<
   ImageRow,
-  "product_id" | "url" | "alt_text" | "is_primary" | "sort_order"
+  "product_id" | "url" | "thumbnail_url" | "alt_text" | "is_primary" | "sort_order"
 >;
 type StorefrontCollectionRow = Pick<
   CollectionRow,
-  "id" | "handle" | "title" | "description" | "image_url"
+  "id" | "handle" | "title" | "description" | "image_url" | "seo_title" | "seo_description"
 >;
 type StorefrontCollectionLinkRow = Pick<
   CollectionLinkRow,
   "collection_id" | "product_id" | "sort_order"
 >;
-type StorefrontBrandRow = Pick<BrandRow, "id" | "name">;
+type StorefrontBrandRow = Pick<BrandRow, "id" | "name" | "slug">;
+type StorefrontBrandUsageRow = Pick<ProductRow, "brand_id">;
+type StorefrontCategoryRow = Pick<
+  CategoryRow,
+  "id" | "name" | "slug" | "is_active" | "spec_template"
+>;
+type StorefrontNavigationCategoryRow = Pick<CategoryRow, "id" | "name" | "slug" | "sort_order">;
 type NavigationProductRow = Pick<
   ProductRow,
-  "id" | "title" | "handle" | "brand_id" | "product_type" | "tags"
+  "id" | "title" | "handle" | "brand_id" | "category_id" | "product_type" | "tags"
 >;
 
+type RustCatalogCardBrand = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type RustCatalogCardVariant = {
+  id: string;
+  title: string;
+  price: Json;
+  compare_at_price: Json | null;
+  is_active: boolean;
+  track_inventory: boolean;
+  allow_backorder: boolean;
+  stock_quantity: number;
+  sku: string | null;
+  barcode: string | null;
+  image_url: string | null;
+  options: Json;
+  sort_order: number;
+};
+
+type RustCatalogCardImage = {
+  url: string;
+  thumbnail_url: string | null;
+  alt_text: string | null;
+  is_primary: boolean;
+  sort_order: number;
+};
+
+type RustCatalogCardRow = {
+  id: string;
+  title: string;
+  handle: string;
+  brand_id: string | null;
+  product_type: string | null;
+  currency: string;
+  base_price: Json;
+  compare_at_price: Json | null;
+  stock_quantity: number;
+  track_inventory: boolean;
+  allow_backorder: boolean;
+  created_at: string;
+  updated_at: string;
+  tags: string[];
+  brand: RustCatalogCardBrand | null;
+  variants: RustCatalogCardVariant[];
+  images: RustCatalogCardImage[];
+};
+
 const STOREFRONT_PRODUCT_SELECT =
-  "id,title,description,description_html,handle,brand_id,product_type,created_at,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
+  "id,title,title_ar,description,description_ar,description_html,handle,brand_id,category_id,product_type,specifications,created_at,updated_at,seo_title,seo_description,tags,base_price,compare_at_price,currency,track_inventory,allow_backorder,stock_quantity,best_seller,sort_order" as const;
 const STOREFRONT_VARIANT_SELECT =
   "id,product_id,title,price,compare_at_price,is_active,track_inventory,allow_backorder,stock_quantity,sku,barcode,image_url,options,sort_order" as const;
 const STOREFRONT_IMAGE_SELECT =
-  "product_id,url,alt_text,is_primary,sort_order" as const;
+  "product_id,url,thumbnail_url,alt_text,is_primary,sort_order" as const;
 const STOREFRONT_COLLECTION_SELECT =
-  "id,handle,title,description,image_url" as const;
-const STOREFRONT_COLLECTION_LINK_SELECT =
-  "collection_id,product_id,sort_order" as const;
-const STOREFRONT_BRAND_SELECT = "id,name" as const;
+  "id,handle,title,description,image_url,seo_title,seo_description" as const;
+const STOREFRONT_COLLECTION_LINK_SELECT = "collection_id,product_id,sort_order" as const;
+const STOREFRONT_BRAND_SELECT = "id,name,slug" as const;
+const STOREFRONT_CATEGORY_SELECT = "id,name,slug,is_active,spec_template" as const;
+const STOREFRONT_NAVIGATION_CATEGORY_SELECT = "id,name,slug,sort_order" as const;
 const STOREFRONT_NAVIGATION_PRODUCT_SELECT =
-  "id,title,handle,brand_id,product_type,tags" as const;
+  "id,title,handle,brand_id,category_id,product_type,tags" as const;
+const RUST_CATALOG_BASE_URL = "https://space-call-rust-backend-production.up.railway.app";
+const RUST_CATALOG_TIMEOUT_MS = 1_800;
+// The Rust catalogue is a canary only. Keep the public Supabase catalogue as
+// the reliable default until the optional backend has production coverage.
+const RUST_CATALOG_CANARY_ENABLED = import.meta.env.VITE_STOREFRONT_RUST_CATALOG_CANARY === "true";
 
 type NativeProduct = {
   product: StoreProduct;
@@ -90,6 +162,7 @@ type NativeSnapshot = {
   collections: StorefrontCollectionRow[];
   links: StorefrontCollectionLinkRow[];
   brands: StorefrontBrandRow[];
+  categories: StorefrontCategoryRow[];
 };
 
 const CACHE_TTL_MS = 30_000;
@@ -140,6 +213,30 @@ function assertResult<T>(
   if (result.error) throw new Error(`Supabase ${label} failed: ${result.error.message}`);
   if (result.data === null) throw new Error(`Supabase ${label} returned no data`);
   return result.data;
+}
+
+type PublicReadError = { message: string; code?: string };
+
+function isMissingCategorySpecTemplate(error: PublicReadError | null | undefined) {
+  if (!error) return false;
+  return (
+    error.code === "42703" ||
+    /store_categories\.spec_template.*does not exist/i.test(error.message) ||
+    /spec_template.*does not exist/i.test(error.message)
+  );
+}
+
+function categoryRowsOrEmpty(
+  result: { data: StorefrontCategoryRow[] | null; error: PublicReadError | null },
+  label: string,
+): StorefrontCategoryRow[] {
+  if (isMissingCategorySpecTemplate(result.error)) {
+    console.warn(
+      `Supabase ${label} is temporarily missing spec_template; continuing without category templates.`,
+    );
+    return [];
+  }
+  return assertResult(result, label);
 }
 
 function normalizeOptionName(name: string) {
@@ -211,6 +308,7 @@ function buildProduct(
   images: StorefrontImageRow[],
   collections: StorefrontCollectionRow[],
   brand?: StorefrontBrandRow,
+  category?: StorefrontCategoryRow,
 ): StoreProduct {
   const sortedVariants = [...variants].sort((a, b) => a.sort_order - b.sort_order);
   const sortedImages = [...images].sort(
@@ -270,20 +368,35 @@ function buildProduct(
     node: {
       id: row.id,
       title: row.title,
+      titleAr: row.title_ar?.trim() || undefined,
       description: row.description,
+      descriptionAr: row.description_ar?.trim() || undefined,
       descriptionHtml: row.description_html ?? undefined,
       handle: row.handle,
+      categoryId: row.category_id,
+      categorySlug: category?.is_active ? category.slug : undefined,
+      categoryName: category?.is_active ? category.name : undefined,
       vendor: brand?.name,
+      vendorSlug: brand?.slug,
+      vendorHidden: Boolean(row.brand_id && !brand),
       productType: row.product_type ?? undefined,
+      seoTitle: row.seo_title ?? undefined,
+      seoDescription: row.seo_description ?? undefined,
       availableForSale,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
       tags: row.tags,
+      specificationGroups: specificationGroups(category?.spec_template, row.specifications),
       priceRange: { minVariantPrice: money(minPrice, row.currency) },
       compareAtPriceRange:
         minCompare == null ? undefined : { minVariantPrice: money(minCompare, row.currency) },
       images: {
         edges: sortedImages.map((image) => ({
-          node: { url: image.url, altText: image.alt_text },
+          node: {
+            url: image.url,
+            ...(image.thumbnail_url ? { thumbnailUrl: image.thumbnail_url } : {}),
+            altText: image.alt_text,
+          },
         })),
       },
       collections: {
@@ -316,28 +429,52 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
 
   if (missingRows.length) {
     const productIds = missingRows.map((row) => row.id);
-    const [variantResult, imageResult, linkResult] = await Promise.all([
-      publicSupabase
-        .from("store_product_variants")
-        .select(STOREFRONT_VARIANT_SELECT)
-        .in("product_id", productIds)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true }),
-      publicSupabase
-        .from("store_product_images")
-        .select(STOREFRONT_IMAGE_SELECT)
-        .in("product_id", productIds)
-        .order("sort_order", { ascending: true }),
-      publicSupabase
-        .from("store_collection_products")
-        .select(STOREFRONT_COLLECTION_LINK_SELECT)
-        .in("product_id", productIds)
-        .order("sort_order", { ascending: true }),
-    ]);
+    const categoryIds = [
+      ...new Set(
+        missingRows.map((row) => row.category_id).filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const brandIds = [
+      ...new Set(missingRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id))),
+    ];
+    const [variantResult, imageResult, linkResult, categoryResult, brandResult] = await Promise.all(
+      [
+        publicSupabase
+          .from("store_product_variants")
+          .select(STOREFRONT_VARIANT_SELECT)
+          .in("product_id", productIds)
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
+        publicSupabase
+          .from("store_product_images")
+          .select(STOREFRONT_IMAGE_SELECT)
+          .in("product_id", productIds)
+          .order("sort_order", { ascending: true }),
+        publicSupabase
+          .from("store_collection_products")
+          .select(STOREFRONT_COLLECTION_LINK_SELECT)
+          .in("product_id", productIds)
+          .order("sort_order", { ascending: true }),
+        categoryIds.length
+          ? publicSupabase
+              .from("store_categories")
+              .select(STOREFRONT_CATEGORY_SELECT)
+              .in("id", categoryIds)
+          : Promise.resolve({ data: [] as StorefrontCategoryRow[], error: null }),
+        brandIds.length
+          ? publicSupabase
+              .from("cms_brands")
+              .select(STOREFRONT_BRAND_SELECT)
+              .in("id", brandIds)
+              .eq("is_visible", true)
+          : Promise.resolve({ data: [] as StorefrontBrandRow[], error: null }),
+      ],
+    );
 
     const variants = assertResult(variantResult, "bounded product variants");
     const images = assertResult(imageResult, "bounded product images");
     const links = assertResult(linkResult, "bounded product collection links");
+    const categoryRows = categoryRowsOrEmpty(categoryResult, "bounded product categories");
     const variantsByProduct = groupByProduct(variants);
     const imagesByProduct = groupByProduct(images);
     const linksByProduct = groupByProduct(links);
@@ -353,21 +490,11 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
       collections = assertResult(collectionResult, "bounded product collections");
     }
 
-    const brandIds = [
-      ...new Set(missingRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id))),
-    ];
-    let brands: StorefrontBrandRow[] = [];
-    if (brandIds.length) {
-      const brandResult = await publicSupabase
-        .from("cms_brands")
-        .select(STOREFRONT_BRAND_SELECT)
-        .in("id", brandIds)
-        .eq("is_visible", true);
-      brands = assertResult(brandResult, "bounded product brands");
-    }
+    const brands = assertResult(brandResult, "bounded product brands");
 
     const collectionsById = new Map(collections.map((row) => [row.id, row]));
     const brandsById = new Map(brands.map((row) => [row.id, row]));
+    const categoriesById = new Map(categoryRows.map((row) => [row.id, row]));
     const expiresAt = Date.now() + HYDRATED_PRODUCT_CACHE_TTL_MS;
 
     for (const row of missingRows) {
@@ -380,6 +507,7 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
         imagesByProduct.get(row.id) ?? [],
         productCollections,
         row.brand_id ? brandsById.get(row.brand_id) : undefined,
+        row.category_id ? categoriesById.get(row.category_id) : undefined,
       );
       hydratedProductCache.set(row.id, { expiresAt, product });
       cachedProducts.set(row.id, product);
@@ -391,76 +519,149 @@ async function hydrateProductRows(productRows: StorefrontProductRow[]): Promise<
     .filter((product): product is StoreProduct => Boolean(product));
 }
 
+/**
+ * Supabase's per-response row limit must not silently hide products at the end
+ * of the catalog (or leave their variants, images and category links behind).
+ * Use stable ordering across every page for deterministic snapshots.
+ */
+async function fetchAllSnapshotPages<T>(
+  page: (
+    start: number,
+    end: number,
+  ) => PromiseLike<{
+    data: T[] | null;
+    error: { message: string } | null;
+  }>,
+  label: string,
+): Promise<T[]> {
+  const pageSize = 500;
+  const results: T[] = [];
+  for (let start = 0; ; start += pageSize) {
+    const batch = assertResult(await page(start, start + pageSize - 1), label);
+    results.push(...batch);
+    if (batch.length < pageSize) return results;
+  }
+}
+
 async function fetchSnapshot(): Promise<NativeSnapshot> {
-  const [productResult, variantResult, imageResult, collectionResult, linkResult, brandResult] =
-      await Promise.all([
-        publicSupabase
-          .from("store_products")
-      .select(STOREFRONT_PRODUCT_SELECT)
-          .eq("status", "active")
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: false }),
-        publicSupabase
-          .from("store_product_variants")
-      .select(STOREFRONT_VARIANT_SELECT)
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true }),
-        publicSupabase
-          .from("store_product_images")
-      .select(STOREFRONT_IMAGE_SELECT)
-          .order("sort_order", { ascending: true }),
-        publicSupabase
-          .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true })
-          .order("title", { ascending: true }),
-        publicSupabase.from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT).order("sort_order", { ascending: true }),
-        publicSupabase
-          .from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT)
-          .eq("is_visible", true)
-          .order("sort_order", { ascending: true }),
-      ]);
+  const [productRows, variantRows, imageRows, collectionRows, links, brands, categories] =
+    await Promise.all([
+      fetchAllSnapshotPages<StorefrontProductRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_products")
+            .select(STOREFRONT_PRODUCT_SELECT)
+            .eq("status", "active")
+            .order("sort_order", { ascending: true })
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "products",
+      ),
+      fetchAllSnapshotPages<StorefrontVariantRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_product_variants")
+            .select(STOREFRONT_VARIANT_SELECT)
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "variants",
+      ),
+      fetchAllSnapshotPages<StorefrontImageRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_product_images")
+            .select(STOREFRONT_IMAGE_SELECT)
+            .order("sort_order", { ascending: true })
+            .order("product_id", { ascending: true })
+            .order("url", { ascending: true })
+            .range(from, to),
+        "images",
+      ),
+      fetchAllSnapshotPages<StorefrontCollectionRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_collections")
+            .select(STOREFRONT_COLLECTION_SELECT)
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+            .order("title", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "collections",
+      ),
+      fetchAllSnapshotPages<StorefrontCollectionLinkRow>(
+        (from, to) =>
+          publicSupabase
+            .from("store_collection_products")
+            .select(STOREFRONT_COLLECTION_LINK_SELECT)
+            .order("sort_order", { ascending: true })
+            .order("collection_id", { ascending: true })
+            .order("product_id", { ascending: true })
+            .range(from, to),
+        "collection links",
+      ),
+      fetchAllSnapshotPages<StorefrontBrandRow>(
+        (from, to) =>
+          publicSupabase
+            .from("cms_brands")
+            .select(STOREFRONT_BRAND_SELECT)
+            .eq("is_visible", true)
+            .order("sort_order", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to),
+        "brands",
+      ),
+      fetchAllSnapshotPages<StorefrontCategoryRow>(async (from, to) => {
+        const result = await publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .order("id", { ascending: true })
+          .range(from, to);
+        if (isMissingCategorySpecTemplate(result.error)) {
+          console.warn(
+            "Supabase category templates unavailable; continuing without category metadata.",
+          );
+          return { data: [] as StorefrontCategoryRow[], error: null };
+        }
+        return result;
+      }, "categories"),
+    ]);
 
-    const productRows = assertResult(productResult, "products");
-    const variantRows = assertResult(variantResult, "variants");
-    const imageRows = assertResult(imageResult, "images");
-    const collectionRows = assertResult(collectionResult, "collections");
-    const links = assertResult(linkResult, "collection links");
-    const brands = assertResult(brandResult, "brands");
+  const variantsByProduct = groupByProduct(variantRows);
+  const imagesByProduct = groupByProduct(imageRows);
+  const linksByProduct = groupByProduct(links);
+  const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
+  const brandsById = new Map(brands.map((row) => [row.id, row]));
+  const categoriesById = new Map(categories.map((row) => [row.id, row]));
 
-    const variantsByProduct = groupByProduct(variantRows);
-    const imagesByProduct = groupByProduct(imageRows);
-    const linksByProduct = groupByProduct(links);
-    const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
-    const brandsById = new Map(brands.map((row) => [row.id, row]));
-
-    const products: NativeProduct[] = productRows.map((row) => {
-      const productCollections = (linksByProduct.get(row.id) ?? [])
-        .map((link) => collectionsById.get(link.collection_id))
-        .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
-      return {
+  const products: NativeProduct[] = productRows.map((row) => {
+    const productCollections = (linksByProduct.get(row.id) ?? [])
+      .map((link) => collectionsById.get(link.collection_id))
+      .filter((collection): collection is StorefrontCollectionRow => Boolean(collection));
+    return {
+      row,
+      product: buildProduct(
         row,
-        product: buildProduct(
-          row,
-          variantsByProduct.get(row.id) ?? [],
-          imagesByProduct.get(row.id) ?? [],
-          productCollections,
-          row.brand_id ? brandsById.get(row.brand_id) : undefined,
-        ),
-      };
-    });
-
-    const value = { products, collections: collectionRows, links, brands };
-    const fetchedAt = Date.now();
-    cachedSnapshot = {
-      expiresAt: fetchedAt + CACHE_TTL_MS,
-      staleUntil: fetchedAt + CACHE_TTL_MS + STALE_TTL_MS,
-      value,
+        variantsByProduct.get(row.id) ?? [],
+        imagesByProduct.get(row.id) ?? [],
+        productCollections,
+        row.brand_id ? brandsById.get(row.brand_id) : undefined,
+        row.category_id ? categoriesById.get(row.category_id) : undefined,
+      ),
     };
-    return value;
+  });
+
+  const value = { products, collections: collectionRows, links, brands, categories };
+  const fetchedAt = Date.now();
+  cachedSnapshot = {
+    expiresAt: fetchedAt + CACHE_TTL_MS,
+    staleUntil: fetchedAt + CACHE_TTL_MS + STALE_TTL_MS,
+    value,
+  };
+  return value;
 }
 
 function startSnapshotRefresh(): Promise<NativeSnapshot> {
@@ -513,9 +714,237 @@ function publicProducts(snapshot: NativeSnapshot) {
   return snapshot.products.map((entry) => entry.product);
 }
 
+function isRustCatalogRow(value: unknown): value is StorefrontProductRow {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.title === "string" &&
+    typeof row.description === "string" &&
+    typeof row.handle === "string" &&
+    typeof row.currency === "string" &&
+    typeof row.stock_quantity === "number" &&
+    typeof row.track_inventory === "boolean" &&
+    typeof row.allow_backorder === "boolean" &&
+    typeof row.best_seller === "boolean" &&
+    typeof row.created_at === "string" &&
+    typeof row.updated_at === "string" &&
+    typeof row.sort_order === "number" &&
+    Array.isArray(row.tags)
+  );
+}
+
+async function fetchRustCatalogRows(first: number): Promise<StorefrontProductRow[]> {
+  const limit = Math.min(500, Math.max(1, Math.trunc(first)));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RUST_CATALOG_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${RUST_CATALOG_BASE_URL}/api/catalog/products?limit=${limit}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Rust catalog returned HTTP ${response.status}`);
+    }
+
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload) || !payload.every(isRustCatalogRow)) {
+      throw new Error("Rust catalog returned an incompatible product contract");
+    }
+
+    return payload;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function isRustCatalogCardRow(value: unknown): value is RustCatalogCardRow {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+
+  return (
+    typeof row.id === "string" &&
+    typeof row.title === "string" &&
+    typeof row.handle === "string" &&
+    typeof row.currency === "string" &&
+    typeof row.stock_quantity === "number" &&
+    typeof row.track_inventory === "boolean" &&
+    typeof row.allow_backorder === "boolean" &&
+    typeof row.created_at === "string" &&
+    typeof row.updated_at === "string" &&
+    Array.isArray(row.tags) &&
+    Array.isArray(row.variants) &&
+    Array.isArray(row.images)
+  );
+}
+
+function moneyValue(value: Json | null | undefined) {
+  return typeof value === "number" || typeof value === "string" ? String(value) : "0";
+}
+
+function buildPreviewProduct(row: RustCatalogCardRow): StoreProduct {
+  const variants = [...row.variants]
+    .filter((variant) => variant.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const canonicalNames = canonicalOptionNames(variants.map((variant) => variant.options));
+  const mappedVariants = variants.map((variant) => {
+    const availableForSale =
+      !variant.track_inventory || variant.allow_backorder || variant.stock_quantity > 0;
+    return {
+      node: {
+        id: variant.id,
+        title: variant.title,
+        price: money(Number(variant.price), row.currency),
+        compareAtPrice:
+          variant.compare_at_price == null
+            ? null
+            : money(Number(variant.compare_at_price), row.currency),
+        availableForSale,
+        trackInventory: variant.track_inventory,
+        allowBackorder: variant.allow_backorder,
+        stockQuantity: variant.stock_quantity,
+        sku: variant.sku,
+        barcode: variant.barcode,
+        image: variant.image_url ? { url: variant.image_url, altText: null } : null,
+        selectedOptions: optionEntries(variant.options, canonicalNames),
+      },
+    };
+  });
+
+  const optionValues = new Map<string, string[]>();
+  for (const variant of variants) {
+    for (const option of optionEntries(variant.options, canonicalNames)) {
+      const values = optionValues.get(option.name) ?? [];
+      if (!values.includes(option.value)) values.push(option.value);
+      optionValues.set(option.name, values);
+    }
+  }
+
+  const prices = variants
+    .map((variant) => Number(moneyValue(variant.price)))
+    .filter(Number.isFinite);
+  const comparePrices = variants
+    .map((variant) => Number(moneyValue(variant.compare_at_price)))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const minPrice = prices.length ? Math.min(...prices) : Number(moneyValue(row.base_price));
+  const minCompare = comparePrices.length
+    ? Math.min(...comparePrices)
+    : row.compare_at_price == null
+      ? null
+      : Number(moneyValue(row.compare_at_price));
+  const availableForSale = mappedVariants.length
+    ? mappedVariants.some((variant) => variant.node.availableForSale)
+    : !row.track_inventory || row.allow_backorder || row.stock_quantity > 0;
+  const images = [...row.images].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
+  );
+
+  return {
+    node: {
+      id: row.id,
+      title: row.title,
+      description: "",
+      handle: row.handle,
+      vendor: row.brand?.name,
+      vendorSlug: row.brand?.slug,
+      vendorHidden: Boolean(row.brand_id && !row.brand),
+      productType: row.product_type ?? undefined,
+      availableForSale,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      tags: row.tags,
+      priceRange: { minVariantPrice: money(minPrice, row.currency) },
+      compareAtPriceRange:
+        minCompare == null || !Number.isFinite(minCompare)
+          ? undefined
+          : { minVariantPrice: money(minCompare, row.currency) },
+      images: {
+        edges: images.map((image) => ({
+          node: {
+            url: image.url,
+            ...(image.thumbnail_url ? { thumbnailUrl: image.thumbnail_url } : {}),
+            altText: image.alt_text,
+          },
+        })),
+      },
+      collections: { edges: [] },
+      variants: { edges: mappedVariants },
+      options: [...optionValues].map(([name, values]) => ({ name, values })),
+    },
+  };
+}
+
+async function fetchRustCatalogCards(first: number): Promise<RustCatalogCardRow[]> {
+  const limit = Math.min(24, Math.max(1, Math.trunc(first)));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RUST_CATALOG_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${RUST_CATALOG_BASE_URL}/api/catalog/cards?limit=${limit}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Rust catalog cards returned HTTP ${response.status}`);
+    }
+
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload) || !payload.every(isRustCatalogCardRow)) {
+      throw new Error("Rust catalog cards returned an incompatible contract");
+    }
+
+    return payload;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchSupabaseCatalogPreview(first: number): Promise<StoreProduct[]> {
+  const result = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .eq("status", "active")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(Math.max(1, Math.trunc(first)));
+
+  return hydrateProductRows(assertResult(result, "catalog preview products"));
+}
+
+export async function fetchCatalogPreviewProducts(first = 24): Promise<StoreProduct[]> {
+  if (first <= 0) return [];
+
+  if (RUST_CATALOG_CANARY_ENABLED) {
+    try {
+      const rows = await fetchRustCatalogCards(first);
+      return rows.map(buildPreviewProduct);
+    } catch (error) {
+      console.warn("Rust catalog card canary failed; using Supabase.", error);
+    }
+  }
+
+  return fetchSupabaseCatalogPreview(first);
+}
+
 export async function fetchCatalogProducts(first = 500): Promise<StoreProduct[]> {
-  const products = publicProducts(await loadSnapshot());
-  return products.slice(0, Math.max(0, first));
+  if (first <= 0) return [];
+
+  if (RUST_CATALOG_CANARY_ENABLED && first <= 500) {
+    try {
+      const rows = await fetchRustCatalogRows(first);
+      return hydrateProductRows(rows);
+    } catch (error) {
+      console.warn("Rust catalog canary failed; using Supabase.", error);
+    }
+  }
+
+  // Match the direct Supabase snapshot used by storefront search so every
+  // publicly visible active product appears in /shop as well.
+  return publicProducts(await loadSnapshot()).slice(0, Math.trunc(first));
 }
 
 export async function fetchHomepageProducts(first = 48): Promise<StoreProduct[]> {
@@ -532,13 +961,29 @@ export async function fetchHomepageProducts(first = 48): Promise<StoreProduct[]>
 }
 
 export async function fetchBrandVendors(): Promise<string[]> {
-  const snapshot = await loadSnapshot();
-  const used = new Set(
-    snapshot.products
-      .map((entry) => entry.product.node.vendor?.trim())
-      .filter((value): value is string => Boolean(value)),
+  const [brandResult, productResult] = await Promise.all([
+    publicSupabase
+      .from("cms_brands")
+      .select(STOREFRONT_BRAND_SELECT)
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true }),
+    publicSupabase
+      .from("store_products")
+      .select("brand_id")
+      .eq("status", "active")
+      .not("brand_id", "is", null),
+  ]);
+
+  const brands = assertResult(brandResult, "catalog brands");
+  const productRows = assertResult(
+    productResult,
+    "catalog brand usage",
+  ) as StorefrontBrandUsageRow[];
+  const usedBrandIds = new Set(
+    productRows.map((row) => row.brand_id).filter((id): id is string => Boolean(id)),
   );
-  return snapshot.brands.map((brand) => brand.name).filter((name) => used.has(name));
+
+  return brands.filter((brand) => usedBrandIds.has(brand.id)).map((brand) => brand.name);
 }
 
 /**
@@ -549,31 +994,45 @@ export async function fetchBrandVendors(): Promise<string[]> {
  * variant or image tables merely to render navigation.
  */
 export async function fetchNavigationCatalogFacets() {
-  const [productResult, collectionResult, linkResult, brandResult] = await Promise.all([
-    publicSupabase
-      .from("store_products")
-      .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
-      .eq("status", "active")
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .eq("is_active", true),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT)
-      .eq("is_visible", true)
-      .order("sort_order", { ascending: true }),
-  ]);
+  const [productResult, collectionResult, linkResult, brandResult, categoryResult] =
+    await Promise.all([
+      publicSupabase
+        .from("store_products")
+        .select(STOREFRONT_NAVIGATION_PRODUCT_SELECT)
+        .eq("status", "active")
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_collections")
+        .select(STOREFRONT_COLLECTION_SELECT)
+        .eq("is_active", true),
+      publicSupabase
+        .from("store_collection_products")
+        .select(STOREFRONT_COLLECTION_LINK_SELECT)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("cms_brands")
+        .select(STOREFRONT_BRAND_SELECT)
+        .eq("is_visible", true)
+        .order("sort_order", { ascending: true }),
+      publicSupabase
+        .from("store_categories")
+        .select(STOREFRONT_NAVIGATION_CATEGORY_SELECT)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true }),
+    ]);
 
   const productRows = assertResult(productResult, "navigation products") as NavigationProductRow[];
   const collectionRows = assertResult(collectionResult, "navigation collections");
   const links = assertResult(linkResult, "navigation collection links");
   const brands = assertResult(brandResult, "navigation brands");
+  // Managed categories are authoritative when the public read succeeds.
+  const managedCategories = categoryResult.error
+    ? null
+    : ((categoryResult.data ?? []) as StorefrontNavigationCategoryRow[]);
+  const managedCategoriesById = new Map(
+    (managedCategories ?? []).map((category) => [category.id, category]),
+  );
 
   const collectionsById = new Map(collectionRows.map((row) => [row.id, row]));
   const linksByProduct = groupByProduct(links);
@@ -590,7 +1049,16 @@ export async function fetchNavigationCatalogFacets() {
         title: row.title,
         description: "",
         handle: row.handle,
+        categoryId: row.category_id,
+        categorySlug: row.category_id
+          ? managedCategoriesById.get(row.category_id)?.slug
+          : undefined,
+        categoryName: row.category_id
+          ? managedCategoriesById.get(row.category_id)?.name
+          : undefined,
         vendor: row.brand_id ? brandsById.get(row.brand_id)?.name : undefined,
+        vendorSlug: row.brand_id ? brandsById.get(row.brand_id)?.slug : undefined,
+        vendorHidden: Boolean(row.brand_id && !brandsById.get(row.brand_id)),
         productType: row.product_type ?? undefined,
         tags: row.tags,
         availableForSale: true,
@@ -608,76 +1076,66 @@ export async function fetchNavigationCatalogFacets() {
   });
 
   const catalog = buildCatalogIndex(products);
-  return { categories: catalog.categories, brands: catalog.brands };
+  const categoryCounts = new Map<string, number>();
+  for (const row of productRows) {
+    if (!row.category_id) continue;
+    categoryCounts.set(row.category_id, (categoryCounts.get(row.category_id) ?? 0) + 1);
+  }
+  const categories = managedCategories
+    ? managedCategories.map((category) => ({
+        slug: category.slug,
+        label: category.name,
+        count: categoryCounts.get(category.id) ?? 0,
+        icon: categoryDefinition(category.slug)?.icon,
+      }))
+    : catalog.categories;
+  return { categories, brands: catalog.brands, usedPhoneCount: usedPhoneProducts(products).length };
 }
 
 export async function fetchProductByHandle(handle: string): Promise<StoreProduct | null> {
   const normalized = handle.trim().toLowerCase();
   if (!normalized) return null;
 
-  const productResult = await publicSupabase
-    .from("store_products")
-      .select(STOREFRONT_PRODUCT_SELECT)
-    .eq("handle", normalized)
-    .eq("status", "active")
-    .maybeSingle();
-  if (productResult.error) {
-    throw new Error(`Supabase product failed: ${productResult.error.message}`);
-  }
-  const row = productResult.data as StorefrontProductRow | null;
-  if (!row) return null;
-
-  const [variantResult, imageResult, linkResult, brandResult] = await Promise.all([
+  const readProduct = (
+    categoryColumns: typeof STOREFRONT_CATEGORY_SELECT | "id,name,slug,is_active",
+  ) =>
     publicSupabase
-      .from("store_product_variants")
-      .select(STOREFRONT_VARIANT_SELECT)
-      .eq("product_id", row.id)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_product_images")
-      .select(STOREFRONT_IMAGE_SELECT)
-      .eq("product_id", row.id)
-      .order("sort_order", { ascending: true }),
-    publicSupabase
-      .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
-      .eq("product_id", row.id)
-      .order("sort_order", { ascending: true }),
-    row.brand_id
-      ? publicSupabase.from("cms_brands")
-      .select(STOREFRONT_BRAND_SELECT).eq("id", row.brand_id).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+      .from("store_products")
+      .select(
+        `${STOREFRONT_PRODUCT_SELECT},
+         variants:store_product_variants(${STOREFRONT_VARIANT_SELECT}),
+         images:store_product_images(${STOREFRONT_IMAGE_SELECT}),
+         links:store_collection_products(collection:store_collections!inner(${STOREFRONT_COLLECTION_SELECT})),
+         brand:cms_brands!store_products_brand_id_fkey(${STOREFRONT_BRAND_SELECT}),
+         category:store_categories!store_products_category_id_fkey(${categoryColumns})`,
+      )
+      .eq("handle", normalized)
+      .eq("status", "active")
+      .eq("variants.is_active", true)
+      .eq("brand.is_visible", true)
+      .eq("links.collection.is_active", true)
+      .order("sort_order", { referencedTable: "variants" })
+      .order("sort_order", { referencedTable: "images" })
+      .order("sort_order", { referencedTable: "links" })
+      .maybeSingle();
 
-  const variants = assertResult(variantResult, "product variants");
-  const images = assertResult(imageResult, "product images");
-  const links = assertResult(linkResult, "product collection links");
-  if (brandResult.error) {
-    throw new Error(`Supabase product brand failed: ${brandResult.error.message}`);
+  // All relations use the public client's existing access rules. Keep the
+  // top-level product even when it has no public category, brand, or media.
+  let result = await readProduct(STOREFRONT_CATEGORY_SELECT);
+  if (isMissingCategorySpecTemplate(result.error)) {
+    result = await readProduct("id,name,slug,is_active");
   }
+  if (result.error) throw new Error(`Supabase product failed: ${result.error.message}`);
+  if (!result.data) return null;
 
-  const collectionIds = links.map((link) => link.collection_id);
-  let collections: StorefrontCollectionRow[] = [];
-  if (collectionIds.length) {
-    const collectionResult = await publicSupabase
-      .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
-      .in("id", collectionIds)
-      .eq("is_active", true);
-    collections = assertResult(collectionResult, "product collections");
-    const order = new Map(links.map((link, index) => [link.collection_id, index]));
-    collections.sort(
-      (a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER),
-    );
-  }
-
+  const { variants, images, links, brand, category, ...row } = result.data;
   return buildProduct(
     row,
     variants,
     images,
-    collections,
-    (brandResult.data as StorefrontBrandRow | null) ?? undefined,
+    links.map(({ collection }) => collection),
+    brand ?? undefined,
+    category ? { spec_template: null, ...category } : undefined,
   );
 }
 
@@ -702,6 +1160,8 @@ function mapCollection(row: StorefrontCollectionRow): StoreCollection {
     handle: row.handle,
     title: row.title,
     description: row.description,
+    seoTitle: row.seo_title ?? undefined,
+    seoDescription: row.seo_description ?? undefined,
     image: row.image_url ? { url: row.image_url, altText: row.title } : null,
   };
 }
@@ -715,7 +1175,7 @@ async function fetchSmallCollectionByHandle(
 
   const collectionResult = await publicSupabase
     .from("store_collections")
-      .select(STOREFRONT_COLLECTION_SELECT)
+    .select(STOREFRONT_COLLECTION_SELECT)
     .eq("handle", normalizedHandle)
     .eq("is_active", true)
     .maybeSingle();
@@ -731,7 +1191,7 @@ async function fetchSmallCollectionByHandle(
 
   const linkResult = await publicSupabase
     .from("store_collection_products")
-      .select(STOREFRONT_COLLECTION_LINK_SELECT)
+    .select(STOREFRONT_COLLECTION_LINK_SELECT)
     .eq("collection_id", row.id)
     .order("sort_order", { ascending: true });
   const orderedLinks = assertResult(linkResult, "collection links");
@@ -740,7 +1200,7 @@ async function fetchSmallCollectionByHandle(
   const linkedProductIds = [...new Set(orderedLinks.map((link) => link.product_id))];
   const productResult = await publicSupabase
     .from("store_products")
-      .select(STOREFRONT_PRODUCT_SELECT)
+    .select(STOREFRONT_PRODUCT_SELECT)
     .in("id", linkedProductIds)
     .eq("status", "active");
   const productRows = assertResult(productResult, "collection products");
@@ -753,7 +1213,12 @@ async function fetchSmallCollectionByHandle(
   if (!selectedRows.length) return { collection, products: [] };
 
   const activeProductIds = selectedRows.map((product) => product.id);
-  const [variantResult, imageResult, productLinkResult] = await Promise.all([
+  const categoryIds = [
+    ...new Set(
+      selectedRows.map((product) => product.category_id).filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const [variantResult, imageResult, productLinkResult, categoryResult] = await Promise.all([
     publicSupabase
       .from("store_product_variants")
       .select(STOREFRONT_VARIANT_SELECT)
@@ -770,11 +1235,18 @@ async function fetchSmallCollectionByHandle(
       .select(STOREFRONT_COLLECTION_LINK_SELECT)
       .in("product_id", activeProductIds)
       .order("sort_order", { ascending: true }),
+    categoryIds.length
+      ? publicSupabase
+          .from("store_categories")
+          .select(STOREFRONT_CATEGORY_SELECT)
+          .in("id", categoryIds)
+      : Promise.resolve({ data: [] as StorefrontCategoryRow[], error: null }),
   ]);
 
   const variants = assertResult(variantResult, "collection product variants");
   const images = assertResult(imageResult, "collection product images");
   const productLinks = assertResult(productLinkResult, "collection product links");
+  const categoryRows = categoryRowsOrEmpty(categoryResult, "collection product categories");
   const variantsByProduct = groupByProduct(variants);
   const imagesByProduct = groupByProduct(images);
   const linksByProduct = groupByProduct(productLinks);
@@ -798,9 +1270,7 @@ async function fetchSmallCollectionByHandle(
 
   const brandIds = [
     ...new Set(
-      selectedRows
-        .map((product) => product.brand_id)
-        .filter((id): id is string => Boolean(id)),
+      selectedRows.map((product) => product.brand_id).filter((id): id is string => Boolean(id)),
     ),
   ];
   let brands: StorefrontBrandRow[] = [];
@@ -813,6 +1283,7 @@ async function fetchSmallCollectionByHandle(
     brands = assertResult(brandResult, "collection product brands");
   }
   const brandsById = new Map(brands.map((brand) => [brand.id, brand]));
+  const categoriesById = new Map(categoryRows.map((category) => [category.id, category]));
 
   const products = selectedRows.map((productRow) => {
     const productCollections = (linksByProduct.get(productRow.id) ?? [])
@@ -824,6 +1295,7 @@ async function fetchSmallCollectionByHandle(
       imagesByProduct.get(productRow.id) ?? [],
       productCollections,
       productRow.brand_id ? brandsById.get(productRow.brand_id) : undefined,
+      productRow.category_id ? categoriesById.get(productRow.category_id) : undefined,
     );
   });
 
@@ -855,6 +1327,90 @@ export async function fetchCollectionByHandle(
     .slice(0, Math.max(0, pageSize));
 
   return { collection: mapCollection(row), products };
+}
+
+export type HomepageProductSource =
+  "best_sellers" | "newest" | "manual" | "collection" | "brand" | "category";
+
+export async function fetchHomepageConfiguredProducts(config: {
+  source: HomepageProductSource;
+  sourceValue?: string;
+  manualProductIds?: string[];
+  count?: number;
+}): Promise<StoreProduct[]> {
+  const count = Math.min(10, Math.max(1, Math.trunc(config.count ?? 5)));
+  const value = config.sourceValue?.trim() ?? "";
+
+  if (config.source === "best_sellers") return fetchBestSellingProducts(count);
+  if (config.source === "newest") return fetchNewestProducts(count);
+  if (config.source === "manual") {
+    return (await fetchProductsByIds(config.manualProductIds ?? [])).slice(0, count);
+  }
+
+  if (!value) return [];
+  const normalized = value.toLowerCase();
+
+  if (config.source === "brand") {
+    const brandResult = await publicSupabase
+      .from("cms_brands")
+      .select("id,name,slug")
+      .eq("is_visible", true);
+    const brands = assertResult(brandResult, "homepage brand source");
+    const brand = brands.find((row) =>
+      [row.id, row.name, row.slug].some((entry) => entry.toLowerCase() === normalized),
+    );
+    if (!brand) return [];
+
+    const productResult = await publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_PRODUCT_SELECT)
+      .eq("status", "active")
+      .eq("brand_id", brand.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(count);
+    return hydrateProductRows(assertResult(productResult, "homepage brand products"));
+  }
+
+  if (config.source === "category") {
+    const categoryResult = await publicSupabase
+      .from("store_categories")
+      .select("id,name,slug")
+      .eq("is_active", true);
+    const categories = assertResult(categoryResult, "homepage category source");
+    const category = categories.find((row) =>
+      [row.id, row.name, row.slug].some((entry) => entry.toLowerCase() === normalized),
+    );
+    if (!category) return [];
+
+    const productResult = await publicSupabase
+      .from("store_products")
+      .select(STOREFRONT_PRODUCT_SELECT)
+      .eq("status", "active")
+      .eq("category_id", category.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(count);
+    return hydrateProductRows(assertResult(productResult, "homepage category products"));
+  }
+
+  const collectionResult = await publicSupabase
+    .from("store_collections")
+    .select("id,title,handle")
+    .eq("is_active", true);
+  const collections = assertResult(collectionResult, "homepage collection source");
+  const collection = collections.find((row) =>
+    [row.id, row.title, row.handle].some((entry) => entry.toLowerCase() === normalized),
+  );
+  if (!collection) return [];
+
+  const linkResult = await publicSupabase
+    .from("store_collection_products")
+    .select("product_id")
+    .eq("collection_id", collection.id)
+    .order("sort_order", { ascending: true });
+  const links = assertResult(linkResult, "homepage collection products");
+  return (await fetchProductsByIds(links.map((row) => row.product_id))).slice(0, count);
 }
 
 export async function fetchNewestProducts(first = 12) {
@@ -914,6 +1470,24 @@ export async function fetchAllProductsByVendor(vendor: string) {
   return fetchProductsByVendor(vendor, Number.MAX_SAFE_INTEGER);
 }
 
+export async function fetchProductsByIds(ids: string[]) {
+  const normalizedIds = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  const order = new Map(normalizedIds.map((id, index) => [id, index]));
+  if (!order.size) return [];
+
+  const productResult = await publicSupabase
+    .from("store_products")
+    .select(STOREFRONT_PRODUCT_SELECT)
+    .in("id", normalizedIds)
+    .eq("status", "active");
+  const products = await hydrateProductRows(assertResult(productResult, "products by ids"));
+  return products.sort(
+    (a, b) =>
+      (order.get(a.node.id) ?? Number.MAX_SAFE_INTEGER) -
+      (order.get(b.node.id) ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
 export async function fetchProductsByHandles(handles: string[]) {
   const normalizedHandles = [
     ...new Set(handles.map((handle) => handle.trim().toLowerCase()).filter(Boolean)),
@@ -935,28 +1509,16 @@ export async function fetchProductsByHandles(handles: string[]) {
 }
 
 export async function fetchProductRecommendations(handle: string, first = 8) {
-  const snapshot = await loadSnapshot();
-  const current = snapshot.products.find((entry) => entry.product.node.handle === handle);
-  if (!current) return [];
+  const normalizedHandle = handle.trim().toLowerCase();
+  if (!normalizedHandle || first <= 0) return [];
 
-  const vendor = current.product.node.vendor?.toLowerCase();
-  const type = current.product.node.productType?.toLowerCase();
-  return snapshot.products
-    .filter((entry) => entry.product.node.handle !== handle)
-    .map((entry) => ({
-      product: entry.product,
-      score:
-        (type && entry.product.node.productType?.toLowerCase() === type ? 2 : 0) +
-        (vendor && entry.product.node.vendor?.toLowerCase() === vendor ? 1 : 0),
-    }))
-    .filter((entry) => entry.score > 0)
-    .sort(
-      (a, b) =>
-        b.score - a.score ||
-        a.product.node.title.localeCompare(b.product.node.title, "en", { numeric: true }),
-    )
-    .slice(0, first)
-    .map((entry) => entry.product);
+  const [snapshot, { rankProductRecommendations }] = await Promise.all([
+    loadSnapshot(),
+    import("@/lib/productRecommendations"),
+  ]);
+  const products = publicProducts(snapshot);
+  const current = products.find((product) => product.node.handle === normalizedHandle);
+  return current ? rankProductRecommendations(current, products, first) : [];
 }
 
 export async function searchStorefront(term: string) {

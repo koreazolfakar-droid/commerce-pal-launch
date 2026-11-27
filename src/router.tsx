@@ -26,7 +26,9 @@ export const getRouter = () => {
   if (typeof window !== "undefined") {
     subscribeStorefrontRefresh(() => {
       void queryClient.invalidateQueries({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "supabase",
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          (query.queryKey[0] === "supabase" || query.queryKey[0] === "storefront"),
       });
     });
   }

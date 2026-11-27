@@ -13,10 +13,10 @@ test("automatic CI uses one PR gate without duplicate responsive runners", async
 
   assert.match(storefront, /pull_request:[\s\S]*?branches:[\s\S]*?- main/);
   assert.match(storefront, /workflow_dispatch:/);
-  assert.doesNotMatch(storefront, /\n  push:\n/);
+  assert.match(storefront, /\n  push:\n[\s\S]*?branches:[\s\S]*?- main/);
 
   assert.match(storefront, /bun run test:unit/);
-  assert.doesNotMatch(storefront, /node --test e2e\/dashboard-\*\.test\.mjs/);
+  assert.match(storefront, /node --test e2e\/dashboard-\*\.test\.mjs/);
 
   assert.match(storefront, /ui-polish-responsive-check\.mjs/);
   assert.match(storefront, /hero-responsive-check\.mjs/);

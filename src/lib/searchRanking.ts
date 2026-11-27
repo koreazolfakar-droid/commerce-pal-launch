@@ -1,7 +1,7 @@
 import type { StoreProduct } from "@/lib/storeTypes";
 
 type SearchField = {
-  value: string;
+  value: string | null | undefined;
   weight: number;
 };
 
@@ -64,8 +64,8 @@ const TOKEN_ALIASES: Record<string, string[]> = {
   بانك: ["بانك", "bank"],
 };
 
-export function normalizeSearchText(value: string) {
-  return value
+export function normalizeSearchText(value: string | null | undefined) {
+  return (value ?? "")
     .normalize("NFKD")
     .replace(ARABIC_MARKS, "")
     .replace(/[أإآٱ]/g, "ا")
@@ -100,11 +100,7 @@ function editDistanceAtMost(value: string, target: string, maxDistance: number) 
     let rowMin = current[0];
     for (let j = 1; j <= target.length; j += 1) {
       const cost = value[i - 1] === target[j - 1] ? 0 : 1;
-      current[j] = Math.min(
-        current[j - 1] + 1,
-        previous[j] + 1,
-        previous[j - 1] + cost,
-      );
+      current[j] = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + cost);
       rowMin = Math.min(rowMin, current[j]);
     }
     if (rowMin > maxDistance) return false;
@@ -114,7 +110,11 @@ function editDistanceAtMost(value: string, target: string, maxDistance: number) 
   return previous[target.length] <= maxDistance;
 }
 
-function tokenMatchScore(queryToken: string, fieldValue: string, weight: number) {
+function tokenMatchScore(
+  queryToken: string,
+  fieldValue: string | null | undefined,
+  weight: number,
+) {
   const normalized = normalizeSearchText(fieldValue);
   if (!normalized) return 0;
 
@@ -191,7 +191,10 @@ function scoreFields(term: string, fields: SearchField[]) {
     const queryTokenCount = tokens.length;
     const extraTitleTokens = Math.max(0, titleTokenCount - queryTokenCount);
     score += Math.max(0, 160 - extraTitleTokens * 30);
-  } else if (compact(title).includes(compact(normalizedTerm)) && compact(normalizedTerm).length >= 4)
+  } else if (
+    compact(title).includes(compact(normalizedTerm)) &&
+    compact(normalizedTerm).length >= 4
+  )
     score += 450;
 
   return score;
@@ -234,7 +237,7 @@ export function matchesProductSearch(product: StoreProduct, term: string) {
 export function textSearchScore(
   term: string,
   primary: string,
-  secondary: string[] = [],
+  secondary: Array<string | null | undefined> = [],
 ) {
   return scoreFields(term, [
     { value: primary, weight: 120 },

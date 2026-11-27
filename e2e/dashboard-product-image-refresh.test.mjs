@@ -60,4 +60,5 @@ test("storefront query cache refetches Supabase data when dashboard signals a ch
   assert.match(router, /subscribeStorefrontRefresh/);
   assert.match(router, /queryClient\.invalidateQueries/);
   assert.match(router, /query\.queryKey\[0\] === "supabase"/);
+  assert.match(router, /query\.queryKey\[0\] === "storefront"/);
 });

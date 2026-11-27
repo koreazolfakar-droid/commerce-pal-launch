@@ -136,13 +136,17 @@ export async function createDashboardProductVariant(
   input: DashboardProductVariantInput,
 ): Promise<DashboardProductVariant> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("create_store_product_variant", rpcArgs({
-    p_product_id: productId,
-    ...variantRpcPayload(input),
-  }));
+  const { data, error } = await supabase.rpc(
+    "create_store_product_variant",
+    rpcArgs({
+      p_product_id: productId,
+      ...variantRpcPayload(input),
+    }),
+  );
   throwIfError(error, "Creating variant failed");
   if (!data) throw new Error("Variant creation returned no row.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapVariant(data as VariantRow);
 }
 
@@ -151,13 +155,17 @@ export async function updateDashboardProductVariant(
   input: DashboardProductVariantInput,
 ): Promise<DashboardProductVariant> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("update_store_product_variant", rpcArgs({
-    p_variant_id: variantId,
-    ...variantRpcPayload(input),
-  }));
+  const { data, error } = await supabase.rpc(
+    "update_store_product_variant",
+    rpcArgs({
+      p_variant_id: variantId,
+      ...variantRpcPayload(input),
+    }),
+  );
   throwIfError(error, "Updating variant failed");
   if (!data) throw new Error("Variant update returned no row.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapVariant(data as VariantRow);
 }
 
@@ -165,21 +173,29 @@ export async function reorderDashboardProductVariants(
   variants: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("reorder_store_product_variants", rpcArgs({
-    p_items: variants.map((variant) => ({ id: variant.id, sort_order: variant.sortOrder })),
-  }));
+  const { error } = await supabase.rpc(
+    "reorder_store_product_variants",
+    rpcArgs({
+      p_items: variants.map((variant) => ({ id: variant.id, sort_order: variant.sortOrder })),
+    }),
+  );
   throwIfError(error, "Reordering variants failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function deleteDashboardProductVariant(variantId: string): Promise<void> {
   const role = await requireDashboardStaff();
   if (role !== "admin") throw new Error("Only dashboard admins can permanently delete variants.");
-  const { error } = await supabase.rpc("delete_store_product_variant_safe", rpcArgs({
-    p_variant_id: variantId,
-  }));
+  const { error } = await supabase.rpc(
+    "delete_store_product_variant_safe",
+    rpcArgs({
+      p_variant_id: variantId,
+    }),
+  );
   throwIfError(error, "Deleting variant failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function uploadDashboardVariantImage(
@@ -194,24 +210,25 @@ export async function uploadDashboardVariantImage(
   }
 
   const objectPath = `${VARIANT_PREFIX}/${productId}/${variantId}.webp`;
-  const { error: uploadError } = await supabase.storage.from(VARIANT_BUCKET).upload(
-    objectPath,
-    conversion.file,
-    {
+  const { error: uploadError } = await supabase.storage
+    .from(VARIANT_BUCKET)
+    .upload(objectPath, conversion.file, {
       upsert: true,
       cacheControl: "3600",
       contentType: "image/webp",
-    },
-  );
+    });
   throwIfError(uploadError, "Uploading variant image failed");
 
-  const { error: registerError } = await supabase.rpc("register_cms_media_asset", rpcArgs({
-    p_object_path: objectPath,
-    p_file_name: conversion.file.name,
-    p_mime_type: "image/webp",
-    p_size_bytes: conversion.file.size,
-    p_alt_text: null,
-  }));
+  const { error: registerError } = await supabase.rpc(
+    "register_cms_media_asset",
+    rpcArgs({
+      p_object_path: objectPath,
+      p_file_name: conversion.file.name,
+      p_mime_type: "image/webp",
+      p_size_bytes: conversion.file.size,
+      p_alt_text: null,
+    }),
+  );
   throwIfError(registerError, "Registering variant image failed");
 
   const { data: publicUrl } = supabase.storage.from(VARIANT_BUCKET).getPublicUrl(objectPath);
@@ -258,12 +275,16 @@ export async function setDashboardProductCollections(
   collectionIds: string[],
 ): Promise<void> {
   await requireDashboardStaff();
-  const { error } = await supabase.rpc("set_store_product_collections", rpcArgs({
-    p_product_id: productId,
-    p_collection_ids: [...new Set(collectionIds)],
-  }));
+  const { error } = await supabase.rpc(
+    "set_store_product_collections",
+    rpcArgs({
+      p_product_id: productId,
+      p_collection_ids: [...new Set(collectionIds)],
+    }),
+  );
   throwIfError(error, "Saving product collections failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function setDashboardProductsStatus(
@@ -272,34 +293,46 @@ export async function setDashboardProductsStatus(
 ): Promise<number> {
   await requireDashboardStaff();
   const dbStatus = status.toLowerCase();
-  const { data, error } = await supabase.rpc("set_store_products_status", rpcArgs({
-    p_product_ids: [...new Set(productIds)],
-    p_status: dbStatus,
-  }));
+  const { data, error } = await supabase.rpc(
+    "set_store_products_status",
+    rpcArgs({
+      p_product_ids: [...new Set(productIds)],
+      p_status: dbStatus,
+    }),
+  );
   throwIfError(error, "Updating product status failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return Number(data ?? 0);
 }
 
 export async function duplicateDashboardProduct(productId: string): Promise<string> {
   await requireDashboardStaff();
-  const { data, error } = await supabase.rpc("duplicate_store_product", rpcArgs({
-    p_product_id: productId,
-  }));
+  const { data, error } = await supabase.rpc(
+    "duplicate_store_product",
+    rpcArgs({
+      p_product_id: productId,
+    }),
+  );
   throwIfError(error, "Duplicating product failed");
   if (!data) throw new Error("Product duplication returned no id.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return String(data);
 }
 
 export async function deleteDashboardProductSafe(productId: string): Promise<void> {
   const role = await requireDashboardStaff();
   if (role !== "admin") throw new Error("Only dashboard admins can permanently delete products.");
-  const { error } = await supabase.rpc("delete_store_product_safe", rpcArgs({
-    p_product_id: productId,
-  }));
+  const { error } = await supabase.rpc(
+    "delete_store_product_safe",
+    rpcArgs({
+      p_product_id: productId,
+    }),
+  );
   throwIfError(error, "Deleting product failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function getProductManagementRole(): Promise<DashboardRole> {

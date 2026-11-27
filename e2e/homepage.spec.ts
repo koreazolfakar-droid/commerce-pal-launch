@@ -13,6 +13,8 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   await expect(page.getByTestId("top-brands")).toBeVisible();
   await expect(page.getByTestId("best-sellers")).toHaveCount(1);
   await expect(page.getByTestId("new-items")).toHaveCount(1);
+  await expect(page.getByTestId("why-shop")).toHaveCount(1);
+  await expect(page.getByTestId("home-quick-actions")).toHaveCount(1);
   const order = await page
     .locator(".home-page [data-testid]")
     .evaluateAll((elements) => elements.map((element) => element.getAttribute("data-testid")));
@@ -27,7 +29,27 @@ test("homepage has one rebuilt catalog hero, one heading, one benefits strip and
   ];
   for (let i = 1; i < expected.length; i++)
     expect(order.indexOf(expected[i]!)).toBeGreaterThan(order.indexOf(expected[i - 1]!));
-  await expect(page.getByTestId("deal-spotlight").locator("article")).toHaveCount(2);
+  const productShelves = page.locator(
+    '[data-testid="best-sellers"], [data-testid="deals-section"], [data-testid="new-items"]',
+  );
+  const shelfProducts = await productShelves.evaluateAll((sections) =>
+    sections.flatMap((section) => {
+      const shelf = section.getAttribute("data-testid") ?? "unknown";
+      const hrefs = [
+        ...new Set(
+          Array.from(section.querySelectorAll<HTMLAnchorElement>('a[href^="/product/"]')).map(
+            (link) => link.getAttribute("href") ?? "",
+          ),
+        ),
+      ].filter(Boolean);
+      return hrefs.map((href) => ({ shelf, href }));
+    }),
+  );
+  const firstShelfByProduct = new Map<string, string>();
+  for (const item of shelfProducts) {
+    expect(firstShelfByProduct.get(item.href), `${item.href} repeats across homepage product shelves`).toBeUndefined();
+    firstShelfByProduct.set(item.href, item.shelf);
+  }
   if (isMobile) await expect(page.getByTestId("bottom-nav")).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
@@ -46,29 +68,46 @@ test("hero never falls back to Shopify artwork", async ({ page }) => {
   await expect(hero.locator("img")).toBeVisible();
 });
 
-test("each brand keeps its compact showcase, products and exact destination without duplicate hero artwork", async ({
+test("curated brand and category showcases avoid replaying primary shelf products", async ({
   page,
 }) => {
   await page.goto("/");
-  for (const [brand, included, excluded] of [
-    ["apple", "2", "1"],
-    ["samsung", "1", "2"],
-    ["xiaomi", "3", "1"],
-    ["kobo", "8", "1"],
-  ]) {
-    const section = page.locator(`section[data-facet-kind="brand"][data-facet-slug="${brand}"]`);
-    await expect(section.locator(`a[href="/brand/${brand}"]`)).toHaveCount(1);
-    await expect(
-      section.locator(`a[href="/product/fixture-phone-${included}"]`).first(),
-    ).toBeAttached();
-    await expect(section.locator(`a[href="/product/fixture-phone-${excluded}"]`)).toHaveCount(0);
+
+  const primaryProductHrefs = new Set(
+    await page
+      .locator('[data-testid="best-sellers"], [data-testid="deals-section"], [data-testid="new-items"]')
+      .evaluateAll((sections) =>
+        sections.flatMap((section) =>
+          Array.from(section.querySelectorAll<HTMLAnchorElement>('a[href^="/product/"]')).map(
+            (link) => link.getAttribute("href") ?? "",
+          ),
+        ).filter(Boolean),
+      ),
+  );
+
+  const facets = page.getByTestId("brand-showcases").locator("section[data-facet-kind]");
+  const facetCount = await facets.count();
+  for (let index = 0; index < facetCount; index++) {
+    const section = facets.nth(index);
+    const kind = await section.getAttribute("data-facet-kind");
+    const slug = await section.getAttribute("data-facet-slug");
+    expect(kind === "brand" || kind === "category").toBeTruthy();
+    expect(slug).toBeTruthy();
+    await expect(section.locator(`a[href="/${kind}/${slug}"]`)).toHaveCount(1);
+
+    const productHrefs = await section
+      .locator('a[href^="/product/"]')
+      .evaluateAll((links) => [
+        ...new Set(links.map((link) => link.getAttribute("href") ?? "").filter(Boolean)),
+      ]);
+    for (const href of productHrefs) {
+      expect(primaryProductHrefs.has(href), `${href} repeats a primary homepage product`).toBeFalsy();
+    }
   }
+
   await expect(
     page.getByTestId("brand-showcases").locator('img[alt^="Merchant artwork hero-"]'),
   ).toHaveCount(0);
-  await expect(
-    page.locator('[data-facet-kind="category"][data-facet-slug="e-readers"]'),
-  ).toBeAttached();
 });
 
 test("mobile menu supports Arabic and closes after navigation", async ({ page, isMobile }) => {

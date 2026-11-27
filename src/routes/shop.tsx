@@ -1,18 +1,30 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import { CatalogView } from "@/components/CatalogView";
+import { ProductGridSkeleton } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
-import { applyFilters, parseProductSearch, type ProductFilters } from "@/lib/filters";
-import { catalogQueryOptions, collectionsQueryOptions } from "@/lib/queries";
+import {
+  activeFilterCount,
+  applyFilters,
+  parseProductSearch,
+  type ProductFilters,
+} from "@/lib/filters";
+import {
+  catalogPreviewQueryOptions,
+  catalogQueryOptions,
+  collectionsQueryOptions,
+} from "@/lib/queries";
 import { displayCollections } from "@/lib/taxonomy";
 import { breadcrumbJsonLd, canonicalLink, itemListJsonLd, jsonLd, socialMeta } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
+import { useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/shop")({
   validateSearch: parseProductSearch,
   loader: async ({ context }) => {
-    const catalog = await context.queryClient.ensureQueryData(catalogQueryOptions());
+    const catalog = await context.queryClient.ensureQueryData(catalogPreviewQueryOptions());
     void context.queryClient.prefetchQuery(collectionsQueryOptions());
     return { products: catalog.products };
   },
@@ -43,14 +55,60 @@ export const Route = createFileRoute("/shop")({
     };
   },
   component: ShopPage,
+  pendingComponent: ShopPending,
+  pendingMs: 200,
+  pendingMinMs: 0,
 });
 
+function ShopPending() {
+  const { language } = useLanguage();
+  return (
+    <StoreLayout>
+      <div className="mx-auto w-full max-w-[80rem] px-3 py-4 sm:px-5 lg:px-6" role="status" aria-live="polite">
+        <span className="sr-only">{language === "ar" ? "جارٍ تحميل المنتجات" : "Loading products"}</span>
+        <div className="mb-5 space-y-3" aria-hidden="true">
+          <div className="shimmer h-6 w-44 rounded-md bg-surface" />
+          <div className="shimmer h-4 w-2/3 max-w-sm rounded-md bg-surface" />
+          <div className="shimmer h-10 w-full rounded-xl bg-surface" />
+        </div>
+        <ProductGridSkeleton />
+      </div>
+    </StoreLayout>
+  );
+}
+
 function ShopPage() {
-  const { data: catalog } = useSuspenseQuery(catalogQueryOptions());
+  const { language } = useLanguage();
+  const { data: previewCatalog } = useSuspenseQuery(catalogPreviewQueryOptions());
   const { data: collections } = useQuery(collectionsQueryOptions());
   const filters = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const [fullCatalogEnabled, setFullCatalogEnabled] = useState(false);
+  const hasImmediateCatalogIntent =
+    Boolean(filters.q || filters.sort) || activeFilterCount(filters) > 0;
 
+  useEffect(() => {
+    if (hasImmediateCatalogIntent) {
+      setFullCatalogEnabled(true);
+      return;
+    }
+
+    // Keep the first paint and first product images ahead of the full-catalog
+    // hydration request. The complete catalogue still arrives automatically.
+    const timer = window.setTimeout(() => setFullCatalogEnabled(true), 700);
+    return () => window.clearTimeout(timer);
+  }, [hasImmediateCatalogIntent]);
+
+  const {
+    data: fullCatalog,
+    isError: fullCatalogError,
+    isFetching: fullCatalogFetching,
+    refetch: refetchFullCatalog,
+  } = useQuery({
+    ...catalogQueryOptions(),
+    enabled: fullCatalogEnabled || hasImmediateCatalogIntent,
+  });
+  const catalog = fullCatalog ?? previewCatalog;
   const products = applyFilters(catalog.products, catalog, filters);
 
   const update = (patch: Partial<ProductFilters>) =>
@@ -59,8 +117,42 @@ function ShopPage() {
   return (
     <StoreLayout>
       <CatalogView
-        title="Shop all products"
-        description="Browse Space Call phones, tablets, audio, wearables and accessories available for shoppers in Lebanon."
+        topContent={
+          !fullCatalog ? (
+            <div
+              data-testid="shop-catalog-load-state"
+              role={fullCatalogError ? "alert" : "status"}
+              aria-live="polite"
+              className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 text-sm text-foreground"
+            >
+              <span>
+                {fullCatalogError
+                  ? language === "ar"
+                    ? "تعذّر تحميل بقية المنتجات. المعروض حاليًا جزء من الكتالوج فقط."
+                    : "Could not load the full catalog. Only a portion of products is shown."
+                  : language === "ar"
+                    ? "جارٍ تحميل بقية منتجات المتجر…"
+                    : "Loading the rest of the store catalog…"}
+              </span>
+              {fullCatalogError ? (
+                <button
+                  type="button"
+                  onClick={() => void refetchFullCatalog()}
+                  disabled={fullCatalogFetching}
+                  className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent disabled:opacity-50"
+                >
+                  {language === "ar" ? "إعادة المحاولة" : "Retry loading"}
+                </button>
+              ) : null}
+            </div>
+          ) : undefined
+        }
+        title={language === "ar" ? "تصفّح كل المنتجات" : "Shop all products"}
+        description={
+          language === "ar"
+            ? "تصفّح الهواتف والأجهزة اللوحية والسماعات والساعات والإكسسوارات المتوفّرة في Space Call في لبنان."
+            : "Browse Space Call phones, tablets, audio, wearables and accessories available for shoppers in Lebanon."
+        }
         products={products}
         total={catalog.products.length}
         filters={filters}

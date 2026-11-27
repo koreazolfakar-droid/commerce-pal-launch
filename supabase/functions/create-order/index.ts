@@ -1,21 +1,56 @@
+import { readBoundedText, RequestBodyTooLargeError } from "../_shared/requestBody.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
-const ALLOWED_ORIGINS = new Set([
+const PRODUCTION_ORIGINS = new Set([
   "https://spacecallapp.store",
   "https://www.spacecallapp.store",
+  "https://app.spacecallapp.store",
+]);
+
+const NON_PRODUCTION_ORIGINS = new Set([
   "http://localhost:3000",
   "http://localhost:5173",
 ]);
+
+const TRUSTED_PREVIEW_SUFFIXES = [
+  ".lovable.app",
+  ".lovableproject.com",
+  ".lovableproject-dev.com",
+  ".gpt-eng.com",
+  ".gptengineer.run",
+];
+
+function allowNonProductionOrigins() {
+  return Deno.env.get("ALLOW_NON_PRODUCTION_ORIGINS")?.trim().toLowerCase() === "true";
+}
+
+function isAllowedOrigin(origin: string) {
+  if (!origin) return true;
+  if (PRODUCTION_ORIGINS.has(origin)) return true;
+  if (!allowNonProductionOrigins()) return false;
+  if (NON_PRODUCTION_ORIGINS.has(origin)) return true;
+
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "https:" &&
+      TRUSTED_PREVIEW_SUFFIXES.some((suffix) => url.hostname.endsWith(suffix))
+    );
+  } catch {
+    return false;
+  }
+}
 const MAX_BODY_BYTES = 64 * 1024;
 const RATE_WINDOW_SECONDS = 10 * 60;
 const RATE_LIMIT_PER_IP = 30;
+const RATE_LIMIT_PER_USER = 10;
 const RATE_LIMIT_PER_PHONE = 5;
 
 function responseHeaders(req: Request) {
   const origin = req.headers.get("origin")?.trim() || "";
   return {
-    ...(origin && ALLOWED_ORIGINS.has(origin)
+    ...(origin && isAllowedOrigin(origin)
       ? { "Access-Control-Allow-Origin": origin, Vary: "Origin" }
       : {}),
     "Access-Control-Allow-Headers": "content-type, apikey, authorization, x-client-info",
@@ -238,6 +273,7 @@ function publicError(message: string | undefined) {
     "insufficient_stock",
     "mixed_currency_order",
     "pricing_changed",
+    "order_account_conflict",
     "invalid_delivery_fee_config",
   ];
   return known.find((code) => message?.includes(code)) ?? "order_failed";
@@ -245,7 +281,8 @@ function publicError(message: string | undefined) {
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin")?.trim() || "";
-  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+  if (!isAllowedOrigin(origin)) {
+    console.warn("create-order rejected origin", origin);
     return json(req, 403, { error: "origin_not_allowed" });
   }
   if (req.method === "OPTIONS") {
@@ -271,17 +308,18 @@ Deno.serve(async (req: Request) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  let accountUserId = "";
-  let accountEmail = "";
   const userToken = authenticatedBearerToken(req);
-  if (userToken) {
-    const { data: authData, error: authError } = await db.auth.getUser(userToken);
-    if (authError || !authData.user) {
-      return json(req, 401, { error: "invalid_session" });
-    }
-    accountUserId = authData.user.id;
-    accountEmail = authData.user.email?.trim() || "";
+  if (!userToken) {
+    return json(req, 401, { error: "authentication_required" });
   }
+
+  const { data: authData, error: authError } = await db.auth.getUser(userToken);
+  if (authError || !authData.user) {
+    return json(req, 401, { error: "invalid_session" });
+  }
+
+  const accountUserId = authData.user.id;
+  const accountEmail = authData.user.email?.trim() || "";
 
   const enforceRateLimit = async (key: string, limit: number) => {
     const { data: rateRows, error: rateError } = await db.rpc("consume_edge_rate_limit", {
@@ -310,6 +348,13 @@ Deno.serve(async (req: Request) => {
     );
   };
 
+  const userFingerprint = await sha256(accountUserId);
+  const userRateLimit = await enforceRateLimit(
+    `create-order:user:${userFingerprint}`,
+    RATE_LIMIT_PER_USER,
+  );
+  if (userRateLimit) return userRateLimit;
+
   const forwarded =
     req.headers.get("cf-connecting-ip")?.trim() ||
     req.headers.get("x-real-ip")?.trim() ||
@@ -327,19 +372,19 @@ Deno.serve(async (req: Request) => {
 
   let body: unknown;
   try {
-    const text = await req.text();
-    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
+    const text = await readBoundedText(req, MAX_BODY_BYTES);
+    body = JSON.parse(text);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
       return json(req, 413, { error: "payload_too_large" });
     }
-    body = JSON.parse(text);
-  } catch {
     return json(req, 400, { error: "invalid_json" });
   }
 
   const validationError = validatePayload(body);
   if (validationError) return json(req, 400, { error: validationError });
 
-  if (accountEmail && body && typeof body === "object" && !Array.isArray(body)) {
+  if (body && typeof body === "object" && !Array.isArray(body)) {
     const payload = body as Record<string, unknown>;
     const customer =
       payload.customer && typeof payload.customer === "object" && !Array.isArray(payload.customer)
@@ -349,7 +394,7 @@ Deno.serve(async (req: Request) => {
       ...payload,
       customer: {
         ...customer,
-        email: accountEmail,
+        ...(accountEmail ? { email: accountEmail } : {}),
       },
     };
   }
@@ -368,7 +413,10 @@ Deno.serve(async (req: Request) => {
   );
   if (phoneRateLimit) return phoneRateLimit;
 
-  const { data, error } = await db.rpc("create_store_order_internal", { payload: body });
+  const { data, error } = await db.rpc("create_store_order_for_customer_internal", {
+    payload: body,
+    p_customer_user_id: accountUserId,
+  });
   if (error) {
     const code = publicError(error.message);
     console.warn("create-order rejected", code);
@@ -376,7 +424,8 @@ Deno.serve(async (req: Request) => {
       code === "insufficient_stock" ||
       code === "product_or_variant_unavailable" ||
       code === "idempotency_key_conflict" ||
-      code === "pricing_changed"
+      code === "pricing_changed" ||
+      code === "order_account_conflict"
         ? 409
         : code === "invalid_delivery_fee_config"
           ? 503
@@ -392,23 +441,6 @@ Deno.serve(async (req: Request) => {
     isUuid((data as Record<string, unknown>).order_id)
   ) {
     const orderId = (data as Record<string, unknown>).order_id as string;
-
-    if (accountUserId) {
-      const accountPatch: Record<string, unknown> = {
-        customer_user_id: accountUserId,
-      };
-      if (accountEmail) accountPatch.customer_email = accountEmail;
-
-      const { error: accountLinkError } = await db
-        .from("store_orders")
-        .update(accountPatch)
-        .eq("id", orderId)
-        .is("customer_user_id", null);
-
-      if (accountLinkError) {
-        console.error("create-order account link failed", accountLinkError.message);
-      }
-    }
 
     const { data: publicNumberRow, error: publicNumberError } = await db
       .from("store_orders")

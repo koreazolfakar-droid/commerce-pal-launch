@@ -28,3 +28,236 @@ Rollback republish request: 2026-09-25T06:14:00+03:00
 Action: restore the last pre-SEO production snapshot after the SEO deployment caused a production regression.
 Expected runtime snapshot: fb3bd23a72bda574e9ef6c86a586de61d7da9280
 Rollback commit on main: d98fc68ca5ca71f3ed276afc78253c318ca7ef09
+
+MFA UI republish request: 2026-09-26T07:39:00+03:00
+Action: force the Lovable-connected production deployment to rebuild the current main snapshot because PR #392 was merged but the live dashboard MFA page still showed the previous UI.
+Expected runtime snapshot: afc1430dffe4d3dccd3ea2abfa8a450c79e1f40b
+Includes MFA UI merge: e62def6287830de14c383b16bf7339998da0b110
+Runtime behavior changed by this marker: none.
+
+Security hardening republish request: 2026-09-26
+Action: force the Lovable-connected Space Call production project to rebuild current main after final session/CI/URL hardening.
+Required runtime snapshot: the merge commit containing branch security/session-ci-final-hardening-20260926.
+Includes: tab-scoped production Supabase auth storage, legacy localStorage cleanup, shared URL allowlist, restored automatic security CI.
+Do not deploy the separate "Deploy. Done." Lovable project.
+Runtime behavior changed by this marker: none; marker exists only to force the correct connected deployment to sync after merge.
+
+
+Storefront SSR recovery republish request: 2026-09-29T07:13:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after fixing /shop SSR failure.
+Required runtime snapshot: d798ea0e69f5814beec1d9e9b66b4d56f6994898 or newer.
+Includes:
+- canonical public Supabase project guard for storefront SSR
+- resilient category spec_template schema-drift fallback
+- Rust-first catalog integration already present on main
+Do not deploy the separate "Deploy. Done." Lovable project.
+Runtime behavior changed by this marker: none; marker exists only to force the correct connected deployment to sync after merge.
+
+
+Shop SSR performance republish request: 2026-09-29T08:24:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after bounding /shop SSR payload.
+Required runtime snapshot: 7e67f6ff406eda20fdc389d2ec7031b3ef9562af or newer.
+Includes:
+- initial /shop SSR catalog limited to 24 hydrated products
+- full catalog deferred until after first paint or immediate filter/search intent
+- product grid rendered progressively in batches of 24
+- mobile category rail switched to lightweight navigation facets
+- bilingual Load more products control
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Shop SSR single-request preview republish request: 2026-09-29T08:43:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after moving the initial /shop card hydration behind one Rust endpoint.
+Required runtime snapshot: e31d9c9d751ff39c792224640522e2292b068290 or newer.
+Includes:
+- /api/catalog/cards single PostgREST embedded read
+- first /shop SSR maps card-ready products without Supabase hydration round trips
+- existing hydrated catalog remains the fallback and post-paint full-catalog path
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Homepage LCP discovery republish request: 2026-09-29T09:04:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after fixing initial hero discovery.
+Required runtime snapshot: f6b7de5294459d50aee11fb9395cfa2643a906e4 or newer.
+Includes:
+- Rust /api/cms proxy for SSR-only CMS resolution
+- homepage SSR resolves hero CMS through Rust first with safe public-cms fallback
+- existing dynamic hero preload now receives the real image URL in initial HTML
+Goal: eliminate Lighthouse hero resource-load discovery delay caused by SSR placeholder rendering.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Homepage performance rollback republish request: 2026-09-29T09:26:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after removing the blocking Rust CMS lookup from homepage SSR.
+Required runtime snapshot: 913a7fe56af4d24de55790117720c93372a268aa or newer.
+Keep all proven /shop catalog performance improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Homepage LCP non-blocking recovery republish request: 2026-09-29T09:32:00+03:00
+Action: force the Lovable-connected Space Call production project to rebuild current main after fixing LCP discovery without blocking SSR.
+Required runtime snapshot: 861c5f12c09795abf7f30ad5bdd8f079b4d687d9 or newer.
+Includes:
+- public-cms v15 with cached public responses
+- lightweight ?scope=hero endpoint
+- early <head> hero discovery + fetchpriority=high preload
+- early hero rendering after hydration before full CMS settles
+- no blocking Rust CMS lookup in SSR
+Keep all /shop Rust catalog performance improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Mobile performance critical-path republish request: 2026-09-29T10:08:00+03:00
+Action: rebuild the Space Call production storefront from current main with the mobile-first startup performance changes.
+Required runtime snapshot: 3c34ce2e0557478d3e873d7093a1d502d423c8a7 or newer.
+Includes:
+- customer auth and address overlays loaded only when opened
+- Top Brands interactive bundle loaded only near viewport
+- SiteFooter and footer CMS navigation loaded only near viewport
+- non-LCP category, brand and product images explicitly low priority
+- secondary homepage catalog/collection work no longer forced after 160ms; idle timeout raised to 2500ms with 900ms fallback
+- existing early hero discovery and Rust catalog improvements preserved
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Managed category artwork consistency republish request: 2026-09-29T10:25:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 801890f0ed54ecb24444aa85f191cb75a40bed25 or newer.
+Fixes:
+- homepage category rail no longer renders legacy catalog/collection artwork while dashboard categories are loading
+- loading state now reserves layout with skeletons
+- managed category rows never fall back to legacy collection artwork; dashboard image is authoritative
+- legacy artwork fallback is used only when the managed category request actually fails
+- regression coverage verifies /categories, /category/:slug, /brands and homepage hero/brand data resolve authoritative managed sources before visual fallback
+Keep all previous mobile performance and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Immediate hero SSR republish request: 2026-09-29T12:04:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 34dbd8064c4141c1f96f8b492e2ce3178d837203 or newer.
+Fixes:
+- homepage loader returns the already-resolved CMS snapshot to the route component
+- HomeHero renders cms.heroSlides from the first SSR render
+- the large logo hero placeholder is removed entirely
+- obsolete early hero discovery client script removed to avoid duplicate CMS work
+- route preload for the actual hero image remains in the document head
+Expected visual sequence: real hero immediately; never logo-placeholder -> hero.
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Critical hero recovery republish request: 2026-09-29T12:12:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: bc993bed0cc9cad4d849da500a3efc8863287bdd or newer.
+Fixes:
+- critical homepage hero is fetched independently through public-cms?scope=hero
+- critical hero fetch does not depend on the full CMS snapshot or publishable apikey header
+- homepage loader merges criticalHero with full CMS hero slides
+- actual hero image drives preload and first SSR render even when full CMS snapshot is empty
+- large logo hero placeholder remains removed
+- public-cms v16 returns a complete CmsHeroSlide-compatible critical payload
+Keep all category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Direct PostgREST hero performance republish request: 2026-09-29T12:26:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: dccfaa1f4b84269ac1dd001efce04873c3cd0921 or newer.
+Fixes:
+- critical homepage hero now reads directly from Supabase PostgREST instead of Edge Function
+- anon access is limited by RLS to active published hero rows and explicit presentation columns only
+- full CMS snapshot no longer blocks first hero SSR
+- first HTML renders the actual hero and emits its preload
+- full CMS hero slider replaces the critical first slide after CMS hydration so multi-slide behavior remains intact
+- logo hero placeholder remains removed
+Supabase migration: public_active_hero_read_path
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Final direct hero critical-path republish request: 2026-09-29T12:34:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 07e3524f12852819d2b570f270393669a6b99068 or newer.
+Final hero path:
+- first hero is read directly from Supabase PostgREST with active-row RLS
+- full CMS no longer blocks first hero SSR
+- first HTML must contain the real hero image and preload
+- full hero slider restores after CMS hydration
+- no large logo placeholder
+- no client-side hero discovery script
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Guaranteed server hero injection republish request: 2026-09-29T12:48:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: b28118779ba4a8d857174f69b123549375362644 or newer.
+Fixes:
+- src/server.ts now fetches the active published hero in parallel with SSR on / and /ar
+- direct PostgREST read is protected by the existing active-hero RLS/column grants
+- the server injects hero preload and a temporary background image into the first HTML before it leaves the server
+- the hero fetch is cached for 10 seconds and may delay a completed SSR response by at most 50ms
+- this path does not depend on TanStack route loader execution
+- React/CMS still replaces the temporary background with the normal full hero slider after hydration
+Keep all prior category, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Server hero runtime-config recovery republish request: 2026-09-29T13:03:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 9360e80537c78b74bf5eb6f3497950bf368473fd or newer.
+Fixes:
+- guaranteed server hero injection now uses getPublicSupabaseConfig(), so it does not depend on missing Lovable runtime SUPABASE_URL/SUPABASE_PUBLISHABLE_KEY bindings
+- server still reads only the active published hero through the existing RLS/column grants
+- global /logo.svg image preload removed so the mobile hero owns high network priority
+- hero fetch remains parallel with SSR, cached 10s, and capped to 50ms post-SSR wait
+Keep all previous category, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Stable first-paint hero republish request: 2026-09-29T13:18:00+03:00
+Action: rebuild the Space Call production storefront from current main.
+Required runtime snapshot: 36dc51238ac615fdce8206537a8e45c4632a4b89 or newer.
+Final hero architecture:
+- homepage first HTML renders fixed Storage aliases hero/current-mobile and hero/current-desktop directly
+- homepage head preloads those aliases with mobile/desktop media queries
+- no route-loader, server-injection, Edge Function, Rust, or PostgREST request is required before first hero pixels
+- mobile header logo uses low fetch priority
+- full CMS hero slider still replaces the stable first-paint image after CMS hydration
+- authenticated sync-current-hero Edge Function refreshes stable aliases after dashboard create/update/delete/reorder
+- temporary seed-current-hero endpoint is disabled and JWT-protected
+- direct anon cms_hero_slides access restored to gateway-only security model
+Keep all previous category consistency, mobile performance, and Rust catalog improvements unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.
+
+
+Mobile product-image thumbnail pipeline republish request: 2026-09-29T15:11:00+03:00
+Action: rebuild the Space Call production storefront/dashboard from current main.
+Required runtime snapshot: 006142fe4f9b234ebd37568f3e7cb31f4bcd60ac or newer.
+Image-performance changes:
+- store_product_images now supports nullable thumbnail_url
+- new uploads generate a dedicated 480px WebP card thumbnail while preserving the full-quality original
+- product cards, compact cards, search, recently viewed, cart and deal surfaces prefer thumbnailUrl with original fallback
+- product detail/gallery/SEO keep the original high-quality image
+- Dashboard Media Library -> Global old-image WebP optimizer now includes “Mobile product-card thumbnails”
+- Admin button “Generate first 24 thumbnails” backfills current primary product images one-by-one in the browser
+- backfill only writes thumbnail_url; it never changes the original url
+- cleanup logic treats thumbnail files as referenced managed assets
+- temporary server-side thumbnail backfill experiments are removed/disabled
+- Supabase migration 20260929114340_product_image_card_thumbnails is already applied
+Do not deploy the separate "Deploy. Done." Lovable project.
+Keep all previous hero, category consistency, mobile performance, auth, dashboard, inventory and Rust functionality unchanged.
+
+
+Product thumbnail backfill completion republish request: 2026-09-29T15:31:00+03:00
+Action: rebuild the Space Call production storefront/dashboard from current main.
+Required runtime snapshot: 0dcf2e56718ba29b8e23c21273509b64671998c5 or newer.
+Changes:
+- existing thumbnail backfill now selects rows missing thumbnail_url directly, so it cannot stall on the first product batch
+- one dashboard action can process all current missing active primary product thumbnails sequentially (up to 250)
+- original full-quality product images remain unchanged
+- progress reports remaining thumbnails
+- regression test prevents returning to first-24-product behavior
+Keep all prior image-thumbnail, hero, category consistency, mobile performance, auth, dashboard, inventory and Rust functionality unchanged.
+Do not deploy the separate "Deploy. Done." Lovable project.

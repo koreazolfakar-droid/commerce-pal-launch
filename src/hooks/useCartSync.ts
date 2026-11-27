@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import { subscribeStorefrontRefresh } from "@/lib/nativeStore";
 import { useCartStore } from "@/stores/cartStore";
 
 const CART_SYNC_IDLE_TIMEOUT_MS = 2000;
@@ -32,9 +33,14 @@ export function useCartSync() {
       if (document.visibilityState === "visible") void syncCart();
     };
 
+    const unsubscribeStorefrontRefresh = subscribeStorefrontRefresh(() => {
+      if (!cancelled) void syncCart();
+    });
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       cancelled = true;
+      unsubscribeStorefrontRefresh();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (idleRequestId !== null) window.cancelIdleCallback(idleRequestId);
       if (fallbackTimer !== null) clearTimeout(fallbackTimer);

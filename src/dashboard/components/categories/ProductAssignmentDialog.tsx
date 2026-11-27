@@ -1,3 +1,4 @@
+import { useLanguage } from "@/dashboard/i18n";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ export default function ProductAssignmentDialog({
   onClose: () => void;
   onAssign: (productIds: string[]) => void;
 }) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [brand, setBrand] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -63,19 +65,20 @@ export default function ProductAssignmentDialog({
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-[.15em] text-[#6a70e7]">
-              Product assignment
+              {t("Product assignment")}
             </div>
             <h2 className="mt-1 text-[19px] font-black tracking-[-.03em] text-[#14203a]">
-              Assign Products
+              {t("Assign Products")}
             </h2>
             <p className="mt-1 text-[10px] text-slate-400">
-              Selected products will move to <b>{category.name}</b> by updating their Supabase category assignment.
+              {t("Selected products will move to")}
+              <b>{category.name}</b> {t("by updating their Supabase category assignment.")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close assignment dialog"
+            aria-label={t("Close assignment dialog")}
             className="grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50"
           >
             <X className="size-4" />
@@ -84,23 +87,23 @@ export default function ProductAssignmentDialog({
 
         <div className="grid gap-2 border-b border-slate-100 p-3 sm:grid-cols-[1fr_180px] sm:px-6 sm:py-4">
           <label className="relative">
-            <span className="sr-only">Search products</span>
+            <span className="sr-only">{t("Search products")}</span>
             <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search product name or SKU"
+              placeholder={t("Search product name or SKU")}
               className="h-10 w-full rounded-xl border border-slate-200 ps-9 pe-3 text-[11px] outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
             />
           </label>
           <label className="relative">
-            <span className="sr-only">Filter by brand</span>
+            <span className="sr-only">{t("Filter by brand")}</span>
             <select
               value={brand}
               onChange={(event) => setBrand(event.target.value)}
               className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-white ps-3 pe-8 text-[10px] font-semibold text-slate-600 outline-none"
             >
-              <option value="all">All Brands</option>
+              <option value="all">{t("All Brands")}</option>
               {brands.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -155,7 +158,7 @@ export default function ProductAssignmentDialog({
                     <span className="shrink-0 text-end">
                       {alreadyAssigned && (
                         <span className="block rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-bold text-emerald-700">
-                          Current
+                          {t("Current")}
                         </span>
                       )}
                       <span className="mt-1 block text-[8px] text-slate-400">
@@ -171,13 +174,13 @@ export default function ProductAssignmentDialog({
               <div>
                 <div className="text-[12px] font-bold text-slate-600">
                   {products.length
-                    ? "No products match these filters"
-                    : "No products available to assign"}
+                    ? t("No products match these filters")
+                    : t("No products available to assign")}
                 </div>
                 <div className="mt-1 text-[10px] text-slate-400">
                   {products.length
-                    ? "Try another product name, SKU, or brand."
-                    : "Create a product first, then return here to assign it."}
+                    ? t("Try another product name, SKU, or brand.")
+                    : t("Create a product first, then return here to assign it.")}
                 </div>
               </div>
             </div>
@@ -186,7 +189,7 @@ export default function ProductAssignmentDialog({
 
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:px-6">
           <div className="text-[10px] text-slate-400">
-            <b className="text-slate-600">{selected.size}</b> selected
+            <b className="text-slate-600">{selected.size}</b> {t("selected")}
           </div>
           <div className="flex gap-2">
             <button
@@ -194,14 +197,14 @@ export default function ProductAssignmentDialog({
               onClick={onClose}
               className="h-10 rounded-xl border border-slate-200 px-4 text-[11px] font-bold text-slate-600"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               type="button"
               onClick={submit}
               className="h-10 rounded-xl bg-[#5968ea] px-4 text-[11px] font-bold text-white shadow-[0_8px_18px_rgba(89,104,234,.22)]"
             >
-              Assign Selected
+              {t("Assign Selected")}
             </button>
           </div>
         </div>

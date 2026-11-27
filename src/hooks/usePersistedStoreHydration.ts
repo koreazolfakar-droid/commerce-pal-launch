@@ -12,9 +12,9 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 export function usePersistedStoreHydration() {
   useEffect(() => {
     void Promise.all([
-      Promise.resolve(useCartStore.persist.rehydrate()),
-      Promise.resolve(useWishlistStore.persist.rehydrate()),
-      Promise.resolve(useRecentlyViewedStore.persist.rehydrate()),
+      Promise.resolve(useCartStore.persist?.rehydrate()),
+      Promise.resolve(useWishlistStore.persist?.rehydrate()),
+      Promise.resolve(useRecentlyViewedStore.persist?.rehydrate()),
     ]);
   }, []);
 }

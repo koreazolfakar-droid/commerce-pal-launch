@@ -20,7 +20,7 @@ import { useLanguage } from "@/lib/i18n";
 import { formatPrice, variantSummary } from "@/lib/productPricing";
 import { absoluteUrl, canonicalLink } from "@/lib/seo";
 import { STORE_NAME } from "@/lib/storeConfig";
-import { useCartStore } from "@/stores/cartStore";
+import { cartItemMaxQuantity, useCartStore } from "@/stores/cartStore";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -200,6 +200,7 @@ function CartPage() {
                   {items.map((item) => {
                     const image = item.product.node.images?.edges?.[0]?.node;
                     const lineTotal = Number(item.price.amount) * item.quantity;
+                    const maxQuantity = cartItemMaxQuantity(item);
 
                     return (
                       <li
@@ -278,7 +279,7 @@ function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={t("increaseQuantity")}
-                                disabled={isLoading}
+                                disabled={isLoading || item.quantity >= maxQuantity}
                                 onClick={() =>
                                   void updateQuantity(item.variantId, item.quantity + 1)
                                 }

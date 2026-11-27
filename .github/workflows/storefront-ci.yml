@@ -1,6 +1,9 @@
 name: Storefront CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -19,10 +22,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
 
@@ -40,8 +45,8 @@ jobs:
           node scripts/security-gate.mjs
           node scripts/android-security-gate.mjs
 
-      - name: Dependency security gate
-        run: bun audit --audit-level=high
+      - name: Dashboard security regression tests
+        run: node --test e2e/dashboard-*.test.mjs
 
       - name: Unit, security regression and architecture tests
         run: bun run test:unit
@@ -49,9 +54,12 @@ jobs:
       - name: Install Chromium for responsive UI checks
         run: ./node_modules/.bin/playwright install --with-deps chromium
 
+      - name: Production build
+        run: bun run build
+
       - name: Responsive UI, RTL, theme and route checks
         run: |
-          bun run dev:e2e --host 0.0.0.0 --port 4173 > /tmp/ui-polish-vite.log 2>&1 &
+          SPACE_CALL_VISUAL_FIXTURES=1 node --import ./e2e/helpers/storefront-fixture-fetch.mjs e2e/helpers/production-preview.mjs > /tmp/ui-polish-preview.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
           for _ in {1..60}; do
@@ -61,11 +69,16 @@ jobs:
             sleep 1
           done
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/ui-polish-responsive-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/product-details-responsive-check.mjs
+          E2E_BASE_URL=http://127.0.0.1:4173 node e2e/product-layout-acceptance.mjs
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/hero-responsive-check.mjs
           E2E_BASE_URL=http://127.0.0.1:4173 node e2e/bottom-nav-responsive-check.mjs
 
-      - name: Production build
-        run: bun run build
-
       - name: SSR smoke test
-        run: bun run test:ssr
+        run: SPACE_CALL_VISUAL_FIXTURES=1 NODE_OPTIONS="--import ./e2e/helpers/storefront-fixture-fetch.mjs" bun run test:ssr
+
+      # Keep the audit mandatory, but do not let an upstream unpatched
+      # advisory prevent execution of unrelated security, browser and SSR tests.
+      # The workflow still fails closed when bun audit finds HIGH/CRITICAL.
+      - name: Dependency security gate
+        run: bun audit --audit-level=high

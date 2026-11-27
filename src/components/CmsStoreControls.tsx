@@ -19,6 +19,7 @@ import { cmsLocalizedSetting, localizeNavigationItem } from "@/lib/cms";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { safeStoreHref } from "@/lib/safeUrl";
 
 const CMS_ICONS: Record<string, LucideIcon> = {
   Grid2X2,
@@ -90,13 +91,22 @@ export function CmsNavigationStrip({
         {items.map((item) => {
           const className =
             "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-bold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
-          return isInternalStoreHref(item.href) ? (
-            <Link key={item.id} to={item.href as never} preload="intent" className={className}>
+          const safeHref = safeStoreHref(item.href);
+          if (!safeHref) {
+            return (
+              <span key={item.id} className={className}>
+                <ItemIcon item={item} />
+                <span>{item.label}</span>
+              </span>
+            );
+          }
+          return isInternalStoreHref(safeHref) ? (
+            <Link key={item.id} to={safeHref as never} preload="intent" className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </Link>
           ) : (
-            <a key={item.id} href={item.href ?? "/"} className={className}>
+            <a key={item.id} href={safeHref} className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </a>
@@ -132,13 +142,22 @@ export function CmsTrustStrip() {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-3 text-[11px] font-semibold text-muted-foreground sm:px-5 lg:px-6">
         {items.map((item) => {
           const className = "inline-flex items-center gap-2 hover:text-foreground";
-          return isInternalStoreHref(item.href) ? (
-            <Link key={item.id} to={item.href as never} preload="intent" className={className}>
+          const safeHref = safeStoreHref(item.href);
+          if (!safeHref) {
+            return (
+              <span key={item.id} className={className}>
+                <ItemIcon item={item} />
+                <span>{item.label}</span>
+              </span>
+            );
+          }
+          return isInternalStoreHref(safeHref) ? (
+            <Link key={item.id} to={safeHref as never} preload="intent" className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </Link>
           ) : (
-            <a key={item.id} href={item.href ?? undefined} className={className}>
+            <a key={item.id} href={safeHref} className={className}>
               <ItemIcon item={item} />
               <span>{item.label}</span>
             </a>

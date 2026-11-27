@@ -1,3 +1,4 @@
+import { readPreference, writePreference } from "@/dashboard/lib/preferenceStorage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
@@ -28,7 +29,7 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (!switchable || typeof window === "undefined") return defaultTheme;
-    const stored = window.localStorage.getItem(storageKey);
+    const stored = readPreference(storageKey);
     return stored === "dark" || stored === "light" ? stored : defaultTheme;
   });
 
@@ -39,7 +40,7 @@ export function ThemeProvider({
     root.style.colorScheme = theme;
 
     if (switchable) {
-      window.localStorage.setItem(storageKey, theme);
+      writePreference(storageKey, theme);
     }
   }, [storageKey, switchable, theme]);
 

@@ -1,0 +1,210 @@
+# Space Call AI Admin Copilot
+
+## Supported forms
+
+One reusable AI assistant is connected to:
+
+- Products
+- Categories
+- Brands
+- Collections (create and edit)
+- SEO pages (English and Arabic metadata)
+
+The assistant supports:
+
+- Research & Fill
+- SEO improvement
+- Validation
+- exact / partial / uncertain entity resolution
+- server-owned field risk levels: low / medium / high
+- deterministic confidence scoring that combines model confidence, source quality, entity match and verification state
+- server decisions: Allow / Review / Block
+- read-only Supabase checks for duplicate slugs, existing brand/category mappings and barcode uniqueness
+- server-calibrated entity matching that can downgrade an unsupported "exact" model claim
+- per-suggestion grounded evidence binding; Verified is accepted only when the cited URL matches a real grounded source
+- conflict detection when the model returns more than one meaningful value for the same field
+- cross-field slug/name consistency review
+- action-specific output rules: Improve SEO can return SEO fields only
+- source links with official-domain recognition and source quality scoring
+- preview and explicit Apply Selected before the normal form save
+- unchanged or non-meaningful suggestions blocked from application
+- optional reference text (up to 12,000 characters), with literal quotations shown separately from web evidence
+- optional direct manufacturer/product-page URLs (up to three public HTTPS links) using Gemini URL Context, with independently cited results counted as web grounding
+- specification-aware extraction: each dynamic field carries its exact category section and expected unit, and incompatible unit assignments are rejected server-side
+- two-stage first-product research: if no category is selected, resolve an existing dashboard category and then research that category's template in the same review session (still no auto-save)
+- clear grouped suggestion review with safe/review/blocked counts and official evidence links
+- complete-form filling that preserves populated fields by default, with an explicit mode to propose improvements
+- every category specification slot, processed in bounded batches of at most 40 fields and 60 KB of UTF-8 JSON instead of silently dropping fields after the first 40
+- progress, content-field completeness and reasons for fields that still need information
+- request cancellation when closing the panel and protection against overwriting edits made after research began
+
+Research and SEO actions never mutate the form by themselves. Apply Selected changes local draft fields only, and the AI never persists form changes directly.
+
+## Architecture
+
+```text
+Dashboard form
+  -> authenticated Supabase client
+  -> dashboard-ai-assist Edge Function
+  -> staff role check
+  -> entity/field allowlist
+  -> Gemini Interactions API
+  -> structured response normalization
+  -> exact-entity assessment
+  -> source quality scoring
+  -> per-field citation binding
+  -> server-calibrated entity match
+  -> server-side field-risk policy
+  -> read-only Supabase + cross-field validation
+  -> conflict detection
+  -> deterministic confidence + Allow/Review/Block decision
+  -> preview in Dashboard
+  -> user selects eligible suggestions
+  -> existing form save flow
+```
+
+The existing form save functions remain the only paths that persist changes. No AI result is saved automatically. If any batch fails, the request shows an error without applying earlier batches.
+
+For product specifications, select a category first when possible. If the product has no selected category, the full-product assistant may propose an existing category and, when it matches an exact registered category name, research that category's specification template in a second pass before any draft changes are applied. Specification suggestions remain blocked from application until the category suggestion is selected too. Prices, stock and media remain in their normal form controls and are excluded from the assistant's completeness count.
+
+## Rollout and local checks
+
+Deploy `supabase/functions/dashboard-ai-assist` from the same commit before enabling the updated dashboard. The function now imports `formEvidence.ts` as well as `access.ts`. Preserve `verify_jwt = true` and the existing server-side provider secrets. No schema migration is required. The server remains compatible with older requests that omit reference text, fill mode and language.
+
+Run `npm run test:dashboard:ai` with the local Vite server on port 5173 (or set `SPACE_CALL_DASHBOARD_ORIGIN`). Browser checks use synthetic staff authentication and intercepted API responses, and never call a real model or persist catalog changes. A live provider smoke check requires an authorized staff session and is separate from these checks.
+
+## Gemini configuration
+
+Production requires a server-side Supabase Edge Function secret:
+
+```text
+GEMINI_API_KEY=<secret>
+```
+
+Optional:
+
+```text
+GEMINI_MODEL=gemini-3.5-flash-lite
+```
+
+Never expose the Gemini key through a `VITE_*` variable or browser code.
+
+The Edge Function uses the Gemini Interactions API with structured JSON output and defaults to Gemini 3.5 Flash-Lite. It attempts Google Search grounding first and combines it with URL Context when staff provide direct product pages. If a 400 response indicates a structured-output schema or tool conflict, it retries Search without constrained decoding while retaining server-side verification. On 400/403 Search failures, it tries URL Context alone when URLs were supplied, then safely falls back to ungrounded, manual-review-only suggestions. A 429 is treated as rate limiting (not silently relabeled a Search tier issue). Results with neither a real Search result nor a cited retrieved URL are never marked as independently grounded.
+
+As of September 2026, Gemini API Free Tier access depends on the selected model/project. Search grounding also has separate tier/quota rules, so the implementation never assumes Search is available: a 400/403 Search failure may fall back to ungrounded manual-review output, and 429 fails explicitly instead of making unsupported claims about account access. Verify current model and grounding limits before enabling billing:
+
+- https://ai.google.dev/gemini-api/docs/pricing
+- https://ai.google.dev/gemini-api/docs/google-search
+- https://ai.google.dev/gemini-api/docs/interactions-overview
+
+## Data sent to the model
+
+Only server-allowlisted catalog data can be included.
+
+### Product
+
+- title
+- description
+- brand name
+- category name
+- barcode / GTIN
+- SEO title
+- SEO description
+- the names/slugs of available brands and categories
+- specification field definitions from the selected category template
+
+### Category
+
+- name
+- slug
+- description
+- icon
+- SEO title
+- SEO description
+- existing category names/slugs
+- allowed icon names
+
+### Brand
+
+- name
+- slug
+- description
+- official website
+- SEO title
+- SEO description
+- existing brand names/slugs
+
+### Collection
+
+- English and Arabic titles
+- URL handle (requires review and a read-only uniqueness check)
+- description, SEO title and meta description
+
+### SEO page
+
+- English and Arabic titles and meta descriptions
+- page slug as context only, not as an editable AI field
+
+For each supported entity, staff may optionally provide reference text. The prompt treats it as untrusted data, never as instructions. The response language follows the dashboard language; explicitly bilingual fields keep their own language.
+
+The Edge Function rejects fields outside these entity-specific allowlists even if a modified browser client sends them.
+
+## Protected data
+
+The assistant blocks AI control of operational or sensitive fields, including:
+
+- selling price
+- compare-at price
+- cost
+- stock / inventory quantity
+- suppliers
+- order status
+- refunds
+- discounts
+- permissions / roles
+- passwords
+- user IDs
+
+Orders, customers and other personal/customer data are not part of the AI entity allowlist.
+
+## Research trust rules
+
+The prompt, response normalizer and verification engine enforce these rules:
+
+1. Accuracy is more important than completeness.
+2. Resolve the exact entity before trusting factual fields. Product-family evidence is not enough for a specific model or variant.
+3. Prefer manufacturer/brand primary sources, then official documentation, then reputable retailers.
+4. Do not invent product specifications, compatibility, identifiers, websites, warranty, stock or commercial values.
+5. `verified=true` is accepted only when a grounded Search response contains real HTTP(S) citation sources.
+6. The final confidence shown in the Dashboard is server-computed; the model-provided confidence is only one input.
+7. A model claim of an exact entity match is calibrated against the query/current identity and is downgraded when variant tokens or identity overlap do not support it.
+8. Verified factual suggestions must bind to one or more URLs that are present in the actual grounded Search result set; unmatched model-provided URLs do not count as evidence.
+9. High-risk fields such as barcode/GTIN and official website require exact entity resolution and stronger evidence. GTIN length and checksum are validated deterministically.
+10. Category/brand slugs, product barcode uniqueness, and product brand/category mappings are checked against Supabase before a suggestion can be allowed.
+11. Duplicate conflicting values for one field are blocked, and category/brand slugs that do not align with their entity name are sent to review.
+12. Improve SEO is constrained server-side to SEO title/description fields, instead of trusting the model to respect the UI action.
+13. Suggestions that are identical or not meaningfully different from the current value are blocked.
+14. The Edge Function performs catalog validation reads only; it never writes AI results to Supabase.
+15. An ungrounded product specification may be offered for manual review only when the entity match is exact and its proposed value appears literally in a quotation from the staff-supplied reference text. It remains unverified and is never selected automatically. A substring such as “8 GB” inside “128 GB” is rejected as evidence.
+16. Missing or blocked facts remain empty with an explanation. Completeness measures existing values and selected eligible suggestions, not independent verification of every value.
+
+## Failure behavior
+
+Gemini is an enhancement, not a dependency.
+
+- If Gemini is not configured, the existing Dashboard forms continue to work.
+- If Search grounding is unavailable, the assistant can still produce unverified SEO/copy suggestions.
+- If Gemini times out or fails, no catalog mutation occurs.
+- Closing the AI drawer discards its preview result.
+- Running Research & Fill, Improve SEO or Validate only prepares a preview; it does not mutate form fields.
+- Apply Selected changes local form state only after client-side safety checks; the user must still use the existing Save action.
+
+## Next phases
+
+The catalog assistant now uses the Phase 2 verification engine. Future extensions should reuse the same risk/decision contract rather than creating separate AI paths:
+
+1. Optional staff feedback telemetry for accepted/rejected suggestions, with an explicit retention/privacy design before any adaptive learning is enabled.
+2. Media, Hero/Banners and additional CMS forms.
+3. Inventory, Receiving and Purchase Orders — advisory/validation only for quantities.
+4. Orders, Customers and Sales — with stricter privacy rules and no Free Tier processing of personal customer data.
+5. Search aliases, internal linking, catalog-wide SEO audits, optional request caching, quotas and durable AI audit telemetry.

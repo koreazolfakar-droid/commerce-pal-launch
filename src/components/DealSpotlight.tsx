@@ -26,7 +26,7 @@ export function DealSpotlight({ products }: { products: StoreProduct[] }) {
             <div className="relative min-w-0 bg-image-stage">
               <Link to="/product/$handle" params={{ handle: node.handle }} aria-label={node.title}>
                 <ProductImage
-                  url={image?.url}
+                  url={image?.thumbnailUrl ?? image?.url}
                   alt={image?.altText ?? node.title}
                   size={640}
                   sizes="(min-width: 1024px) 420px, (min-width: 640px) 40vw, 92vw"

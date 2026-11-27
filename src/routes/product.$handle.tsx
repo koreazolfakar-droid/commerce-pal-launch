@@ -1,12 +1,21 @@
-import { ProductRail } from "@/components/ProductRail";
 import { useLanguage } from "@/lib/i18n";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import {
-  ChevronDown,
   ChevronRight,
+  ChevronDown,
+  Cpu,
+  Cable,
+  HardDrive,
+  Monitor,
+  Battery,
+  Plug,
+  Palette,
+  Camera,
+  Bluetooth,
+  Sparkles,
   Heart,
   Loader2,
   MessageCircle,
@@ -20,19 +29,24 @@ import { toast } from "sonner";
 
 import { CompareButton } from "@/components/CompareButton";
 import { ProductGallery } from "@/components/product/ProductGallery";
-import { OfficialProductResearch } from "@/components/product/OfficialProductResearch";
-import { ProseSections } from "@/components/product/ProseSection";
-import { SpecSheet } from "@/components/product/SpecSheet";
+import { ProductInformation } from "@/components/product/ProductInformation";
 import { VariantPicker } from "@/components/product/VariantPicker";
-import { ProductGrid } from "@/components/ProductGrid";
 import { StoreLayout } from "@/components/StoreLayout";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { groupSpecs, parseDescription, splitSections, type SpecRow } from "@/lib/productContent";
-import { recommendationsQueryOptions, vendorProductsQueryOptions } from "@/lib/queries";
+import { productOptionKind } from "@/lib/productOptionDisplay";
+import { buildProductHighlights, formatProductHighlight } from "@/lib/productPresentation";
+import {
+  buildDisplayOverview,
+  buildDisplaySpecificationGroups,
+  inferredBoxContents,
+  reconcileVariantSpecifications,
+} from "@/lib/productDetailDisplay";
 import { cmsQueryOptions } from "@/lib/cmsQuery";
 import { fetchProductByHandle } from "@/lib/storefrontData";
-import { discountPercent, formatPrice } from "@/lib/productPricing";
+import { subscribeStorefrontRefresh } from "@/lib/nativeStore";
+import { optionsForVariant, selectProductVariant } from "@/lib/productVariantSelection";
+import { discountPercent, formatPrice, productPrimaryVariant } from "@/lib/productPricing";
 import type { StoreProduct } from "@/lib/storeTypes";
 import { PURCHASE_ASSURANCES } from "@/lib/storeAssurances";
 import { primaryCategory, resolveBrand } from "@/lib/taxonomy";
@@ -55,7 +69,7 @@ import { useWishlistStore } from "@/stores/wishlistStore";
 export const Route = createFileRoute("/product/$handle")({
   loader: async ({ params }) => {
     const product = await fetchProductByHandle(params.handle);
-    if (!product) throw notFound();
+    if (!product) throw notFound({ routeId: Route.id });
     return { product };
   },
   head: ({ params, loaderData }) => {
@@ -69,8 +83,8 @@ export const Route = createFileRoute("/product/$handle")({
     }
     const product = loaderData.product;
     const title = product.node.title || "Product";
-    const fullTitle = `${title} — ${STORE_NAME}`;
-    const description = productMetaDescription(product);
+    const fullTitle = product.node.seoTitle?.trim() || `${title} — ${STORE_NAME}`;
+    const description = product.node.seoDescription?.trim() || productMetaDescription(product);
     const image = product.node.images.edges[0]?.node.url;
     const path = `/product/${params.handle}`;
     return {
@@ -103,10 +117,149 @@ export const Route = createFileRoute("/product/$handle")({
     };
   },
   component: ProductPage,
+  pendingComponent: ProductPending,
+  notFoundComponent: ProductUnavailable,
+  errorComponent: ProductLoadError,
+  pendingMs: 200,
+  pendingMinMs: 0,
 });
 
-function ProductPage() {
+function ProductPending() {
+  const { language } = useLanguage();
+  return (
+    <StoreLayout>
+      <div
+        className="mx-auto grid w-full max-w-7xl gap-6 px-4 pb-6 pt-12 sm:px-5 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-8 lg:px-8 xl:gap-12"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">
+          {language === "ar" ? "جارٍ تحميل المنتج" : "Loading product"}
+        </span>
+        <div
+          className="shimmer aspect-[4/3] self-start rounded-2xl bg-surface sm:aspect-square"
+          aria-hidden="true"
+        />
+        <div
+          className="space-y-4 rounded-2xl border border-border/70 bg-card p-4 sm:p-6"
+          aria-hidden="true"
+        >
+          <div className="shimmer h-3 w-20 rounded bg-surface" />
+          <div className="shimmer h-7 w-4/5 rounded bg-surface" />
+          <div className="shimmer h-5 w-2/3 rounded bg-surface" />
+          <div className="shimmer h-5 w-24 rounded bg-surface" />
+          <div className="shimmer h-11 w-full rounded-xl bg-surface" />
+        </div>
+      </div>
+    </StoreLayout>
+  );
+}
+
+const FEATURE_ICONS = {
+  power: Zap,
+  technology: Cpu,
+  processor: Cpu,
+  port: Plug,
+  display: Monitor,
+  cable: Cable,
+  storage: HardDrive,
+  ram: Cpu,
+  battery: Battery,
+  camera: Camera,
+  bluetooth: Bluetooth,
+  color: Palette,
+} as const;
+
+function ProductUnavailable() {
+  return <ProductStatus />;
+}
+
+function ProductLoadError() {
+  const router = useRouter();
+  return <ProductStatus onRetry={() => void router.invalidate()} />;
+}
+
+function ProductStatus({ onRetry }: { onRetry?: () => void }) {
   const { t, language } = useLanguage();
+  const ar = language === "ar";
+  const title = onRetry
+    ? ar
+      ? "تعذّر تحميل المنتج"
+      : "Unable to load this product"
+    : ar
+      ? "هذا المنتج غير متاح"
+      : "This product is unavailable";
+
+  return (
+    <StoreLayout>
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-5 px-4 py-16 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <div className="flex flex-wrap justify-center gap-3">
+          {onRetry && <Button onClick={onRetry}>{ar ? "حاول مجددًا" : "Try again"}</Button>}
+          <Button asChild variant={onRetry ? "outline" : "default"}>
+            <Link to="/shop">{t("shop")}</Link>
+          </Button>
+        </div>
+      </div>
+    </StoreLayout>
+  );
+}
+
+// Suggestions can fail independently of the purchase experience.
+const LazyProductSuggestions = lazy(() =>
+  import("@/components/product/ProductSuggestions").catch(() => ({ default: () => null })),
+);
+
+function DeferredProductSuggestions(props: {
+  product: StoreProduct;
+  brand: ReturnType<typeof resolveBrand>;
+  category: ReturnType<typeof primaryCategory>;
+}) {
+  const marker = useRef<HTMLDivElement>(null);
+  const [nearViewport, setNearViewport] = useState(false);
+
+  useEffect(() => {
+    const element = marker.current;
+    if (!element) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setNearViewport(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setNearViewport(true);
+        observer.disconnect();
+      },
+      { rootMargin: "0px 0px 480px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={marker} className="min-h-px">
+      {nearViewport && (
+        <Suspense fallback={null}>
+          <LazyProductSuggestions {...props} />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
+function ProductPage() {
+  const { product } = Route.useLoaderData();
+  return (
+    <StoreLayout>
+      <ProductDetails key={product.node.handle} product={product} />
+    </StoreLayout>
+  );
+}
+
+function ProductDetails({ product }: { product: StoreProduct }) {
+  const { t, language } = useLanguage();
+  const router = useRouter();
   const { data: cms } = useQuery(cmsQueryOptions());
   const cmsStoreName = cms?.settings["site_name"];
   const cmsWhatsApp = cms?.settings["whatsapp_number"];
@@ -114,62 +267,76 @@ function ProductPage() {
     typeof cmsStoreName === "string" && cmsStoreName.trim() ? cmsStoreName.trim() : STORE_NAME;
   const whatsappNumber =
     typeof cmsWhatsApp === "string" && cmsWhatsApp.trim() ? cmsWhatsApp : undefined;
-  const { product } = Route.useLoaderData() as { product: StoreProduct };
   const node = product.node;
+  const displayTitle = language === "ar" && node.titleAr?.trim() ? node.titleAr : node.title;
   const variants = useMemo(() => node.variants.edges.map((edge) => edge.node), [node]);
   const images = useMemo(() => node.images.edges.map((edge) => edge.node), [node]);
+  const galleryImages = useMemo(() => {
+    const all = [...images];
+    const known = new Set(images.map((image) => image.url));
+    // Dashboard variants can have their own picture even if it is not in the
+    // product-wide image list. Preserve both sources without duplicates.
+    for (const variant of variants) {
+      const image = variant.image;
+      if (!image?.url || known.has(image.url)) continue;
+      all.push({ url: image.url, altText: image.altText ?? displayTitle });
+      known.add(image.url);
+    }
+    return all;
+  }, [images, variants, displayTitle]);
 
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      (variants[0]?.selectedOptions ?? []).map((option) => [option.name, option.value]),
-    ),
+  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
+    () => productPrimaryVariant(product)?.id,
   );
-  const [activeImage, setActiveImage] = useState(0);
+  const [viewedImage, setViewedImage] = useState<string>();
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState<"cart" | "buy" | null>(null);
 
-  const selectedVariant = useMemo(() => {
-    const match = variants.find((variant) =>
-      variant.selectedOptions.every((option) => selectedOptions[option.name] === option.value),
-    );
-    return match ?? variants[0];
-  }, [variants, selectedOptions]);
+  const selectedVariant = useMemo(
+    () =>
+      variants.find((variant) => variant.id === selectedVariantId) ??
+      productPrimaryVariant(product),
+    [variants, selectedVariantId, product],
+  );
+  const selectedOptions = useMemo(() => optionsForVariant(selectedVariant), [selectedVariant]);
+  const preferredImage = viewedImage ?? selectedVariant?.image?.url;
+  const activeImage = Math.max(
+    0,
+    galleryImages.findIndex((image) => image.url === preferredImage),
+  );
 
   const addItem = useCartStore((state) => state.addItem);
   const cartLoading = useCartStore((state) => state.isLoading);
   const wishlisted = useWishlistStore((state) => state.handles.includes(node.handle));
   const toggleWishlist = useWishlistToggle();
   const addRecentlyViewed = useRecentlyViewedStore((state) => state.add);
-  const { data: recommended } = useQuery(recommendationsQueryOptions(node.handle));
-  const { data: vendorProducts } = useQuery(vendorProductsQueryOptions(node.vendor ?? ""));
-
   useEffect(() => {
     addRecentlyViewed(node.handle);
-    setActiveImage(0);
-    setQuantity(1);
-    setSelectedOptions(
-      Object.fromEntries(
-        (variants[0]?.selectedOptions ?? []).map((option) => [option.name, option.value]),
-      ),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node.handle]);
+  }, [addRecentlyViewed, node.handle]);
 
+  // Dashboard edits invalidate the native cache and re-run this route's direct
+  // Supabase loader, including changes made in another tab of this browser.
   useEffect(() => {
-    const variantImage = selectedVariant?.image?.url;
-    if (!variantImage) return;
-    const index = images.findIndex((image) => image.url === variantImage);
-    if (index >= 0) setActiveImage(index);
-  }, [selectedVariant?.image?.url, images]);
+    const unsubscribe = subscribeStorefrontRefresh(() => {
+      void router.invalidate();
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [router]);
 
   const handleOptionSelect = (name: string, value: string) => {
-    setSelectedOptions((current) => ({ ...current, [name]: value }));
+    const next = selectProductVariant(variants, selectedVariant, name, value);
+    if (!next) return;
+    setSelectedVariantId(next.id);
+    setViewedImage(undefined);
+    setQuantity(1);
   };
 
   const handleShare = async () => {
     try {
       const url = window.location.href;
-      if (navigator.share) await navigator.share({ title: node.title, url });
+      if (navigator.share) await navigator.share({ title: displayTitle, url });
       else {
         await navigator.clipboard.writeText(url);
         toast.success(t("linkCopied"));
@@ -196,9 +363,9 @@ function ProductPage() {
         toast.error(t("addToCartFailed"), { position: "top-center" });
         return;
       }
-      toast.success(`${node.title}: ${t("addedToCart")}`, { position: "top-center" });
+      toast.success(`${displayTitle}: ${t("addedToCart")}`, { position: "top-center" });
       if (checkout) {
-        window.location.assign("/cart");
+        await router.navigate({ to: "/cart" });
       }
     } catch {
       toast.error(t("addToCartFailed"));
@@ -207,20 +374,19 @@ function ProductPage() {
     }
   };
 
-  const compareAt =
-    selectedVariant?.compareAtPrice?.amount ?? node.compareAtPriceRange?.minVariantPrice.amount;
-  const discount = discountPercent(selectedVariant?.price.amount, compareAt);
-  const currency = selectedVariant?.price.currencyCode ?? "USD";
+  const price = selectedVariant?.price ?? node.priceRange.minVariantPrice;
+  const priceLabel = formatPrice(price.amount, price.currencyCode);
+  const compareAt = selectedVariant
+    ? selectedVariant.compareAtPrice?.amount
+    : node.compareAtPriceRange?.minVariantPrice.amount;
+  const discount = discountPercent(price.amount, compareAt);
   const inStock = Boolean(selectedVariant?.availableForSale);
   const brand = resolveBrand(product);
-  const sameVendorProducts = (vendorProducts ?? [])
-    .filter((item) => item.node.handle !== node.handle && item.node.vendor === node.vendor)
-    .slice(0, 8);
   const category = primaryCategory(product);
   const busy = pending !== null || cartLoading;
-  const isPhone = category?.slug === "smartphones";
+  const isPhone = category?.slug === "smartphone" || category?.slug === "smartphones";
   const whatsappOrderUrl = productWhatsAppUrl({
-    title: node.title,
+    title: displayTitle,
     url: absoluteUrl(`/product/${node.handle}`),
     quantity,
     options: selectedVariant?.selectedOptions ?? [],
@@ -229,12 +395,30 @@ function ProductPage() {
   });
 
   const content = useMemo(
-    () => splitSections(parseDescription(node.descriptionHtml, node.description)),
-    [node.descriptionHtml, node.description],
+    () =>
+      splitSections(
+        parseDescription(
+          language === "ar" && node.descriptionAr?.trim() ? undefined : node.descriptionHtml,
+          language === "ar" && node.descriptionAr?.trim() ? node.descriptionAr : node.description,
+        ),
+      ),
+    [language, node.descriptionHtml, node.description, node.descriptionAr],
   );
 
   const specGroups = useMemo(() => {
-    const rows: SpecRow[] = [
+    const structuredGroups = (node.specificationGroups ?? []).map((group) => ({
+      title: language === "ar" ? group.titleAr || group.title : group.title,
+      rows: group.rows.map((row) => ({
+        label: language === "ar" ? row.labelAr || row.label : row.label,
+        value: row.value,
+      })),
+    }));
+    const structuredLabels = new Set(
+      structuredGroups.flatMap((group) =>
+        group.rows.map((row) => row.label.trim().toLocaleLowerCase()),
+      ),
+    );
+    const fallbackRows: SpecRow[] = [
       ...content.specs,
       ...(selectedVariant?.selectedOptions ?? [])
         .filter((option) => option.value !== "Default Title")
@@ -248,33 +432,59 @@ function ProductPage() {
       selectedVariant.weightUnit
         ? [{ label: "Weight", value: `${selectedVariant.weight} ${selectedVariant.weightUnit}` }]
         : []),
-    ];
-    return groupSpecs(rows);
-  }, [content.specs, selectedVariant, node.productType, node.vendor]);
+    ].filter((row) => !structuredLabels.has(row.label.trim().toLocaleLowerCase()));
 
-  const similar = useMemo(() => {
-    const fromRecommendations = (recommended ?? []).filter(
-      (candidate) => candidate.node.handle !== node.handle,
+    return reconcileVariantSpecifications(
+      buildDisplaySpecificationGroups(
+        [...structuredGroups, ...groupSpecs(fallbackRows)],
+        node.title,
+        language,
+      ),
+      selectedVariant?.selectedOptions ?? [],
+      language,
     );
-    if (fromRecommendations.length >= 4) return fromRecommendations.slice(0, 8);
-    const seen = new Set([node.handle, ...fromRecommendations.map((item) => item.node.handle)]);
-    const fallback = (vendorProducts ?? []).filter((candidate) => !seen.has(candidate.node.handle));
-    return [...fromRecommendations, ...fallback].slice(0, 8);
-  }, [recommended, vendorProducts, node.handle]);
+  }, [
+    content.specs,
+    selectedVariant,
+    node.productType,
+    node.vendor,
+    node.specificationGroups,
+    node.title,
+    language,
+  ]);
 
-  const hasOverview = content.overview.length > 0;
-  const hasBox = content.box.length > 0;
-  const hasShipping = content.shipping.length > 0;
-  const hasSpecs = specGroups.length > 0;
-  const needsSeoOverview = (node.description ?? "").replace(/\s+/g, " ").trim().length < 180;
-  const defaultTab = hasOverview ? "overview" : "specifications";
-  const selectedOptionSummary = (selectedVariant?.selectedOptions ?? [])
-    .filter((option) => option.value !== "Default Title")
-    .map((option) => option.value)
-    .join(" · ");
+  const highlights = useMemo(() => {
+    const optionKeys = new Set<string>(
+      (node.options ?? []).map((option) => productOptionKind(option.name)),
+    );
+    return buildProductHighlights(specGroups, node.title, 6)
+      .filter((highlight) => !optionKeys.has(highlight.key === "ram" ? "memory" : highlight.key))
+      .slice(0, 6);
+  }, [specGroups, node.title, node.options]);
+
+  const showSpecifications = (event: MouseEvent<HTMLAnchorElement>) => {
+    const details = document.getElementById("product-specifications");
+    if (!(details instanceof HTMLDetailsElement)) return;
+    event.preventDefault();
+    details.open = true;
+    details.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    details.querySelector("summary")?.focus({ preventScroll: true });
+  };
+
+  const displayOverview = useMemo(
+    () => buildDisplayOverview(content.overview, node.title, node.vendor, language),
+    [content.overview, node.title, node.vendor, language],
+  );
+  const displayBox = useMemo(
+    () => (content.box.length ? content.box : inferredBoxContents(node.title, language)),
+    [content.box, node.title, language],
+  );
   const maxQuantity =
     selectedVariant?.trackInventory && !selectedVariant.allowBackorder
-      ? Math.max(0, selectedVariant.stockQuantity ?? 0)
+      ? Math.max(0, Math.min(99, Math.trunc(selectedVariant.stockQuantity ?? 0)))
       : 99;
 
   useEffect(() => {
@@ -282,80 +492,104 @@ function ProductPage() {
   }, [maxQuantity, selectedVariant?.id]);
 
   return (
-    <StoreLayout>
-      <div className="mx-auto max-w-7xl px-4 py-4 pb-[calc(var(--mobile-nav-height)+5.75rem)] sm:px-5 sm:pb-16 lg:px-6 lg:py-10 lg:pb-14">
+    <>
+      <div className="mx-auto max-w-7xl px-4 py-4 pb-6 sm:px-5 sm:pb-12 lg:px-8 lg:pt-7">
         <nav
-          aria-label="Breadcrumb"
-          className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex"
+          aria-label={language === "ar" ? "مسار التنقل" : "Breadcrumb"}
+          className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground sm:text-sm"
         >
-          <Link to="/" className="transition-colors hover:text-primary">
-            Home
+          <Link to="/" className="shrink-0 transition-colors hover:text-primary">
+            {t("home")}
           </Link>
-          <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-          <Link to="/shop" className="transition-colors hover:text-primary">
-            Shop
+          <ChevronRight aria-hidden className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />
+          <Link to="/shop" className="shrink-0 transition-colors hover:text-primary">
+            {t("shop")}
           </Link>
           {category && (
             <>
-              <ChevronRight aria-hidden className="h-3.5 w-3.5" />
+              <ChevronRight aria-hidden className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />
               <Link
                 to="/category/$slug"
                 params={{ slug: category.slug }}
-                className="transition-colors hover:text-primary"
+                className="min-w-0 truncate transition-colors hover:text-primary"
               >
                 {category.label}
               </Link>
             </>
           )}
-          <ChevronRight aria-hidden className="h-3.5 w-3.5" />
-          <span className="truncate text-foreground">{node.title}</span>
+          <ChevronRight aria-hidden className="h-3.5 w-3.5 shrink-0 rtl:rotate-180" />
+          <span aria-current="page" className="min-w-0 truncate text-foreground">
+            {displayTitle}
+          </span>
         </nav>
 
         <div
           data-testid="product-detail-canvas"
-          className="mt-0 grid gap-6 sm:mt-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,.95fr)] lg:gap-12"
+          className="mt-4 grid items-start gap-4 sm:mt-5 sm:gap-6 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-8 xl:gap-12"
         >
           <ProductGallery
-            images={images}
-            title={node.title}
+            images={galleryImages}
+            title={displayTitle}
             activeIndex={activeImage}
-            onSelect={setActiveImage}
+            onSelect={(index) => setViewedImage(galleryImages[index]?.url)}
             badge={
               discount !== null ? (
-                <span className="absolute left-3 top-3 rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-semibold text-destructive-foreground sm:left-4 sm:top-4">
+                <span className="absolute start-3 top-3 rounded-lg bg-destructive px-2.5 py-1 text-[11px] font-semibold text-destructive-foreground sm:start-4 sm:top-4">
                   -{discount}%
                 </span>
               ) : null
             }
           />
 
-          <div className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:py-2">
+          <div
+            data-testid="product-buy-box"
+            className="flex min-w-0 flex-col gap-3.5 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:gap-4 sm:p-6 lg:p-7"
+          >
             <div className="min-w-0">
               {brand && (
                 <Link
                   to="/brand/$slug"
                   params={{ slug: brand.slug }}
-                  className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
+                  className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary"
                 >
                   {brand.label}
                 </Link>
               )}
-              <h1 className="mt-1.5 text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2.15rem] lg:leading-[1.15]">
-                {node.title}
+              <h1 className="mt-1.5 max-w-3xl text-balance break-words text-[1.45rem] font-semibold leading-[1.24] tracking-[-0.025em] text-foreground sm:text-3xl lg:text-[2rem] lg:leading-[1.16]">
+                {displayTitle}
               </h1>
-              {selectedOptionSummary && (
-                <p className="mt-2 text-sm text-muted-foreground">{selectedOptionSummary}</p>
-              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border/60 pb-3.5 sm:pb-4">
+              <div
+                data-testid="product-price"
+                className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-1"
+                aria-live="polite"
+              >
+                <bdi className="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
+                  {priceLabel}
+                </bdi>
+                {discount !== null && compareAt && (
+                  <del className="text-sm text-muted-foreground">
+                    <bdi>{formatPrice(compareAt, price.currencyCode)}</bdi>
+                  </del>
+                )}
+                {discount !== null && (
+                  <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                    {language === "ar" ? "خصم" : "Save"} {discount}%
+                  </span>
+                )}
+              </div>
               <p
                 className={cn(
-                  "mt-2 inline-flex items-center gap-2 text-xs font-medium",
-                  inStock ? "text-success" : "text-muted-foreground",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                  inStock ? "bg-success/10 text-success" : "bg-surface text-muted-foreground",
                 )}
               >
                 <span
                   aria-hidden
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full",
+                    "size-1.5 shrink-0 rounded-full",
                     inStock ? "bg-success" : "bg-muted-foreground",
                   )}
                 />
@@ -363,71 +597,67 @@ function ProductPage() {
               </p>
             </div>
 
-            <VariantPicker
-              options={node.options ?? []}
-              variants={variants}
-              selected={selectedOptions}
-              onSelect={handleOptionSelect}
-            />
+            <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-3">
+              <VariantPicker
+                className="min-w-0 flex-1 basis-36"
+                compactSingleValues
+                options={node.options ?? []}
+                variants={variants}
+                selected={selectedOptions}
+                onSelect={handleOptionSelect}
+              />
 
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                  <span className="text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground sm:text-2xl">
-                    {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
-                  </span>
-                  {discount !== null && compareAt && (
-                    <span className="text-sm text-muted-foreground line-through">
-                      {formatPrice(compareAt, currency)}
-                    </span>
-                  )}
-                </div>
-                {discount !== null && (
-                  <p className="mt-1 text-[11px] font-medium text-primary">Save {discount}%</p>
-                )}
-              </div>
-
-              <div
-                className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-background"
-                aria-label="Quantity"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 rounded-xl"
-                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  disabled={busy || quantity <= 1}
-                  aria-label={t("decreaseQuantity")}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-8 text-center text-sm font-semibold tabular-nums" aria-live="polite">
-                  {quantity}
+              <div className="flex shrink-0 flex-col gap-1.5 max-[350px]:w-full max-[350px]:flex-row max-[350px]:items-center max-[350px]:justify-between only:w-full only:flex-row only:items-center only:justify-between">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {language === "ar" ? "الكمية" : "Quantity"}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-11 w-11 rounded-xl"
-                  onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
-                  disabled={busy || !inStock || quantity >= maxQuantity}
-                  aria-label={t("increaseQuantity")}
+                <div
+                  data-testid="product-quantity"
+                  role="group"
+                  className="flex h-11 shrink-0 items-center rounded-xl border border-border/70 bg-surface/50"
+                  aria-label={language === "ar" ? "الكمية" : "Quantity"}
                 >
-                  <Plus className="h-4 w-4" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 rounded-xl"
+                    onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                    disabled={busy || quantity <= 1}
+                    aria-label={t("decreaseQuantity")}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span
+                    className="w-6 text-center text-sm font-semibold tabular-nums"
+                    aria-live="polite"
+                  >
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 rounded-xl"
+                    onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+                    disabled={busy || !inStock || quantity >= maxQuantity}
+                    aria-label={t("increaseQuantity")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <div className="hidden gap-2 sm:flex">
+            <div data-testid="product-purchase-actions" className="grid grid-cols-2 gap-2.5">
               <Button
                 size="lg"
                 onClick={() => handleAddToCart()}
                 disabled={busy || !inStock}
-                className="press flex-1 rounded-xl"
+                className="press h-auto min-h-12 gap-1.5 whitespace-normal rounded-xl px-2 py-2 text-center leading-tight sm:gap-2 sm:px-3"
               >
                 {pending === "cart" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
                 ) : (
-                  <ShoppingBag className="h-4 w-4" />
+                  <ShoppingBag aria-hidden className="h-4 w-4" />
                 )}
                 {t(inStock ? "addToCart" : "soldOut")}
               </Button>
@@ -436,20 +666,85 @@ function ProductPage() {
                 variant="outline"
                 onClick={() => handleAddToCart(true)}
                 disabled={busy || !inStock}
-                className="press rounded-xl"
+                className="press h-auto min-h-12 gap-1.5 whitespace-normal rounded-xl border-border bg-card px-2 py-2 text-center leading-tight sm:gap-2 sm:px-3"
               >
                 {pending === "buy" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Zap className="h-4 w-4" />
+                  <Zap aria-hidden className="h-4 w-4" />
                 )}
-                Buy now
+                {language === "ar" ? "اشترِ الآن" : "Buy now"}
               </Button>
             </div>
 
+            {highlights.length > 0 && (
+              <section
+                data-testid="product-key-features"
+                aria-label={language === "ar" ? "أبرز المواصفات" : "Key product highlights"}
+                className="min-w-0 border-t border-border/60 pt-4"
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <h2 className="text-base font-semibold tracking-tight text-foreground">
+                    {language === "ar" ? "أبرز المميزات" : "Key features"}
+                  </h2>
+                  {specGroups.length > 0 && (
+                    <a
+                      href="#product-specifications"
+                      data-testid="product-specifications-link"
+                      aria-controls="product-specifications"
+                      onClick={showSpecifications}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
+                      <ChevronDown aria-hidden className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {highlights.map((highlight) => {
+                    const HighlightIcon =
+                      FEATURE_ICONS[highlight.key as keyof typeof FEATURE_ICONS] ?? Sparkles;
+                    return (
+                      <div
+                        key={highlight.key}
+                        className="min-w-0 rounded-lg border border-border/60 bg-surface/30 p-3"
+                      >
+                        <div className="mb-1.5 flex min-w-0 items-center gap-1.5 text-muted-foreground">
+                          <HighlightIcon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+                          <span className="min-w-0 break-words text-xs leading-snug">
+                            {language === "ar" ? highlight.labelAr : highlight.label}
+                          </span>
+                        </div>
+                        <strong
+                          title={highlight.value}
+                          className="block break-words text-sm font-semibold leading-snug text-foreground"
+                        >
+                          {formatProductHighlight(highlight.key, highlight.value)}
+                        </strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {highlights.length === 0 && specGroups.length > 0 && (
+              <a
+                href="#product-specifications"
+                data-testid="product-specifications-link"
+                aria-controls="product-specifications"
+                onClick={showSpecifications}
+                className="-my-1 inline-flex min-h-11 items-center gap-1.5 self-start rounded-lg text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {language === "ar" ? "عرض جميع المواصفات" : "View all specifications"}
+                <ChevronDown aria-hidden className="h-4 w-4" />
+              </a>
+            )}
+
             <div
-              className="grid grid-cols-3 border-y border-border/60 py-1"
-              aria-label="Product actions"
+              className="grid grid-cols-3 divide-x divide-border/60 rounded-xl border border-border/70 bg-surface/35"
+              role="group"
+              aria-label={language === "ar" ? "إجراءات المنتج" : "Product actions"}
             >
               <Button
                 variant="ghost"
@@ -459,8 +754,15 @@ function ProductPage() {
                 aria-label={wishlisted ? t("removeWishlist") : t("saveWishlist")}
                 className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
-                <Heart className={cn("h-4 w-4", wishlisted && "fill-primary text-primary")} />
-                <span className="truncate">{t(wishlisted ? "saved" : "saveWishlist")}</span>
+                <Heart
+                  className={cn("h-4 w-4 shrink-0", wishlisted && "fill-primary text-primary")}
+                />
+                <span className="truncate sm:hidden">
+                  {t(wishlisted ? "saved" : "wishlistShort")}
+                </span>
+                <span className="hidden truncate sm:inline">
+                  {t(wishlisted ? "saved" : "saveWishlist")}
+                </span>
               </Button>
               <Button
                 variant="ghost"
@@ -469,8 +771,9 @@ function ProductPage() {
                 aria-label={t("shareProduct")}
                 className="h-11 min-w-0 rounded-lg px-2 text-xs sm:text-sm"
               >
-                <Share2 aria-hidden className="h-4 w-4" />
-                <span className="truncate">{t("shareProduct")}</span>
+                <Share2 aria-hidden className="h-4 w-4 shrink-0" />
+                <span className="truncate sm:hidden">{t("shareShort")}</span>
+                <span className="hidden truncate sm:inline">{t("shareProduct")}</span>
               </Button>
               <Button
                 asChild
@@ -478,236 +781,53 @@ function ProductPage() {
                 size="sm"
                 className="h-11 min-w-0 rounded-lg px-2 text-xs text-success hover:bg-success/10 hover:text-success sm:text-sm"
               >
-                <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={whatsappOrderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
+                >
                   <MessageCircle className="h-4 w-4" />
-                  <span className="truncate">WhatsApp</span>
+                  <span className="sm:hidden">{language === "ar" ? "اسألنا" : "Ask us"}</span>
+                  <span className="hidden sm:inline">
+                    {language === "ar" ? "اسأل عن المنتج" : "Ask a question"}
+                  </span>
                 </a>
               </Button>
             </div>
 
-            {isPhone && <div className="-mt-2 flex justify-start"><CompareButton handle={node.handle} /></div>}
+            {isPhone && (
+              <div className="-mt-2 flex justify-start">
+                <CompareButton handle={node.handle} />
+              </div>
+            )}
 
-            <ul className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border/60 pb-5 text-xs text-muted-foreground">
-              {PURCHASE_ASSURANCES.slice(0, 3).map((item) => (
-                <li key={item.title} className="flex min-w-[7rem] flex-1 basis-[30%] items-center gap-1.5">
+            <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground sm:gap-x-4">
+              {PURCHASE_ASSURANCES.slice(0, 3).map((item, index) => (
+                <li key={item.title} className="flex min-w-0 items-center gap-1.5">
                   <item.icon aria-hidden className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="font-medium text-foreground">{item.title}</span>
+                  <span className="font-medium">
+                    {language === "ar"
+                      ? ["منتجات أصلية", "توصيل سريع", "سهولة الإرجاع"][index]
+                      : item.title}
+                  </span>
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {(hasOverview || hasSpecs) && (
-          <section className="mt-8 border-t border-border/60 pt-6 sm:mt-10" aria-label="Product details">
-            <Tabs defaultValue={defaultTab} className="w-full">
-              <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b border-border/60 bg-transparent p-0">
-                {hasOverview && (
-                  <TabsTrigger
-                    value="overview"
-                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
-                  >
-                    Description
-                  </TabsTrigger>
-                )}
-                {hasSpecs && (
-                  <TabsTrigger
-                    value="specifications"
-                    className="rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-0 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
-                  >
-                    Specifications
-                  </TabsTrigger>
-                )}
-              </TabsList>
-              {hasOverview && (
-                <TabsContent value="overview" className="pt-5">
-                  <ProseSections sections={content.overview} />
-                </TabsContent>
-              )}
-              {hasSpecs && (
-                <TabsContent value="specifications" className="pt-5">
-                  <SpecSheet groups={specGroups} />
-                </TabsContent>
-              )}
-            </Tabs>
-          </section>
-        )}
+        <ProductInformation
+          key={node.handle}
+          overview={displayOverview}
+          specifications={specGroups}
+          box={displayBox}
+          shipping={content.shipping}
+          language={language}
+        />
 
-        <details className="group mt-8 border-y border-border/60">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/20 [&::-webkit-details-marker]:hidden">
-            <span>{language === "ar" ? "معلومات إضافية عن المنتج" : "More product information"}</span>
-            <ChevronDown
-              aria-hidden
-              className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-            />
-          </summary>
-          <div className="space-y-7 border-t border-border/60 py-6">
-            {hasBox && (
-              <section aria-labelledby="product-box-heading">
-                <h2 id="product-box-heading" className="mb-3 text-base font-semibold">
-                  In the box
-                </h2>
-                <ProseSections sections={content.box} />
-              </section>
-            )}
-
-            {hasShipping && (
-              <section className={cn(hasBox && "border-t border-border/60 pt-6")} aria-labelledby="product-shipping-heading">
-                <h2 id="product-shipping-heading" className="mb-3 text-base font-semibold">
-                  Shipping &amp; returns
-                </h2>
-                <ProseSections sections={content.shipping} />
-              </section>
-            )}
-
-            {needsSeoOverview && (
-              <section
-                className={cn((hasBox || hasShipping) && "border-t border-border/60 pt-6")}
-                aria-labelledby="product-buying-guide"
-              >
-                <h2 id="product-buying-guide" className="text-base font-semibold tracking-tight">
-                  {language === "ar" ? `معلومات عن ${node.title}` : `About ${node.title}`}
-                </h2>
-                <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground">
-                  {language === "ar"
-                    ? `${node.title}${brand?.label ? ` من ${brand.label}` : ""} متوفر عبر ${STORE_NAME}. راجع السعر الحالي والتوفر والخيارات والمواصفات في هذه الصفحة قبل إتمام الطلب.`
-                    : `${node.title}${brand?.label ? ` by ${brand.label}` : ""} is available through ${STORE_NAME}. Review the current price, availability, options and specifications on this page before ordering.`}
-                </p>
-                <div className="mt-5 grid gap-5 md:grid-cols-3">
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {language === "ar" ? "المواصفات والخيارات" : "Specifications & options"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {language === "ar"
-                        ? `يمكنك مراجعة ${category?.label ?? node.productType ?? "فئة المنتج"} وخيارات النسخة المتاحة مثل السعة أو اللون عندما تكون مدرجة.`
-                        : `Review the ${category?.label ?? node.productType ?? "product category"} details and available variant options such as storage or colour when listed.`}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {language === "ar" ? "السعر والتوفر" : "Price & availability"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {language === "ar"
-                        ? `يعرض المتجر السعر الحالي وحالة المخزون المباشرة. الحالة الحالية: ${inStock ? "متوفر" : "غير متوفر"}.`
-                        : `The store shows the current price and live stock status. Current status: ${inStock ? "in stock" : "out of stock"}.`}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {language === "ar" ? "التوصيل والضمان" : "Delivery & warranty"}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {language === "ar"
-                        ? "راجع صفحات الشحن والضمان والإرجاع أو تواصل مع الدعم قبل الطلب إذا كنت تحتاج تفاصيل إضافية."
-                        : "Check the shipping, warranty and returns pages, or contact support before ordering if you need additional details."}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-4 text-sm font-medium">
-                  <Link to="/shipping" className="text-primary hover:underline">
-                    {t("shippingTitle")}
-                  </Link>
-                  <Link to="/warranty" className="text-primary hover:underline">
-                    {t("warrantyTitle")}
-                  </Link>
-                  <Link to="/returns" className="text-primary hover:underline">
-                    {t("returnsTitle")}
-                  </Link>
-                </div>
-              </section>
-            )}
-
-            <section
-              className={cn((hasBox || hasShipping || needsSeoOverview) && "border-t border-border/60 pt-6")}
-              aria-label="Official manufacturer information"
-            >
-              <OfficialProductResearch
-                title={node.title}
-                {...(node.vendor ? { vendor: node.vendor } : {})}
-              />
-            </section>
-          </div>
-        </details>
-
-        {similar.length > 0 && (
-          <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="similar-products">
-            <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
-              <div className="min-w-0">
-                <h2 id="similar-products" className="text-xl font-semibold tracking-tight">
-                  You may also like
-                </h2>
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  Recommended from the live {STORE_NAME} catalogue
-                </p>
-              </div>
-              {category && (
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: category.slug }}
-                  className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline"
-                >
-                  View all <ChevronRight aria-hidden className="h-4 w-4" />
-                </Link>
-              )}
-            </div>
-            <ProductGrid products={similar} />
-          </section>
-        )}
-
-        {sameVendorProducts.length > 0 && (
-          <section className="mt-12 border-t border-border/60 pt-8" aria-labelledby="more-from-brand">
-            <div className="home-section-header">
-              <h2 id="more-from-brand" className="min-w-0 break-words text-xl font-semibold">
-                {t("moreFromBrand")} {brand?.label}
-              </h2>
-              {brand && (
-                <Link
-                  to="/brand/$slug"
-                  params={{ slug: brand.slug }}
-                  className="shrink-0 text-sm font-semibold text-primary hover:underline"
-                >
-                  {t("viewAll")}
-                </Link>
-              )}
-            </div>
-            <ProductRail products={sameVendorProducts} storageKey={`more-from-${node.vendor}`} />
-          </section>
-        )}
+        <DeferredProductSuggestions product={product} brand={brand} category={category} />
       </div>
-
-      <div
-        data-testid="product-purchase-bar"
-        className="fixed bottom-[var(--mobile-nav-height)] left-0 right-0 z-40 border-t border-border/70 bg-background/95 supports-[backdrop-filter]:bg-background/90 supports-[backdrop-filter]:backdrop-blur-md sm:hidden"
-      >
-        <div className="mx-auto flex min-h-16 max-w-[560px] items-center gap-4 px-4 py-2.5">
-          <div className="min-w-0 shrink-0">
-            <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-              {language === "ar" ? "السعر" : "Price"}
-            </span>
-            <span className="block truncate text-base font-semibold tabular-nums text-foreground">
-              {selectedVariant && formatPrice(selectedVariant.price.amount, currency)}
-            </span>
-          </div>
-          <Button
-            onClick={() => handleAddToCart()}
-            disabled={busy || !inStock}
-            className="press h-11 min-w-0 flex-1 rounded-xl text-sm font-semibold"
-          >
-            {pending === "cart" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : inStock ? (
-              <>
-                <ShoppingBag className="h-4 w-4" />
-                {t("addToCart")}
-              </>
-            ) : (
-              t("soldOut")
-            )}
-          </Button>
-        </div>
-      </div>
-    </StoreLayout>
+    </>
   );
 }

@@ -35,13 +35,14 @@ export const ProductCard = memo(function ProductCard({
   className?: string;
   eager?: boolean;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const addItem = useCartStore((state) => state.addItem);
   const [isAdding, setIsAdding] = useState(false);
   const wishlisted = useWishlistStore((state) => state.handles.includes(product.node.handle));
   const toggleWishlist = useWishlistToggle();
 
   const node = product.node;
+  const displayTitle = language === "ar" && node.titleAr?.trim() ? node.titleAr : node.title;
   const selectedVariant = productPrimaryVariant(product);
   const image = node.images.edges[0]?.node;
   const price = selectedVariant?.price ?? node.priceRange.minVariantPrice;
@@ -65,7 +66,7 @@ export const ProductCard = memo(function ProductCard({
         selectedOptions: selectedVariant.selectedOptions ?? [],
       });
       if (success)
-        toast.success(`${node.title}: ${t("addedToCart")}`, {
+        toast.success(`${displayTitle}: ${t("addedToCart")}`, {
           position: "top-center",
         });
       else toast.error(t("addToCartFailed"), { position: "top-center" });
@@ -80,6 +81,7 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <article
+      data-testid="product-card"
       className={cn(
         "sc-product-card card-lift group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-card hover:border-primary/30",
         className,
@@ -89,12 +91,13 @@ export const ProductCard = memo(function ProductCard({
         <Link
           to="/product/$handle"
           params={{ handle: node.handle }}
-          aria-label={node.title}
+          aria-label={displayTitle}
           className="block"
         >
           <ProductImage
-            url={image?.url}
-            alt={image?.altText ?? node.title}
+            url={image?.thumbnailUrl ?? image?.url}
+            fallbackUrl={image?.url}
+            alt={image?.altText ?? displayTitle}
             size={480}
             sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 45vw"
             eager={eager}
@@ -165,7 +168,7 @@ export const ProductCard = memo(function ProductCard({
         )}
         <Link to="/product/$handle" params={{ handle: node.handle }} className="min-w-0">
           <h3 className="product-card-title line-clamp-2 min-h-[2.65rem] break-words text-sm font-semibold leading-[1.4] transition-colors group-hover:text-primary">
-            {node.title}
+            {displayTitle}
           </h3>
         </Link>
         {summary && <p className="truncate text-xs text-muted-foreground">{summary}</p>}
@@ -189,10 +192,7 @@ export const ProductCard = memo(function ProductCard({
         >
           <span
             aria-hidden
-            className={cn(
-              "h-1.5 w-1.5 rounded-full",
-              inStock ? "bg-success" : "bg-destructive",
-            )}
+            className={cn("h-1.5 w-1.5 rounded-full", inStock ? "bg-success" : "bg-destructive")}
           />
           {t(inStock ? "inStock" : "outOfStock")}
         </p>

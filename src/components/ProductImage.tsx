@@ -1,4 +1,4 @@
-import { cdnImage, cdnSrcSet } from "@/lib/image";
+import { cdnImage, cdnSrcSet, productImageSource } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { useState } from "react";
  */
 export function ProductImage({
   url,
+  fallbackUrl,
   alt,
   size = 480,
   sizes,
@@ -20,6 +21,7 @@ export function ProductImage({
   imageClassName,
 }: {
   url?: string | undefined;
+  fallbackUrl?: string | undefined;
   alt: string;
   size?: number;
   sizes?: string;
@@ -28,7 +30,8 @@ export function ProductImage({
   imageClassName?: string;
 }) {
   const { t } = useLanguage();
-  const [failedUrl, setFailedUrl] = useState<string>();
+  const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const source = productImageSource(url, fallbackUrl, failedUrls);
 
   return (
     <div
@@ -37,19 +40,20 @@ export function ProductImage({
         className,
       )}
     >
-      {url && failedUrl !== url ? (
+      {source ? (
         <img
-          src={cdnImage(url, size)}
-          srcSet={cdnSrcSet(url, size)}
+          key={source}
+          src={cdnImage(source, size)}
+          srcSet={cdnSrcSet(source, size)}
           sizes={sizes}
           alt={alt}
           loading={eager ? "eager" : "lazy"}
-          fetchPriority={eager ? "high" : "auto"}
+          fetchPriority={eager ? "high" : "low"}
           decoding="async"
           width={size}
           height={size}
           draggable={false}
-          onError={() => setFailedUrl(url)}
+          onError={() => setFailedUrls((current) => [...current, source])}
           className={cn(
             "absolute inset-0 z-10 h-full w-full select-none bg-image-stage object-contain object-center p-[5%] transition-transform duration-500 sm:p-[6%]",
             imageClassName,

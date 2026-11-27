@@ -2,11 +2,16 @@ import { rpcArgs } from "@/dashboard/lib/rpcArgs";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import {
+  normalizeSpecificationTemplate,
+  specificationTemplateToJson,
+  type ProductSpecificationTemplate,
+} from "@/lib/productSpecifications";
+import {
   getDashboardRole,
   listDashboardProducts,
   type DashboardProduct,
 } from "@/dashboard/data/catalog";
-import { invalidateNativeStoreCache } from "@/lib/nativeStore";
+import { broadcastStorefrontRefresh, invalidateNativeStoreCache } from "@/lib/nativeStore";
 import {
   convertProductImageToWebp,
   type ProductImageConversionResult,
@@ -47,6 +52,7 @@ function formatCategoryImagePath(categoryId: string) {
 export type CatalogCategory = {
   id: string;
   name: string;
+  nameAr?: string;
   slug: string;
   icon: string;
   description: string;
@@ -58,6 +64,7 @@ export type CatalogCategory = {
   seoDescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  specTemplate: ProductSpecificationTemplate;
 };
 
 function throwIfError(error: { message: string } | null, label: string) {
@@ -74,6 +81,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
   return {
     id: row.id,
     name: row.name,
+    ...(row.name_ar ? { nameAr: row.name_ar } : {}),
     slug: row.slug,
     icon: row.icon || "LayoutGrid",
     description: row.description || "",
@@ -85,6 +93,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
     ...(row.seo_description ? { seoDescription: row.seo_description } : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    specTemplate: normalizeSpecificationTemplate(row.spec_template),
   };
 }
 
@@ -129,24 +138,15 @@ export function createUniqueCategorySlug(
   return `${base}-${suffix}`;
 }
 
-export function productBelongsToCategory(
-  product: DashboardProduct,
-  category: CatalogCategory,
-) {
+export function productBelongsToCategory(product: DashboardProduct, category: CatalogCategory) {
   return product.categoryId === category.id;
 }
 
-export function getProductsForCategory(
-  products: DashboardProduct[],
-  category: CatalogCategory,
-) {
+export function getProductsForCategory(products: DashboardProduct[], category: CatalogCategory) {
   return products.filter((product) => productBelongsToCategory(product, category));
 }
 
-export function getCategoryProductCount(
-  products: DashboardProduct[],
-  category: CatalogCategory,
-) {
+export function getCategoryProductCount(products: DashboardProduct[], category: CatalogCategory) {
   return getProductsForCategory(products, category).length;
 }
 
@@ -155,9 +155,7 @@ export function countProductsAssignedToValidCategories(
   categories: CatalogCategory[],
 ) {
   const valid = new Set(categories.map((category) => category.id));
-  return products.filter(
-    (product) => product.categoryId && valid.has(product.categoryId),
-  ).length;
+  return products.filter((product) => product.categoryId && valid.has(product.categoryId)).length;
 }
 
 export async function loadCategoriesWorkspace() {
@@ -183,6 +181,7 @@ export async function createDashboardCategory(category: CatalogCategory) {
     .from("store_categories")
     .insert({
       name: category.name.trim(),
+      name_ar: category.nameAr?.trim() || null,
       slug: normalizeCategorySlug(category.slug || category.name),
       description: category.description.trim() || null,
       image_url: category.image?.trim() || null,
@@ -192,12 +191,14 @@ export async function createDashboardCategory(category: CatalogCategory) {
       is_featured: category.featured,
       seo_title: category.seoTitle?.trim() || null,
       seo_description: category.seoDescription?.trim() || null,
+      spec_template: specificationTemplateToJson(category.specTemplate),
     })
     .select("*")
     .single();
   throwIfError(error, "Creating category failed");
   if (!data) throw new Error("Creating category returned no record.");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCategory(data as CategoryRow);
 }
 
@@ -213,19 +214,24 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   const previousImageUrl = existing?.image_url ?? null;
   const nextImageUrl = category.image?.trim() || "";
 
-  const { error } = await supabase.rpc("update_store_category", rpcArgs({
-    p_category_id: category.id,
-    p_name: category.name.trim(),
-    p_slug: normalizeCategorySlug(category.slug || category.name),
-    p_description: category.description.trim(),
-    p_image_url: category.image?.trim() || "",
-    p_icon: category.icon?.trim() || "",
-    p_sort_order: Math.max(0, Math.trunc(category.order)),
-    p_is_active: category.active,
-    p_is_featured: category.featured,
-    p_seo_title: category.seoTitle?.trim() || "",
-    p_seo_description: category.seoDescription?.trim() || "",
-  }));
+  const { error } = await supabase.rpc(
+    "update_store_category_with_spec_template_v2",
+    rpcArgs({
+      p_category_id: category.id,
+      p_name: category.name.trim(),
+      p_name_ar: category.nameAr?.trim() || "",
+      p_slug: normalizeCategorySlug(category.slug || category.name),
+      p_description: category.description.trim(),
+      p_image_url: category.image?.trim() || "",
+      p_icon: category.icon?.trim() || "",
+      p_sort_order: Math.max(0, Math.trunc(category.order)),
+      p_is_active: category.active,
+      p_is_featured: category.featured,
+      p_seo_title: category.seoTitle?.trim() || "",
+      p_seo_description: category.seoDescription?.trim() || "",
+      p_spec_template: specificationTemplateToJson(category.specTemplate),
+    }),
+  );
   throwIfError(error, "Updating category failed");
 
   const { data, error: readError } = await supabase
@@ -241,6 +247,7 @@ export async function updateDashboardCategory(category: CatalogCategory) {
   }
 
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCategory(data as CategoryRow);
 }
 
@@ -269,9 +276,7 @@ export async function uploadDashboardCategoryImage(
     });
   throwIfError(uploadError, "Uploading category image failed");
 
-  const { data: publicUrl } = supabase.storage
-    .from(CATEGORY_IMAGE_BUCKET)
-    .getPublicUrl(objectPath);
+  const { data: publicUrl } = supabase.storage.from(CATEGORY_IMAGE_BUCKET).getPublicUrl(objectPath);
 
   try {
     const previousImageUrl = category.image;
@@ -289,12 +294,16 @@ export async function uploadDashboardCategoryImage(
     }
 
     invalidateNativeStoreCache();
+    broadcastStorefrontRefresh();
     return {
       category: mapCategory(data as CategoryRow),
       conversion,
     };
   } catch (error) {
-    await supabase.storage.from(CATEGORY_IMAGE_BUCKET).remove([objectPath]).catch(() => undefined);
+    await supabase.storage
+      .from(CATEGORY_IMAGE_BUCKET)
+      .remove([objectPath])
+      .catch(() => undefined);
     throw error;
   }
 }
@@ -316,6 +325,7 @@ export async function deleteDashboardCategoryImage(
 
   await removeOwnedCategoryImageFile(previousImageUrl).catch(() => undefined);
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
   return mapCategory(data as CategoryRow);
 }
 
@@ -335,6 +345,7 @@ export async function assignProductsToDashboardCategory(
     .in("id", ids);
   throwIfError(error, "Assigning products to category failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function deleteDashboardCategory(
@@ -344,15 +355,18 @@ export async function deleteDashboardCategory(
   await requireDashboardStaff();
   const { error } = await supabase.rpc(
     "delete_store_category",
-    rpcArgs(destinationCategoryId
-      ? {
-          p_category_id: categoryId,
-          p_destination_category_id: destinationCategoryId,
-        }
-      : { p_category_id: categoryId },
-  ));
+    rpcArgs(
+      destinationCategoryId
+        ? {
+            p_category_id: categoryId,
+            p_destination_category_id: destinationCategoryId,
+          }
+        : { p_category_id: categoryId },
+    ),
+  );
   throwIfError(error, "Deleting category failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function reorderDashboardCategories(categories: CatalogCategory[]) {
@@ -361,11 +375,15 @@ export async function reorderDashboardCategories(categories: CatalogCategory[]) 
     id: category.id,
     sort_order: index + 1,
   })) satisfies Json[];
-  const { error } = await supabase.rpc("reorder_store_categories", rpcArgs({
-    p_items: items as Json,
-  }));
+  const { error } = await supabase.rpc(
+    "reorder_store_categories",
+    rpcArgs({
+      p_items: items as Json,
+    }),
+  );
   throwIfError(error, "Saving category order failed");
   invalidateNativeStoreCache();
+  broadcastStorefrontRefresh();
 }
 
 export async function refreshDashboardCategoryProducts() {

@@ -6,11 +6,11 @@
 - `user_roles` keeps a narrow self-read bootstrap path at AAL1 so a staff account can discover its role and complete TOTP enrollment; this does not grant dashboard data access.
 - Cloudflare Turnstile client integration for dashboard sign-in and password recovery.
 - Native Supabase Auth `captchaToken` forwarding.
-- Pre-auth Edge Function throttling with opaque SHA-256 buckets:
-  - IP + email pair: 5 failures / 10 minutes -> 15 minute block.
-  - IP + email pair: 10 failures / 10 minutes -> 60 minute block.
-  - Global source IP: 25 failures / 10 minutes -> 15 minute block.
-  - Global source IP: 50 failures / 10 minutes -> 60 minute block.
+- Pre-auth Edge Function throttling with opaque SHA-256 buckets. Every login attempt is consumed before Supabase Auth is called, so the throttle does not query whether the submitted email belongs to dashboard staff:
+  - IP + email pair: 5 attempts / 10 minutes -> 15 minute block for subsequent attempts.
+  - IP + email pair: 10 attempts / 10 minutes -> 60 minute block for subsequent attempts.
+  - Global source IP: 25 attempts / 10 minutes -> 15 minute block for subsequent attempts.
+  - Global source IP: 50 attempts / 10 minutes -> 60 minute block for subsequent attempts.
 - No raw email address or IP is stored in the throttle table.
 - Security event audit trail with sensitive metadata stripping.
 - Explicit Supabase session revocation:
@@ -24,7 +24,7 @@
 - CSP allowlisting for Cloudflare Turnstile.
 - CSP uses a cryptographically random per-request SSR nonce. TanStack `ScriptOnce`, `HeadContent`, and `Scripts` bind executable SSR scripts to that nonce; `script-src` no longer contains `'unsafe-inline'`.
 - `script-src-attr 'none'` blocks HTML inline event handlers such as `onclick=`. `style-src` still allows inline styles because the current component library emits dynamic `<style>`/style attributes; tightening style CSP is a separate refactor.
-- Production/non-preview Supabase sessions use `sessionStorage` rather than `localStorage`, so dashboard tokens do not survive closing the browser tab/window.
+- Production/non-preview Supabase sessions use `sessionStorage` rather than `localStorage`, so dashboard tokens do not survive closing the browser tab/window. Legacy persistent auth is migrated once into the current tab and deleted from `localStorage`; if browser storage is blocked, auth falls back to memory only.
 - Dashboard responses are explicitly marked `no-store` for browser/CDN/proxy caches.
 - CI runs dashboard security regression tests on every PR open/update and on pushes to `main`.
 
@@ -54,10 +54,18 @@ Supabase's native **Leaked Password Protection** is still recommended if the pro
 
 ## Rate limiting
 
-The project-level Edge throttle is already deployed as `dashboard-auth-throttle`.
+The project-level dashboard auth throttle is deployed as `dashboard-auth-throttle`.
 Keep Supabase Auth's native rate limits enabled as an independent defense layer.
 
-The Edge throttle is intentionally fail-open if its infrastructure is unavailable so an Edge outage cannot lock the administrator out; TOTP MFA, Supabase Auth, RLS, and (when configured) Turnstile remain independent controls.
+Dashboard login throttling **fails closed**: if the pre-auth Edge Function or the transactional database RPC cannot be reached or returns an invalid decision, the app does not initiate password sign-in. TOTP MFA, Supabase Auth, RLS, and (when configured) Turnstile remain independent controls. Direct calls to Supabase Auth do not pass through this application-side throttle; native Auth provider rate limiting is therefore essential.
+
+The application server's global mutation limiter no longer uses process-local memory. It consumes the shared `consume_edge_rate_limit` database RPC through the server-only Supabase admin client, with the source address stored only as a SHA-256-derived bucket key. Mutating requests fail closed with HTTP 503 if that shared protection cannot be reached, avoiding per-instance bypasses during production scaling.
+
+## Privileged database RPC boundary
+
+Privileged dashboard RPC implementations are stored in the non-exposed `private` schema as `SECURITY DEFINER` functions. The existing `public` RPC names are preserved as `SECURITY INVOKER` wrappers, so the dashboard API contract remains stable without exposing definer functions directly through the Data API.
+
+The retired `ci_debug_logs` table has been removed. The old `ci-debug-log` Edge Function remains a 410 Gone tombstone and cannot write data.
 
 ## Secret handling
 
@@ -74,6 +82,30 @@ Never store any of these in `VITE_*`, source files, GitHub commits, or browser s
 
 The dashboard is still a browser-managed Supabase SPA session because MFA, refresh, and authenticated Edge Function calls currently run through the browser Supabase client. The production session is therefore intentionally stored in `sessionStorage`, not `localStorage`: this reduces persistence but does **not** make tokens inaccessible to JavaScript.
 
-Moving the Supabase session to a fully HttpOnly cookie would require a server-brokered auth architecture for MFA, token refresh, and every authenticated dashboard/Edge request. That is a separate architectural migration and should not be represented as completed by merely wrapping or encrypting browser storage.
+Moving the Supabase session to a fully HttpOnly cookie would require a server-brokered auth architecture for MFA, token refresh, and every authenticated dashboard/Edge request. Supabase's current SSR guidance uses cookie-backed sessions for rich client applications, but those browser auth cookies remain JavaScript-readable when client-side Supabase needs them. A truly HttpOnly dashboard therefore requires moving authenticated dashboard operations behind a server/BFF boundary; it should not be represented as completed by merely changing a cookie flag, wrapping storage, or encrypting browser storage.
 
 Auth0's additional dashboard token cache remains memory-only.
+
+
+## Final hardening follow-up — 2026-09-26
+
+- Corrected an implementation drift where production auth storage had regressed to `localStorage` despite tests/documentation requiring tab-scoped sessions.
+- Restored automatic `main` + pull-request CI triggers and the explicit dashboard security regression test.
+- Added a shared storefront URL allowlist and revalidation at CMS navigation / brand render boundaries.
+- Dashboard saves now reject executable, protocol-relative, credential-bearing, or otherwise invalid managed links.
+- Current CMS URL data was checked before this change and contained no unsafe navigation, brand, or canonical destinations.
+- Production Supabase logs for `dashboard-auth-throttle` showed successful requests and no observed function errors during the inspected window.
+- Sensitive dashboard Edge endpoints now return browser CORS access only to Space Call production origins, localhost development, and trusted Lovable preview zones; arbitrary origins receive no `Access-Control-Allow-Origin`.
+
+## Atomic login hardening (security PR #517, 2026-11-18)
+
+The security change on this branch is **not active in production merely because the GitHub pull request is merged**. Deploy the two dependent components in this exact order:
+
+1. Apply `supabase/migrations/20261118090000_atomic_dashboard_login_throttle.sql`, including the `service_role`-only EXECUTE grant. Never grant this RPC to `anon` or `authenticated`.
+2. Deploy `dashboard-auth-throttle` with `_shared/requestBody.ts`. Keep `verify_jwt = false` for the pre-auth attempt API; authenticated success resets verify a real JWT and the staff role inside the handler.
+3. Execute read-only checks of function privileges, then perform bounded smoke tests with an isolated dashboard test account for valid login + MFA, failed password, pair/IP throttling, malformed JSON, and oversized request rejection.
+4. Observe Edge Function 4xx/5xx rates and login failures, and verify the fallback bucket is not shared by normal traffic because trusted gateway client-IP information is missing.
+
+The pre-auth limiter increments IP/email and IP-wide counters in a single PostgreSQL transaction protected by an advisory lock. This removes a lost-update race under concurrent requests. The public handler rejects bodies exceeding 1024 streamed bytes, rejects disallowed browser Origin values, and no longer trusts user-supplied forwarded-IP fallbacks. These controls reduce abuse but cannot substitute for Supabase Auth provider rate limits or server-enforced MFA/RLS.
+
+**Outstanding independent release conditions:** Supabase Auth Security Advisor reports its native leaked-password protection disabled (separate from dashboard HIBP). The full `bun audit --audit-level=high` security gate currently reports high-severity `GHSA-fc5q-39xc-vjpf` in the build dependency `picomatch`. Do not silently ignore the advisory or misreport a red security gate as a passing test; track the upstream fix and reassess the dependency's build-time exposure before a production release.

@@ -1,7 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 
+import { importWithChunkRecovery } from "@/lib/lazyChunkRecovery";
+
 const LazyCartDrawer = lazy(() =>
-  import("@/components/CartDrawer").then(({ CartDrawer }) => ({ default: CartDrawer })),
+  importWithChunkRecovery("cart-drawer", () =>
+    import("@/components/CartDrawer").then(({ CartDrawer }) => ({ default: CartDrawer })),
+  ),
 );
 
 /**
