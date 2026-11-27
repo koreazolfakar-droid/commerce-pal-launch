@@ -88,6 +88,12 @@ async function verifiedStaff(client, name, role) {
   );
   // The role alone must never bypass MFA.
   assert.equal(await rpc(client, "dashboard_staff_access_ready"), false);
+  assert.equal(await rpc(client, "is_staff", { _user_id: operator.id }), false);
+  assert.equal(await rpc(client, "has_role", { _user_id: operator.id, _role: role }), false);
+  for (const inventoryRpc of ["dashboard_inventory_page", "dashboard_inventory_summary"]) {
+    const { error } = await client.rpc(inventoryRpc);
+    assert.match(error?.message ?? "", /dashboard authentication is required/);
+  }
   const factor = data(
     await client.auth.mfa.enroll({ factorType: "totp", friendlyName: "Acceptance authenticator" }),
     "enroll TOTP",
@@ -160,6 +166,10 @@ try {
     "aal2",
   );
   assert.equal(await rpc(staff, "dashboard_staff_access_ready"), true);
+  assert.equal(await rpc(staff, "is_staff", { _user_id: session.user.id }), true);
+  assert.equal(await rpc(staff, "has_role", { _user_id: session.user.id, _role: "admin" }), true);
+  await rpc(staff, "dashboard_inventory_page");
+  await rpc(staff, "dashboard_inventory_summary");
   checked("real password + TOTP staff authentication and database authorization");
 
   const product = await rpc(staff, "save_store_product_editor", base);
@@ -284,12 +294,38 @@ try {
     return { status: response.status, body: await response.json() };
   }
   assert.equal((await order(payload, "")).status, 401);
+  for (const changes of [{ expected_subtotal: 199 }, { expected_delivery_fee: 1 }]) {
+    const declined = await admin.rpc("create_store_order_for_customer_internal", {
+      payload: { ...payload, ...changes },
+      p_customer_user_id: buyer.id,
+    });
+    assert.equal(declined.error?.message, "pricing_changed");
+  }
+  // Keep the historical guest separate from the buyer's CRM record.
+  const historicalPayload = {
+    ...payload,
+    customer: { ...payload.customer, phone: payload.customer.phone.replace("+96171", "+96170") },
+    idempotency_key: randomUUID(),
+  };
+  const historical = await rpc(admin, "create_store_order_internal", { payload: historicalPayload });
+  const ownership = await admin.rpc("create_store_order_for_customer_internal", {
+    payload: historicalPayload,
+    p_customer_user_id: buyer.id,
+  });
+  assert.equal(ownership.error?.message, "order_account_conflict");
+  assert.equal((await row("store_orders", historical.order_id)).customer_user_id, null);
+
   const created = await order(payload);
   assert.equal(created.status, 201, JSON.stringify(created.body));
   const orderId = created.body.order.order_id;
   assert.match(created.body.order.public_order_number, /^\d{5}-\d{5}$/);
   assert.equal((await row("store_orders", orderId)).customer_user_id, buyer.id);
   assert.equal(await stock(), 20, "New orders reserve stock only when staff confirms");
+  const otherOwner = await admin.rpc("create_store_order_for_customer_internal", {
+    payload,
+    p_customer_user_id: session.user.id,
+  });
+  assert.equal(otherOwner.error?.message, "order_account_conflict");
   const retry = await order(payload);
   assert.equal(retry.status, 201);
   assert.equal(retry.body.order.order_id, orderId);

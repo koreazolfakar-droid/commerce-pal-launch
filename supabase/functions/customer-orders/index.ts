@@ -216,6 +216,7 @@ Deno.serve(async (req: Request) => {
       .from("store_orders")
       .select("id,customer_user_id")
       .eq("id", body.order_id)
+      .eq("customer_user_id", user.id)
       .maybeSingle();
 
     if (orderError) {
