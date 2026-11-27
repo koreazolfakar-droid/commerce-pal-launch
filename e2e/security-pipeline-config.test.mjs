@@ -24,7 +24,7 @@ test("Deep Security Scan covers code, secrets, dependencies and regression check
   assert.match(workflow, /--config p\/typescript/);
   assert.doesNotMatch(workflow, /--config auto/);
   assert.match(workflow, /gitleaks\/gitleaks-action@v3/);
-  assert.match(workflow, /aquasecurity\/trivy-action@v0\.36\.0/);
+  assert.match(workflow, /aquasecurity\/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25/);
   assert.match(workflow, /severity: HIGH,CRITICAL/);
   assert.match(workflow, /exit-code: "1"/);
   assert.match(workflow, /node --test e2e\/dashboard-\*\.test\.mjs/);
