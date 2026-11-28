@@ -50,3 +50,47 @@ test("analytics has its own lazy route while the dashboard overview stays intact
   assertDashboardRoute("/dashboard/analytics", "analyticsPage");
   assertDashboardRoute("/dashboard", "homePage");
 });
+
+test("analytics keeps seven-day groups aligned to the previous period and preserves the partial bucket", async () => {
+  const { analyticsTrendBuckets } = await helpers();
+  const day = 86400000;
+  const start = Date.parse("2026-11-01T00:00:00Z");
+  const end = start + 8.5 * day;
+  const previousStart = start - (end - start);
+  const trend = Array.from({ length: 9 }, (_, index) => ({
+    date: new Date(start + index * day).toISOString(),
+    previousDate: new Date(previousStart + index * day).toISOString(),
+    revenue: 0.1,
+    orders: 1,
+    previousRevenue: 0,
+    previousOrders: 2,
+  }));
+  const snapshot = { trend, periodEnd: new Date(end).toISOString(), previousEnd: trend[0].date };
+  const groups = analyticsTrendBuckets(snapshot, "sevenDays");
+  assert.deepEqual(
+    groups.map((row) => [row.revenue, row.orders, row.previousOrders]),
+    [
+      [0.7, 7, 14],
+      [0.2, 2, 4],
+    ],
+  );
+  assert.equal(groups[0].end, trend[7].date);
+  assert.equal(groups[0].previousEnd, trend[7].previousDate);
+  assert.equal(groups[1].end, snapshot.periodEnd);
+  assert.equal(groups[1].previousEnd, snapshot.previousEnd);
+  const noCompare = analyticsTrendBuckets(
+    {
+      ...snapshot,
+      trend: trend.map((row) => ({ ...row, previousRevenue: null, previousOrders: null })),
+      previousEnd: null,
+    },
+    "daily",
+  );
+  assert.equal(noCompare.length, 9);
+  assert.ok(
+    noCompare.every(
+      (row) =>
+        row.previousRevenue === null && row.previousOrders === null && row.previousEnd === null,
+    ),
+  );
+});

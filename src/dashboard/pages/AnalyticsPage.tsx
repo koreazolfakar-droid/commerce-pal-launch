@@ -4,6 +4,8 @@ import {
   BarChart3,
   Boxes,
   CalendarDays,
+  ChartNoAxesCombined,
+  Link2,
   CircleDollarSign,
   Package,
   PackageX,
@@ -14,10 +16,17 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { toast } from "sonner";
+import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
-import { analyticsRange, type AnalyticsPeriod } from "@/dashboard/lib/analytics";
+import {
+  analyticsRange,
+  formatAnalyticsDates,
+  type AnalyticsInterval,
+  type AnalyticsPeriod,
+} from "@/dashboard/lib/analytics";
 import { loadAnalyticsSnapshot } from "@/dashboard/data/analytics";
 import { useAnalyticsResource } from "@/dashboard/hooks/useAnalyticsResource";
 import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
@@ -32,17 +41,28 @@ import InventoryAlertCenter from "@/dashboard/components/analytics/InventoryAler
 import ProductPerformance from "@/dashboard/components/analytics/ProductPerformance";
 import "@/dashboard/components/analytics/analytics.css";
 
+const PERIODS = ["7D", "30D", "90D", "12M", "custom"] as const;
+const INTERVALS = ["daily", "sevenDays"] as const;
+
 export default function AnalyticsPage() {
   const { t, lang } = useLanguage();
-  const locale = lang === "ar" ? "ar" : "en-US";
+  const locale = lang === "ar" ? "ar-LB" : "en-US";
   const [anchor, setAnchor] = useState(() => new Date());
-  const [period, setPeriod] = useState<AnalyticsPeriod>("30D");
-  const [from, setFrom] = useState(() =>
-    new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10),
+  const [period, setPeriod] = useDashboardQueryState<AnalyticsPeriod>("period", "30D", PERIODS);
+  const [initialDates] = useState(() => ({
+    from: new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10),
+    to: new Date().toISOString().slice(0, 10),
+  }));
+  const [from, setFrom] = useDashboardQueryState("from", initialDates.from);
+  const [to, setTo] = useDashboardQueryState("to", initialDates.to);
+  const [compare, setCompare] = useDashboardQueryState<boolean>("compare", true);
+  const [requestedCurrency, setCurrency] = useDashboardQueryState<string>("currency", "USD");
+  const currency = /^[A-Z]{3}$/.test(requestedCurrency) ? requestedCurrency : "USD";
+  const [interval, setInterval] = useDashboardQueryState<AnalyticsInterval>(
+    "interval",
+    "daily",
+    INTERVALS,
   );
-  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
-  const [compare, setCompare] = useState(true);
-  const [currency, setCurrency] = useState("USD");
   const [knownCurrencies, setKnownCurrencies] = useState(["USD"]);
   const [revision, setRevision] = useState(0);
   const rangeResult = useMemo(() => {
@@ -77,25 +97,36 @@ export default function AnalyticsPage() {
       setKnownCurrencies((codes) => Array.from(new Set([...codes, ...data.currencies])));
     }
   }, [data]);
-  const date = (value: string) =>
-    new Date(value).toLocaleDateString(locale, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-  const dateRange = (start: string, end: string) =>
-    `${date(start)} – ${date(new Date(Date.parse(end) - 1).toISOString())}`;
+  const reportDates = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
   const integer = (n: number) => n.toLocaleString(locale);
   const money = (n: number) =>
     new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 2 }).format(
       n,
     );
+  async function copyReportLink() {
+    const url = new URL(window.location.href);
+    url.hash = "";
+    if (period === "custom" && range) {
+      url.searchParams.set("from", from);
+      url.searchParams.set("to", to);
+    }
+    try {
+      await navigator.clipboard.writeText(url.href);
+      toast.success(t("Report link copied."));
+    } catch {
+      toast.error(t("Unable to copy report link."));
+    }
+  }
+
   const exportReport = () => {
     if (!data || loading || error || !range) return;
-    const current = data.current,
-      previous = data.previous;
-    downloadCsv(`space-call-analytics-${data.periodStart.slice(0, 10)}.csv`, [
+    const { current, previous, catalog } = data;
+    downloadCsv(`space-call-analytics-${data.periodStart.slice(0, 10)}-${data.currency}.csv`, [
       [
         "Metric",
         "Value",
@@ -103,29 +134,41 @@ export default function AnalyticsPage() {
         "Currency",
         "Period start (UTC)",
         "Period end exclusive (UTC)",
-      ],
+        "Previous start (UTC)",
+        "Previous end exclusive (UTC)",
+      ].map(t),
       ...[
-        ["Gross merchandise sales", current.grossSales, previous?.grossSales],
-        ["Net merchandise sales", current.netSales, previous?.netSales],
-        ["Orders created", current.orders, previous?.orders],
-        ["Average completed order value", current.aov, previous?.aov],
-      ].map(([name, value, prior]) => [
-        name ?? "",
+        ["Gross merchandise sales", current.grossSales, previous?.grossSales, data.currency],
+        ["Net merchandise sales", current.netSales, previous?.netSales, data.currency],
+        ["Orders created", current.orders, previous?.orders, ""],
+        ["Eligible completed orders", current.paidOrders, previous?.paidOrders, ""],
+        ["Average completed order value", current.aov, previous?.aov, data.currency],
+      ].map(([name, value, prior, code]) => [
+        t(String(name)),
         value ?? "",
         prior ?? "",
-        currency,
+        code ?? "",
         data.periodStart,
         data.periodEnd,
+        data.previousStart ?? "",
+        data.previousEnd ?? "",
       ]),
-      ["Customers (current)", data.catalog.customers, "", "", "", ""],
-      ["Products (current)", data.catalog.products, "", "", "", ""],
-      ["Units on hand (current)", data.catalog.totalUnits, "", "", "", ""],
-      ["Low stock (current)", data.catalog.lowStock, "", "", "", ""],
-      ["Out of stock (current)", data.catalog.outOfStock, "", "", "", ""],
-      ["Visible brands (current)", data.catalog.visibleBrands, "", "", "", ""],
+      ...[
+        ["Customers (current)", catalog.customers],
+        ["Products (current)", catalog.products],
+        ["Units on hand (current)", catalog.totalUnits],
+        ["Low stock (current)", catalog.lowStock],
+        ["Critical stock (current)", catalog.criticalStock],
+        ["Out of stock (current)", catalog.outOfStock],
+        ["Visible brands (current)", catalog.visibleBrands],
+      ].map(([label, value]) => [t(String(label)), value, "", "", "", "", "", ""]),
       [
-        "Note",
-        "Net merchandise = subtotal minus discounts, before shipping. Full refunds excluded; partial refunds retain recorded values.",
+        t("Note"),
+        t(
+          "Net merchandise uses recorded discounts before shipping. Full refunds are excluded. Partial refunds retain recorded values.",
+        ),
+        "",
+        "",
         "",
         "",
         "",
@@ -136,12 +179,18 @@ export default function AnalyticsPage() {
   return (
     <div className="analytics-page" aria-busy={loading}>
       <header className="analytics-header">
-        <PageTitle
-          eyebrow="Store performance"
-          title="Analytics"
-          description="A clearer view of sales, stock and what comes next."
-        />
+        <PageTitle eyebrow="Store performance" title="Analytics" />
         <div className="analytics-header-actions">
+          <button
+            type="button"
+            className="analytics-icon-button"
+            aria-label={t("Copy report link")}
+            title={t("Copy report link")}
+            onClick={() => void copyReportLink()}
+            disabled={!range}
+          >
+            <Link2 size={17} />
+          </button>
           <button type="button" className="analytics-button" onClick={refresh} disabled={loading}>
             <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
             {t("Refresh")}
@@ -159,7 +208,7 @@ export default function AnalyticsPage() {
       </header>
       <section className="analytics-toolbar" aria-label={t("Analytics filters")}>
         <div className="analytics-periods" role="group" aria-label={t("Report period")}>
-          {(["7D", "30D", "90D", "12M", "custom"] as const).map((value) => (
+          {PERIODS.map((value) => (
             <button
               type="button"
               key={value}
@@ -189,11 +238,13 @@ export default function AnalyticsPage() {
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
             >
-              {Array.from(new Set([currency, ...knownCurrencies, ...(data?.currencies ?? [])])).map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
-              ))}
+              {Array.from(new Set([currency, ...knownCurrencies, ...(data?.currencies ?? [])])).map(
+                (code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ),
+              )}
             </select>
           </label>
         </div>
@@ -231,11 +282,12 @@ export default function AnalyticsPage() {
         <div className="analytics-report-meta">
           <span>
             <CalendarDays className="size-3.5" />
-            {dateRange(range.start, range.end)} · UTC
+            <bdi>{formatAnalyticsDates(range.start, range.end, reportDates)}</bdi> · UTC
           </span>
           {compare && (
             <span>
-              {t("Compared with")} {dateRange(range.previousStart, range.previousEnd)}
+              {t("Compared with")}{" "}
+              <bdi>{formatAnalyticsDates(range.previousStart, range.previousEnd, reportDates)}</bdi>
             </span>
           )}
           {updatedAt && (
@@ -246,15 +298,21 @@ export default function AnalyticsPage() {
           )}
         </div>
       )}
-      <p className="analytics-caption">
-        {t("Sales and orders follow the selected period; catalog and stock show current totals.")}
-      </p>
+      {data && (
+        <nav className="analytics-section-links" aria-label={t("Analytics sections")}>
+          <a href="#analytics-trends">{t("Sales and order trends")}</a>
+          <a href="#analytics-stock">{t("Stock and catalog totals")}</a>
+          <a href="#analytics-products">{t("Product performance")}</a>
+        </nav>
+      )}
       {loading ? (
         <>
           <p role="status" className="analytics-caption">
-            {lang === "ar" ? "جارٍ تحميل التقرير للفترة والعملة المحددتين…" : "Loading the report for the selected period and currency…"}
+            {lang === "ar"
+              ? "جارٍ تحميل التقرير للفترة والعملة المحددتين…"
+              : "Loading the report for the selected period and currency…"}
           </p>
-          <AnalyticsSkeleton cards={10} />
+          <AnalyticsSkeleton cards={4} />
           <div className="analytics-chart-grid">
             <AnalyticsSkeleton />
             <AnalyticsSkeleton />
@@ -264,47 +322,72 @@ export default function AnalyticsPage() {
         <AnalyticsError message={error} onRetry={refresh} />
       ) : data ? (
         <>
-          <div className="analytics-kpi-grid">
-            <SmartKpi
-              periodMetric
-              title="Gross sales"
-              value={money(data.current.grossSales)}
-              current={data.current.grossSales}
-              previous={data.previous?.grossSales}
-              icon={CircleDollarSign}
-              helper={t("Eligible completed merchandise subtotal")}
-              href="/dashboard/sales"
-            />
-            <SmartKpi
-              periodMetric
-              title="Net sales"
-              value={money(data.current.netSales)}
-              current={data.current.netSales}
-              previous={data.previous?.netSales}
-              icon={Wallet}
-              helper={t("After discounts · before shipping")}
-              href="/dashboard/sales"
-            />
-            <SmartKpi
-              periodMetric
-              title="Orders"
-              value={integer(data.current.orders)}
-              current={data.current.orders}
-              previous={data.previous?.orders}
-              icon={ShoppingBag}
-              helper={t("Orders created in this period")}
-              href="/dashboard/orders"
-            />
-            <SmartKpi
-              periodMetric
-              title="Average order value"
-              value={money(data.current.aov)}
-              current={data.current.aov}
-              previous={data.previous?.aov}
-              icon={BarChart3}
-              helper={`${integer(data.current.paidOrders)} ${t("eligible completed orders")}`}
-              href="/dashboard/sales"
-            />
+          <section className="analytics-section" aria-labelledby="analytics-summary-heading">
+            <div className="analytics-section-heading">
+              <h2 id="analytics-summary-heading">
+                <ChartNoAxesCombined size={18} aria-hidden="true" />
+                {t("Sales summary")}
+              </h2>
+              <span className="analytics-caption">{currency}</span>
+            </div>
+            <div className="analytics-kpi-grid analytics-sales-grid">
+              <SmartKpi
+                periodMetric
+                featured
+                title="Net sales"
+                value={money(data.current.netSales)}
+                current={data.current.netSales}
+                previous={data.previous?.netSales}
+                icon={Wallet}
+                helper={t("After discounts · before shipping")}
+                href="/dashboard/sales"
+              />
+              <SmartKpi
+                periodMetric
+                title="Gross sales"
+                value={money(data.current.grossSales)}
+                current={data.current.grossSales}
+                previous={data.previous?.grossSales}
+                icon={CircleDollarSign}
+                helper={t("Eligible completed merchandise subtotal")}
+                href="/dashboard/sales"
+              />
+              <SmartKpi
+                periodMetric
+                title="Orders"
+                value={integer(data.current.orders)}
+                current={data.current.orders}
+                previous={data.previous?.orders}
+                icon={ShoppingBag}
+                helper={t("Orders created in this period")}
+                href="/dashboard/orders"
+              />
+              <SmartKpi
+                periodMetric
+                title="Average order value"
+                value={money(data.current.aov)}
+                current={data.current.aov}
+                previous={data.previous?.aov}
+                icon={BarChart3}
+                helper={`${integer(data.current.paidOrders)} ${t("eligible completed orders")}`}
+                href="/dashboard/sales"
+              />
+            </div>
+          </section>
+          <AnalyticsCharts snapshot={data} interval={interval} onIntervalChange={setInterval} />
+        </>
+      ) : null}
+      <section
+        id="analytics-stock"
+        className="analytics-section"
+        aria-labelledby="analytics-stock-heading"
+      >
+        <div className="analytics-section-heading">
+          <h2 id="analytics-stock-heading">{t("Stock and catalog totals")}</h2>
+          <span className="analytics-caption">{t("Current totals across the store")}</span>
+        </div>
+        {data && (
+          <div className="analytics-kpi-grid analytics-catalog-grid">
             <SmartKpi
               title="Customers"
               value={integer(data.catalog.customers)}
@@ -362,13 +445,18 @@ export default function AnalyticsPage() {
               href="/dashboard/brands"
             />
           </div>
-          <AnalyticsCharts snapshot={data} compare={compare} />
-        </>
-      ) : null}
-      <InventoryAlertCenter revision={revision} />
+        )}
+        <InventoryAlertCenter revision={revision} />
+      </section>
       {data && range && !error && !loading && (
         <>
-          <ProductPerformance snapshot={data} compare={compare} />
+          <section
+            className="analytics-section"
+            id="analytics-products"
+            aria-label={t("Product performance")}
+          >
+            <ProductPerformance snapshot={data} compare={compare} />
+          </section>
           <AnalyticsContext snapshot={data} />
         </>
       )}

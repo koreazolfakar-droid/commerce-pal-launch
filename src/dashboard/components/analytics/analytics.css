@@ -939,3 +939,236 @@
   background: var(--analytics-blue);
   border-radius: 5px;
 }
+
+.analytics-page {
+  container: analytics-workspace / inline-size;
+}
+.analytics-section {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  scroll-margin-block-start: 6rem;
+}
+.analytics-section-heading {
+  margin-block-start: 5px;
+  align-items: center;
+}
+.analytics-section-heading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+}
+.analytics-section-heading h2 svg {
+  color: var(--analytics-blue);
+  flex-shrink: 0;
+}
+.analytics-section-heading p {
+  font-size: 12px;
+}
+.analytics-section-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  border-block-end: 1px solid var(--analytics-border);
+}
+.analytics-section-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--analytics-muted);
+}
+.analytics-section-links a:hover {
+  color: var(--analytics-blue);
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.analytics-report-meta {
+  font-size: 12px;
+}
+.analytics-header-actions > .analytics-icon-button {
+  flex: 0 0 44px;
+}
+.analytics-sales-grid,
+.analytics-catalog-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.analytics-sales-grid .analytics-kpi {
+  min-height: 140px;
+}
+.analytics-kpi-heading,
+.analytics-trend {
+  font-size: 12px;
+}
+.analytics-kpi p {
+  font-size: 11px;
+}
+.analytics-kpi-featured {
+  border-color: #203b5a;
+  background: linear-gradient(118deg, #122944, #1a3555);
+  color: white;
+}
+.analytics-kpi-featured
+  :is(.analytics-kpi-heading, .analytics-kpi-footer, .analytics-trend.neutral, p) {
+  color: #c7dbed;
+}
+.analytics-kpi-featured .analytics-kpi-icon {
+  background: #28496b;
+  color: #e2eeff;
+}
+.analytics-kpi-featured .analytics-trend.positive {
+  color: #9be1c4;
+}
+.analytics-kpi-featured .analytics-trend.negative {
+  color: #ffc2c8;
+}
+.analytics-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding-inline: 4px;
+  border: 1px solid var(--analytics-border);
+  border-radius: 9px;
+  background: var(--card);
+}
+.analytics-segments button {
+  padding: 8px 11px;
+  border-radius: 6px;
+  min-height: 44px;
+  color: var(--analytics-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.analytics-segments [aria-pressed="true"] {
+  background: color-mix(in oklab, var(--analytics-blue) 10%, var(--card));
+  color: var(--analytics-blue);
+}
+.analytics-trend-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.analytics-trend-grid .analytics-chart-legend {
+  font-size: 12px;
+}
+.analytics-trend-grid .analytics-chart-total {
+  font-size: 19px;
+}
+.analytics-timeline summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px;
+  min-height: 52px;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.analytics-timeline summary::-webkit-details-marker {
+  display: none;
+}
+.analytics-timeline summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: solid var(--analytics-muted);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translateY(-2px) rotate(45deg);
+  flex-shrink: 0;
+}
+.analytics-timeline[open] summary::after {
+  transform: translateY(2px) rotate(225deg);
+}
+.analytics-timeline summary svg {
+  color: var(--analytics-blue);
+  flex-shrink: 0;
+}
+.analytics-timeline summary small {
+  color: var(--analytics-muted);
+  margin-inline-start: auto;
+  font-size: 12px;
+  font-weight: 500;
+}
+.analytics-table-tools {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-block-start: 1px solid var(--analytics-border);
+}
+.analytics-table-tools label {
+  display: grid;
+  gap: 4px;
+  color: var(--analytics-muted);
+  font-size: 12px;
+}
+.analytics-timeline table {
+  width: 100%;
+  table-layout: fixed;
+  font-size: 13px;
+  text-align: start;
+}
+.analytics-timeline :is(th, td) {
+  padding: 12px 16px;
+  border-block-start: 1px solid var(--analytics-border);
+  overflow-wrap: anywhere;
+  text-align: start;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+.analytics-timeline thead {
+  color: var(--analytics-muted);
+  background: var(--muted);
+}
+.analytics-timeline thead th:first-child {
+  width: 40%;
+}
+.analytics-timeline small {
+  display: block;
+  color: var(--analytics-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-block-start: 3px;
+  font-weight: 400;
+}
+.analytics-timeline .analytics-pagination {
+  border-block-start: 1px solid var(--analytics-border);
+}
+@container analytics-workspace (min-width: 690px) {
+  .analytics-sales-grid {
+    grid-template-columns: 1.24fr repeat(3, minmax(0, 1fr));
+  }
+  .analytics-catalog-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container analytics-workspace (min-width: 845px) {
+  .analytics-trend-grid {
+    grid-template-columns: 1.46fr minmax(0, 1fr);
+  }
+}
+@container analytics-workspace (min-width: 1040px) {
+  .analytics-catalog-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@container analytics-workspace (max-width: 520px) {
+  .analytics-page .analytics-section-heading h2 {
+    font-size: 16px;
+  }
+  .analytics-section-links {
+    column-gap: 12px;
+  }
+  .analytics-section-links a {
+    font-size: 12px;
+  }
+  .analytics-timeline :is(th, td) {
+    padding: 10px;
+    font-size: 12px;
+  }
+}

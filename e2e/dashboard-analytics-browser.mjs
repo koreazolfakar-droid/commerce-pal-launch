@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { createDashboardBrowser } from "./helpers/dashboard-browser.mjs";
 
 const origin = process.env.SPACE_CALL_DASHBOARD_ORIGIN || "http://127.0.0.1:4173";
 const { browser, context } = await createDashboardBrowser();
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, "clipboard", {
+    value: { writeText: async (value) => (window.copiedAnalyticsUrl = value) },
+  });
+});
 const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
@@ -118,6 +123,12 @@ await context.route("**/rest/v1/rpc/get_dashboard_inventory_alerts", async (rout
     json: { items: match ? [row] : [], total: match ? 1 : 0, page: args.p_page, pageSize: 8 },
   });
 });
+async function downloadCsv(button) {
+  const pending = page.waitForEvent("download");
+  await button.click();
+  const file = await pending;
+  return { file, contents: await readFile(await file.path(), "utf8") };
+}
 const ready = () => page.locator(".analytics-kpi").first().waitFor();
 const noOverflow = async (width) => {
   const sizes = await page.evaluate(() => ({
@@ -148,6 +159,36 @@ try {
       "$101.00",
     ),
   );
+  const ordersInspect = page.getByRole("combobox", {
+    name: "Inspect date · Orders trend",
+    exact: true,
+  });
+  assert.equal(await ordersInspect.inputValue(), "", "charts inspect dates independently");
+  await ordersInspect.selectOption({ index: 3 });
+  const revenueInspect = page.getByRole("combobox", {
+    name: "Inspect date · Revenue trend",
+    exact: true,
+  });
+  assert.notEqual(await revenueInspect.inputValue(), await ordersInspect.inputValue());
+  const timeline = page.locator(".analytics-timeline");
+  await timeline.locator("summary").click();
+  await timeline.getByRole("combobox", { name: "Sort trend" }).selectOption("orders");
+  assert.equal(await timeline.locator("tbody tr").count(), 10);
+  await timeline.getByRole("button", { name: "Next trend page" }).click();
+  assert.match(await timeline.locator("[aria-live]").textContent(), /2 \/ 3/);
+  const requestsBeforeInterval = requests.length;
+  await page.getByRole("button", { name: "7-day groups", exact: true }).click();
+  assert.ok(page.url().includes("interval=sevenDays"));
+  assert.equal(requests.length, requestsBeforeInterval);
+  assert.equal(await timeline.locator("tbody tr").count(), 5);
+  const grouped = await downloadCsv(timeline.getByRole("button", { name: "Export trend CSV" }));
+  assert.equal(grouped.contents.trim().split("\r\n").length, 6);
+  assert.match(grouped.contents, /"USD","721","15"/);
+  await page.getByRole("button", { name: "Daily", exact: true }).click();
+  await timeline.locator("summary").click();
+  const ranked = await downloadCsv(page.getByRole("button", { name: "Export product rankings" }));
+  assert.match(ranked.contents, /"Product line revenue"/);
+  assert.match(ranked.contents, /SC-PRO-BLUE/);
   await page
     .locator(".analytics-chart")
     .first()
@@ -199,10 +240,26 @@ try {
   await page.waitForFunction(
     () =>
       document.querySelector(".analytics-kpi") &&
-      document.querySelector(".analytics-report-meta").textContent.includes("Feb 7"),
+      /Feb 1\s*–\s*7, 2026/.test(document.querySelector(".analytics-report-meta").textContent),
   );
   assert.equal(requests.at(-1).p_start, "2026-02-01T00:00:00.000Z");
   assert.equal(requests.at(-1).p_end, "2026-02-08T00:00:00.000Z");
+  await page.getByRole("combobox", { name: "Report currency" }).selectOption("LBP");
+  await ready();
+  assert.equal(requests.at(-1).p_currency, "LBP");
+  await page.getByRole("button", { name: "Copy report link" }).click();
+  const copied = new URL(await page.evaluate(() => window.copiedAnalyticsUrl));
+  assert.equal(copied.searchParams.get("period"), "custom");
+  assert.equal(copied.searchParams.get("from"), "2026-02-01");
+  assert.equal(copied.searchParams.get("to"), "2026-02-07");
+  assert.equal(copied.searchParams.get("currency"), "LBP");
+  await page.goto(copied.href);
+  await ready();
+  assert.equal(await page.getByRole("combobox", { name: "Report currency" }).inputValue(), "LBP");
+  assert.equal(await start.inputValue(), "2026-02-01");
+  assert.equal(requests.at(-1).p_end, "2026-02-08T00:00:00.000Z");
+  await page.getByRole("combobox", { name: "Report currency" }).selectOption("USD");
+  await ready();
   await end.fill("2026-01-01");
   await page
     .getByRole("alert")
@@ -271,6 +328,7 @@ try {
     }
     if (width === 390) {
       const chart = page.locator(".analytics-chart").first();
+      await chart.locator(".recharts-wrapper").waitFor();
       await chart.scrollIntoViewIfNeeded();
       const bounds = await chart.boundingBox();
       const cdp = await context.newCDPSession(page);
@@ -280,7 +338,8 @@ try {
         touchPoints: [{ x: bounds.x + 120, y: bounds.y + 100 }],
       });
       await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-      await page.locator(".recharts-tooltip-wrapper .analytics-chart-tooltip").first().waitFor();
+      await page.locator(".analytics-chart-inspect [aria-live]").first().waitFor();
+      assert.notEqual(await revenueInspect.inputValue(), "", "tapping pins the inspected date");
       await cdp.detach();
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.getByRole("button", { name: "More", exact: true }).click();
