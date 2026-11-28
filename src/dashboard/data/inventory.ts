@@ -598,6 +598,20 @@ export async function adjustInventoryDelta(
   return result.new_stock;
 }
 
+/** Reopen a failed count against the current balance for the same tracked variant. */
+export async function readCountBalance(row: InventoryRow): Promise<number> {
+  await requireDashboardStaff();
+  const { data, error } = await supabase
+    .from("store_product_variants")
+    .select("stock_quantity,track_inventory")
+    .eq("id", row.variantId)
+    .eq("product_id", row.productId)
+    .maybeSingle();
+  throwIfError(error, "Unable to reload balance.");
+  if (!data?.track_inventory) throw new Error("This variant is no longer available for counting.");
+  return data.stock_quantity;
+}
+
 export async function setInventoryStock(
   row: InventoryRow,
   stock: number,

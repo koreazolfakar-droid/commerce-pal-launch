@@ -1,5 +1,6 @@
 import { useLanguage } from "@/dashboard/i18n";
-import { AlertCircle, History, Loader2, RefreshCw, Search, X } from "lucide-react";
+import { downloadCsv } from "@/dashboard/lib/exportCsv";
+import { AlertCircle, Download, History, Loader2, RefreshCw, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -57,76 +58,97 @@ function displayReferenceName(value: string) {
   return movementName(value);
 }
 
-function formatActor(value: string | null) {
-  if (!value) return "System";
-  return "Staff · " + value.slice(0, 8) + "…";
-}
-
 function MovementSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-slate-100 bg-white p-4">
+    <div className="animate-pulse rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="h-3 w-28 rounded bg-slate-100" />
-        <div className="h-7 w-12 rounded-lg bg-slate-100" />
+        <div className="h-3 w-28 rounded bg-muted" />
+        <div className="h-7 w-12 rounded-lg bg-muted" />
       </div>
-      <div className="mt-3 h-3 w-3/4 rounded bg-slate-100" />
-      <div className="mt-2 h-3 w-1/2 rounded bg-slate-100" />
+      <div className="mt-3 h-3 w-3/4 rounded bg-muted" />
+      <div className="mt-2 h-3 w-1/2 rounded bg-muted" />
     </div>
   );
 }
 
 function MovementCard({ movement }: { movement: DashboardInventoryMovement }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const positive = movement.quantityDelta > 0;
   const neutral = movement.quantityDelta === 0;
   const deltaClass = neutral
-    ? "bg-slate-100 text-slate-600"
+    ? "bg-muted text-muted-foreground"
     : positive
-      ? "bg-emerald-50 text-emerald-700"
-      : "bg-rose-50 text-rose-700";
-  const delta = positive ? "+" + movement.quantityDelta : String(movement.quantityDelta);
+      ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
+      : "bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200";
+  const quantity = movement.quantityDelta.toLocaleString(lang === "ar" ? "ar-LB" : "en");
+  const delta = (positive ? "+" : "") + quantity;
 
   return (
-    <article className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_6px_18px_rgba(33,47,82,.035)]">
+    <article className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-extrabold text-slate-700">
-            {movementName(movement.movementType)}
+          <div className="text-sm font-semibold text-foreground">
+            {t(movementName(movement.movementType))}
           </div>
-          <div className="mt-1 text-[10px] text-slate-400">
-            {new Date(movement.createdAt).toLocaleString()}
+          <div className="mt-1 text-xs text-muted-foreground">
+            <time dateTime={movement.createdAt}>
+              <bdi>
+                {new Date(movement.createdAt).toLocaleString(lang === "ar" ? "ar-LB" : "en", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </bdi>
+            </time>
           </div>
         </div>
         <span
           className={
-            "inline-flex min-w-12 items-center justify-center rounded-xl px-2.5 py-1.5 text-[12px] font-black " +
+            "inline-flex min-w-12 items-center justify-center rounded-xl px-2.5 py-1.5 text-sm font-bold " +
             deltaClass
           }
         >
-          {delta}
+          <bdi>{delta}</bdi>
         </span>
       </div>
 
       {movement.note ? (
-        <p className="mt-3 break-words text-[11px] leading-5 text-slate-600">{movement.note}</p>
+        <p className="mt-3 break-words text-sm leading-5 text-muted-foreground">{movement.note}</p>
       ) : null}
 
-      <div className="mt-3 grid gap-2 text-[9px] text-slate-400 sm:grid-cols-2">
-        <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-          <div className="font-bold uppercase tracking-[.12em] text-slate-400">{t("Actor")}</div>
-          <div className="mt-1 truncate font-semibold text-slate-600">
-            {formatActor(movement.createdBy)}
+      <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+        <div className="rounded-xl bg-muted/65 px-3 py-2.5">
+          <div className="font-bold uppercase tracking-[.12em] text-muted-foreground">
+            {t("Actor")}
+          </div>
+          <div className="mt-1 break-all font-semibold text-muted-foreground">
+            {movement.createdBy ? (
+              <>
+                {t("Staff")} ·{" "}
+                <bdi title={movement.createdBy}>{movement.createdBy.slice(0, 8)}…</bdi>
+              </>
+            ) : (
+              t("System")
+            )}
           </div>
         </div>
-        <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-          <div className="font-bold uppercase tracking-[.12em] text-slate-400">
+        <div className="rounded-xl bg-muted/65 px-3 py-2.5">
+          <div className="font-bold uppercase tracking-[.12em] text-muted-foreground">
             {t("Reference")}
           </div>
-          <div className="mt-1 truncate font-semibold text-slate-600">
-            {movement.referenceType
-              ? displayReferenceName(movement.referenceType) +
-                (movement.referenceId ? " · " + movement.referenceId : "")
-              : t("Manual / none")}
+          <div className="mt-1 break-all font-semibold text-muted-foreground">
+            {movement.referenceType ? (
+              <>
+                {t(displayReferenceName(movement.referenceType))}
+                {movement.referenceId && (
+                  <>
+                    {" "}
+                    · <bdi>{movement.referenceId}</bdi>
+                  </>
+                )}
+              </>
+            ) : (
+              t("Manual / none")
+            )}
           </div>
         </div>
       </div>
@@ -143,7 +165,7 @@ export default function InventoryMovementHistoryDrawer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<DashboardInventoryMovement[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -157,6 +179,22 @@ export default function InventoryMovementHistoryDrawer({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const createdSince = useMemo(() => movementCreatedSince(period), [period]);
   const requestId = useRef(0);
+  const currentScope = JSON.stringify([
+    row?.variantId,
+    movementType,
+    referenceType,
+    period,
+    debouncedSearch,
+  ]);
+  const [loadedScope, setLoadedScope] = useState("");
+  const canExport = Boolean(
+    row &&
+    items.length &&
+    !loading &&
+    !loadingMore &&
+    currentScope === loadedScope &&
+    searchInput === debouncedSearch,
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -193,6 +231,7 @@ export default function InventoryMovementHistoryDrawer({
           return [...current, ...result.items.filter((movement) => !known.has(movement.id))];
         });
         setPage(result.page);
+        setLoadedScope(currentScope);
         setHasMore(result.hasMore);
         setError("");
       } catch (cause) {
@@ -205,7 +244,7 @@ export default function InventoryMovementHistoryDrawer({
         }
       }
     },
-    [createdSince, debouncedSearch, movementType, referenceType, row],
+    [createdSince, currentScope, debouncedSearch, movementType, referenceType, row],
   );
 
   useEffect(() => {
@@ -257,29 +296,74 @@ export default function InventoryMovementHistoryDrawer({
     period !== "all" ||
     searchInput.trim().length > 0;
 
+  function exportMovements() {
+    if (!canExport || !row) return;
+    downloadCsv("space-call-inventory-movements.csv", [
+      [
+        "Product",
+        "Variant",
+        "SKU",
+        "Date",
+        "Movement type",
+        "Quantity change",
+        "Reference",
+        "Reference ID",
+        "Note",
+        "Actor",
+      ].map(t),
+      ...items.map((entry) => [
+        row.productName,
+        row.variantTitle,
+        row.sku,
+        entry.createdAt,
+        t(movementName(entry.movementType)),
+        entry.quantityDelta,
+        entry.referenceType ? t(displayReferenceName(entry.referenceType)) : "",
+        entry.referenceId ?? "",
+        entry.note ?? "",
+        entry.createdBy || t("System"),
+      ]),
+    ]);
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="right"
-        className="w-full max-w-none overflow-hidden p-0 sm:w-[560px] sm:max-w-[92vw]"
+        side={lang === "ar" ? "left" : "right"}
+        dir={lang === "ar" ? "rtl" : "ltr"}
+        overlayClassName="bg-slate-950/55 backdrop-blur-[2px]"
+        className="w-full max-w-none overflow-hidden p-0 sm:w-[560px] sm:max-w-[92vw] [&>button:last-child]:size-11"
       >
-        <div className="flex h-full min-h-0 flex-col bg-[#f7f9fc]">
-          <SheetHeader className="border-b border-slate-100 bg-white px-5 py-5 pe-14 text-start">
-            <div className="mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-indigo-500">
+        <div className="flex h-full min-h-0 flex-col bg-background">
+          <SheetHeader className="border-b border-border bg-card px-5 py-5 pe-14 text-start">
+            <div className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[.16em] text-primary">
               <History className="size-3.5" />
               {t("Inventory history")}
             </div>
-            <SheetTitle className="truncate text-[18px] font-extrabold tracking-[-.025em] text-[#14203a]">
+            <SheetTitle className="break-words text-lg font-semibold tracking-[-.025em] text-foreground">
               {row?.productName ?? t("Movement history")}
             </SheetTitle>
-            <SheetDescription className="text-[11px] leading-5 text-slate-500">
-              {row
-                ? (row.variantTitle || "Default variant") +
-                  (row.sku ? " · SKU " + row.sku : "") +
-                  " · " +
-                  row.stock +
-                  " on hand"
-                : t("Inventory movement history")}
+            <SheetDescription className="text-sm leading-5 text-muted-foreground">
+              {row ? (
+                <>
+                  <bdi>{row.variantTitle || t("Default variant")}</bdi>
+                  {row.sku && (
+                    <>
+                      {" "}
+                      · {t("SKU")} <bdi>{row.sku}</bdi>
+                    </>
+                  )}
+                  {" · "}
+                  {t("On hand")}{" "}
+                  <bdi>
+                    {row.trackInventory
+                      ? row.stock.toLocaleString(lang === "ar" ? "ar-LB" : "en")
+                      : "—"}
+                  </bdi>
+                </>
+              ) : (
+                t("Inventory movement history")
+              )}
             </SheetDescription>
           </SheetHeader>
 
@@ -288,28 +372,25 @@ export default function InventoryMovementHistoryDrawer({
             aria-live="polite"
             aria-busy={loading || loadingMore}
           >
-            <div className="mb-4 rounded-2xl border border-slate-100 bg-white p-3">
+            <div className="mb-4 rounded-xl border border-border bg-card p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">
+                  <div className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">
                     {t("History filters")}
-                  </div>
-                  <div className="mt-0.5 text-[9px] text-slate-400">
-                    {t("Applied directly in Supabase before pagination")}
                   </div>
                 </div>
                 {filtersActive ? (
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="min-h-9 shrink-0 rounded-xl px-3 text-[10px] font-bold text-indigo-600 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    className="min-h-11 shrink-0 rounded-xl px-3 text-xs font-bold text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                   >
                     {t("Reset")}
                   </button>
                 ) : null}
               </div>
               <div className="relative mt-3">
-                <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
@@ -317,7 +398,7 @@ export default function InventoryMovementHistoryDrawer({
                   autoComplete="off"
                   placeholder={t("Search reference ID or note")}
                   aria-label={t("Search inventory movement history")}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white ps-9 pe-10 text-[11px] font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                  className="h-11 w-full rounded-xl border border-border bg-card ps-9 pe-10 text-sm font-semibold text-foreground outline-none placeholder:font-normal placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-ring/20"
                 />
                 {searchInput ? (
                   <button
@@ -327,7 +408,7 @@ export default function InventoryMovementHistoryDrawer({
                       setDebouncedSearch("");
                     }}
                     aria-label={t("Clear inventory movement history search")}
-                    className="absolute end-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    className="absolute end-1.5 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -337,33 +418,33 @@ export default function InventoryMovementHistoryDrawer({
                 <select
                   value={movementType}
                   onChange={(event) => setMovementType(event.target.value as MovementTypeFilter)}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  className="h-11 min-w-0 w-full rounded-xl border border-border bg-card px-3 text-sm font-bold text-foreground outline-none focus:border-primary"
                   aria-label={t("Filter inventory movement history by type")}
                 >
                   <option value="all">{t("All movement types")}</option>
                   {INVENTORY_MOVEMENT_TYPES.map((type) => (
                     <option key={type} value={type}>
-                      {movementName(type)}
+                      {t(movementName(type))}
                     </option>
                   ))}
                 </select>
                 <select
                   value={referenceType}
                   onChange={(event) => setReferenceType(event.target.value as ReferenceTypeFilter)}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  className="h-11 min-w-0 w-full rounded-xl border border-border bg-card px-3 text-sm font-bold text-foreground outline-none focus:border-primary"
                   aria-label={t("Filter inventory movement history by source")}
                 >
                   <option value="all">{t("All sources")}</option>
                   {INVENTORY_REFERENCE_TYPES.map((type) => (
                     <option key={type} value={type}>
-                      {referenceName(type)}
+                      {t(referenceName(type))}
                     </option>
                   ))}
                 </select>
                 <select
                   value={period}
                   onChange={(event) => setPeriod(event.target.value as MovementPeriod)}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-700 outline-none focus:border-indigo-400"
+                  className="h-11 min-w-0 w-full rounded-xl border border-border bg-card px-3 text-sm font-bold text-foreground outline-none focus:border-primary"
                   aria-label={t("Filter inventory movement history by date range")}
                 >
                   <option value="all">{t("All time")}</option>
@@ -383,17 +464,19 @@ export default function InventoryMovementHistoryDrawer({
             ) : error && !items.length ? (
               <div className="grid min-h-[300px] place-items-center">
                 <div className="max-w-sm text-center">
-                  <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+                  <div className="mx-auto grid size-12 place-items-center rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-200">
                     <AlertCircle className="size-5" />
                   </div>
-                  <div className="mt-4 text-sm font-bold text-slate-700">
+                  <div className="mt-4 text-sm font-bold text-foreground">
                     {t("Movement history could not be loaded")}
                   </div>
-                  <p className="mt-2 break-words text-[11px] leading-5 text-slate-500">{error}</p>
+                  <p className="mt-2 break-words text-sm leading-5 text-muted-foreground">
+                    {error}
+                  </p>
                   <button
                     type="button"
                     onClick={retry}
-                    className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700"
+                    className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-bold text-foreground"
                   >
                     <RefreshCw className="size-3.5" />
                     {t("Retry")}
@@ -403,10 +486,10 @@ export default function InventoryMovementHistoryDrawer({
             ) : !items.length ? (
               <div className="grid min-h-[300px] place-items-center">
                 <div className="max-w-xs text-center">
-                  <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+                  <div className="mx-auto grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
                     <History className="size-5" />
                   </div>
-                  <div className="mt-4 text-sm font-bold text-slate-700">
+                  <div className="mt-4 text-sm font-bold text-foreground">
                     {movementType === "all" &&
                     referenceType === "all" &&
                     period === "all" &&
@@ -414,7 +497,7 @@ export default function InventoryMovementHistoryDrawer({
                       ? t("No inventory movements yet")
                       : t("No movements match these filters")}
                   </div>
-                  <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                  <p className="mt-2 text-sm leading-5 text-muted-foreground">
                     {movementType === "all" &&
                     referenceType === "all" &&
                     period === "all" &&
@@ -428,19 +511,33 @@ export default function InventoryMovementHistoryDrawer({
               </div>
             ) : (
               <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    <bdi>{items.length.toLocaleString(lang === "ar" ? "ar-LB" : "en")}</bdi>{" "}
+                    {t("movements loaded")}
+                  </span>
+                  <button
+                    type="button"
+                    className="dashboard-button min-h-11"
+                    disabled={!canExport}
+                    onClick={exportMovements}
+                  >
+                    <Download size={16} /> {t("Export loaded movements")}
+                  </button>
+                </div>
                 {items.map((movement) => (
                   <MovementCard key={movement.id} movement={movement} />
                 ))}
 
                 {error ? (
-                  <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3 text-[10px] text-rose-700">
+                  <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-xs text-rose-700">
                     <div className="font-bold">{t("Could not load more movements.")}</div>
                     <div className="mt-1 break-words opacity-80">{error}</div>
                     <button
                       type="button"
                       onClick={retry}
                       disabled={loadingMore}
-                      className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-xl bg-white px-3 font-bold shadow-sm disabled:opacity-50"
+                      className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-xl bg-card px-3 font-bold shadow-sm disabled:opacity-50"
                     >
                       <RefreshCw className={"size-3 " + (loadingMore ? "animate-spin" : "")} />
                       {t("Retry")}
@@ -453,7 +550,7 @@ export default function InventoryMovementHistoryDrawer({
                     type="button"
                     onClick={() => void loadPage(page + 1, true)}
                     disabled={loadingMore}
-                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700 disabled:opacity-50"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-bold text-foreground disabled:opacity-50"
                   >
                     {loadingMore ? <Loader2 className="size-4 animate-spin" /> : null}
                     {loadingMore ? t("Loading more…") : t("Load more")}
@@ -461,7 +558,7 @@ export default function InventoryMovementHistoryDrawer({
                 ) : null}
 
                 {!hasMore && !error ? (
-                  <div className="py-2 text-center text-[9px] font-semibold text-slate-400">
+                  <div className="py-2 text-center text-xs font-semibold text-muted-foreground">
                     {t("End of movement history")}
                   </div>
                 ) : null}
