@@ -1,7 +1,7 @@
 import DashboardLoadError from "@/dashboard/components/DashboardLoadError";
 import DashboardListViews from "@/dashboard/components/layout/DashboardListViews";
 import { useDashboardQueryState } from "@/dashboard/hooks/useDashboardQueryState";
-import { useSearch } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { PageTitle } from "@/dashboard/components/layout/PageTitle";
 import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
@@ -15,6 +15,7 @@ import {
   Layers3,
   ChevronLeft,
   ChevronRight,
+  ListChecks,
   Loader2,
   RefreshCw,
   Search,
@@ -26,6 +27,7 @@ import { toast } from "sonner";
 import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
 import InventoryCycleCount from "@/dashboard/components/inventory/InventoryCycleCount";
+import InventoryAdjustment from "@/dashboard/components/inventory/InventoryAdjustment";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
 import "@/dashboard/components/inventory/inventory-control.css";
 import InventoryGroupedList from "@/dashboard/components/inventory/InventoryGroupedList";
@@ -70,20 +72,26 @@ function paginationItems(currentPage: number, totalPages: number): PaginationIte
 
 export default function InventoryManagerPage() {
   const { t, lang } = useLanguage();
+  const [path, navigate] = useLocation();
   const urlSearch = useSearch();
   const attention = new URLSearchParams(urlSearch).get("attention");
   const [rows, setRows] = useState<InventoryRow[]>([]);
   const [query, setQuery] = useDashboardQueryState<string>("search", "");
   const [serverQuery, setServerQuery] = useState(query.trim());
   const [category, setCategory] = useDashboardQueryState<string>("category", "all");
-  const [threshold, setThreshold] = useDashboardQueryState<number>(
-    "threshold",
-    attention === "out" ? 0 : 10,
-  );
-  const [onlyLow, setOnlyLow] = useDashboardQueryState<boolean>(
+  const [threshold, setThreshold] = useDashboardQueryState<number>("threshold", 10);
+  const [onlyLow] = useDashboardQueryState<boolean>(
     "onlyLow",
     attention === "low" || attention === "out",
   );
+  const outOnly = onlyLow && (attention === "out" || threshold === 0);
+  const stockLimit = outOnly ? 0 : threshold;
+  const searchInput = useRef<HTMLInputElement>(null);
+  const selectionButton = useRef<HTMLButtonElement>(null);
+  const [showOtherVariants, setShowOtherVariants] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [adjustmentRow, setAdjustmentRow] = useState<InventoryRow | null>(null);
   const [categories, setCategories] = useState<InventoryCategoryOptions>({
     items: [],
     hasUncategorized: false,
@@ -138,8 +146,20 @@ export default function InventoryManagerPage() {
   const [page, setPage] = useDashboardQueryState<number>("page", 1);
   const [pageSize, setPageSize] = useDashboardQueryState<number>("pageSize", 20, [20, 50, 100]);
 
-  const requestKey = JSON.stringify([serverQuery, category, threshold, onlyLow, page, pageSize]);
+  const requestKey = JSON.stringify([
+    serverQuery,
+    category,
+    threshold,
+    stockLimit,
+    onlyLow,
+    page,
+    pageSize,
+  ]);
   const currentPageReady = query.trim() === serverQuery && loadedKey === requestKey;
+  useEffect(() => {
+    setSelected(new Set());
+    setSelecting(false);
+  }, [requestKey, showOtherVariants]);
   const load = useCallback(
     async (manual = false) => {
       const requestId = ++loadRequestRef.current;
@@ -153,7 +173,7 @@ export default function InventoryManagerPage() {
           loadInventoryPage({
             search: serverQuery,
             category,
-            threshold,
+            threshold: stockLimit,
             onlyLow,
             page,
             pageSize,
@@ -189,7 +209,7 @@ export default function InventoryManagerPage() {
         }
       }
     },
-    [serverQuery, category, threshold, onlyLow, page, pageSize, requestKey, t],
+    [serverQuery, category, threshold, stockLimit, onlyLow, page, pageSize, requestKey, t],
   );
 
   useEffect(() => {
@@ -291,10 +311,77 @@ export default function InventoryManagerPage() {
   const number = new Intl.NumberFormat(lang === "ar" ? "ar-LB" : "en");
   const catalogBusy = !currentPageReady || refreshing;
   const pageActionsDisabled = catalogBusy || Boolean(error) || Boolean(savingId) || inventoryDirty;
-  const trackedRows = rows.filter((row) => row.trackInventory);
+  const showingMatchingVariants = onlyLow && paginationMode === "products" && !showOtherVariants;
+  const visibleRows = showingMatchingVariants
+    ? rows.filter((row) => row.trackInventory && row.stock <= stockLimit)
+    : rows;
+  const trackedRows = visibleRows.filter((row) => row.trackInventory);
+  const selectedRows = trackedRows.filter((row) => selected.has(row.variantId));
+  const normalizedQuery = serverQuery.toLowerCase();
+  const exactMatches = new Set(
+    visibleRows
+      .filter(
+        (row) =>
+          normalizedQuery &&
+          [row.sku, row.barcode].some((identifier) => identifier.toLowerCase() === normalizedQuery),
+      )
+      .map((row) => row.variantId),
+  );
 
-  function exportPage() {
-    downloadCsv(`space-call-inventory-page-${page}.csv`, [
+  function applyStockView(view: "all" | "low" | "out") {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("attention");
+    params.delete("onlyLow");
+    params.delete("page");
+    if (view === "out") params.set("attention", "out");
+    if (view === "low") {
+      params.set("onlyLow", "1");
+      if (threshold === 0) params.delete("threshold");
+    }
+    setShowOtherVariants(false);
+    navigate(`${path}${params.size ? `?${params}` : ""}${window.location.hash}`, {
+      replace: true,
+    });
+  }
+
+  function resetFilters() {
+    const params = new URLSearchParams(window.location.search);
+    for (const key of ["search", "category", "onlyLow", "threshold", "attention", "page"]) {
+      params.delete(key);
+    }
+    setShowOtherVariants(false);
+    navigate(`${path}${params.size ? `?${params}` : ""}${window.location.hash}`, {
+      replace: true,
+    });
+  }
+
+  function clearSearch() {
+    setQuery("");
+    setServerQuery("");
+    searchInput.current?.focus();
+  }
+
+  function toggleRows(items: InventoryRow[]) {
+    if (pageActionsDisabled || !selecting || !items.length) return;
+    setSelected((current) => {
+      const next = new Set(current);
+      const clear = items.every((row) => current.has(row.variantId));
+      for (const row of items) {
+        if (clear) next.delete(row.variantId);
+        else next.add(row.variantId);
+      }
+      return next;
+    });
+  }
+
+  function finishSelection() {
+    setSelected(new Set());
+    setSelecting(false);
+    selectionButton.current?.focus();
+  }
+
+  function exportPage(items: InventoryRow[], name: string) {
+    downloadCsv(`space-call-inventory-${name}.csv`, [
       [
         "Product",
         "Variant",
@@ -306,7 +393,7 @@ export default function InventoryManagerPage() {
         "Inventory tracking",
         "On hand",
       ].map(t),
-      ...rows.map((row) => [
+      ...items.map((row) => [
         row.productName,
         row.variantTitle,
         row.variantId,
@@ -416,6 +503,15 @@ export default function InventoryManagerPage() {
     }
   };
 
+  function discardDraft(id: string) {
+    draftSnapshots.current.delete(id);
+    setDraftStocks((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  }
+
   if (loading) {
     return (
       <div
@@ -428,7 +524,7 @@ export default function InventoryManagerPage() {
     );
   }
 
-  if (error && !rows.length && !countRows) {
+  if (error && !rows.length && !countRows && !adjustmentRow) {
     return (
       <div>
         <h1 className="mb-5 text-2xl font-bold">{t("Inventory control")}</h1>
@@ -458,21 +554,23 @@ export default function InventoryManagerPage() {
           <button
             type="button"
             className="dashboard-button"
-            disabled={pageActionsDisabled || !rows.length}
-            onClick={exportPage}
+            disabled={pageActionsDisabled || !visibleRows.length}
+            onClick={() => exportPage(visibleRows, `page-${page}`)}
           >
             <Download size={16} />
             {t("Export page")}
           </button>
-          <button
-            type="button"
-            className="dashboard-button dashboard-button-primary"
-            disabled={pageActionsDisabled || !trackedRows.length}
-            onClick={() => setCountRows(trackedRows)}
-          >
-            <ClipboardList size={17} />
-            {t("Start cycle count")}
-          </button>
+          {!selecting && (
+            <button
+              type="button"
+              className="dashboard-button dashboard-button-primary"
+              disabled={pageActionsDisabled || !trackedRows.length}
+              onClick={() => setCountRows(trackedRows)}
+            >
+              <ClipboardList size={17} />
+              {t("Start cycle count")}
+            </button>
+          )}
         </div>
       </header>
 
@@ -554,25 +652,18 @@ export default function InventoryManagerPage() {
           </span>
         </div>
         <div className="inventory-stock-tabs" role="group" aria-label={t("Inventory stock views")}>
-          {[
-            { label: "All stock", selected: !onlyLow, low: false, limit: 10 },
-            {
-              label: "Needs replenishment",
-              selected: onlyLow && threshold > 0,
-              low: true,
-              limit: threshold || 10,
-            },
-            { label: "Out of stock", selected: onlyLow && threshold === 0, low: true, limit: 0 },
-          ].map((view) => (
+          {(
+            [
+              { label: "All stock", selected: !onlyLow, value: "all" },
+              { label: "Needs replenishment", selected: onlyLow && !outOnly, value: "low" },
+              { label: "Out of stock", selected: outOnly, value: "out" },
+            ] as const
+          ).map((view) => (
             <button
               key={view.label}
               type="button"
               aria-pressed={view.selected}
-              onClick={() => {
-                setOnlyLow(view.low);
-                setThreshold(view.limit);
-                setPage(1);
-              }}
+              onClick={() => applyStockView(view.value)}
             >
               {t(view.label)}
             </button>
@@ -583,22 +674,29 @@ export default function InventoryManagerPage() {
             <div className="inventory-search">
               <Search size={18} aria-hidden="true" />
               <input
+                ref={searchInput}
                 value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
+                maxLength={120}
+                autoComplete="off"
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    setServerQuery(event.currentTarget.value.trim());
+                  } else if (event.key === "Escape" && query) {
+                    event.stopPropagation();
+                    clearSearch();
+                  }
                 }}
-                placeholder={t("Search product, variant, SKU, barcode, or brand")}
+                placeholder={t("Name, SKU, or barcode")}
                 aria-label={t("Search product, variant, SKU, barcode, or brand")}
               />
               {query && (
                 <button
                   type="button"
                   aria-label={t("Clear inventory search")}
-                  onClick={() => {
-                    setQuery("");
-                    setPage(1);
-                  }}
+                  onClick={clearSearch}
                 >
                   <X size={16} />
                 </button>
@@ -614,8 +712,54 @@ export default function InventoryManagerPage() {
             >
               <SlidersHorizontal size={16} />
               {t("Filters")}
-              {activeFilterCount ? <span>{number.format(activeFilterCount)}</span> : null}
+              {(category !== "all" || threshold !== 10) && (
+                <span className="inventory-filter-dot" aria-hidden="true" />
+              )}
             </button>
+            <button
+              ref={selectionButton}
+              type="button"
+              className="dashboard-button inventory-select-start"
+              aria-label={t("Select variants")}
+              aria-pressed={selecting}
+              title={t("Select variants")}
+              disabled={!selecting && (pageActionsDisabled || !trackedRows.length)}
+              onClick={selecting ? finishSelection : () => setSelecting(true)}
+            >
+              <ListChecks size={17} /> <span>{t("Select variants")}</span>
+            </button>
+          </div>
+          <div className="inventory-filter-chips">
+            {category !== "all" && (
+              <button
+                type="button"
+                onClick={() => setCategory("all")}
+                aria-label={t("Remove category filter")}
+              >
+                {categories.items.find((item) => item.id === category)?.name ??
+                  t(category === "uncategorized" ? "Uncategorized" : "Category")}
+                <X size={14} />
+              </button>
+            )}
+            {threshold !== 10 && (
+              <button
+                type="button"
+                onClick={() => setThreshold(10)}
+                aria-label={t("Reset low stock threshold")}
+              >
+                {t("Low ≤")} <bdi>{number.format(threshold)}</bdi>
+                <X size={14} />
+              </button>
+            )}
+            {onlyLow && paginationMode === "products" && (
+              <button
+                type="button"
+                aria-pressed={showOtherVariants}
+                onClick={() => setShowOtherVariants((value) => !value)}
+              >
+                {t(showOtherVariants ? "Show matching variants" : "Show other variants")}
+              </button>
+            )}
           </div>
           {filtersOpen && (
             <div id="inventory-filters" className="inventory-filters">
@@ -656,13 +800,7 @@ export default function InventoryManagerPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setQuery("");
-                    setCategory("all");
-                    setOnlyLow(false);
-                    setThreshold(10);
-                    setPage(1);
-                  }}
+                  onClick={resetFilters}
                   className="min-h-11 rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                 >
                   {t("Reset filters")}
@@ -677,13 +815,53 @@ export default function InventoryManagerPage() {
           )}
         </div>
 
-        <div className="inventory-edit-hint">
-          <p>
-            {lang === "ar"
-              ? "لحفظ الكمية، اضغط Enter أو اخرج من حقل الكمية. الحقل الفارغ لا يغيّر المخزون."
-              : "Press Enter or leave the quantity field to save. An empty field never changes stock."}
-          </p>
-          {inventoryDirty && (
+        {selecting && (
+          <div className="inventory-selection">
+            <div role="status">
+              <strong>
+                {number.format(selectedRows.length)} {t("variants selected")}
+              </strong>
+              <span>{t("Current page")}</span>
+            </div>
+            <button
+              type="button"
+              className="dashboard-button"
+              disabled={pageActionsDisabled || !trackedRows.length}
+              onClick={() => toggleRows(trackedRows)}
+            >
+              {t(
+                selectedRows.length && selectedRows.length === trackedRows.length
+                  ? "Clear selection"
+                  : "Select current page",
+              )}
+            </button>
+            <button
+              type="button"
+              className="dashboard-button"
+              disabled={pageActionsDisabled || !selectedRows.length}
+              onClick={() => exportPage(selectedRows, "selection")}
+            >
+              <Download size={16} /> {t("Export selection")}
+            </button>
+            <button
+              type="button"
+              className="dashboard-button dashboard-button-primary"
+              disabled={pageActionsDisabled || !selectedRows.length}
+              onClick={() => setCountRows(selectedRows)}
+            >
+              <ClipboardList size={16} /> {t("Count selection")}
+            </button>
+            <button
+              type="button"
+              className="inventory-selection-done"
+              onClick={finishSelection}
+            >
+              {t("Done")}
+            </button>
+          </div>
+        )}
+        {inventoryDirty && (
+          <div className="inventory-edit-hint">
             <div className="flex flex-wrap items-center gap-2" role="status">
               <span>
                 {pendingDraftCount} {lang === "ar" ? "تعديلات لم تُحفظ" : "unsaved quantity edits"}
@@ -701,8 +879,8 @@ export default function InventoryManagerPage() {
                 {lang === "ar" ? "إلغاء التعديلات" : "Discard edits"}
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="inventory-list" aria-busy={catalogBusy}>
           {paginationMode === "variants" && (
@@ -712,8 +890,10 @@ export default function InventoryManagerPage() {
           )}
           <div inert={!currentPageReady || Boolean(error) ? true : undefined}>
             <InventoryGroupedList
-              rows={pageRows}
-              completeGroups={paginationMode === "products"}
+              rows={visibleRows}
+              completeGroups={paginationMode === "products" && !showingMatchingVariants}
+              exactMatches={exactMatches}
+              selection={selecting ? selected : null}
               threshold={threshold}
               savingId={savingId}
               draftStocks={draftStocks}
@@ -722,14 +902,26 @@ export default function InventoryManagerPage() {
                 setDraftStocks((current) => ({ ...current, [id]: value }))
               }
               onCommit={(row) => void commitAbsolute(row)}
+              onCancelDraft={discardDraft}
+              onSelect={toggleRows}
+              onAdjust={(row) => setAdjustmentRow(row)}
               onChangeBy={(row, delta) => void changeBy(row, delta)}
               onHistory={(row) => setHistoryRow(row)}
             />
           </div>
-          {!totalCount && (
+          {currentPageReady && !totalCount && (
             <div className="p-12 text-center text-sm text-muted-foreground">
               <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
-              {t("No inventory variants match these filters.")}
+              <p>{t("No inventory variants match these filters.")}</p>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  className="dashboard-button mx-auto mt-3"
+                  onClick={resetFilters}
+                >
+                  {t("Reset filters")}
+                </button>
+              )}
             </div>
           )}
 
@@ -816,6 +1008,16 @@ export default function InventoryManagerPage() {
           rows={countRows}
           onClose={() => setCountRows(null)}
           onPosted={refreshBalances}
+        />
+      )}
+      {adjustmentRow && (
+        <InventoryAdjustment
+          row={adjustmentRow}
+          onClose={() => setAdjustmentRow(null)}
+          onSaved={(newStock, previousStock) => {
+            replaceRowStock(adjustmentRow.variantId, newStock, newStock - previousStock);
+            refreshBalances();
+          }}
         />
       )}
       <InventoryMovementHistoryDrawer

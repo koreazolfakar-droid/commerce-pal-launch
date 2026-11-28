@@ -5,18 +5,9 @@ import { readCountBalance, setInventoryStock, type InventoryRow } from "@/dashbo
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import { useLanguage } from "@/dashboard/i18n";
 import { downloadCsv } from "@/dashboard/lib/exportCsv";
+import { parseInventoryQuantity } from "./inventoryQuantity";
 
 type CountLine = { row: InventoryRow; input: string; posted: boolean; error: string };
-
-function quantity(input: string): number | null {
-  const normalized = input
-    .trim()
-    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x660))
-    .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x6f0));
-  if (!/^\d+$/.test(normalized)) return null;
-  const value = Number(normalized);
-  return value <= 2147483647 ? value : null;
-}
 
 export default function InventoryCycleCount({
   rows,
@@ -46,9 +37,11 @@ export default function InventoryCycleCount({
   }, []);
 
   const entered = lines.filter((line) => line.input.trim() !== "");
-  const invalid = entered.some((line) => quantity(line.input) === null);
+  const invalid = entered.some((line) => parseInventoryQuantity(line.input) === null);
   const differences = entered.filter(
-    (line) => quantity(line.input) !== null && quantity(line.input) !== line.row.stock,
+    (line) =>
+      parseInventoryQuantity(line.input) !== null &&
+      parseInventoryQuantity(line.input) !== line.row.stock,
   );
   const remaining = differences.filter((line) => !line.posted);
   const hasError = lines.some((line) => line.error);
@@ -91,7 +84,7 @@ export default function InventoryCycleCount({
         "Count note",
       ].map(t),
       ...lines.map(({ row, input, posted }) => {
-        const count = quantity(input);
+        const count = parseInventoryQuantity(input);
         return [
           row.productName,
           row.variantTitle,
@@ -120,7 +113,7 @@ export default function InventoryCycleCount({
         try {
           await setInventoryStock(
             line.row,
-            quantity(line.input)!,
+            parseInventoryQuantity(line.input)!,
             [t("Cycle count"), note.trim()].filter(Boolean).join(" · "),
           );
         } catch (cause) {
@@ -207,7 +200,7 @@ export default function InventoryCycleCount({
         <div className="count-lines">
           {visible.map((line) => {
             const { row } = line;
-            const actual = quantity(line.input);
+            const actual = parseInventoryQuantity(line.input);
             const diff = actual === null ? null : actual - row.stock;
             const invalidLine = Boolean(line.input.trim()) && actual === null;
             return (

@@ -554,3 +554,269 @@
     padding-block: 0.65rem;
   }
 }
+
+.inventory-filter-chips,
+.inventory-selection,
+.inventory-variant-actions,
+.inventory-variant-buttons,
+.inventory-quick-edit,
+.inventory-quick-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.inventory-filter-chips:not(:empty) {
+  margin-block-start: 0.5rem;
+}
+.inventory-filter-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+.inventory-select-start[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  background: var(--inv-tint);
+  color: var(--color-primary);
+}
+.inventory-filter-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  border: 1px solid var(--inv-line);
+  border-radius: 0.55rem;
+  background: var(--inv-tint);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+  text-align: start;
+}
+.inventory-filter-chips svg {
+  flex-shrink: 0;
+}
+.inventory-selection {
+  padding: 0.65rem 1.2rem;
+  background: var(--inv-tint);
+  border-block: 1px solid var(--inv-line);
+}
+.inventory-selection > div {
+  display: grid;
+  gap: 0.15rem;
+  margin-inline-end: auto;
+  font-size: 0.85rem;
+}
+.inventory-selection > div span {
+  color: var(--inv-quiet);
+  font-size: 0.75rem;
+}
+.inventory-selection-done {
+  color: var(--color-primary);
+  padding-inline: 0.65rem;
+  min-height: 44px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.inventory-select-check {
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  border-radius: 0.5rem;
+}
+.inventory-select-check > span {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--inv-quiet);
+  border-radius: 0.32rem;
+  color: var(--color-primary-foreground);
+}
+.inventory-select-check:is([aria-checked="true"], [aria-checked="mixed"]) > span {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.inventory-groups[data-selecting] .inventory-column-labels {
+  padding-inline-start: calc(1.2rem + 44px + 0.4rem);
+}
+.inventory-variant {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  border-block-end: 1px solid var(--inv-line);
+}
+.inventory-variant:last-child {
+  border-block-end: 0;
+}
+.inventory-variant > div:first-of-type {
+  flex: 1 1 12rem;
+}
+.inventory-variant[data-match] {
+  background: var(--inv-tint);
+  box-shadow: inset 0 -2px var(--color-primary);
+}
+.inventory-exact-match {
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+.inventory-variant-actions {
+  min-width: 0;
+  justify-content: space-between;
+}
+.inventory-variant-balance {
+  display: grid;
+  min-width: 4rem;
+  padding-inline: 0.25rem;
+}
+.inventory-variant-balance span,
+.inventory-history-button small {
+  color: var(--inv-quiet);
+  font-size: 0.75rem;
+}
+.inventory-variant-balance strong {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+.inventory-history-button span {
+  display: grid;
+  text-align: start;
+  min-width: 0;
+}
+.inventory-history-button strong {
+  font-weight: inherit;
+}
+.inventory-quick-edit {
+  width: 100%;
+  padding-block-start: 0.65rem;
+  border-block-start: 1px solid var(--inv-line);
+}
+.inventory-quick-edit > button {
+  min-width: 44px;
+}
+.inventory-selection .dashboard-button,
+.inventory-variant-buttons .dashboard-button,
+.inventory-quick-confirm .dashboard-button {
+  min-height: 44px;
+}
+.inventory-adjustment {
+  display: grid;
+  gap: 0.85rem;
+  font-size: 0.875rem;
+}
+.inventory-adjustment-item,
+.inventory-adjustment-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  background: var(--color-muted);
+}
+.inventory-adjustment-item > div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.inventory-adjustment-item > div:last-child {
+  text-align: end;
+}
+.inventory-adjustment-item span,
+.inventory-adjustment-preview span {
+  color: var(--inv-quiet);
+}
+.inventory-adjustment-actions,
+.inventory-adjustment-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.inventory-adjustment-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.inventory-adjustment-actions button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--inv-line);
+  border-radius: 0.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.inventory-adjustment-actions button[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  background: var(--inv-tint);
+  color: var(--color-primary);
+}
+.inventory-adjustment-actions svg {
+  flex-shrink: 0;
+}
+.inventory-adjustment label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  font-weight: 600;
+}
+.inventory-adjustment :is(input, select) {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--inv-line);
+  border-radius: 0.5rem;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  padding: 0.5rem 0.65rem;
+  font-weight: 400;
+}
+.inventory-adjustment-preview strong {
+  font-size: 1.1rem;
+  margin-inline-start: auto;
+}
+.inventory-adjustment-preview p {
+  width: 100%;
+  color: var(--color-muted-foreground);
+}
+@container inventory (max-width: 520px) {
+  .inventory-select-start {
+    width: 44px;
+    padding-inline: 0;
+  }
+  .inventory-select-start span {
+    display: none;
+  }
+  .inventory-variant {
+    padding-inline: 0.65rem;
+    align-items: start;
+  }
+  .inventory-variant > div:first-of-type {
+    flex-basis: calc(100% - 55px);
+  }
+  .inventory-variant-actions {
+    width: 100%;
+  }
+  .inventory-variant-buttons {
+    flex: 1 1 auto;
+  }
+  .inventory-variant-buttons .dashboard-button {
+    padding-inline: 0.6rem;
+  }
+  .inventory-selection {
+    padding-inline: 0.65rem;
+  }
+}
+@container inventory (max-width: 360px) {
+  .inventory-adjustment-actions button {
+    flex-direction: column;
+  }
+}

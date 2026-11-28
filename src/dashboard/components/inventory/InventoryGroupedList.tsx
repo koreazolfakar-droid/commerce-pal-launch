@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import {
+  Check,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -9,6 +10,7 @@ import {
   Package,
   Plus,
   Pencil,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLanguage } from "@/dashboard/i18n";
@@ -18,6 +20,11 @@ import { groupInventoryRows } from "./groupInventoryRows";
 
 type Props = {
   rows: InventoryRow[];
+  exactMatches: ReadonlySet<string>;
+  selection: ReadonlySet<string> | null;
+  onSelect: (rows: InventoryRow[]) => void;
+  onAdjust: (row: InventoryRow) => void;
+  onCancelDraft: (id: string) => void;
   threshold: number;
   /** True when server pagination includes every variant for a parent product. */
   completeGroups: boolean;
@@ -62,18 +69,49 @@ function VariantStatus({ row, threshold }: { row: InventoryRow; threshold: numbe
   );
 }
 
+function SelectionCheck({
+  label,
+  checked,
+  onClick,
+}: {
+  label: string;
+  checked: boolean | "mixed";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-label={label}
+      aria-checked={checked}
+      className="inventory-select-check"
+      onClick={onClick}
+    >
+      <span aria-hidden="true">
+        {checked === "mixed" ? <Minus size={14} /> : checked ? <Check size={14} /> : null}
+      </span>
+    </button>
+  );
+}
+
 function VariantEditor({
   row,
   savingId,
   draftStocks,
   onDraftChange,
+  onCancelDraft,
   onCommit,
+  onSelect,
+  onAdjust,
+  exactMatches,
+  selection,
   onChangeBy,
   onHistory,
   movementLoading,
   threshold,
 }: Omit<Props, "rows" | "completeGroups"> & { row: InventoryRow }) {
   const { t, lang } = useLanguage();
+  const [quickOpen, setQuickOpen] = useState(false);
   const saving = savingId === row.variantId;
   const blocked = Boolean(savingId) || !row.trackInventory;
   const pendingDraft =
@@ -82,12 +120,22 @@ function VariantEditor({
   const label = `${row.productName} — ${row.variantTitle || t("Default")}`;
 
   return (
-    <div className="grid gap-3 border-t border-border px-3 py-3.5 first:border-t-0 sm:px-4 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center lg:gap-5">
+    <div className="inventory-variant" data-match={exactMatches.has(row.variantId) || undefined}>
+      {selection && row.trackInventory && (
+        <SelectionCheck
+          label={`${t("Select variant")} · ${label} · ${row.sku || row.variantId}`}
+          checked={selection.has(row.variantId)}
+          onClick={() => onSelect([row])}
+        />
+      )}
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="min-w-0 break-words text-sm font-semibold text-foreground">
-            {row.variantTitle || t("Default")}
+            <bdi>{row.variantTitle || t("Default")}</bdi>
           </span>
+          {exactMatches.has(row.variantId) && (
+            <span className="inventory-exact-match">{t("Exact match")}</span>
+          )}
           <VariantStatus row={row} threshold={threshold} />
         </div>
         {row.optionsLabel && (
@@ -96,7 +144,7 @@ function VariantEditor({
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex max-w-full items-center gap-1 break-all">
             <span>
-              <span className="font-semibold">{t("SKU")}:</span> {row.sku || "—"}
+              <span className="font-semibold">{t("SKU")}:</span> <bdi>{row.sku || "—"}</bdi>
             </span>
             {row.sku && (
               <button
@@ -119,83 +167,141 @@ function VariantEditor({
           </span>
           {row.barcode && (
             <span className="break-all">
-              {t("Barcode")}: {row.barcode}
+              {t("Barcode")}: <bdi>{row.barcode}</bdi>
             </span>
           )}
         </div>
       </div>
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <span className="me-auto text-xs font-medium text-muted-foreground lg:me-0">
-          {t("On hand")}
-        </span>
-        <button
-          type="button"
-          onClick={() => onChangeBy(row, -1)}
-          disabled={quickBlocked || row.stock <= 0}
-          aria-label={`${t("Decrease stock for")} ${label}`}
-          className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Minus className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onChangeBy(row, -5)}
-          disabled={quickBlocked || row.stock < 5}
-          title={t("Decrease stock by five")}
-          aria-label={`${t("Decrease stock by five")}: ${label}`}
-          className="grid h-11 min-w-10 shrink-0 place-items-center rounded-lg border border-border bg-card px-1 text-xs font-semibold tabular-nums text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40"
-        >
-          −5
-        </button>
-        <input
-          value={draftStocks[row.variantId] ?? String(row.stock)}
-          onChange={(event) => onDraftChange(row.variantId, event.target.value)}
-          onBlur={() => onCommit(row)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") event.currentTarget.blur();
-          }}
-          disabled={blocked}
-          aria-label={`${t("Set stock for")} ${label}`}
-          type="number"
-          min={0}
-          step={1}
-          inputMode="numeric"
-          className="h-11 w-20 min-w-0 rounded-lg border border-border bg-card text-center text-sm font-bold tabular-nums text-foreground outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:bg-muted disabled:text-muted-foreground"
-        />
-        <button
-          type="button"
-          onClick={() => onChangeBy(row, 1)}
-          disabled={quickBlocked}
-          aria-label={`${t("Increase stock for")} ${label}`}
-          className="grid size-11 shrink-0 place-items-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => onChangeBy(row, 5)}
-          disabled={quickBlocked}
-          title={t("Increase stock by five")}
-          aria-label={`${t("Increase stock by five")}: ${label}`}
-          className="grid h-11 min-w-10 shrink-0 place-items-center rounded-lg border border-blue-300 bg-blue-50 px-1 text-xs font-semibold tabular-nums text-blue-700 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40 dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-200"
-        >
-          +5
-        </button>
+      <div className="inventory-variant-actions">
+        <div className="inventory-variant-balance">
+          <span>{t("On hand")}</span>
+          <strong>
+            <bdi>
+              {row.trackInventory ? row.stock.toLocaleString(lang === "ar" ? "ar-LB" : "en") : "—"}
+            </bdi>
+          </strong>
+        </div>
+        {!selection && (
+          <div className="inventory-variant-buttons">
+            {row.trackInventory && (
+              <>
+                <button
+                  className="dashboard-button"
+                  type="button"
+                  disabled={quickBlocked}
+                  onClick={() => onAdjust(row)}
+                  aria-label={`${t("Adjust stock")} · ${label}`}
+                >
+                  <SlidersHorizontal size={15} /> {t("Adjust stock")}
+                </button>
+                <button
+                  className="dashboard-button"
+                  type="button"
+                  aria-expanded={quickOpen}
+                  aria-controls={`inventory-quick-${row.variantId}`}
+                  onClick={() => setQuickOpen((open) => !open)}
+                >
+                  {t("Quick edits")} <ChevronDown size={15} />
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => onHistory(row)}
+              aria-label={`${t("View inventory history for")} ${label}`}
+              className="inventory-history-button dashboard-button"
+              title={t("History")}
+            >
+              <History size={16} />
+              <span>
+                <strong>{t("History")}</strong>
+                {row.lastMovementAt && (
+                  <small>
+                    <bdi>{t(formatMovement(row, movementLoading, lang))}</bdi>
+                  </small>
+                )}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
-      <button
-        type="button"
-        onClick={() => onHistory(row)}
-        aria-label={`${t("View inventory history for")} ${label}`}
-        className="flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-2 py-2 text-start text-xs text-muted-foreground hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:max-w-52"
-      >
-        <History className="size-4 shrink-0 text-blue-600" />
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold text-blue-700">{t("History")}</span>
-          <span className="block break-words text-[11px] leading-4 text-muted-foreground">
-            {t(formatMovement(row, movementLoading, lang))}
-          </span>
-        </span>
-      </button>
+      {!selection && row.trackInventory && (quickOpen || pendingDraft) && (
+        <div className="inventory-quick-edit" id={`inventory-quick-${row.variantId}`}>
+          <button
+            type="button"
+            onClick={() => onChangeBy(row, -1)}
+            disabled={quickBlocked || row.stock <= 0}
+            aria-label={`${t("Decrease stock for")} ${label}`}
+            className="grid size-11 shrink-0 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Minus className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onChangeBy(row, -5)}
+            disabled={quickBlocked || row.stock < 5}
+            title={t("Decrease stock by five")}
+            aria-label={`${t("Decrease stock by five")}: ${label}`}
+            className="grid h-11 min-w-10 shrink-0 place-items-center rounded-lg border border-border bg-card px-1 text-xs font-semibold tabular-nums text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40"
+          >
+            −5
+          </button>
+          <input
+            value={draftStocks[row.variantId] ?? String(row.stock)}
+            onChange={(event) => onDraftChange(row.variantId, event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") onCommit(row);
+              if (event.key === "Escape") onCancelDraft(row.variantId);
+            }}
+            disabled={blocked}
+            aria-label={`${t("Set stock for")} ${label}`}
+            type="number"
+            min={0}
+            step={1}
+            inputMode="numeric"
+            className="h-11 w-20 min-w-0 rounded-lg border border-border bg-card text-center text-sm font-bold tabular-nums text-foreground outline-none focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:bg-muted disabled:text-muted-foreground"
+          />
+          <button
+            type="button"
+            onClick={() => onChangeBy(row, 1)}
+            disabled={quickBlocked}
+            aria-label={`${t("Increase stock for")} ${label}`}
+            className="grid size-11 shrink-0 place-items-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => onChangeBy(row, 5)}
+            disabled={quickBlocked}
+            title={t("Increase stock by five")}
+            aria-label={`${t("Increase stock by five")}: ${label}`}
+            className="grid h-11 min-w-10 shrink-0 place-items-center rounded-lg border border-blue-300 bg-blue-50 px-1 text-xs font-semibold tabular-nums text-blue-700 hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40 dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-200"
+          >
+            +5
+          </button>
+          {pendingDraft && (
+            <div className="inventory-quick-confirm">
+              <button
+                type="button"
+                className="dashboard-button dashboard-button-primary"
+                disabled={blocked || !draftStocks[row.variantId]?.trim()}
+                onClick={() => onCommit(row)}
+              >
+                {t("Save")}
+              </button>
+              <button
+                type="button"
+                className="dashboard-button"
+                disabled={blocked}
+                onClick={() => onCancelDraft(row.variantId)}
+              >
+                {t("Cancel")}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -211,7 +317,7 @@ export default function InventoryGroupedList(props: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   return (
-    <div className="inventory-groups">
+    <div className="inventory-groups" data-selecting={Boolean(props.selection) || undefined}>
       {groups.length > 0 && (
         <div className="inventory-column-labels" aria-hidden="true">
           <span>{t("Product")}</span>
@@ -220,18 +326,33 @@ export default function InventoryGroupedList(props: Props) {
         </div>
       )}
       {groups.map((group) => {
-        const isOpen = expanded[group.productId] ?? group.variants.length === 1;
+        const match = group.variants.find((row) => props.exactMatches.has(row.variantId));
+        const expansionKey = match ? `${group.productId}:${match.variantId}` : group.productId;
+        const isOpen = expanded[expansionKey] ?? (Boolean(match) || group.variants.length === 1);
+        const selectable = props.selection
+          ? group.variants.filter((row) => row.trackInventory)
+          : [];
+        const selectedCount = selectable.filter((row) =>
+          props.selection?.has(row.variantId),
+        ).length;
         const sectionId = `inventory-product-${group.productId}`;
         return (
           <section key={group.productId} className="bg-card">
             <div className="inventory-group">
+              {selectable.length > 0 && (
+                <SelectionCheck
+                  label={`${t("Select product variants")} · ${group.productName}`}
+                  checked={
+                    selectedCount === selectable.length ? true : selectedCount > 0 ? "mixed" : false
+                  }
+                  onClick={() => props.onSelect(selectable)}
+                />
+              )}
               <button
                 type="button"
                 aria-expanded={isOpen}
                 aria-controls={sectionId}
-                onClick={() =>
-                  setExpanded((current) => ({ ...current, [group.productId]: !isOpen }))
-                }
+                onClick={() => setExpanded((current) => ({ ...current, [expansionKey]: !isOpen }))}
                 className="inventory-group-toggle"
               >
                 <span className="inventory-product-photo">
@@ -300,18 +421,7 @@ export default function InventoryGroupedList(props: Props) {
               >
                 <div className="rounded-s-xl bg-card">
                   {group.variants.map((row) => (
-                    <VariantEditor
-                      key={row.variantId}
-                      row={row}
-                      threshold={props.threshold}
-                      savingId={props.savingId}
-                      draftStocks={props.draftStocks}
-                      onDraftChange={props.onDraftChange}
-                      onCommit={props.onCommit}
-                      onChangeBy={props.onChangeBy}
-                      onHistory={props.onHistory}
-                      movementLoading={props.movementLoading}
-                    />
+                    <VariantEditor key={row.variantId} row={row} {...props} />
                   ))}
                 </div>
               </div>
