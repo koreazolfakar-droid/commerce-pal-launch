@@ -7,9 +7,14 @@ import { useLanguage } from "@/dashboard/i18n";
 import { useDashboardUnsavedChanges } from "@/dashboard/hooks/useDashboardUnsavedChanges";
 import {
   Boxes,
+  Package,
+  PackageX,
+  TriangleAlert,
+  ClipboardList,
+  Download,
+  Layers3,
   ChevronLeft,
   ChevronRight,
-  Filter,
   Loader2,
   RefreshCw,
   Search,
@@ -20,6 +25,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashboardRealtimeRefresh } from "@/dashboard/hooks/useDashboardRealtimeRefresh";
 import InventoryMovementHistoryDrawer from "@/dashboard/components/inventory/InventoryMovementHistoryDrawer";
+import InventoryCycleCount from "@/dashboard/components/inventory/InventoryCycleCount";
+import { downloadCsv } from "@/dashboard/lib/exportCsv";
+import "@/dashboard/components/inventory/inventory-control.css";
 import InventoryGroupedList from "@/dashboard/components/inventory/InventoryGroupedList";
 import {
   adjustInventoryDelta,
@@ -86,6 +94,9 @@ export default function InventoryManagerPage() {
     lowCount: 0,
     outCount: 0,
   });
+  const [countRows, setCountRows] = useState<InventoryRow[] | null>(null);
+  const [loadedKey, setLoadedKey] = useState("");
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [productCountOnPage, setProductCountOnPage] = useState(0);
   const [paginationMode, setPaginationMode] = useState<"products" | "variants">("products");
@@ -127,11 +138,13 @@ export default function InventoryManagerPage() {
   const [page, setPage] = useDashboardQueryState<number>("page", 1);
   const [pageSize, setPageSize] = useDashboardQueryState<number>("pageSize", 20, [20, 50, 100]);
 
+  const requestKey = JSON.stringify([serverQuery, category, threshold, onlyLow, page, pageSize]);
+  const currentPageReady = query.trim() === serverQuery && loadedKey === requestKey;
   const load = useCallback(
     async (manual = false) => {
       const requestId = ++loadRequestRef.current;
-      if (manual) setRefreshing(true);
-      else if (!hasLoadedRef.current) setLoading(true);
+      if (manual || hasLoadedRef.current) setRefreshing(true);
+      else setLoading(true);
 
       try {
         // Search, category and pagination do not change this threshold summary.
@@ -150,6 +163,8 @@ export default function InventoryManagerPage() {
 
         if (requestId !== loadRequestRef.current) return;
 
+        setLoadedKey(requestKey);
+        setUpdatedAt(new Date());
         setRows(pageResult.items);
         setTotalCount(pageResult.totalCount);
         setProductCountOnPage(pageResult.productCountOnPage);
@@ -160,7 +175,7 @@ export default function InventoryManagerPage() {
         setMovementVersion((current) => current + 1);
         hasLoadedRef.current = true;
 
-        if (manual) toast.success("Inventory refreshed from Supabase.");
+        if (manual) toast.success(t("Inventory refreshed."));
       } catch (cause) {
         if (requestId !== loadRequestRef.current) return;
         const message = cause instanceof Error ? cause.message : "Unable to load inventory.";
@@ -174,17 +189,21 @@ export default function InventoryManagerPage() {
         }
       }
     },
-    [serverQuery, category, threshold, onlyLow, page, pageSize],
+    [serverQuery, category, threshold, onlyLow, page, pageSize, requestKey, t],
   );
 
   useEffect(() => {
     void load(false);
+    return () => {
+      loadRequestRef.current += 1;
+    };
   }, [load]);
 
-  useDashboardRealtimeRefresh(["store_product_variants"], () => {
+  const refreshBalances = () => {
     summaryCacheRef.current.clear();
     void load(false);
-  });
+  };
+  useDashboardRealtimeRefresh(["store_product_variants"], refreshBalances);
 
   useEffect(() => {
     let active = true;
@@ -221,8 +240,8 @@ export default function InventoryManagerPage() {
   const pageVariantKey = pageRows.map((row) => row.variantId).join(",");
 
   useEffect(() => {
-    if (hasLoadedRef.current && !loading && page !== safePage) setPage(safePage);
-  }, [loading, page, safePage, setPage]);
+    if (currentPageReady && !loading && page !== safePage) setPage(safePage);
+  }, [currentPageReady, loading, page, safePage, setPage]);
 
   useEffect(() => {
     const variantIds = pageVariantKey ? pageVariantKey.split(",") : [];
@@ -264,10 +283,42 @@ export default function InventoryManagerPage() {
       });
   }, [pageVariantKey, movementVersion]);
 
-  const activeFilterCount = Number(Boolean(query.trim())) + Number(category !== "all") + Number(onlyLow) + Number(threshold !== 10);
-  const totalUnits = summary.totalUnits;
-  const low = summary.lowCount;
-  const out = summary.outCount;
+  const activeFilterCount =
+    Number(Boolean(query.trim())) +
+    Number(category !== "all") +
+    Number(onlyLow) +
+    Number(threshold !== 10);
+  const number = new Intl.NumberFormat(lang === "ar" ? "ar-LB" : "en");
+  const catalogBusy = !currentPageReady || refreshing;
+  const pageActionsDisabled = catalogBusy || Boolean(error) || Boolean(savingId) || inventoryDirty;
+  const trackedRows = rows.filter((row) => row.trackInventory);
+
+  function exportPage() {
+    downloadCsv(`space-call-inventory-page-${page}.csv`, [
+      [
+        "Product",
+        "Variant",
+        "Variant ID",
+        "Brand",
+        "Category",
+        "SKU",
+        "Barcode",
+        "Inventory tracking",
+        "On hand",
+      ].map(t),
+      ...rows.map((row) => [
+        row.productName,
+        row.variantTitle,
+        row.variantId,
+        row.brand,
+        row.category,
+        row.sku,
+        row.barcode,
+        t(row.trackInventory ? "Tracked" : "Not tracked"),
+        row.trackInventory ? row.stock : "",
+      ]),
+    ]);
+  }
 
   const replaceRowStock = (variantId: string, stock: number, delta: number) => {
     summaryCacheRef.current.clear();
@@ -302,7 +353,11 @@ export default function InventoryManagerPage() {
         `Inventory dashboard ${delta > 0 ? "increase" : "decrease"}`,
       );
       replaceRowStock(row.variantId, newStock, delta);
-      toast.success(`${row.productName} stock updated to ${newStock}.`);
+      toast.success(
+        lang === "ar"
+          ? `تم تحديث رصيد ${row.productName} إلى ${newStock}.`
+          : `${row.productName} stock updated to ${newStock}.`,
+      );
       void load(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Inventory adjustment failed.");
@@ -347,7 +402,11 @@ export default function InventoryManagerPage() {
         "Inventory dashboard manual stock set",
       );
       replaceRowStock(row.variantId, newStock, newStock - row.stock);
-      toast.success(`${row.productName} stock updated to ${newStock}.`);
+      toast.success(
+        lang === "ar"
+          ? `تم تحديث رصيد ${row.productName} إلى ${newStock}.`
+          : `${row.productName} stock updated to ${newStock}.`,
+      );
       void load(false);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Inventory update failed.");
@@ -359,15 +418,17 @@ export default function InventoryManagerPage() {
 
   if (loading) {
     return (
-      <div role="status"
+      <div
+        role="status"
         aria-label={lang === "ar" ? "جارٍ تحميل المخزون" : "Loading inventory"}
-        className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-card">
+        className="grid min-h-[420px] place-items-center rounded-2xl border border-border bg-card"
+      >
         <Loader2 className="size-6 animate-spin text-[#5968ea]" />
       </div>
     );
   }
 
-  if (error && !rows.length) {
+  if (error && !rows.length && !countRows) {
     return (
       <div>
         <h1 className="mb-5 text-2xl font-bold">{t("Inventory control")}</h1>
@@ -377,299 +438,386 @@ export default function InventoryManagerPage() {
   }
 
   return (
-    <div>
+    <div className="inventory-workspace">
       {error && (
         <DashboardLoadError message={error} busy={refreshing} onRetry={() => void load(true)} />
       )}
-      <div className="dashboard-page-header mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <PageTitle
-            eyebrow="Commerce / Operations"
-            title="Inventory control"
-            description="Live variant inventory from Supabase. Every stock change is recorded as an inventory movement."
-          />
-        </div>
-        <button
-          onClick={() => void load(true)}
-          disabled={refreshing}
-          className="dashboard-button flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold disabled:opacity-60"
-        >
-          <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          {t("Refresh inventory")}
-        </button>
-      </div>
-
-      <DashboardListViews
-        scope="inventory"
-        keys={["category", "onlyLow", "threshold", "pageSize", "attention"]}
-        presets={[
-          { name: "Low stock", query: "onlyLow=1&threshold=10" },
-          { name: "Out of stock", query: "onlyLow=1&threshold=0&attention=out" },
-        ]}
-      />
-
-      <div className="dashboard-summary-grid mb-3 grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="dashboard-metric-card rounded-xl border border-border bg-card p-3 sm:p-4">
-          <div className="text-xs text-slate-500">{t("Total units")}</div>
-          <div className="mt-1 text-2xl font-bold tabular-nums text-foreground">{totalUnits}</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {summary.variantCount} {t("variants")}
-          </div>
-        </div>
-        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-800/50 dark:bg-amber-950/30 sm:p-4">
-          <div className="text-xs text-amber-800 dark:text-amber-200">{t("Low stock variants")}</div>
-          <div className="mt-1 text-2xl font-bold text-amber-800 dark:text-amber-200">{low}</div>
-        </div>
-        <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-800/50 dark:bg-rose-950/30 sm:p-4">
-          <div className="text-xs text-rose-800 dark:text-rose-200">{t("Out of stock variants")}</div>
-          <div className="mt-1 text-2xl font-bold text-rose-800 dark:text-rose-200">{out}</div>
-        </div>
-      </div>
-
-      <div className="dashboard-inventory-stock-tabs mb-2 flex flex-wrap items-center gap-2" role="group" aria-label={t("Inventory stock views")}>
-        {[
-          { label: "All stock", selected: !onlyLow, low: false, limit: 10 },
-          { label: "Low stock", selected: onlyLow && threshold > 0, low: true, limit: 10 },
-          { label: "Out of stock", selected: onlyLow && threshold === 0, low: true, limit: 0 },
-        ].map((view) => (
+      <header className="inventory-header">
+        <PageTitle eyebrow="Space Call / Stock operations" title="Inventory control" />
+        <div className="inventory-header-actions">
           <button
-            key={view.label}
             type="button"
-            aria-pressed={view.selected}
-            onClick={() => {
-              setOnlyLow(view.low);
-              setThreshold(view.limit);
-              setPage(1);
-            }}
-            className={`min-h-10 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
-              view.selected
-                ? "border-blue-500 bg-blue-50 text-blue-800 dark:border-blue-400 dark:bg-blue-950/60 dark:text-blue-100"
-                : "border-border bg-card text-foreground hover:bg-muted/60"
-            }`}
+            className="dashboard-button"
+            aria-label={t("Refresh inventory")}
+            title={t("Refresh inventory")}
+            disabled={refreshing}
+            onClick={() => void load(true)}
           >
-            {t(view.label)}
+            <RefreshCw size={17} className={refreshing ? "animate-spin" : ""} />
           </button>
-        ))}
-      </div>
-      <div className="dashboard-filter-panel dashboard-inventory-toolbar mb-3 rounded-xl border border-border bg-card p-3 sm:p-3.5">
-        <div className="flex flex-col gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="relative min-w-0 flex-1">
-              <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+          <button
+            type="button"
+            className="dashboard-button"
+            disabled={pageActionsDisabled || !rows.length}
+            onClick={exportPage}
+          >
+            <Download size={16} />
+            {t("Export page")}
+          </button>
+          <button
+            type="button"
+            className="dashboard-button dashboard-button-primary"
+            disabled={pageActionsDisabled || !trackedRows.length}
+            onClick={() => setCountRows(trackedRows)}
+          >
+            <ClipboardList size={17} />
+            {t("Start cycle count")}
+          </button>
+        </div>
+      </header>
+
+      <section className="inventory-summary" aria-label={t("Inventory overview")}>
+        <div className="inventory-total">
+          <span>
+            <Boxes size={19} />
+            {t("Total units")}
+          </span>
+          <strong>{number.format(summary.totalUnits)}</strong>
+          {updatedAt && (
+            <small>
+              {t("Updated")}{" "}
+              <time dateTime={updatedAt.toISOString()}>
+                {updatedAt.toLocaleTimeString(lang === "ar" ? "ar-LB" : "en", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </time>
+            </small>
+          )}
+        </div>
+        <div>
+          <span>
+            <Layers3 size={18} />
+            {t("Inventory variants")}
+          </span>
+          <strong>{number.format(summary.variantCount)}</strong>
+          <small>{t("Across the catalog")}</small>
+        </div>
+        <div>
+          <span>
+            <TriangleAlert size={18} className="inventory-low dark:bg-amber-950/30" />
+            {t("Low stock")}
+          </span>
+          <strong>{number.format(summary.lowCount)}</strong>
+          <small>
+            {threshold > 0 ? (
+              <>
+                <bdi>
+                  {number.format(1)}–{number.format(threshold)}
+                </bdi>{" "}
+                {t("units")}
+              </>
+            ) : (
+              t("Threshold is zero")
+            )}
+          </small>
+        </div>
+        <div>
+          <span>
+            <PackageX size={18} className="inventory-out dark:bg-rose-950/30" />
+            {t("Out of stock")}
+          </span>
+          <strong>{number.format(summary.outCount)}</strong>
+          <small>{t("Tracked variants at zero")}</small>
+        </div>
+      </section>
+      <section className="inventory-register" aria-labelledby="inventory-register-title">
+        <div className="inventory-register-heading">
+          <h2 id="inventory-register-title">
+            <Package size={20} />
+            {t("Stock register")}
+          </h2>
+          <span>
+            {totalCount && currentPageReady ? (
+              <>
+                <bdi>
+                  {number.format(pageStart + 1)}–{number.format(pageEnd)}
+                </bdi>{" "}
+                {t("of")} {number.format(totalCount)}{" "}
+                {t(paginationMode === "products" ? "products" : "variants")}
+              </>
+            ) : currentPageReady ? (
+              t("0 shown")
+            ) : (
+              t("Loading…")
+            )}
+          </span>
+        </div>
+        <div className="inventory-stock-tabs" role="group" aria-label={t("Inventory stock views")}>
+          {[
+            { label: "All stock", selected: !onlyLow, low: false, limit: 10 },
+            {
+              label: "Needs replenishment",
+              selected: onlyLow && threshold > 0,
+              low: true,
+              limit: threshold || 10,
+            },
+            { label: "Out of stock", selected: onlyLow && threshold === 0, low: true, limit: 0 },
+          ].map((view) => (
+            <button
+              key={view.label}
+              type="button"
+              aria-pressed={view.selected}
+              onClick={() => {
+                setOnlyLow(view.low);
+                setThreshold(view.limit);
+                setPage(1);
+              }}
+            >
+              {t(view.label)}
+            </button>
+          ))}
+        </div>
+        <div className="inventory-tools">
+          <div className="inventory-search-row">
+            <div className="inventory-search">
+              <Search size={18} aria-hidden="true" />
               <input
                 value={query}
-                onChange={(event) => { setQuery(event.target.value); setPage(1); }}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setPage(1);
+                }}
                 placeholder={t("Search product, variant, SKU, barcode, or brand")}
                 aria-label={t("Search product, variant, SKU, barcode, or brand")}
-                className="h-11 w-full rounded-lg border border-border bg-background ps-10 pe-10 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-blue-600 focus-visible:ring-2 focus-visible:ring-blue-600/20"
               />
               {query && (
-                <button type="button" aria-label={t("Clear inventory search")}
-                  title={t("Clear inventory search")}
-                  onClick={() => { setQuery(""); setPage(1); }}
-                  className="absolute end-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600">
-                  <X className="size-4" />
+                <button
+                  type="button"
+                  aria-label={t("Clear inventory search")}
+                  onClick={() => {
+                    setQuery("");
+                    setPage(1);
+                  }}
+                >
+                  <X size={16} />
                 </button>
               )}
             </div>
             <button
               type="button"
-              aria-expanded={filtersOpen}
-              onClick={() => setFiltersOpen((open) => !open)}
-              className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:hidden"
+              className="dashboard-button"
+              onClick={() => setFiltersOpen((current) => !current)}
               aria-label={t("Advanced inventory filters")}
+              aria-expanded={filtersOpen}
+              aria-controls="inventory-filters"
             >
-              <SlidersHorizontal className="size-5" />
-              {activeFilterCount > 0 && <span className="ms-1 text-xs font-bold tabular-nums">{activeFilterCount}</span>}
+              <SlidersHorizontal size={16} />
+              {t("Filters")}
+              {activeFilterCount ? <span>{number.format(activeFilterCount)}</span> : null}
             </button>
           </div>
-          <div className={`${filtersOpen ? "flex" : "hidden"} flex-wrap items-center gap-2 lg:flex`}>
-            <select
-              value={category}
-              onChange={(event) => { setCategory(event.target.value); setPage(1); }}
-              aria-label={t("All categories")}
-              className="h-11 min-w-0 max-w-full flex-1 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground sm:flex-none"
-            >
-              <option value="all">{t("All categories")}</option>
-              {categories.items.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-              {categories.hasUncategorized && (
-                <option value="uncategorized">{t("Uncategorized")}</option>
-              )}
-            </select>
-            <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground">
-              <SlidersHorizontal className="size-4" />
-              {t("Low ≤")}
-              <input
-                value={threshold}
-                onChange={(event) => { setThreshold(Math.max(0, Number(event.target.value) || 0)); setPage(1); }}
-                type="number"
-                min={0}
-                aria-label={t("Low stock threshold")}
-                className="w-14 bg-transparent text-sm text-foreground outline-none"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={() => { setOnlyLow((current) => !current); setPage(1); }}
-              aria-pressed={onlyLow}
-              className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-semibold ${
-                onlyLow ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200" : "border-border bg-background text-foreground"
-              }`}
-            >
-              <Filter className="size-4" />
-              {t("Low stock only")}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setQuery(""); setCategory("all"); setOnlyLow(false); setThreshold(10); setPage(1); }}
-              className="min-h-11 rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-            >
-              {t("Reset filters")}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <p>
-          {lang === "ar"
-            ? "لحفظ الكمية، اضغط Enter أو اخرج من حقل الكمية. الحقل الفارغ لا يغيّر المخزون."
-            : "Press Enter or leave the quantity field to save. An empty field never changes stock."}
-        </p>
-        {inventoryDirty && (
-          <div className="flex flex-wrap items-center gap-2" role="status">
-            <span>
-              {pendingDraftCount} {lang === "ar" ? "تعديلات لم تُحفظ" : "unsaved quantity edits"}
-            </span>
-            <button
-              type="button"
-              disabled={Boolean(savingId)}
-              onClick={() => {
-                if (savingRef.current) return;
-                draftSnapshots.current.clear();
-                setDraftStocks({});
-              }}
-              className="min-h-9 rounded-lg border border-border bg-card px-3 font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
-            >
-              {lang === "ar" ? "إلغاء التعديلات" : "Discard edits"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="dashboard-catalog-panel overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <div className="flex items-center justify-between border-b border-border p-3 sm:px-5 sm:py-3.5">
-          <div>
-            <div className="text-[15px] font-bold text-foreground">{t("Inventory products")}</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {t(paginationMode === "products" ? "All variants are included in each product group." : "Products are grouped by ID. Counts apply to variants on this page.")}
-            </div>
-          </div>
-          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-            {totalCount ? `${pageStart + 1}–${pageEnd} of ${totalCount}` : t("0 shown")}
-          </span>
-        </div>
-
-        <InventoryGroupedList
-          rows={pageRows}
-          completeGroups={paginationMode === "products"}
-          threshold={threshold}
-          savingId={savingId}
-          draftStocks={draftStocks}
-          movementLoading={movementLoading}
-          onDraftChange={(id, value) =>
-            setDraftStocks((current) => ({ ...current, [id]: value }))
-          }
-          onCommit={(row) => void commitAbsolute(row)}
-          onChangeBy={(row, delta) => void changeBy(row, delta)}
-          onHistory={(row) => setHistoryRow(row)}
-        />
-        {!totalCount && (
-          <div className="p-12 text-center text-sm text-muted-foreground">
-            <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
-            {t("No inventory variants match these filters.")}
-          </div>
-        )}
-
-        {totalCount > 0 && (
-          <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-            <div className="flex items-center justify-between gap-3 sm:justify-start">
-              <span className="text-xs font-semibold text-slate-500">
-                {t("Showing")} {pageStart + 1}–{pageEnd} {t("of")} {totalCount} {t(paginationMode === "products" ? "products" : "variants")}
-              </span>
-              <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
-                {t("Per page")}
+          {filtersOpen && (
+            <div id="inventory-filters" className="inventory-filters">
+              <div className="inventory-filter-fields">
                 <select
-                  value={pageSize}
+                  value={category}
                   onChange={(event) => {
-                    setPageSize(Number(event.target.value));
+                    setCategory(event.target.value);
                     setPage(1);
                   }}
-                  className="h-9 rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-blue-500"
-                  aria-label={t("Inventory rows per page")}
+                  aria-label={t("All categories")}
+                  className="h-11 min-w-0 max-w-full flex-1 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground sm:flex-none"
                 >
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
+                  <option value="all">{t("All categories")}</option>
+                  {categories.items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                  {categories.hasUncategorized && (
+                    <option value="uncategorized">{t("Uncategorized")}</option>
+                  )}
                 </select>
-              </label>
+                <label className="flex h-11 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground">
+                  <SlidersHorizontal className="size-4" />
+                  {t("Low ≤")}
+                  <input
+                    value={threshold}
+                    onChange={(event) => {
+                      setThreshold(Math.max(0, Number(event.target.value) || 0));
+                      setPage(1);
+                    }}
+                    type="number"
+                    min={0}
+                    aria-label={t("Low stock threshold")}
+                    className="w-14 bg-transparent text-sm text-foreground outline-none"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setCategory("all");
+                    setOnlyLow(false);
+                    setThreshold(10);
+                    setPage(1);
+                  }}
+                  className="min-h-11 rounded-lg px-3 text-sm font-semibold text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
+                  {t("Reset filters")}
+                </button>
+              </div>
+              <DashboardListViews
+                scope="inventory"
+                keys={["search", "category", "onlyLow", "threshold", "pageSize", "attention"]}
+                presets={[]}
+              />
             </div>
+          )}
+        </div>
 
-            <nav
-              className="flex items-center justify-center gap-1"
-              aria-label={t("Inventory pagination")}
-            >
+        <div className="inventory-edit-hint">
+          <p>
+            {lang === "ar"
+              ? "لحفظ الكمية، اضغط Enter أو اخرج من حقل الكمية. الحقل الفارغ لا يغيّر المخزون."
+              : "Press Enter or leave the quantity field to save. An empty field never changes stock."}
+          </p>
+          {inventoryDirty && (
+            <div className="flex flex-wrap items-center gap-2" role="status">
+              <span>
+                {pendingDraftCount} {lang === "ar" ? "تعديلات لم تُحفظ" : "unsaved quantity edits"}
+              </span>
               <button
                 type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={safePage <= 1}
-                className="grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-35"
-                aria-label={t("Previous inventory page")}
+                disabled={Boolean(savingId)}
+                onClick={() => {
+                  if (savingRef.current) return;
+                  draftSnapshots.current.clear();
+                  setDraftStocks({});
+                }}
+                className="min-h-9 rounded-lg border border-border bg-card px-3 font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
               >
-                <ChevronLeft className="size-4 rtl:rotate-180" />
+                {lang === "ar" ? "إلغاء التعديلات" : "Discard edits"}
               </button>
+            </div>
+          )}
+        </div>
 
-              {paginationItems(safePage, totalPages).map((item) =>
-                typeof item === "number" ? (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setPage(item)}
-                    aria-current={item === safePage ? "page" : undefined}
-                    className={`min-w-9 rounded-lg border px-2 py-2 text-[11px] font-bold transition ${
-                      item === safePage
-                        ? "border-indigo-500 bg-indigo-600 text-white"
-                        : "border-border bg-card text-foreground hover:bg-muted/60"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ) : (
-                  <span
-                    key={item}
-                    className="grid size-9 place-items-center text-[11px] text-slate-400"
-                  >
-                    …
-                  </span>
-                ),
-              )}
-
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                disabled={safePage >= totalPages}
-                className="grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-35"
-                aria-label={t("Next inventory page")}
-              >
-                <ChevronRight className="size-4 rtl:rotate-180" />
-              </button>
-            </nav>
+        <div className="inventory-list" aria-busy={catalogBusy}>
+          {paginationMode === "variants" && (
+            <p className="inventory-edit-hint">
+              {t("Products are grouped by ID. Counts apply to variants on this page.")}
+            </p>
+          )}
+          <div inert={!currentPageReady || Boolean(error) ? true : undefined}>
+            <InventoryGroupedList
+              rows={pageRows}
+              completeGroups={paginationMode === "products"}
+              threshold={threshold}
+              savingId={savingId}
+              draftStocks={draftStocks}
+              movementLoading={movementLoading}
+              onDraftChange={(id, value) =>
+                setDraftStocks((current) => ({ ...current, [id]: value }))
+              }
+              onCommit={(row) => void commitAbsolute(row)}
+              onChangeBy={(row, delta) => void changeBy(row, delta)}
+              onHistory={(row) => setHistoryRow(row)}
+            />
           </div>
-        )}
-      </div>
+          {!totalCount && (
+            <div className="p-12 text-center text-sm text-muted-foreground">
+              <Boxes className="mx-auto mb-3 size-8 text-slate-300" />
+              {t("No inventory variants match these filters.")}
+            </div>
+          )}
 
+          {totalCount > 0 && (
+            <div className="flex flex-col gap-3 border-t border-border bg-muted/30 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <div className="flex items-center justify-between gap-3 sm:justify-start">
+                <span className="text-xs font-semibold text-slate-500">
+                  {t("Showing")} {pageStart + 1}–{pageEnd} {t("of")} {totalCount}{" "}
+                  {t(paginationMode === "products" ? "products" : "variants")}
+                </span>
+                <label className="flex items-center gap-2 text-[10px] font-semibold text-slate-500">
+                  {t("Per page")}
+                  <select
+                    value={pageSize}
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value));
+                      setPage(1);
+                    }}
+                    className="h-9 rounded-lg border border-border bg-background px-2 text-xs font-semibold text-foreground outline-none focus:border-blue-500"
+                    aria-label={t("Inventory rows per page")}
+                  >
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </label>
+              </div>
+
+              <nav
+                className="flex items-center justify-center gap-1"
+                aria-label={t("Inventory pagination")}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={safePage <= 1}
+                  className="grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-35"
+                  aria-label={t("Previous inventory page")}
+                >
+                  <ChevronLeft className="size-4 rtl:rotate-180" />
+                </button>
+
+                {paginationItems(safePage, totalPages).map((item) =>
+                  typeof item === "number" ? (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setPage(item)}
+                      aria-current={item === safePage ? "page" : undefined}
+                      className={`min-w-9 rounded-lg border px-2 py-2 text-[11px] font-bold transition ${
+                        item === safePage
+                          ? "border-indigo-500 bg-indigo-600 text-white"
+                          : "border-border bg-card text-foreground hover:bg-muted/60"
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ) : (
+                    <span
+                      key={item}
+                      className="grid size-9 place-items-center text-[11px] text-slate-400"
+                    >
+                      …
+                    </span>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  disabled={safePage >= totalPages}
+                  className="grid size-9 place-items-center rounded-lg border border-border bg-card text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-35"
+                  aria-label={t("Next inventory page")}
+                >
+                  <ChevronRight className="size-4 rtl:rotate-180" />
+                </button>
+              </nav>
+            </div>
+          )}
+        </div>
+      </section>
+      {countRows && (
+        <InventoryCycleCount
+          rows={countRows}
+          onClose={() => setCountRows(null)}
+          onPosted={refreshBalances}
+        />
+      )}
       <InventoryMovementHistoryDrawer
         row={historyRow}
         open={Boolean(historyRow)}

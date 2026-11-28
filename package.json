@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:product-editor:browser": "node e2e/product-editor-production-qa.mjs",
-    "test:dashboard:browser": "node e2e/dashboard-audit-browser.mjs && node e2e/dashboard-workspace-flows.mjs && node e2e/dashboard-work-tools-browser.mjs",
+    "test:dashboard:browser": "node e2e/dashboard-audit-browser.mjs && node e2e/dashboard-workspace-flows.mjs && node e2e/dashboard-work-tools-browser.mjs && node e2e/inventory-cycle-count-browser.mjs",
     "test:commerce:setup": "node e2e/helpers/prepare-commerce-stack.mjs",
     "test:commerce": "node e2e/dashboard-commerce-acceptance.mjs",
     "test:commerce:stop": "node e2e/helpers/prepare-commerce-stack.mjs --stop",
