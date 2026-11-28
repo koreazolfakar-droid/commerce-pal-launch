@@ -54,6 +54,7 @@ export function SmartKpi({
   previous,
   status = "normal",
   periodMetric = false,
+  featured = false,
 }: {
   title: string;
   value: string;
@@ -64,8 +65,10 @@ export function SmartKpi({
   previous?: number | null;
   status?: "normal" | "warning" | "critical";
   periodMetric?: boolean;
+  featured?: boolean;
 }) {
   const { t } = useLanguage();
+  const className = `analytics-kpi analytics-panel ${status}${featured ? " analytics-kpi-featured" : ""}`;
   const body = (
     <>
       <div className="analytics-kpi-heading">
@@ -89,15 +92,11 @@ export function SmartKpi({
     </>
   );
   return href ? (
-    <Link
-      href={href}
-      className={`analytics-kpi analytics-panel ${status}`}
-      aria-label={`${t(title)}: ${value}`}
-    >
+    <Link href={href} className={className} aria-label={`${t(title)}: ${value}`}>
       {body}
     </Link>
   ) : (
-    <div className={`analytics-kpi analytics-panel ${status}`}>{body}</div>
+    <div className={className}>{body}</div>
   );
 }
 export function AnalyticsPanel({

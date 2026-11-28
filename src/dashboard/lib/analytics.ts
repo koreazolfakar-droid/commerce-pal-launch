@@ -65,3 +65,60 @@ export function percentageChange(
 export function inventoryHref(search: string) {
   return `/dashboard/inventory?search=${encodeURIComponent(search)}&page=1`;
 }
+
+export type AnalyticsInterval = "daily" | "sevenDays";
+type TrendPoint = {
+  date: string;
+  previousDate: string;
+  revenue: number;
+  orders: number;
+  previousRevenue: number | null;
+  previousOrders: number | null;
+};
+
+export type AnalyticsTrendBucket = TrendPoint & { end: string; previousEnd: string | null };
+
+/** Group aligned buckets from the server. A final bucket may cover fewer days. */
+export function analyticsTrendBuckets(
+  snapshot: { trend: TrendPoint[]; periodEnd: string; previousEnd: string | null },
+  interval: AnalyticsInterval,
+): AnalyticsTrendBucket[] {
+  const size = interval === "daily" ? 1 : 7;
+  const buckets: AnalyticsTrendBucket[] = [];
+  for (let index = 0; index < snapshot.trend.length; index += size) {
+    const group = snapshot.trend.slice(index, index + size);
+    const first = group[0];
+    const next = snapshot.trend[index + size];
+    let revenue = 0;
+    let orders = 0;
+    let previousRevenue: number | null = null;
+    let previousOrders: number | null = null;
+    for (const point of group) {
+      revenue += point.revenue;
+      orders += point.orders;
+      if (point.previousRevenue !== null)
+        previousRevenue = (previousRevenue ?? 0) + point.previousRevenue;
+      if (point.previousOrders !== null)
+        previousOrders = (previousOrders ?? 0) + point.previousOrders;
+    }
+    buckets.push({
+      date: first.date,
+      end: next?.date ?? snapshot.periodEnd,
+      previousDate: first.previousDate,
+      previousEnd: snapshot.previousEnd ? (next?.previousDate ?? snapshot.previousEnd) : null,
+      revenue: Number(revenue.toFixed(2)),
+      orders,
+      previousRevenue: previousRevenue === null ? null : Number(previousRevenue.toFixed(2)),
+      previousOrders,
+    });
+  }
+  return buckets;
+}
+
+export function formatAnalyticsDates(start: string, end: string, format: Intl.DateTimeFormat) {
+  const first = new Date(start);
+  const last = new Date(Date.parse(end) - 1);
+  if (!Number.isFinite(first.getTime()) || !Number.isFinite(last.getTime()) || last < first)
+    return "—";
+  return format.formatRange(first, last);
+}

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Eye, Pencil, SlidersHorizontal } from "lucide-react";
+import { ArrowDownToLine, Eye, Pencil, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/dashboard/i18n";
 import type { AnalyticsSnapshot, PerformanceProduct } from "@/dashboard/data/analytics";
 import { inventoryHref } from "@/dashboard/lib/analytics";
+import { downloadCsv } from "@/dashboard/lib/exportCsv";
 import DashboardModal from "@/dashboard/components/DashboardModal";
 import { AnalyticsEmpty, AnalyticsPanel, ProductThumbnail, Trend } from "./AnalyticsPrimitives";
 
@@ -90,6 +91,50 @@ export default function ProductPerformance({
       subtitle: "Products with a tracked variant at 10 units or fewer",
     },
   ] as const;
+  const rankings = sections.flatMap(({ key, title }) =>
+    snapshot.products[key].map((product, index) => ({
+      title,
+      rank: index + 1,
+      product,
+    })),
+  );
+  function exportRankings() {
+    downloadCsv(
+      `space-call-analytics-products-${snapshot.periodStart.slice(0, 10)}-${snapshot.currency}.csv`,
+      [
+        [
+          "Ranking",
+          "Rank",
+          "Product ID",
+          "Product",
+          "SKU",
+          "Units sold",
+          "Orders",
+          "Product line revenue",
+          "Current stock",
+          "Previous units sold",
+          "Currency",
+          "Period start (UTC)",
+          "Period end exclusive (UTC)",
+        ].map(t),
+        ...rankings.map(({ title, rank, product }) => [
+          t(title),
+          rank,
+          product.productId,
+          product.title,
+          product.sku,
+          product.units,
+          product.orders,
+          product.revenue,
+          product.stock ?? "",
+          product.previousUnits ?? "",
+          snapshot.currency,
+          snapshot.periodStart,
+          snapshot.periodEnd,
+        ]),
+      ],
+    );
+  }
   return (
     <>
       <div className="analytics-section-heading">
@@ -99,7 +144,14 @@ export default function ProductPerformance({
             {t("Sales follow the selected period. Stock is current. Trends compare units sold.")}
           </p>
         </div>
-        <span className="analytics-caption">{t("Up to 8 products per ranking")}</span>
+        <button
+          type="button"
+          className="analytics-button"
+          disabled={!rankings.length}
+          onClick={exportRankings}
+        >
+          <ArrowDownToLine size={16} /> {t("Export product rankings")}
+        </button>
       </div>
       <div className="analytics-performance-grid">
         {sections.map((section) => (

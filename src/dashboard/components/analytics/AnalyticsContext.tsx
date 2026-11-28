@@ -13,7 +13,7 @@ export default function AnalyticsContext({ snapshot }: { snapshot: AnalyticsSnap
     );
   return (
     <div className="analytics-chart-grid">
-      <AnalyticsPanel title="Recent orders" description="Latest real orders">
+      <AnalyticsPanel title="Recent orders" description="Latest across all dates and currencies">
         {snapshot.recentOrders.length ? (
           <div className="analytics-recent-orders">
             {snapshot.recentOrders.map((order) => (
@@ -38,7 +38,10 @@ export default function AnalyticsContext({ snapshot }: { snapshot: AnalyticsSnap
           />
         )}
       </AnalyticsPanel>
-      <AnalyticsPanel title="Top brands" description="By completed sale value">
+      <AnalyticsPanel
+        title="Top brands"
+        description="Share of branded product revenue in this period"
+      >
         {snapshot.topBrands.length ? (
           <div className="analytics-brand-list">
             {snapshot.topBrands.map((brand) => (
